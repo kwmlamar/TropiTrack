@@ -3,10 +3,15 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"; // adju
 import { AppSidebar } from "@/components/app-sidebar"; // adjust path
 import { SiteHeader } from "@/components/site-header"; // adjust path
 
+type DashboardLayoutProps = {
+    children: React.ReactNode;
+    title?: string;
+};
+
 export default function DashboardLayout({ 
     children,
     title = "Dashboard",
- }: { children: React.ReactNode }) {
+ }: DashboardLayoutProps) {
   return (
     <SidebarProvider
       style={
