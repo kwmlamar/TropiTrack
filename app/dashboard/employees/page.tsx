@@ -1,7 +1,10 @@
+
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
 import { IconPlus } from "@tabler/icons-react";
+import  EmployeesTable  from "@/components/employees-table";
+
 
 export default function EmployeesPage() {
   return (
@@ -15,6 +18,10 @@ export default function EmployeesPage() {
           Add Employee
         </Button>
       </div>
+      <div className="mt-4">
+        <EmployeesTable  />
+      </div>
+        
     </DashboardLayout>
   );
 }
