@@ -24,3 +24,18 @@ export async function fetchEmployees() {
     if (error) throw error;
     return data;
 } 
+
+// delete employee from supabase
+export async function deleteEmployee(employeeId: number) {
+    const { error } = await supabase
+    .from('employees')
+    .delete()
+    .eq('id', employeeId)
+
+    if (error) {
+        throw new Error('Failed to delete employee: ' + error.message)
+    }
+
+    return true
+
+}
