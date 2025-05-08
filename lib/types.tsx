@@ -1,6 +1,6 @@
 export type Employee = {
     id: number;
-    full_name: string;
+    name: string;
     hourly_rate: number;
-    status: string;
+    active: boolean;
   };

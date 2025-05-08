@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
-import { IconPlus } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
 import { addEmployee, fetchEmployees, deleteEmployee } from "@/lib/data";
 import {
   DropdownMenu,
@@ -13,77 +13,84 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Plus, UserCheck, UserX } from "lucide-react";
 import { Employee } from "@/lib/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { EmployeeForm } from "@/components/employee-form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const columns = ["Name", "Pay Rate", "Status"];
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [formData, setFormData] = useState({
-    full_name: "",
-    role: "",
-    hourly_rate: "",
-    status: "Active",
-  });
 
   useEffect(() => {
-    setLoading(true);
-    const handleFetchEmployees = async () => {
-      try {
-        const data = await fetchEmployees();
-        setEmployees(data);
-      } catch (error) {
-        console.log("Error fetching employees:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    handleFetchEmployees();
+    loadWorkers();
   }, [refreshKey]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const handleAddEmployee = async () => {
+  const loadWorkers = async () => {
     setLoading(true);
-
     try {
-      await addEmployee(formData);
-
-      setFormData({
-        full_name: "",
-        role: "",
-        hourly_rate: "",
-        status: "Active",
-      });
+      const data = await fetchEmployees();
+      setEmployees(data);
     } catch (error) {
-      console.error("Error adding employee:", error);
+      console.log("Failed to fetch Employees:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateEmployee = async (employeeData: Omit<Employee, "id">) => {
+    try {
+      const data = await addEmployee(employeeData);
+      if (!data || !data.name) {
+        throw new Error("Invalid employee data returned from addEmployee");
+      }
+      setEmployees((prev) => [...prev, data]);
+    } catch (error) {
+      console.log("Failed to create employee:", error);
+    } finally {
+      setIsFormOpen(false);
     }
     setRefreshKey((prev) => prev + 1);
   };
 
-  const handleDeleteEmployee = async (id: number) => {
+  const handleDeleteEmployee = async () => {
+    if (!selectedEmployee) return;
     try {
-       await deleteEmployee(id);
+      await deleteEmployee(selectedEmployee.id);
     } catch (error) {
-        console.log("Error deleting employee:", error);
+      console.log("Failed to delete employee:", error);
+    } finally {
+      setSelectedEmployee(null);
+      setIsDeleteDialogOpen(false);
     }
-    setRefreshKey((prev) => prev + 1)
-    };
+    setRefreshKey((prev) => prev + 1);
+  };
 
-
-  
   return (
     <DashboardLayout title="Employees">
       <h1 className="text-2xl font-bold">Add to your team</h1>
@@ -93,45 +100,37 @@ export default function EmployeesPage() {
           placeholder="Search employees..."
           className="w-1/3 max-w-md"
         />
-        <Button
-          className="ml-auto"
-          onClick={() => setShowForm((prev) => !prev)}
-        >
-          <IconPlus className="!size-5" />
-          {showForm ? "Cancel" : "Add Employee"}
-        </Button>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Employee
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedEmployee ? "Edit Employee" : "Add New Employee"}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedEmployee
+                  ? "Update the employee's information below."
+                  : "Fill in the details to add a new employee."}
+              </DialogDescription>
+            </DialogHeader>
+            <EmployeeForm
+              employee={selectedEmployee}
+              onSubmit={handleCreateEmployee}
+              onCancel={() => {
+                setSelectedEmployee(null);
+                setIsFormOpen(false);
+              }}
+            />
+            <div className="flex flex-col gap-4"></div>
+          </DialogContent>
+        </Dialog>
       </div>
-      {showForm && (
-        <div className="mt-4 space-y-2">
-          <input
-            type="text"
-            name="full_name"
-            placeholder="Full Name"
-            value={formData.full_name}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-          />
-          <input
-            type="text"
-            name="role"
-            placeholder="Role"
-            value={formData.role}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-          />
-          <input
-            type="number"
-            name="hourly_rate"
-            placeholder="$12/hr"
-            value={formData.hourly_rate}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-          />
-          <Button onClick={handleAddEmployee}>
-            {loading ? "Adding..." : "Submit"}
-          </Button>
-        </div>
-      )}
+
       {/* Employees Table*/}
       <div className="mt-4">
         <div className="w-full px-4">
@@ -155,11 +154,15 @@ export default function EmployeesPage() {
                   key={i}
                   className="grid grid-cols-[2fr_1fr_1fr_min-content] gap-4 p-4 items-center"
                 >
-                  <CardContent className="p-0">{emp.full_name}</CardContent>
+                  <CardContent className="p-0">{emp.name}</CardContent>
                   <CardContent className="p-0">
                     ${emp.hourly_rate}/hr
                   </CardContent>
-                  <CardContent className="p-0">{emp.status}</CardContent>
+                  <CardContent className="p-0">
+                    <Badge variant={emp.active ? "default" : "secondary"}>
+                      {emp.active ? "Active" : "Inactive"}
+                    </Badge>
+                  </CardContent>
                   <CardContent className="p-0 justify-self-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -169,13 +172,16 @@ export default function EmployeesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => console.log("Edit", emp.full_name)}
+                          onClick={() => console.log("Edit", emp.name)}
                         >
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           variant="destructive"
-                          onClick={() => handleDeleteEmployee(emp.id)}
+                          onClick={() => {
+                            setSelectedEmployee(emp);
+                            setIsDeleteDialogOpen(true);
+                          }}
                         >
                           Delete
                         </DropdownMenuItem>
@@ -184,6 +190,48 @@ export default function EmployeesPage() {
                   </CardContent>
                 </Card>
               ))}
+              <AlertDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setSelectedEmployee(null);
+                  }
+                  setIsDeleteDialogOpen(open);
+                }}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete {selectedEmployee?.name}.
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteEmployee}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+
+          {employees.length === 0 && !loading && (
+            <div className="flex flex-col items-center justify-center h-64 border rounded-lg p-6">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
+                <UserX className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">No employees found</h3>
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                You haven&apos;t added any employees yet. Add your first
+                employee to get started.
+              </p>
+              <Button onClick={() => setIsFormOpen(true)}>
+                <UserCheck className="mr-2 h-4 w-4" />
+                Add Your First Employee
+              </Button>
             </div>
           )}
         </div>
