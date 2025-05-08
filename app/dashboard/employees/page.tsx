@@ -74,15 +74,16 @@ export default function EmployeesPage() {
   };
 
   const handleDeleteEmployee = async (id: number) => {
-    const error = await deleteEmployee(id);
-
-    if (error) {
-      console.log("Error deleting employee:", error);
-      return;
+    try {
+       await deleteEmployee(id);
+    } catch (error) {
+        console.log("Error deleting employee:", error);
     }
-    setRefreshKey((prev) => prev + 1);
+    setRefreshKey((prev) => prev + 1)
+    };
 
-  };
+
+  
   return (
     <DashboardLayout title="Employees">
       <h1 className="text-2xl font-bold">Add to your team</h1>
