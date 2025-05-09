@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { Employee } from "@/lib/types"
 
 // Get all employees
 export async function fetchEmployees() {
@@ -37,4 +38,21 @@ export async function deleteEmployee(employeeId: number) {
 
   if (error) throw new Error("Failed to delete employee: " + error.message);
   return; // don't return `true` — just return nothing (void) on success
+}
+
+export async function updateEmployee(employee: Employee) {
+    const { data, error } = await supabase
+    .from("employees")
+    .update({
+        name: employee.name,
+        hourly_rate: employee.hourly_rate,
+        active: employee.active,
+    })
+    .eq("id", employee.id)
+    .select()
+    .single();
+
+    if (error) throw new Error("Failed to delete employee:" + error.message);
+    if (!data) throw new Error("No data returned from updateEmployee");
+    return data;
 }

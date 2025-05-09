@@ -5,7 +5,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { addEmployee, fetchEmployees, deleteEmployee } from "@/lib/data";
+import { addEmployee, fetchEmployees, deleteEmployee, updateEmployee } from "@/lib/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,11 +45,11 @@ export default function EmployeesPage() {
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  
 
   useEffect(() => {
     loadWorkers();
-  }, [refreshKey]);
+  }, []);
 
   const loadWorkers = async () => {
     setLoading(true);
@@ -63,19 +63,31 @@ export default function EmployeesPage() {
     }
   };
 
-  const handleCreateEmployee = async (employeeData: Omit<Employee, "id">) => {
+  const handleCreateEmployee = async (employee: Employee) => {
     try {
-      const data = await addEmployee(employeeData);
-      if (!data || !data.name) {
-        throw new Error("Invalid employee data returned from addEmployee");
-      }
+      const data = await addEmployee(employee); // function still expects Omit<Employee, "id">
       setEmployees((prev) => [...prev, data]);
     } catch (error) {
       console.log("Failed to create employee:", error);
     } finally {
       setIsFormOpen(false);
+      loadWorkers();
     }
-    setRefreshKey((prev) => prev + 1);
+  };
+  
+
+  const handleUpdateEmployee = async (employee: Employee) => {
+    try {
+        const updatedEmployee  = await updateEmployee(employee)  
+        if (!updatedEmployee) throw new Error("No employee returned from update");
+
+        setEmployees(employees.map((e) => (e.id === employee.id ? updatedEmployee : e)))
+    } catch (error) {
+        console.log("Failed to update worker:", error);
+    } finally {
+        setSelectedEmployee(null);
+        setIsFormOpen(false);
+    }
   };
 
   const handleDeleteEmployee = async () => {
@@ -88,7 +100,7 @@ export default function EmployeesPage() {
       setSelectedEmployee(null);
       setIsDeleteDialogOpen(false);
     }
-    setRefreshKey((prev) => prev + 1);
+    loadWorkers();
   };
 
   return (
@@ -101,7 +113,7 @@ export default function EmployeesPage() {
           className="w-1/3 max-w-md"
         />
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger>
+          <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Add Employee
@@ -120,7 +132,7 @@ export default function EmployeesPage() {
             </DialogHeader>
             <EmployeeForm
               employee={selectedEmployee}
-              onSubmit={handleCreateEmployee}
+              onSubmit={selectedEmployee ? handleUpdateEmployee : handleCreateEmployee}
               onCancel={() => {
                 setSelectedEmployee(null);
                 setIsFormOpen(false);
@@ -172,7 +184,10 @@ export default function EmployeesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => console.log("Edit", emp.name)}
+                          onClick={() => {
+                            setSelectedEmployee(emp);
+                            setIsFormOpen(true);
+                          }}
                         >
                           Edit
                         </DropdownMenuItem>
