@@ -15,13 +15,74 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { ClientForm } from "@/components/client-form";
+import { fetchClients, createClient, deleteClient, updateClient } from "@/lib/data";
 
 import { Client } from "@/lib/types";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function ClientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    setIsLoading(true);
+    try {
+        const data = await fetchClients();
+        setClients(data)
+    } catch (error) {
+        console.log("Error fetching clients", error)
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleCreateClient = async (client: Client) => {
+    try {
+        const data = await createClient(client);
+        setClients((prev) => [...prev, data])
+    } catch (error) {
+        console.log("Error creating client:", error);
+    } finally {
+        setIsFormOpen(false);
+    loadClients();
+    }  
+  };
+
+  const handleUpdateClient = async (client: Client) => {
+    if (!selectedClient) return;
+    try {
+        const updatedClient = await updateClient(client)
+        if (!updatedClient) throw new Error("No client returned from update.")
+
+        setClients(clients.map((c) => c.id === client.id ? updatedClient : c))
+    } catch (error) {
+        console.log("Error updating client:", error)
+    } finally {
+        setSelectedClient(null);
+        setIsFormOpen(false);
+        loadClients();
+    }
+  }
+
+  const handleDeleteClient = async () => {
+    if (!selectedClient) return;
+    try {
+        await deleteClient(selectedClient.id)
+    } catch (error) {
+        console.log("Error deleting client:", error)
+    } finally {
+        setIsDeleteDialogOpen(false);
+        setSelectedClient(null);
+        loadClients();
+    }
+  };
 
   return (
     <DashboardLayout title="Clients">
@@ -51,12 +112,13 @@ export default function ClientsPage() {
             </DialogHeader>
             <ClientForm
             client={selectedClient}
-            onSubmit={selectedClient ? console.log("update client") : console.log("add new client")}
+            onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
             onCancel={() => {
                 setSelectedClient(null)
                 setIsFormOpen(false)
             }}
             />
+            <div className="flex flex-col gap-4"></div>
           </DialogContent>
         </Dialog>
       </div>

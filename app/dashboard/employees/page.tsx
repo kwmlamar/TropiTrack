@@ -48,10 +48,10 @@ export default function EmployeesPage() {
   
 
   useEffect(() => {
-    loadWorkers();
+    loadEmployees();
   }, []);
 
-  const loadWorkers = async () => {
+  const loadEmployees = async () => {
     setLoading(true);
     try {
       const data = await fetchEmployees();
@@ -71,7 +71,7 @@ export default function EmployeesPage() {
       console.log("Failed to create employee:", error);
     } finally {
       setIsFormOpen(false);
-      loadWorkers();
+      loadEmployees();
     }
   };
   
@@ -99,8 +99,8 @@ export default function EmployeesPage() {
     } finally {
       setSelectedEmployee(null);
       setIsDeleteDialogOpen(false);
+      loadEmployees();
     }
-    loadWorkers();
   };
 
   return (

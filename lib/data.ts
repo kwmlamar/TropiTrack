@@ -1,5 +1,7 @@
 import { supabase } from "./supabaseClient";
-import { Employee } from "@/lib/types"
+import { Employee, Client } from "@/lib/types"
+
+// EMPLOYEES
 
 // Get all employees
 export async function fetchEmployees() {
@@ -17,7 +19,7 @@ export async function addEmployee(employeeData: {
   name: string;
   role?: string;
   hourly_rate: number;
-  status?: string;
+  active?: boolean;
 }) {
   const { data, error } = await supabase
     .from("employees")
@@ -54,5 +56,59 @@ export async function updateEmployee(employee: Employee) {
 
     if (error) throw new Error("Failed to delete employee:" + error.message);
     if (!data) throw new Error("No data returned from updateEmployee");
+    return data;
+}
+
+// CLIENTS
+
+// fetch Clients
+export async function fetchClients() {
+    const {data, error} = await supabase
+    .from("clients")
+    .select("*")
+    .order("created_at", {ascending: false});
+
+    if (error) throw new Error("Failed to fetch clients:" + error.message)
+
+    return data ?? [];
+}
+
+export async function createClient(clientData: {
+    name: string
+    email?: string
+}) {
+    const { data, error } =  await supabase
+    .from("clients")
+    .insert([clientData])
+    .select()
+    .single();
+
+    if (error) throw new Error("Failed to create new client:" + error.message);
+    return data?.[0]
+}
+
+export async function deleteClient(clientId: number) {
+    const { error } =  await supabase
+    .from("clients")
+    .delete()
+    .eq("id", clientId);
+
+    if (error) throw new Error("Failed to delete client" + error.message);
+    return;
+}
+
+export async function updateClient(client: Client) {
+    const { data, error } =  await supabase
+    .from("clients")
+    .update({
+        name: client.name,
+        email: client.email,
+    })
+    .eq("id", client.id)
+    .select()
+    .single();
+
+    if (error) throw new Error("Failed to update client:" + error.message);
+    if (!data) throw new Error("No data returned from updateClient")
     return data;
 }
