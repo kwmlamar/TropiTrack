@@ -12,13 +12,36 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
 import { ClientForm } from "@/components/client-form";
-import { fetchClients, createClient, deleteClient, updateClient } from "@/lib/data";
+import {
+  fetchClients,
+  createClient,
+  deleteClient,
+  updateClient,
+} from "@/lib/data";
 
 import { Client } from "@/lib/types";
-import { supabase } from "@/lib/supabaseClient";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent } from "@/components/ui/card";
+import { MoreVertical, Plus, UserCheck, UserX } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const columns = ["Name", "Email"];
 
 export default function ClientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -34,53 +57,53 @@ export default function ClientsPage() {
   const loadClients = async () => {
     setIsLoading(true);
     try {
-        const data = await fetchClients();
-        setClients(data)
+      const data = await fetchClients();
+      setClients(data);
     } catch (error) {
-        console.log("Error fetching clients", error)
+      console.log("Error fetching clients", error);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleCreateClient = async (client: Client) => {
     try {
-        const data = await createClient(client);
-        setClients((prev) => [...prev, data])
+      const data = await createClient(client);
+      setClients((prev) => [...prev, data]);
     } catch (error) {
-        console.log("Error creating client:", error);
+      console.log("Error creating client:", error);
     } finally {
-        setIsFormOpen(false);
-    loadClients();
-    }  
+      setIsFormOpen(false);
+      loadClients();
+    }
   };
 
   const handleUpdateClient = async (client: Client) => {
     if (!selectedClient) return;
     try {
-        const updatedClient = await updateClient(client)
-        if (!updatedClient) throw new Error("No client returned from update.")
+      const updatedClient = await updateClient(client);
+      if (!updatedClient) throw new Error("No client returned from update.");
 
-        setClients(clients.map((c) => c.id === client.id ? updatedClient : c))
+      setClients(clients.map((c) => (c.id === client.id ? updatedClient : c)));
     } catch (error) {
-        console.log("Error updating client:", error)
+      console.log("Error updating client:", error);
     } finally {
-        setSelectedClient(null);
-        setIsFormOpen(false);
-        loadClients();
+      setSelectedClient(null);
+      setIsFormOpen(false);
+      loadClients();
     }
-  }
+  };
 
   const handleDeleteClient = async () => {
     if (!selectedClient) return;
     try {
-        await deleteClient(selectedClient.id)
+      await deleteClient(selectedClient.id);
     } catch (error) {
-        console.log("Error deleting client:", error)
+      console.log("Error deleting client:", error);
     } finally {
-        setIsDeleteDialogOpen(false);
-        setSelectedClient(null);
-        loadClients();
+      setIsDeleteDialogOpen(false);
+      setSelectedClient(null);
+      loadClients();
     }
   };
 
@@ -111,16 +134,120 @@ export default function ClientsPage() {
               </DialogDescription>
             </DialogHeader>
             <ClientForm
-            client={selectedClient}
-            onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
-            onCancel={() => {
-                setSelectedClient(null)
-                setIsFormOpen(false)
-            }}
+              client={selectedClient}
+              onSubmit={
+                selectedClient ? handleUpdateClient : handleCreateClient
+              }
+              onCancel={() => {
+                setSelectedClient(null);
+                setIsFormOpen(false);
+              }}
             />
             <div className="flex flex-col gap-4"></div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Clients Table*/}
+      <div className="mt-4">
+        <div className="w-full px-4">
+          {/* Column Headers */}
+          <div className="grid grid-cols-[2fr_2fr_min-content] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
+            {columns.map((col) => (
+              <div key={col}>{col}</div>
+            ))}
+            <div /> {/* Empty column for the meatball */}
+          </div>
+
+          {/* Data Cards as Rows */}
+          {isLoading ? (
+            <div className="text-center text-sm text-gray-500 py-4">
+              Loading employees...
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {clients.map((client, i) => (
+                <Card
+                  key={i}
+                  className="grid grid-cols-[2fr_2fr_min-content] gap-4 p-4 items-center"
+                >
+                  <CardContent className="p-0">{client.name}</CardContent>
+                  <CardContent className="p-0">{client.email}</CardContent>
+                  <CardContent className="p-0 justify-self-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedClient(client);
+                            setIsFormOpen(true);
+                          }}
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => {
+                            setSelectedClient(client);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardContent>
+                </Card>
+              ))}
+              <AlertDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setSelectedClient(null);
+                  }
+                  setIsDeleteDialogOpen(open);
+                }}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete {selectedClient?.name}. This
+                      action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteClient}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+
+          {clients.length === 0 && !isLoading && (
+            <div className="flex flex-col items-center justify-center h-64 border rounded-lg p-6">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
+                <UserX className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">No clients found</h3>
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                You haven&apos;t added any clients yet. Add your first client to
+                get started.
+              </p>
+              <Button onClick={() => setIsFormOpen(true)}>
+                <UserCheck className="mr-2 h-4 w-4" />
+                Add Your First client
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

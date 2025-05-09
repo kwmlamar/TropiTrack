@@ -5,7 +5,12 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { addEmployee, fetchEmployees, deleteEmployee, updateEmployee } from "@/lib/data";
+import {
+  addEmployee,
+  fetchEmployees,
+  deleteEmployee,
+  updateEmployee,
+} from "@/lib/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +50,6 @@ export default function EmployeesPage() {
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
 
   useEffect(() => {
     loadEmployees();
@@ -74,19 +78,20 @@ export default function EmployeesPage() {
       loadEmployees();
     }
   };
-  
 
   const handleUpdateEmployee = async (employee: Employee) => {
     try {
-        const updatedEmployee  = await updateEmployee(employee)  
-        if (!updatedEmployee) throw new Error("No employee returned from update");
+      const updatedEmployee = await updateEmployee(employee);
+      if (!updatedEmployee) throw new Error("No employee returned from update");
 
-        setEmployees(employees.map((e) => (e.id === employee.id ? updatedEmployee : e)))
+      setEmployees(
+        employees.map((e) => (e.id === employee.id ? updatedEmployee : e))
+      );
     } catch (error) {
-        console.log("Failed to update worker:", error);
+      console.log("Failed to update worker:", error);
     } finally {
-        setSelectedEmployee(null);
-        setIsFormOpen(false);
+      setSelectedEmployee(null);
+      setIsFormOpen(false);
     }
   };
 
@@ -132,7 +137,9 @@ export default function EmployeesPage() {
             </DialogHeader>
             <EmployeeForm
               employee={selectedEmployee}
-              onSubmit={selectedEmployee ? handleUpdateEmployee : handleCreateEmployee}
+              onSubmit={
+                selectedEmployee ? handleUpdateEmployee : handleCreateEmployee
+              }
               onCancel={() => {
                 setSelectedEmployee(null);
                 setIsFormOpen(false);

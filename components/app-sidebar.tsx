@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   IconCamera,
   IconDashboard,
@@ -16,12 +16,12 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 import { Briefcase } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -30,7 +30,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const data = {
   user: {
@@ -43,7 +43,11 @@ const data = {
     { title: "Projects", url: "/dashboard/projects", icon: IconFolder },
     { title: "Clients", url: "/dashboard/clients", icon: Briefcase },
     { title: "Employees", url: "/dashboard/employees", icon: IconUsers },
-    { title: "Timesheets", url: "/dashboard/timesheets", icon: IconFileDescription },
+    {
+      title: "Timesheets",
+      url: "/dashboard/timesheets",
+      icon: IconFileDescription,
+    },
     { title: "Payroll", url: "/dashboard/payroll", icon: IconDevicesDollar },
   ],
   navClouds: [
@@ -86,8 +90,7 @@ const data = {
     { name: "Reports", url: "#", icon: IconReport },
     { name: "Word Assistant", url: "#", icon: IconFileWord },
   ],
-    
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -115,5 +118,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
