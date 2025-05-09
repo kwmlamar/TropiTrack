@@ -17,6 +17,7 @@ import {
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react"
+import { Briefcase } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -40,6 +41,7 @@ const data = {
   navMain: [
     { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
     { title: "Projects", url: "/dashboard/projects", icon: IconFolder },
+    { title: "Clients", url: "/dashboard/clients", icon: Briefcase },
     { title: "Employees", url: "/dashboard/employees", icon: IconUsers },
     { title: "Timesheets", url: "/dashboard/timesheets", icon: IconFileDescription },
     { title: "Payroll", url: "/dashboard/payroll", icon: IconDevicesDollar },
