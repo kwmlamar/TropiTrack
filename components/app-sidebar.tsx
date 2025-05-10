@@ -17,6 +17,7 @@ import {
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
+import TropiTrackLogo from "./tropitrack-logo";
 import { Briefcase } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -103,8 +104,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconHammer className="!size-7" />
-                <span className="text-base font-semibold">ODS</span>
+                <TropiTrackLogo />
+                <span className="text-base font-semibold">TropiTrack</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
