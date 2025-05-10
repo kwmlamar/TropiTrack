@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import type { Employee } from "@/lib/types"
-
-interface Project {
-    id: number
-    name: string
-}
+import type { Employee, Project } from "@/lib/types"
 
 interface EmployeeFormProps {
     employee?: Employee | null

@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "TropiTrack",
-  description: "A modern bookkeeping and payroll web app built for small businesses in The Bahamas. Track employees, manage timesheets, run payroll, and stay compliant with NIB—simple, fast, and designed for Caribbean workflows.",
+  description:
+    "A modern bookkeeping and payroll web app built for small businesses in The Bahamas. Track employees, manage timesheets, run payroll, and stay compliant with NIB—simple, fast, and designed for Caribbean workflows.",
 };
 
 export default function RootLayout({

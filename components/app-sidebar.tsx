@@ -10,7 +10,6 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
-  IconHammer,
   IconDevicesDollar,
   IconReport,
   IconSearch,
