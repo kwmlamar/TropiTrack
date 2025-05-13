@@ -2,6 +2,7 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"; // adjust imports
 import { AppSidebar } from "@/components/app-sidebar"; // adjust path
 import { SiteHeader } from "@/components/site-header"; // adjust path
+import { ModeToggle } from "../mode-toggle";
 
 type DashboardLayoutProps = {
     children: React.ReactNode;
@@ -23,7 +24,7 @@ export default function DashboardLayout({
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
-        <SiteHeader title={title} />
+        <SiteHeader title={title} rightSlot={<ModeToggle />} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

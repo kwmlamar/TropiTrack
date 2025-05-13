@@ -1,0 +1,8 @@
+-- Example: allow access only to users in same company
+CREATE POLICY "Company access only"
+  ON some_table
+  FOR SELECT
+  USING (
+    auth.uid() IS NOT NULL AND
+    some_table.company_id = auth.jwt() -> 'user_metadata' ->> 'company_id'
+  );

@@ -1,18 +1,20 @@
+"use server";
+
 import { supabase } from "./supabaseClient";
-import { Employee, Client } from "@/lib/types"
+import { Employee, Client } from "@/lib/types";
 
 // EMPLOYEES
 
 // Get all employees
 export async function fetchEmployees() {
-    const { data, error } = await supabase
-      .from("employees")
-      .select("*")
-      .order("created_at", { ascending: false });
-  
-    if (error) throw new Error("Failed to fetch employees: " + error.message);
-    return data ?? [];
-  }
+  const { data, error } = await supabase
+    .from("employees")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error("Failed to fetch employees: " + error.message);
+  return data ?? [];
+}
 
 // Add new employee
 export async function addEmployee(employeeData: {
@@ -43,72 +45,101 @@ export async function deleteEmployee(employeeId: number) {
 }
 
 export async function updateEmployee(employee: Employee) {
-    const { data, error } = await supabase
+  const { data, error } = await supabase
     .from("employees")
     .update({
-        name: employee.name,
-        hourly_rate: employee.hourly_rate,
-        active: employee.active,
+      name: employee.name,
+      hourly_rate: employee.hourly_rate,
+      active: employee.active,
     })
     .eq("id", employee.id)
     .select()
     .single();
 
-    if (error) throw new Error("Failed to delete employee:" + error.message);
-    if (!data) throw new Error("No data returned from updateEmployee");
-    return data;
+  if (error) throw new Error("Failed to delete employee:" + error.message);
+  if (!data) throw new Error("No data returned from updateEmployee");
+  return data;
 }
 
 // CLIENTS
 
 // fetch Clients
 export async function fetchClients() {
-    const {data, error} = await supabase
+  const { data, error } = await supabase
     .from("clients")
     .select("*")
-    .order("created_at", {ascending: false});
+    .order("created_at", { ascending: false });
 
-    if (error) throw new Error("Failed to fetch clients:" + error.message)
+  if (error) throw new Error("Failed to fetch clients:" + error.message);
 
-    return data ?? [];
+  return data ?? [];
 }
 
 export async function createClient(clientData: {
-    name: string
-    email?: string
+  name: string;
+  email?: string;
 }) {
-    const { data, error } =  await supabase
+  const { data, error } = await supabase
     .from("clients")
     .insert([clientData])
     .select()
     .single();
 
-    if (error) throw new Error("Failed to create new client:" + error.message);
-    return data?.[0]
+  if (error) throw new Error("Failed to create new client:" + error.message);
+  return data?.[0];
 }
 
 export async function deleteClient(clientId: number) {
-    const { error } =  await supabase
-    .from("clients")
-    .delete()
-    .eq("id", clientId);
+  const { error } = await supabase.from("clients").delete().eq("id", clientId);
 
-    if (error) throw new Error("Failed to delete client" + error.message);
-    return;
+  if (error) throw new Error("Failed to delete client" + error.message);
+  return;
 }
 
 export async function updateClient(client: Client) {
-    const { data, error } =  await supabase
+  const { data, error } = await supabase
     .from("clients")
     .update({
-        name: client.name,
-        email: client.email,
+      name: client.name,
+      email: client.email,
     })
     .eq("id", client.id)
     .select()
     .single();
 
-    if (error) throw new Error("Failed to update client:" + error.message);
-    if (!data) throw new Error("No data returned from updateClient")
-    return data;
+  if (error) throw new Error("Failed to update client:" + error.message);
+  if (!data) throw new Error("No data returned from updateClient");
+  return data;
+}
+
+// CHECK USER PROFILE AFTER SIGNING UP
+export async function checkAndCreateUserProfile() {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  console.log(userData, userError);
+
+  const user = userData?.user;
+  if (!user || userError) return { error: "No authenticated user found." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (profile) {
+    return { success: true };
+  }
+
+  const { error: insertError } = await supabase.from("profiles").insert([
+    {
+      id: user.id,
+      name: user.user_metadata?.full_name || "Admin",
+      role: "admin",
+      company_id: user.user_metadata?.company_id,
+    },
+  ]);
+
+  if (insertError) return { error: "Failed to create profile." };
+
+  return { success: true };
 }
