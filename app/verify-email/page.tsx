@@ -1,23 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient"; // adjust the path
+import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 
 export default function VerifyEmailPage() {
-  const router = useRouter();
+  const handleLogin = () => {
+    redirect('/login')
+  }
 
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        router.push("/dashboard");
-      }
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -26,6 +17,13 @@ export default function VerifyEmailPage() {
         <p className="mt-4 text-gray-600">
           We&apos;ve sent a verification link to your email. Please click the link in the email to verify your account.
         </p>
+        <Button 
+        onClick={handleLogin}
+        className="mt-4"
+        >
+          Go to Login
+          <ArrowRight />
+        </Button>
       </div>
     </div>
   );

@@ -14,10 +14,13 @@ export async function login(formData: FormData) {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
   };
+
   const { error } = await supabase.auth.signInWithPassword(data);
   if (error) {
-    redirect("/error");
-  }
+  console.error("Login failed:", error.message); // 🔍 log it
+  redirect("/error");
+}
+
   revalidatePath("/dashboard", "layout");
   redirect("/dashboard");
 }
@@ -25,8 +28,6 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("name") as string;
@@ -40,16 +41,17 @@ export async function signup(formData: FormData) {
     },
   });
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("Auth Data:", authData);
-    console.log("Auth Error:", authError);
+  if (!authData.user) {
+    console.error("No user returned from signUp - likely due to email confirmation requried.")
+    return redirect("/verify-email")
   }
 
-  if (authError || !authData.user) {
+  if (authError) {
     console.error("Signup failed:", authError);
-    redirect("/error"); // or better: throw error for debugging
+    return redirect("/error");
   }
 
+  // Insert company data
   const { data: companyData, error: companyError } = await supabase
     .from("companies")
     .insert([
@@ -63,10 +65,30 @@ export async function signup(formData: FormData) {
 
   if (companyError || !companyData) {
     console.error("Failed to create company.", companyError);
-    redirect("/error");
+    return redirect("/error");
   }
 
-  const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+  // Manually insert profile directly
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .insert([
+      {
+        id: authData.user.id,
+        name: fullName,
+        email,
+        company_id: companyData.id, // Assuming company_id is a UUID
+      },
+    ])
+    .select()
+    .single();
+
+  if (profileError || !profileData) {
+    console.error("Failed to create profile.", profileError);
+    return redirect("/error");
+  }
+
+  // Update user metadata
+  const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
     authData.user.id,
     {
       user_metadata: {
@@ -78,8 +100,11 @@ export async function signup(formData: FormData) {
 
   if (updateError) {
     console.error("Failed to update user metadata", updateError);
-    redirect("/error");
+    return redirect("/error");
+  } else {
+    console.log("Updated user metadata:", updatedUser?.user?.user_metadata);
   }
 
-  redirect("/verify-email");
+  return redirect("/verify-email");
 }
+

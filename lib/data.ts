@@ -112,34 +112,4 @@ export async function updateClient(client: Client) {
   return data;
 }
 
-// CHECK USER PROFILE AFTER SIGNING UP
-export async function checkAndCreateUserProfile() {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  console.log(userData, userError);
 
-  const user = userData?.user;
-  if (!user || userError) return { error: "No authenticated user found." };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (profile) {
-    return { success: true };
-  }
-
-  const { error: insertError } = await supabase.from("profiles").insert([
-    {
-      id: user.id,
-      name: user.user_metadata?.full_name || "Admin",
-      role: "admin",
-      company_id: user.user_metadata?.company_id,
-    },
-  ]);
-
-  if (insertError) return { error: "Failed to create profile." };
-
-  return { success: true };
-}
