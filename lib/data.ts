@@ -1,15 +1,33 @@
-"use server";
-
-import { supabase } from "./supabaseClient";
+import { createClient as createBrowserClient } from "@/utils/supabase/client";
 import { Employee, Client } from "@/lib/types";
+
+const supabase = await createBrowserClient();
+
+// PROFILE INFO
+export async function fetchProfileInfo(userId: string) {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profile) {
+    throw new Error("error fetching profile info: " + JSON.stringify(profileError));
+    console.log("user in fetchProfileInfo: ", )
+  }
+
+  return profile;
+}
 
 // EMPLOYEES
 
 // Get all employees
-export async function fetchEmployees() {
+export async function fetchEmployeesForCompany({user}: { user: any}) {
+  const profile = await fetchProfileInfo(user.id);
   const { data, error } = await supabase
     .from("employees")
     .select("*")
+    .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error("Failed to fetch employees: " + error.message);
@@ -17,7 +35,7 @@ export async function fetchEmployees() {
 }
 
 // Add new employee
-export async function addEmployee(employeeData: {
+export async function generateEmployee(employeeData: {
   name: string;
   role?: string;
   hourly_rate: number;
@@ -64,10 +82,12 @@ export async function updateEmployee(employee: Employee) {
 // CLIENTS
 
 // fetch Clients
-export async function fetchClients() {
+export async function fetchClientsForCompany({ user }: { user: any }) {
+  const profile = await fetchProfileInfo(user.id);
   const { data, error } = await supabase
     .from("clients")
     .select("*")
+    .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error("Failed to fetch clients:" + error.message);
@@ -75,13 +95,22 @@ export async function fetchClients() {
   return data ?? [];
 }
 
-export async function createClient(clientData: {
-  name: string;
-  email?: string;
-}) {
+export async function generateClient(
+  clientData: {
+    name: string;
+    email?: string;
+  },
+  { user }: { user: any },
+) {
+  const profile = await fetchProfileInfo(user.id);
   const { data, error } = await supabase
     .from("clients")
-    .insert([clientData])
+    .insert([
+      {
+        ...clientData,
+        company_id: profile.company_id,
+      },
+    ])
     .select()
     .single();
 
@@ -89,14 +118,18 @@ export async function createClient(clientData: {
   return data?.[0];
 }
 
-export async function deleteClient(clientId: number) {
-  const { error } = await supabase.from("clients").delete().eq("id", clientId);
+export async function deleteClient(clientId: number, { user }: { user: any}) {
+  const profile = await fetchProfileInfo(user.id);
+
+  const { error } = await supabase.from("clients").delete().eq("id", clientId).eq("company_id", profile.company_id);
 
   if (error) throw new Error("Failed to delete client" + error.message);
   return;
 }
 
-export async function updateClient(client: Client) {
+export async function updateClient(client: Client, { user } : { user: any }) {
+  const profile = await fetchProfileInfo(user.id);
+
   const { data, error } = await supabase
     .from("clients")
     .update({
@@ -104,6 +137,7 @@ export async function updateClient(client: Client) {
       email: client.email,
     })
     .eq("id", client.id)
+    .eq("company_id", profile.company_id)
     .select()
     .single();
 
@@ -111,5 +145,3 @@ export async function updateClient(client: Client) {
   if (!data) throw new Error("No data returned from updateClient");
   return data;
 }
-
-
