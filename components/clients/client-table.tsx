@@ -52,20 +52,21 @@ export default function ClientTable({ user }: {user: User} ) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
-    const loadClients = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchClientsForCompany({user});
-        setClients(data);
-      } catch (error) {
-        console.log("Error fetching clients", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
+
     loadClients();
   }, [user]);
+
+  const loadClients = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchClientsForCompany({user});
+      setClients(data);
+    } catch (error) {
+      console.log("Error fetching clients", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreateClient = async (client: Client) => {
     try {

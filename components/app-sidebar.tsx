@@ -42,7 +42,7 @@ const data = {
     { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
     { title: "Projects", url: "/dashboard/projects", icon: IconFolder },
     { title: "Clients", url: "/dashboard/clients", icon: Briefcase },
-    { title: "Employees", url: "/dashboard/employees", icon: IconUsers },
+    { title: "Workers", url: "/dashboard/workers", icon: IconUsers },
     {
       title: "Timesheets",
       url: "/dashboard/timesheets",

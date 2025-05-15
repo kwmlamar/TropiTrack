@@ -1,11 +1,11 @@
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
-import { Employee, Client } from "@/lib/types";
-import { User } from "@supabase/supabase-js"
+import { Worker, Client } from "@/lib/types";
+import { User } from "@supabase/supabase-js";
 
 const supabase = await createBrowserClient();
 
 // PROFILE INFO
-export async function fetchProfileInfo(userId: string) {
+export async function getProfile(userId: string) {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
@@ -13,70 +13,81 @@ export async function fetchProfileInfo(userId: string) {
     .single();
 
   if (profileError || !profile) {
-    throw new Error("error fetching profile info: " + JSON.stringify(profileError));
-    console.log("user in fetchProfileInfo: ", )
+    throw new Error(
+      "error fetching profile info: " + JSON.stringify(profileError)
+    );
+    console.log("user in fetchProfileInfo: ");
   }
 
   return profile;
 }
 
-// EMPLOYEES
+// WORKERS
 
-// Get all employees
-export async function fetchEmployeesForCompany({user}: { user: User}) {
-  const profile = await fetchProfileInfo(user.id);
+// Get all workers
+export async function fetchWorkersForCompany({ user }: { user: User }) {
+  const profile = await getProfile(user.id);
+
   const { data, error } = await supabase
-    .from("employees")
+    .from("workers")
     .select("*")
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error("Failed to fetch employees: " + error.message);
+  if (error) throw new Error("Failed to fetch worker: " + error.message);
   return data ?? [];
 }
 
 // Add new employee
-export async function generateEmployee(employeeData: {
-  name: string;
-  role?: string;
-  hourly_rate: number;
-  active?: boolean;
-}) {
+export async function generateWorker(
+  employeeData: {
+    name: string;
+    role?: string;
+    hourly_rate: number;
+    active?: boolean;
+  },
+  { user }: { user: User }
+) {
+  const profile = await getProfile(user.id);
   const { data, error } = await supabase
-    .from("employees")
-    .insert([employeeData])
+    .from("workers")
+    .insert({ ...employeeData, company_id: profile.company_id })
     .select() // this ensures data is returned
     .single();
 
-  if (error) throw new Error("Failed to add employee: " + error.message);
+  if (error) throw new Error("Failed to add worker: " + error.message);
   return data?.[0]; // return the inserted employee
 }
 
 // Delete an employee
-export async function deleteEmployee(employeeId: number) {
+export async function deleteEmployee(workerId: number, {user}: {user: User}) {
+  const profile = await getProfile(user.id);
   const { error } = await supabase
-    .from("employees")
+    .from("workers")
     .delete()
-    .eq("id", employeeId);
+    .eq("id", workerId)
+    .eq("company_id", profile.company_id);
 
-  if (error) throw new Error("Failed to delete employee: " + error.message);
+  if (error) throw new Error("Failed to delete worker: " + error.message);
   return; // don't return `true` — just return nothing (void) on success
 }
 
-export async function updateEmployee(employee: Employee) {
+export async function updateEmployee(worker: Worker, {user}: {user: User} ){
+  const profile = await getProfile(user.id);
   const { data, error } = await supabase
-    .from("employees")
+    .from("workers")
     .update({
-      name: employee.name,
-      hourly_rate: employee.hourly_rate,
-      active: employee.active,
+      name: worker.name,
+      hourly_rate: worker.hourly_rate,
+      active: worker.active,
     })
-    .eq("id", employee.id)
+    .eq("id", worker.id)
+    .eq("company_id", profile.company_id)
     .select()
     .single();
 
-  if (error) throw new Error("Failed to delete employee:" + error.message);
-  if (!data) throw new Error("No data returned from updateEmployee");
+  if (error) throw new Error("Failed to delete worker:" + error.message);
+  if (!data) throw new Error("No data returned from updateWorker");
   return data;
 }
 
@@ -84,7 +95,7 @@ export async function updateEmployee(employee: Employee) {
 
 // fetch Clients
 export async function fetchClientsForCompany({ user }: { user: User }) {
-  const profile = await fetchProfileInfo(user.id);
+  const profile = await getProfile(user.id);
   const { data, error } = await supabase
     .from("clients")
     .select("*")
@@ -101,9 +112,9 @@ export async function generateClient(
     name: string;
     email?: string;
   },
-  { user }: { user: User },
+  { user }: { user: User }
 ) {
-  const profile = await fetchProfileInfo(user.id);
+  const profile = await getProfile(user.id);
   const { data, error } = await supabase
     .from("clients")
     .insert([
@@ -119,17 +130,21 @@ export async function generateClient(
   return data?.[0];
 }
 
-export async function deleteClient(clientId: number, { user }: { user: User}) {
-  const profile = await fetchProfileInfo(user.id);
+export async function deleteClient(clientId: number, { user }: { user: User }) {
+  const profile = await getProfile(user.id);
 
-  const { error } = await supabase.from("clients").delete().eq("id", clientId).eq("company_id", profile.company_id);
+  const { error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", clientId)
+    .eq("company_id", profile.company_id);
 
   if (error) throw new Error("Failed to delete client" + error.message);
   return;
 }
 
-export async function updateClient(client: Client, { user } : { user: User }) {
-  const profile = await fetchProfileInfo(user.id);
+export async function updateClient(client: Client, { user }: { user: User }) {
+  const profile = await getProfile(user.id);
 
   const { data, error } = await supabase
     .from("clients")
@@ -146,3 +161,7 @@ export async function updateClient(client: Client, { user } : { user: User }) {
   if (!data) throw new Error("No data returned from updateClient");
   return data;
 }
+
+// PROJECTS
+
+

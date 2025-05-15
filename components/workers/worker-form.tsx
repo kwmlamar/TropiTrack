@@ -7,19 +7,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import type { Employee, Project } from "@/lib/types"
+import type { Worker, Project } from "@/lib/types"
 
-interface EmployeeFormProps {
-    employee?: Employee | null
-    onSubmit: (employee: Employee | Omit<Employee, "id">) => void
+interface WorkerFormProps {
+    worker?: Worker | null
+    onSubmit: (employee: Worker | Omit<Worker, "id">) => void
     onCancel: () => void
     projects?: Project[]
 }
 
-export function EmployeeForm({ employee, onSubmit, onCancel }: EmployeeFormProps) {
-    const [name, setName] = useState(employee?.name || "")
-    const [hourlyRate, setHourlyRate] = useState(employee?.hourly_rate?.toString() || "")
-    const [active, setActive] = useState(employee?.active ?? true)
+export function WorkerForm({ worker: worker, onSubmit, onCancel }: WorkerFormProps) {
+    const [name, setName] = useState(worker?.name || "")
+    const [hourlyRate, setHourlyRate] = useState(worker?.hourly_rate?.toString() || "")
+    const [active, setActive] = useState(worker?.active ?? true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errors, setErrors] =  useState<Record<string, string>>({})
 
@@ -50,11 +50,11 @@ export function EmployeeForm({ employee, onSubmit, onCancel }: EmployeeFormProps
         setIsSubmitting(true)
 
         try {
-            const employeeData = employee
+            const workerData = worker
             ? {
-                ...employee,
+                ...worker,
                 name,
-                hourl_rate: Number.parseFloat(hourlyRate),
+                hourly_rate: Number.parseFloat(hourlyRate),
                 active,
             }
             : {
@@ -63,9 +63,9 @@ export function EmployeeForm({ employee, onSubmit, onCancel }: EmployeeFormProps
                 active,
             }
 
-            await onSubmit(employeeData)
+            await onSubmit(workerData)
         } catch (error) {
-            console.log("Error submitting employee form:", error)
+            console.log("Error submitting worker form:", error)
         } finally {
             setIsSubmitting(false)
         }
@@ -103,7 +103,7 @@ export function EmployeeForm({ employee, onSubmit, onCancel }: EmployeeFormProps
                 Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : employee ? "Update Employee" : "Add Employee"}
+                {isSubmitting ? "Saving..." : worker ? "Update Worker" : "Add Worker"}
             </Button>
         </div>
        </form>
