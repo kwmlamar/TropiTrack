@@ -1,5 +1,6 @@
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
 import { Employee, Client } from "@/lib/types";
+import { User } from "@supabase/supabase-js"
 
 const supabase = await createBrowserClient();
 
@@ -22,7 +23,7 @@ export async function fetchProfileInfo(userId: string) {
 // EMPLOYEES
 
 // Get all employees
-export async function fetchEmployeesForCompany({user}: { user: any}) {
+export async function fetchEmployeesForCompany({user}: { user: User}) {
   const profile = await fetchProfileInfo(user.id);
   const { data, error } = await supabase
     .from("employees")
@@ -82,7 +83,7 @@ export async function updateEmployee(employee: Employee) {
 // CLIENTS
 
 // fetch Clients
-export async function fetchClientsForCompany({ user }: { user: any }) {
+export async function fetchClientsForCompany({ user }: { user: User }) {
   const profile = await fetchProfileInfo(user.id);
   const { data, error } = await supabase
     .from("clients")
@@ -100,7 +101,7 @@ export async function generateClient(
     name: string;
     email?: string;
   },
-  { user }: { user: any },
+  { user }: { user: User },
 ) {
   const profile = await fetchProfileInfo(user.id);
   const { data, error } = await supabase
@@ -118,7 +119,7 @@ export async function generateClient(
   return data?.[0];
 }
 
-export async function deleteClient(clientId: number, { user }: { user: any}) {
+export async function deleteClient(clientId: number, { user }: { user: User}) {
   const profile = await fetchProfileInfo(user.id);
 
   const { error } = await supabase.from("clients").delete().eq("id", clientId).eq("company_id", profile.company_id);
@@ -127,7 +128,7 @@ export async function deleteClient(clientId: number, { user }: { user: any}) {
   return;
 }
 
-export async function updateClient(client: Client, { user } : { user: any }) {
+export async function updateClient(client: Client, { user } : { user: User }) {
   const profile = await fetchProfileInfo(user.id);
 
   const { data, error } = await supabase

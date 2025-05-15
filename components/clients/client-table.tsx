@@ -19,6 +19,7 @@ import {
   deleteClient,
   updateClient,
 } from "@/lib/data";
+import { User } from "@supabase/supabase-js"
 
 import { Client } from "@/lib/types";
 
@@ -43,7 +44,7 @@ import {
 
 const columns = ["Name", "Email"];
 
-export default function ClientTable({ user }: {user: any} ) {
+export default function ClientTable({ user }: {user: User} ) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
@@ -51,20 +52,20 @@ export default function ClientTable({ user }: {user: any} ) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
+    const loadClients = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchClientsForCompany({user});
+        setClients(data);
+      } catch (error) {
+        console.log("Error fetching clients", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
     loadClients();
-  }, []);
-
-  const loadClients = async () => {
-    setIsLoading(true);
-    try {
-      const data = await fetchClientsForCompany({user});
-      setClients(data);
-    } catch (error) {
-      console.log("Error fetching clients", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [user]);
 
   const handleCreateClient = async (client: Client) => {
     try {

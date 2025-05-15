@@ -6,6 +6,10 @@ export default async function ClientPage() {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
+    if (!user || userError) {
+        return <div>Unauthorized</div>
+    }
+
     return (
         <ClientTable user={user}/>
     )
