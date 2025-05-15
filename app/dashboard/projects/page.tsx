@@ -1,10 +1,7 @@
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import ProjectsTable from "@/components/projects/projects-table"
 
 export default function ProjectsPage() {
   return (
-    <DashboardLayout title="Projects">
-      <h1 className="text-2xl font-bold">Projects</h1>
-      {/* Your page-specific content goes here */}
-    </DashboardLayout>
+    <ProjectsTable />
   );
 }
