@@ -60,7 +60,10 @@ export async function generateWorker(
 }
 
 // Delete an employee
-export async function deleteEmployee(workerId: number, {user}: {user: User}) {
+export async function deleteEmployee(
+  workerId: string,
+  { user }: { user: User }
+) {
   const profile = await getProfile(user.id);
   const { error } = await supabase
     .from("workers")
@@ -72,7 +75,7 @@ export async function deleteEmployee(workerId: number, {user}: {user: User}) {
   return; // don't return `true` — just return nothing (void) on success
 }
 
-export async function updateEmployee(worker: Worker, {user}: {user: User} ){
+export async function updateEmployee(worker: Worker, { user }: { user: User }) {
   const profile = await getProfile(user.id);
   const { data, error } = await supabase
     .from("workers")
@@ -130,7 +133,7 @@ export async function generateClient(
   return data?.[0];
 }
 
-export async function deleteClient(clientId: number, { user }: { user: User }) {
+export async function deleteClient(clientId: string, { user }: { user: User }) {
   const profile = await getProfile(user.id);
 
   const { error } = await supabase
@@ -164,4 +167,26 @@ export async function updateClient(client: Client, { user }: { user: User }) {
 
 // PROJECTS
 
+export async function fetchProjectsForCompany({ user }: { user: User }) {
+  const profile = await getProfile(user.id);
 
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*, client:clients(id, name)")
+    .eq("company_id", profile.company_id)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) throw new Error("Failed to fetch projects:" + error);
+
+  return data ?? [];
+}
+
+export async function generateProject(
+  project: {
+    name: string;
+    client_id: string;
+  },
+  { user }: { user: User }
+) {
+
+}
