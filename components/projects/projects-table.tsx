@@ -82,9 +82,9 @@ export default function ProjectsTable({ user }: { user: User }) {
     <DashboardLayout title="Projects">
       <h1 className="text-2xl font-bold">Add to your Projects</h1>
       {/* Your page-specific content goes here */}
-      <div className="mt-4 flex w-full items-center justify-between ">
+      <div className="mt-4 flex w-full flex-wrap gap-4 ">
         {/* Select Status */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-1 min-w-[300px] items-center gap-4">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select status" />
@@ -109,7 +109,7 @@ export default function ProjectsTable({ user }: { user: User }) {
           />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-1 min-w-[300px] items-center gap-4">
           <SearchForm
             placeholder="Search projects..."
             className="w-full max-w-lg"
@@ -157,11 +157,13 @@ export default function ProjectsTable({ user }: { user: User }) {
       <div className="mt-4">
         <div className="w-full px-4">
           {/* Column Headers */}
+          <div className="overflow-x-auto">
           <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
             {columns.map((col) => (
               <div key={col}>{col}</div>
             ))}
             <div /> {/* Empty column for the meatball */}
+          </div>
           </div>
 
           {/* Data Cards as Rows */}
