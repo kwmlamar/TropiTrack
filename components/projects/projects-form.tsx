@@ -7,22 +7,20 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { SearchableCombobox } from "../searchable-combobox";
 import type { Project, Client, Worker } from "@/lib/types";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button as ShadButton } from "@/components/ui/button";
 import { MultiSelect } from "../multi-select";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DatePicker } from "../date-picker";
+import { format, parse } from "date-fns";
 
 interface ProjectFormProps {
   project?: Project | null;
-  onSubmit: (project: Project | Omit<Project, "id">) => void;
+  onSubmit: (project: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[]}) => void;
   onCancel: () => void;
   clients: Client[];
   workers: Worker[];
@@ -35,8 +33,6 @@ export function ProjectForm({
   clients,
   workers,
 }: ProjectFormProps) {
-  console.log("workers passed to project form:", workers);
-
   const [name, setName] = useState(project?.name || "");
   const [client, setClient] = useState<Client | null>(
     clients.find((c) => c.id === project?.client_id) || null
@@ -84,11 +80,20 @@ export function ProjectForm({
 
       await onSubmit(projectData);
     } catch (error) {
-      console.error("Error submitting project form:", error);
+      if (error instanceof Error) {
+        console.error("Error submitting project form:", error.message);
+      } else {
+        console.error(
+          "Error submitting project form:",
+          JSON.stringify(error, null, 2)
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const localDate = parse(startDate, "yyyy-MM-dd", new Date());
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
@@ -149,34 +154,14 @@ export function ProjectForm({
 
       <div className="space-y-2">
         <Label htmlFor="startDate">Start Date</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <ShadButton
-              variant={"outline"}
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !startDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {startDate ? (
-                format(new Date(startDate), "PPP")
-              ) : (
-                <span>Pick a date</span>
-              )}
-            </ShadButton>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={new Date(startDate)}
-              onSelect={(date) =>
-                date && setStartDate(date.toISOString().split("T")[0])
-              }
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+        <DatePicker
+          date={parse(startDate, "yyyy-MM-dd", new Date())}
+          setDate={(date) => {
+            if (date) {
+              setStartDate(format(date, "yyyy-MM-dd"));
+            }
+          }}
+        />
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

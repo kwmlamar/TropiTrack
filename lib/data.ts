@@ -1,5 +1,5 @@
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
-import { Worker, Client } from "@/lib/types";
+import { Worker, Client, Project } from "@/lib/types";
 import { User } from "@supabase/supabase-js";
 
 const supabase = await createBrowserClient();
@@ -182,23 +182,36 @@ export async function fetchProjectsForCompany({ user }: { user: User }) {
 }
 
 export async function generateProject(
-  projectData: {
-    name: string;
-    client_id: string;
-  },
+  projectData: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] },
   { user }: { user: User }
 ) {
   const profile = await getProfile(user.id);
 
-  const { data, error} = await supabase
+  const { data: project , error: projectError} = await supabase
   .from("projects")
   .insert({
-    ...projectData,
+    name: projectData.name,
+    client_id: projectData.client_id,
     company_id: profile.company_id,
+    start_date: projectData.start_date,
+    status: projectData.status,
   })
   .select()
   .single();
 
-  if (error || !data) throw new Error("Failed to insert project:" + error);
-  return data;
+  if (projectError || !project) throw new Error("Failed to insert project: " + (projectError?.message || "Unknown error"));
+
+
+  const { data: projectAssignment, error: projectAssignmentError } = await supabase
+  .from("project_assignments")
+  .insert(
+    projectData.assigned_worker_ids.map((workerId) => ({
+      project_id: project.id,
+      worker_id: workerId,
+    }))
+  )
+
+  if (projectAssignmentError || !projectAssignment) throw new Error("Failed to insert project assignments:" + projectAssignmentError?.message || "Unknown error");
+
+  return project;
 }

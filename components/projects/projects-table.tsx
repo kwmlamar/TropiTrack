@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical, Plus, Building2 } from "lucide-react";
+import { MoreVertical, Plus, Building2} from "lucide-react";
 import { Worker } from "@/lib/types";
 import {
   Dialog,
@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { format, parseISO } from "date-fns"
 import { ProjectForm } from "@/components/projects/projects-form";
 import {
   AlertDialog,
@@ -43,6 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 const columns = [
   "Project",
@@ -105,7 +107,7 @@ export default function ProjectsTable({ user }: { user: User }) {
     }
   };
 
-  const handleCreateProject = async (project: Omit<Project, "id">) => {
+  const handleCreateProject = async (project: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] }) => {
     setLoading(true);
     try {
         const data = await generateProject(project, {user});
@@ -239,10 +241,10 @@ export default function ProjectsTable({ user }: { user: User }) {
                     }
                   </CardContent>
                   <CardContent>
-                    {project.start_date}
+                    {format(parseISO(project.start_date), "MMMM do, yyyy")}
                   </CardContent>
                   <CardContent>
-                    {project.status}
+                    <Badge variant="outline">{project.status}</Badge>
                   </CardContent>
                   <CardContent>
                     {}
