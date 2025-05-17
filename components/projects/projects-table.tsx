@@ -14,7 +14,7 @@ import {
 import { SearchableCombobox } from "../searchable-combobox";
 import { Button } from "../ui/button";
 import { Client, Project } from "@/lib/types";
-import { fetchProjectsForCompany } from "@/lib/data";
+import { fetchProjectsForCompany, fetchClientsForCompany, generateProject, fetchWorkersForCompany } from "@/lib/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical, Plus, UserCheck, UserX } from "lucide-react";
+import { MoreVertical, Plus, Building2 } from "lucide-react";
 import { Worker } from "@/lib/types";
 import {
   Dialog,
@@ -55,6 +55,7 @@ const columns = [
 export default function ProjectsTable({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -64,6 +65,8 @@ export default function ProjectsTable({ user }: { user: User }) {
 
   useEffect(() => {
     loadProjects();
+    loadClients();
+    loadWorkers();
   }, []);
 
   const loadProjects = async () => {
@@ -77,6 +80,47 @@ export default function ProjectsTable({ user }: { user: User }) {
       setLoading(false);
     }
   };
+
+  const loadClients = async () => {
+    setLoading(true);
+    try {
+        const data = await fetchClientsForCompany({user});
+        setClients(data);
+    } catch (error) {
+        console.log("Failed to load clients:", error);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const loadWorkers = async () => {
+    setLoading(true);
+    try {
+        const data = await fetchWorkersForCompany({user});
+        setWorkers(data);
+    } catch (error) {
+        console.log("Failed to load workers:", error)
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleCreateProject = async (project: Omit<Project, "id">) => {
+    setLoading(true);
+    try {
+        const data = await generateProject(project, {user});
+        setProjects((prev) => [...prev, data]);
+    } catch (error) {
+        console.log("Failed to create project:", error);
+    } finally {
+        setIsFormOpen(false);
+        loadProjects();
+    }
+  }
+
+  const filteredProjects = selectedClient 
+    ? projects.filter((project) => project.client_id === selectedClient.id)
+    : projects;
 
   return (
     <DashboardLayout title="Projects">
@@ -107,6 +151,15 @@ export default function ProjectsTable({ user }: { user: User }) {
             displayKey="name"
             placeholder="Select a client"
           />
+          {selectedClient && (
+            <Button
+            variant="outline"
+            onClick={() => setSelectedClient(null)}
+            className="ml-2"
+            >
+                Clear Filter
+            </Button>
+          )}
         </div>
 
         <div className="flex flex-1 min-w-[300px] items-center gap-4">
@@ -135,11 +188,12 @@ export default function ProjectsTable({ user }: { user: User }) {
               <ProjectForm
                 project={selectedProject}
                 clients={clients}
+                workers={workers}
                 onSubmit={(project) => {
                   if (selectedProject) {
                     console.log("handleUpdateProject", project);
                   } else {
-                    console.log("handleCreateProject", project);
+                    handleCreateProject(project);
                   }
                 }}
                 onCancel={() => {
@@ -158,17 +212,91 @@ export default function ProjectsTable({ user }: { user: User }) {
         <div className="w-full px-4">
           {/* Column Headers */}
           <div className="overflow-x-auto">
-          <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
-            {columns.map((col) => (
-              <div key={col}>{col}</div>
-            ))}
-            <div /> {/* Empty column for the meatball */}
-          </div>
+            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
+              {columns.map((col) => (
+                <div key={col}>{col}</div>
+              ))}
+              <div /> {/* Empty column for the meatball */}
+            </div>
           </div>
 
           {/* Data Cards as Rows */}
-          </div>
+          {loading ? (
+            <div className="text-center text-sm text-gray-500 py-4">
+              Loading projects...
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {filteredProjects.map((project, i) => (
+                <Card
+                  key={i}
+                  className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 p-4 items-center"
+                >
+                  <CardContent className="p-0">{project.name}</CardContent>
+                  <CardContent className="p-0">
+                    {
+                        clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"
+                    }
+                  </CardContent>
+                  <CardContent>
+                    {project.start_date}
+                  </CardContent>
+                  <CardContent>
+                    {project.status}
+                  </CardContent>
+                  <CardContent>
+                    {}
+                  </CardContent>
+                  <CardContent className="p-0 justify-self-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedProject(project);
+                            setIsFormOpen(true);
+                          }}
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => {
+                            setSelectedProject(project);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          {filteredProjects.length === 0 && !loading && (
+            <div className="flex flex-col items-center justify-center h-64 border rounded-lg p-6">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
+                <Building2 className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">No Projects found</h3>
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                You haven&apos;t added any projects yet. Add your first
+                project to get started.
+              </p>
+              <Button onClick={() => setIsFormOpen(true)}>
+                <Building2 className="mr-2 h-4 w-4" />
+                Add Your First Project
+              </Button>
+            </div>
+          )}
         </div>
+      </div>
     </DashboardLayout>
   );
 }

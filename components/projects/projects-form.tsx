@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { SearchableCombobox } from "../searchable-combobox";
-import type { Project, Client } from "@/lib/types";
+import type { Project, Client, Worker } from "@/lib/types";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,12 +17,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button as ShadButton } from "@/components/ui/button";
+import { MultiSelect } from "../multi-select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ProjectFormProps {
   project?: Project | null;
   onSubmit: (project: Project | Omit<Project, "id">) => void;
   onCancel: () => void;
   clients: Client[];
+  workers: Worker[];
 }
 
 export function ProjectForm({
@@ -30,7 +33,10 @@ export function ProjectForm({
   onSubmit,
   onCancel,
   clients,
+  workers,
 }: ProjectFormProps) {
+  console.log("workers passed to project form:", workers);
+
   const [name, setName] = useState(project?.name || "");
   const [client, setClient] = useState<Client | null>(
     clients.find((c) => c.id === project?.client_id) || null
@@ -41,6 +47,9 @@ export function ProjectForm({
   const [status, setStatus] = useState(project?.status || "not_started");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [assignedWorkerIds, setAssignedWorkerIds] = useState<
+    (string | number)[]
+  >([]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -63,12 +72,14 @@ export function ProjectForm({
             client_id: client!.id,
             start_date: startDate,
             status,
+            assigned_worker_ids: assignedWorkerIds,
           }
         : {
             name,
             client_id: client!.id,
             start_date: startDate,
             status,
+            assigned_worker_ids: assignedWorkerIds,
           };
 
       await onSubmit(projectData);
@@ -106,6 +117,34 @@ export function ProjectForm({
         {errors.client && (
           <p className="text-sm text-destructive">{errors.client}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="projectAssingments">Assign Workers</Label>
+        <MultiSelect
+          options={workers.map((w) => ({ label: w.name, value: w.id }))}
+          value={assignedWorkerIds}
+          onChange={setAssignedWorkerIds}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="status">Status</Label>
+        <Select
+          value={status}
+          onValueChange={(val) => setStatus(val as Project["status"])}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="not_started">Not Started</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="paused">Paused</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">

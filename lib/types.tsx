@@ -15,5 +15,5 @@ export interface Worker {
     name: string
     client_id: string
     start_date: string
-    status: "not_started" | "in_progress" | "completed" | "on_hold"
+    status: "not_started" | "in_progress" | "paused" | "completed" | "cancelled"
 }

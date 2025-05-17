@@ -130,7 +130,7 @@ export async function generateClient(
     .single();
 
   if (error) throw new Error("Failed to create new client:" + error.message);
-  return data?.[0];
+  return data;
 }
 
 export async function deleteClient(clientId: string, { user }: { user: User }) {
@@ -176,17 +176,29 @@ export async function fetchProjectsForCompany({ user }: { user: User }) {
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
-  if (error || !data) throw new Error("Failed to fetch projects:" + error);
+  if (error || !data) throw new Error("Failed to fetch projects:" + error.message);
 
   return data ?? [];
 }
 
 export async function generateProject(
-  project: {
+  projectData: {
     name: string;
     client_id: string;
   },
   { user }: { user: User }
 ) {
+  const profile = await getProfile(user.id);
 
+  const { data, error} = await supabase
+  .from("projects")
+  .insert({
+    ...projectData,
+    company_id: profile.company_id,
+  })
+  .select()
+  .single();
+
+  if (error || !data) throw new Error("Failed to insert project:" + error);
+  return data;
 }
