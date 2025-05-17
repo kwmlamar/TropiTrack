@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { User } from "@supabase/supabase-js";
 import { SearchForm } from "../search-form";
@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { SearchableCombobox } from "../searchable-combobox";
 import { Button } from "../ui/button";
-import { Client, Project } from "@/lib/types";
-import { fetchProjectsForCompany, fetchClientsForCompany, generateProject, fetchWorkersForCompany } from "@/lib/data";
+import { Client, Project, Worker, ProjectAssignment } from "@/lib/types";
+import { fetchProjectsForCompany, fetchClientsForCompany, generateProject, fetchWorkersForCompany, fetchProjectAssignments } from "@/lib/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { MoreVertical, Plus, Building2} from "lucide-react";
-import { Worker } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +57,7 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [projectAssignments, setProjectAssignments] = useState<ProjectAssignment[]>([])
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -69,6 +69,7 @@ export default function ProjectsTable({ user }: { user: User }) {
     loadProjects();
     loadClients();
     loadWorkers();
+    loadProjectAssignments();
   }, []);
 
   const loadProjects = async () => {
@@ -107,6 +108,18 @@ export default function ProjectsTable({ user }: { user: User }) {
     }
   };
 
+  const loadProjectAssignments = async () => {
+    setLoading(true)
+    try {
+        const data = await fetchProjectAssignments({user}); 
+        setProjectAssignments(data)
+    } catch (error) {
+        console.log("Failed to load project assignments:", error)
+    } finally {
+        setLoading(false);
+    }
+  }
+
   const handleCreateProject = async (project: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] }) => {
     setLoading(true);
     try {
@@ -119,6 +132,14 @@ export default function ProjectsTable({ user }: { user: User }) {
         loadProjects();
     }
   }
+
+  const assignmentCounts = useMemo(() => {
+    const map = new Map<string,  number>();
+    projectAssignments.forEach((pa) => {
+        map.set(pa.project_id, (map.get(pa.project_id) || 0) + 1)
+    });
+    return map;
+  }, [projectAssignments])
 
   const filteredProjects = selectedClient 
     ? projects.filter((project) => project.client_id === selectedClient.id)
@@ -247,7 +268,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                     <Badge variant="outline">{project.status}</Badge>
                   </CardContent>
                   <CardContent>
-                    {}
+                    {assignmentCounts.get(project.id) || 0}
                   </CardContent>
                   <CardContent className="p-0 justify-self-end">
                     <DropdownMenu>

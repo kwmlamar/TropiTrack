@@ -176,42 +176,67 @@ export async function fetchProjectsForCompany({ user }: { user: User }) {
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
-  if (error || !data) throw new Error("Failed to fetch projects:" + error.message);
+  if (error || !data)
+    throw new Error("Failed to fetch projects:" + error.message);
 
   return data ?? [];
 }
 
 export async function generateProject(
-  projectData: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] },
+  projectData: Omit<Project, "id"> & {
+    assigned_worker_ids: (string | number)[];
+  },
   { user }: { user: User }
 ) {
   const profile = await getProfile(user.id);
 
-  const { data: project , error: projectError} = await supabase
-  .from("projects")
-  .insert({
-    name: projectData.name,
-    client_id: projectData.client_id,
-    company_id: profile.company_id,
-    start_date: projectData.start_date,
-    status: projectData.status,
-  })
-  .select()
-  .single();
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .insert({
+      name: projectData.name,
+      client_id: projectData.client_id,
+      company_id: profile.company_id,
+      start_date: projectData.start_date,
+      status: projectData.status,
+    })
+    .select()
+    .single();
 
-  if (projectError || !project) throw new Error("Failed to insert project: " + (projectError?.message || "Unknown error"));
+  if (projectError || !project)
+    throw new Error(
+      "Failed to insert project: " + (projectError?.message || "Unknown error")
+    );
 
+  const { data: projectAssignment, error: projectAssignmentError } =
+    await supabase.from("project_assignments").insert(
+      projectData.assigned_worker_ids.map((workerId) => ({
+        project_id: project.id,
+        worker_id: workerId,
+        company_id: profile.company_id,
+      }))
+    );
 
-  const { data: projectAssignment, error: projectAssignmentError } = await supabase
-  .from("project_assignments")
-  .insert(
-    projectData.assigned_worker_ids.map((workerId) => ({
-      project_id: project.id,
-      worker_id: workerId,
-    }))
-  )
-
-  if (projectAssignmentError || !projectAssignment) throw new Error("Failed to insert project assignments:" + projectAssignmentError?.message || "Unknown error");
+  if (projectAssignmentError || !projectAssignment)
+    throw new Error(
+      "Failed to insert project assignments:" +
+        projectAssignmentError?.message || "Unknown error"
+    );
 
   return project;
+}
+
+// fetch project assignments
+export async function fetchProjectAssignments({ user }: { user: User }) {
+  const profile = await getProfile(user.id);
+
+  const { data, error } = await supabase
+    .from("project_assignments")
+    .select("*")
+    .eq("company_id", profile.company_id);
+
+  if (error || !data) {
+    throw new Error("Error fetching project assignments:" + error.message);
+  }
+
+  return data;
 }

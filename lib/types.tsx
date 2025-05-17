@@ -17,3 +17,9 @@ export interface Worker {
     start_date: string
     status: "not_started" | "in_progress" | "paused" | "completed" | "cancelled"
 }
+
+export interface ProjectAssignment {
+  id: string
+  worker_id: string
+  project_id: string
+}
