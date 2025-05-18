@@ -165,6 +165,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       console.error("Failed to update project:", error);
     } finally {
       setLoading(false);
+      setIsFormOpen(false);
       loadProjects(); // Optional depending on how stale your state might be
       loadProjectAssignments();
     }
@@ -269,6 +270,9 @@ export default function ProjectsTable({ user }: { user: User }) {
                 project={selectedProject}
                 clients={clients}
                 workers={workers}
+                {...(selectedProject ? { assigned_worker_ids: projectAssignments
+                    .filter((pa) => pa.project_id === selectedProject.id)
+                    .map((pa) => pa.worker_id) } : {})}
                 onSubmit={(project) => {
                     if (selectedProject) {
                         handleUpdateProject(project as Project & { assigned_worker_ids: (string | number)[] });
@@ -324,7 +328,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                     <Badge variant="outline">{project.status}</Badge>
                   </CardContent>
                   <CardContent>
-                    {assignmentCounts.get(project.id) || 0}
+                  {assignmentCounts.get(project.id) || 0} { (assignmentCounts.get(project.id) || 0) === 1 ? 'worker' : 'workers' }
                   </CardContent>
                   <CardContent className="p-0 justify-self-end">
                     <DropdownMenu>

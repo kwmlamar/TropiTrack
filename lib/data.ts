@@ -270,6 +270,7 @@ export async function updateProject(
 ) {
   const profile = await getProfile(user.id);
 
+  // Update the project details
   const { data: updatedProject, error: updateProjectError } = await supabase
     .from("projects")
     .update({
@@ -290,6 +291,20 @@ export async function updateProject(
     );
   }
 
+  // Delete existing assingments for the project
+  const { error: deleteAssignmentsError } = await supabase
+  .from("project_assignments")
+  .delete()
+  .eq("project_id", updatedProject.id);
+
+  if (deleteAssignmentsError) {
+    throw new Error(
+      "Error deleting existing project assignments:" + 
+      (deleteAssignmentsError?.message || "Unknown error")
+    )
+  }
+
+  // Insert the updated assignments
   const assignments = projectData.assigned_worker_ids.map((workerId) => ({
     project_id: updatedProject.id,
     worker_id: workerId,
@@ -297,11 +312,7 @@ export async function updateProject(
   }));
 
   const { data: updatedAssignments, error: updateAssingmentsError } =
-    await supabase.from("project_assignments").upsert(assignments, { onConflict: "project_id,worker_id"});
-
-  if (updateAssingmentsError) {
-    console.error("Detailed Supabase error:", updateAssingmentsError);
-  }
+    await supabase.from("project_assignments").insert(assignments);
 
   if (updateAssingmentsError) {
     throw new Error(

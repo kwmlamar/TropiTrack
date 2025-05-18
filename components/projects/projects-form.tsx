@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -24,6 +24,7 @@ interface ProjectFormProps {
   onCancel: () => void;
   clients: Client[];
   workers: Worker[];
+  assigned_worker_ids?: (string | number)[];
 }
 
 export function ProjectForm({
@@ -32,6 +33,7 @@ export function ProjectForm({
   onCancel,
   clients,
   workers,
+  assigned_worker_ids,
 }: ProjectFormProps) {
   const [name, setName] = useState(project?.name || "");
   const [client, setClient] = useState<Client | null>(
@@ -46,6 +48,14 @@ export function ProjectForm({
   const [assignedWorkerIds, setAssignedWorkerIds] = useState<
     (string | number)[]
   >([]);
+
+  useEffect(() => {
+    if(assigned_worker_ids && assigned_worker_ids.length > 0) {
+      setAssignedWorkerIds(assigned_worker_ids);
+    } else {
+      setAssignedWorkerIds([])
+    }
+  }, [assigned_worker_ids]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
