@@ -150,7 +150,7 @@ export default function ProjectsTable({ user }: { user: User }) {
     project: Project & { assigned_worker_ids: (string | number)[] }
   ) => {
     try {
-      const { project: updatedProject, assignments } = await updateProject(project, { user });
+      const { project: updatedProject } = await updateProject(project, { user });
   
       // Merge assigned_worker_ids into updatedProject if your state relies on it
       const fullUpdatedProject = {
@@ -193,9 +193,14 @@ export default function ProjectsTable({ user }: { user: User }) {
     return map;
   }, [projectAssignments]);
 
-  const filteredProjects = selectedClient
-    ? projects.filter((project) => project.client_id === selectedClient.id)
-    : projects;
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      const matchesClient = selectedClient ? project.client_id === selectedClient.id : true;
+      const matchesStatus = statusFilter === "all" ? true : project.status === statusFilter;
+      return matchesClient && matchesStatus;
+    });
+  }, [projects, selectedClient, statusFilter]);
+  
 
   return (
     <DashboardLayout title="Projects">
@@ -265,11 +270,11 @@ export default function ProjectsTable({ user }: { user: User }) {
                 clients={clients}
                 workers={workers}
                 onSubmit={(project) => {
-                  if (selectedProject) {
-                    handleUpdateProject(project);
-                  } else {
-                    handleCreateProject(project);
-                  }
+                    if (selectedProject) {
+                        handleUpdateProject(project as Project & { assigned_worker_ids: (string | number)[] });
+                      } else {
+                        handleCreateProject(project as Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] });
+                      }
                 }}
                 onCancel={() => {
                   setSelectedProject(null);

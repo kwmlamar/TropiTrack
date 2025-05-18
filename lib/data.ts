@@ -297,9 +297,13 @@ export async function updateProject(
   }));
 
   const { data: updatedAssignments, error: updateAssingmentsError } =
-    await supabase.from("project_assignments").upsert(assignments);
+    await supabase.from("project_assignments").upsert(assignments, { onConflict: "project_id,worker_id"});
 
-  if (updateAssingmentsError || !updatedAssignments) {
+  if (updateAssingmentsError) {
+    console.error("Detailed Supabase error:", updateAssingmentsError);
+  }
+
+  if (updateAssingmentsError) {
     throw new Error(
       "Error updating project assignments:" +
         (updateAssingmentsError?.message || "Unknown error")

@@ -20,7 +20,7 @@ import { format, parse } from "date-fns";
 
 interface ProjectFormProps {
   project?: Project | null;
-  onSubmit: (project: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[]}) => void;
+  onSubmit: (project: (Project | Omit<Project, "id">) & { assigned_worker_ids: (string | number)[]}) => void;
   onCancel: () => void;
   clients: Client[];
   workers: Worker[];
@@ -92,8 +92,6 @@ export function ProjectForm({
       setIsSubmitting(false);
     }
   };
-
-  const localDate = parse(startDate, "yyyy-MM-dd", new Date());
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-4">
