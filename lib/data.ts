@@ -182,6 +182,22 @@ export async function fetchProjectsForCompany({ user }: { user: User }) {
   return data ?? [];
 }
 
+// fetch project assignments
+export async function fetchProjectAssignments({ user }: { user: User }) {
+  const profile = await getProfile(user.id);
+
+  const { data, error } = await supabase
+    .from("project_assignments")
+    .select("*")
+    .eq("company_id", profile.company_id);
+
+  if (error || !data) {
+    throw new Error("Error fetching project assignments:" + error.message);
+  }
+
+  return data;
+}
+
 export async function generateProject(
   projectData: Omit<Project, "id"> & {
     assigned_worker_ids: (string | number)[];
@@ -225,18 +241,69 @@ export async function generateProject(
   return project;
 }
 
-// fetch project assignments
-export async function fetchProjectAssignments({ user }: { user: User }) {
+export async function deleteProject(
+  projectId: string,
+  { user }: { user: User }
+) {
   const profile = await getProfile(user.id);
 
   const { data, error } = await supabase
-    .from("project_assignments")
-    .select("*")
-    .eq("company_id", profile.company_id);
+    .from("projects")
+    .delete()
+    .eq("company_id", profile.company_id)
+    .eq("id", projectId)
+    .select();
 
   if (error || !data) {
-    throw new Error("Error fetching project assignments:" + error.message);
+    throw new Error(
+      "Error deleting project:" + (error?.message || "Unknown error")
+    );
+  }
+  return true;
+}
+
+export async function updateProject(
+  projectData: Project & {
+    assigned_worker_ids: (string | number)[];
+  },
+  { user }: { user: User }
+) {
+  const profile = await getProfile(user.id);
+
+  const { data: updatedProject, error: updateProjectError } = await supabase
+    .from("projects")
+    .update({
+      name: projectData.name,
+      client_id: projectData.client_id,
+      company_id: profile.company_id,
+      start_date: projectData.start_date,
+      status: projectData.status,
+    })
+    .eq("id", projectData.id)
+    .select()
+    .single();
+
+  if (updateProjectError || !updatedProject) {
+    throw new Error(
+      "Error updating project:" +
+        (updateProjectError?.message || "Unknown error")
+    );
   }
 
-  return data;
+  const assignments = projectData.assigned_worker_ids.map((workerId) => ({
+    project_id: updatedProject.id,
+    worker_id: workerId,
+    company_id: profile.company_id,
+  }));
+
+  const { data: updatedAssignments, error: updateAssingmentsError } =
+    await supabase.from("project_assignments").upsert(assignments);
+
+  if (updateAssingmentsError || !updatedAssignments) {
+    throw new Error(
+      "Error updating project assignments:" +
+        (updateAssingmentsError?.message || "Unknown error")
+    );
+  }
+  return { project: updatedProject, assignments: updatedAssignments };
 }

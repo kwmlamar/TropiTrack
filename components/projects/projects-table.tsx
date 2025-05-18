@@ -14,7 +14,15 @@ import {
 import { SearchableCombobox } from "../searchable-combobox";
 import { Button } from "../ui/button";
 import { Client, Project, Worker, ProjectAssignment } from "@/lib/types";
-import { fetchProjectsForCompany, fetchClientsForCompany, generateProject, fetchWorkersForCompany, fetchProjectAssignments } from "@/lib/data";
+import {
+  fetchProjectsForCompany,
+  fetchClientsForCompany,
+  generateProject,
+  fetchWorkersForCompany,
+  fetchProjectAssignments,
+  updateProject,
+  deleteProject,
+} from "@/lib/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical, Plus, Building2} from "lucide-react";
+import { MoreVertical, Plus, Building2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { format, parseISO } from "date-fns"
+import { format, parseISO } from "date-fns";
 import { ProjectForm } from "@/components/projects/projects-form";
 import {
   AlertDialog,
@@ -57,7 +65,9 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [projectAssignments, setProjectAssignments] = useState<ProjectAssignment[]>([])
+  const [projectAssignments, setProjectAssignments] = useState<
+    ProjectAssignment[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -87,61 +97,103 @@ export default function ProjectsTable({ user }: { user: User }) {
   const loadClients = async () => {
     setLoading(true);
     try {
-        const data = await fetchClientsForCompany({user});
-        setClients(data);
+      const data = await fetchClientsForCompany({ user });
+      setClients(data);
     } catch (error) {
-        console.log("Failed to load clients:", error);
+      console.log("Failed to load clients:", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   const loadWorkers = async () => {
     setLoading(true);
     try {
-        const data = await fetchWorkersForCompany({user});
-        setWorkers(data);
+      const data = await fetchWorkersForCompany({ user });
+      setWorkers(data);
     } catch (error) {
-        console.log("Failed to load workers:", error)
+      console.log("Failed to load workers:", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   const loadProjectAssignments = async () => {
-    setLoading(true)
-    try {
-        const data = await fetchProjectAssignments({user}); 
-        setProjectAssignments(data)
-    } catch (error) {
-        console.log("Failed to load project assignments:", error)
-    } finally {
-        setLoading(false);
-    }
-  }
-
-  const handleCreateProject = async (project: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] }) => {
     setLoading(true);
     try {
-        const data = await generateProject(project, {user});
-        setProjects((prev) => [...prev, data]);
+      const data = await fetchProjectAssignments({ user });
+      setProjectAssignments(data);
     } catch (error) {
-        console.log("Failed to create project:", error);
+      console.log("Failed to load project assignments:", error);
     } finally {
-        setIsFormOpen(false);
+      setLoading(false);
+    }
+  };
+
+  const handleCreateProject = async (
+    project: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] }
+  ) => {
+    setLoading(true);
+    try {
+      const data = await generateProject(project, { user });
+      setProjects((prev) => [...prev, data]);
+    } catch (error) {
+      console.log("Failed to create project:", error);
+    } finally {
+      setIsFormOpen(false);
+      loadProjects();
+      loadProjectAssignments();
+    }
+  };
+
+  const handleUpdateProject = async (
+    project: Project & { assigned_worker_ids: (string | number)[] }
+  ) => {
+    try {
+      const { project: updatedProject, assignments } = await updateProject(project, { user });
+  
+      // Merge assigned_worker_ids into updatedProject if your state relies on it
+      const fullUpdatedProject = {
+        ...updatedProject,
+        assigned_worker_ids: project.assigned_worker_ids,
+      };
+  
+      setProjects((prev) =>
+        prev.map((p) => (p.id === fullUpdatedProject.id ? fullUpdatedProject : p))
+      );
+    } catch (error) {
+      console.error("Failed to update project:", error);
+    } finally {
+      setLoading(false);
+      loadProjects(); // Optional depending on how stale your state might be
+      loadProjectAssignments();
+    }
+  };
+  
+
+  const handleDeleteProject = async () => {
+    if (!selectedProject) return;
+    try {
+        await deleteProject(selectedProject.id, {user});
+        console.log(`Project "${selectedProject.name}" deleted successfully.`)
+    } catch (error) {
+        console.log("Failed to delete project:", error instanceof Error ? error.message : error);
+    } finally {
+        setSelectedProject(null);
+        setIsDeleteDialogOpen(false);
         loadProjects();
     }
   }
 
   const assignmentCounts = useMemo(() => {
-    const map = new Map<string,  number>();
+    const map = new Map<string, number>();
     projectAssignments.forEach((pa) => {
-        map.set(pa.project_id, (map.get(pa.project_id) || 0) + 1)
+      map.set(pa.project_id, (map.get(pa.project_id) || 0) + 1);
     });
     return map;
-  }, [projectAssignments])
+  }, [projectAssignments]);
 
-  const filteredProjects = selectedClient 
+  const filteredProjects = selectedClient
     ? projects.filter((project) => project.client_id === selectedClient.id)
     : projects;
 
@@ -176,11 +228,11 @@ export default function ProjectsTable({ user }: { user: User }) {
           />
           {selectedClient && (
             <Button
-            variant="outline"
-            onClick={() => setSelectedClient(null)}
-            className="ml-2"
+              variant="outline"
+              onClick={() => setSelectedClient(null)}
+              className="ml-2"
             >
-                Clear Filter
+              Clear Filter
             </Button>
           )}
         </div>
@@ -214,7 +266,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                 workers={workers}
                 onSubmit={(project) => {
                   if (selectedProject) {
-                    console.log("handleUpdateProject", project);
+                    handleUpdateProject(project);
                   } else {
                     handleCreateProject(project);
                   }
@@ -257,9 +309,8 @@ export default function ProjectsTable({ user }: { user: User }) {
                 >
                   <CardContent className="p-0">{project.name}</CardContent>
                   <CardContent className="p-0">
-                    {
-                        clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"
-                    }
+                    {clients.find((c) => c.id === project.client_id)?.name ||
+                      "Unknown Client"}
                   </CardContent>
                   <CardContent>
                     {format(parseISO(project.start_date), "MMMM do, yyyy")}
@@ -300,6 +351,31 @@ export default function ProjectsTable({ user }: { user: User }) {
                   </CardContent>
                 </Card>
               ))}
+              <AlertDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setSelectedProject(null);
+                  }
+                  setIsDeleteDialogOpen(open);
+                }}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete {selectedProject?.name}.
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteProject}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
           {filteredProjects.length === 0 && !loading && (
@@ -309,8 +385,8 @@ export default function ProjectsTable({ user }: { user: User }) {
               </div>
               <h3 className="text-lg font-medium mb-2">No Projects found</h3>
               <p className="text-sm text-muted-foreground text-center mb-4">
-                You haven&apos;t added any projects yet. Add your first
-                project to get started.
+                You haven&apos;t added any projects yet. Add your first project
+                to get started.
               </p>
               <Button onClick={() => setIsFormOpen(true)}>
                 <Building2 className="mr-2 h-4 w-4" />
