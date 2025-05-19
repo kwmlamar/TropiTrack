@@ -15,14 +15,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DataTableColumnHeader } from "../ui/column-header";
 
-export type Payment = {
+export type Payroll = {
   id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
+  project_id: string;
+  pay_period_start: string;
+  pay_period_end: string;
+  regular_hours: number;
+  overtime_hours: number;
+  total_hours: number;
+  hourly_rate: number;
+  gross_pay: number;
+  deductions: number;
+  net_pay: number;
 };
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<Payroll>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -46,8 +53,8 @@ export const columns: ColumnDef<Payment>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "",
+    header: "",
   },
   {
     accessorKey: "email",

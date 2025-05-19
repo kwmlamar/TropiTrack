@@ -13,16 +13,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DataTableColumnHeader } from "../ui/column-header";
 
-export type Payment = {
+export type Timesheet = {
   id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
+  date: string;
+  worker_id: string;
+  project_id: string;
+  task_description: string;
+  clock_in: string;
+  clock_out: string;
+  break_duration: number;
+  regular_hours: number;
+  overtime_hours: number;
+  total_hours: number;
+  hourly_rate: number
+  total_pay: number;
+  supervisor_approval: boolean;
+  notes?: string;
 };
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<Timesheet>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -46,27 +56,60 @@ export const columns: ColumnDef<Payment>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "date",
+    header: "Date",
   },
   {
-    accessorKey: "email",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Email" />
-    ),
+    accessorKey: "worker_id",
+    header: "Worker",
   },
   {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
-
-      return <div className="text-right font-medium">{formatted}</div>;
-    },
+    accessorKey: "project_id",
+    header: "Project",
+  },
+  {
+    accessorKey: "task_description",
+    header: "Task Description",
+  },
+  {
+    accessorKey: "clock_in",
+    header: "Clock In",
+  },
+  {
+    accessorKey: "clock_out",
+    header: "Clock Out",
+  },
+  {
+    accessorKey: "break_duration",
+    header: "Break",
+  },
+  {
+    accessorKey: "regular_hours",
+    header: "Regular Hours",
+  },
+  {
+    accessorKey: "overtime_hours",
+    header: "Overtime Hours",
+  },
+  {
+    accessorKey: "total_hours",
+    header: "Total Hours",
+  },
+  {
+    accessorKey: "hourly_rate",
+    header: "Hourly Rate",
+  },
+  {
+    accessorKey: "total_pay",
+    header: "Total Pay",
+  },
+  {
+    accessorKey: "supervisor_approval",
+    header: "Supervisor Approval",
+  },
+  {
+    accessorKey: "notes",
+    header: "Notes",
   },
   {
     id: "actions",

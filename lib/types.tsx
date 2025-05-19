@@ -1,6 +1,7 @@
 export interface Worker {
     id: string;
     name: string;
+    role: 'employee' | 'contractor' | 'subcontractor';
     hourly_rate: number;
     active: boolean;
   };
