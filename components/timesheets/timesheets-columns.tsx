@@ -27,7 +27,7 @@ export type Timesheet = {
   regular_hours: number;
   overtime_hours: number;
   total_hours: number;
-  hourly_rate: number
+  hourly_rate: number;
   total_pay: number;
   supervisor_approval: boolean;
   notes?: string;
@@ -82,7 +82,7 @@ export const columns: ColumnDef<Timesheet>[] = [
     header: "Clock In",
     cell: ({ row }) => {
       const [formattedTime, setFormattedTime] = useState("");
-  
+
       useEffect(() => {
         const value = row.getValue("clock_in") as string;
         const date = new Date(value);
@@ -95,7 +95,7 @@ export const columns: ColumnDef<Timesheet>[] = [
           })
         );
       }, [row]);
-  
+
       return <span>{formattedTime}</span>;
     },
   },
@@ -105,7 +105,7 @@ export const columns: ColumnDef<Timesheet>[] = [
     header: "Clock Out",
     cell: ({ row }) => {
       const [formattedTime, setFormattedTime] = useState("");
-  
+
       useEffect(() => {
         const value = row.getValue("clock_out") as string;
         const date = new Date(value);
@@ -118,12 +118,11 @@ export const columns: ColumnDef<Timesheet>[] = [
           })
         );
       }, [row]);
-  
+
       return <span>{formattedTime}</span>;
     },
   },
-  
-  
+
   {
     id: "break_duration",
     accessorKey: "break_duration",
@@ -195,3 +194,135 @@ export const columns: ColumnDef<Timesheet>[] = [
     },
   },
 ];
+
+const sharedColumnsBeginning: ColumnDef<Timesheet>[] = [
+    {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+  { accessorKey: "worker_id", header: "Worker" },
+  { accessorKey: "project_id", header: "Project" },
+];
+
+const sharedColumnsEnd: ColumnDef<Timesheet>[] = [
+    {
+        id: "supervisor_approval",
+        accessorKey: "supervisor_approval",
+        header: "Supervisor Approval",
+      },
+      {
+        id: "notes",
+        accessorKey: "notes",
+        header: "Notes",
+      },
+      {
+        id: "actions",
+        cell: ({ row }) => {
+          const payment = row.original;
+    
+          return (
+            <div className="text-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => navigator.clipboard.writeText(payment.id)}
+                  >
+                    Copy payment ID
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>View customer</DropdownMenuItem>
+                  <DropdownMenuItem>View payment details</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+]
+
+const clockSpecific: ColumnDef<Timesheet>[] = [
+    {
+        id: "clock_in",
+        accessorKey: "clock_in",
+        header: "Clock In",
+        cell: ({ row }) => {
+          const [formattedTime, setFormattedTime] = useState("");
+    
+          useEffect(() => {
+            const value = row.getValue("clock_in") as string;
+            const date = new Date(value);
+            setFormattedTime(
+              date.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: "America/Nassau",
+              })
+            );
+          }, [row]);
+    
+          return <span>{formattedTime}</span>;
+        },
+      },
+      {
+        id: "clock_out",
+        accessorKey: "clock_out",
+        header: "Clock Out",
+        cell: ({ row }) => {
+          const [formattedTime, setFormattedTime] = useState("");
+    
+          useEffect(() => {
+            const value = row.getValue("clock_out") as string;
+            const date = new Date(value);
+            setFormattedTime(
+              date.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: "America/Nassau",
+              })
+            );
+          }, [row]);
+    
+          return <span>{formattedTime}</span>;
+        },
+      },
+  { accessorKey: "break_duration", header: "Break (min)" },
+  { accessorKey: "regular_hours", header: "Reg Hrs" },
+  { accessorKey: "overtime_hours", header: "OT Hrs" },
+  { accessorKey: "total_pay", header: "Pay" },
+];
+
+const totalHoursSpecific: ColumnDef<Timesheet>[] = [
+  { accessorKey: "total_hours", header: "Total Hours" },
+  { accessorKey: "hourly_rate", header: "Rate" },
+  { accessorKey: "total_pay", header: "Pay" },
+];
+
+export const clockInOutColumns = [...sharedColumnsBeginning, ...clockSpecific, ...sharedColumnsEnd];
+export const totalHoursColumns = [...sharedColumnsBeginning, ...totalHoursSpecific, ...sharedColumnsEnd];

@@ -3,7 +3,7 @@
 import {useState, useEffect } from "react"
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { DataTable } from "@/components/ui/data-table";
-import { Timesheet, columns } from "@/components/timesheets/timesheets-columns";
+import { Timesheet, clockInOutColumns, totalHoursColumns, } from "@/components/timesheets/timesheets-columns";
 import EntryModeToggle from "./entry-mode-toggle";
 import { User } from "@supabase/supabase-js"
 import { updateEntryMode, fetchPreferences } from "@/lib/data";
@@ -69,6 +69,8 @@ type EntryMode = "clock-in-out" | "total hours";
 export default function TimesheetsTable({user}: {user: User}) {
     const [entryMode, setEntryMode] = useState<EntryMode>("clock-in-out");
     const [data, setData] = useState<Timesheet[]>([]);
+    
+    const selectedColumns = entryMode === "clock-in-out" ? clockInOutColumns : totalHoursColumns;
 
     useEffect(() => {
         getData().then(setData);
@@ -102,7 +104,7 @@ export default function TimesheetsTable({user}: {user: User}) {
       )}
     </div>
       <div className="container mx-auto py-10">
-        <DataTable columns={columns} data={data} />
+        <DataTable columns={selectedColumns} data={data} />
       </div>
     </DashboardLayout>
   );
