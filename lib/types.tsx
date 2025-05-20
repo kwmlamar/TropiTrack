@@ -24,3 +24,5 @@ export interface ProjectAssignment {
   worker_id: string
   project_id: string
 }
+
+export type EntryMode = "clock-in-out" | "total hours";

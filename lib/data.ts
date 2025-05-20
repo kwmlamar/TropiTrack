@@ -1,5 +1,5 @@
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
-import { Worker, Client, Project } from "@/lib/types";
+import { Worker, Client, Project, EntryMode } from "@/lib/types";
 import { User } from "@supabase/supabase-js";
 
 const supabase = await createBrowserClient();
@@ -322,3 +322,56 @@ export async function updateProject(
   }
   return { project: updatedProject, assignments: updatedAssignments };
 }
+
+// USER PREFERENCES
+export async function fetchPreferences(userId: string) {
+  const { data, error} = await supabase
+  .from("user_preferences")
+  .select("*")
+  .eq("user_id", userId)
+  .maybeSingle();
+
+  if (error) throw new Error("Failed to fetch user_preferences:" + error.message);
+
+  return data;
+}
+
+import { VisibilityState} from "@tanstack/react-table";
+
+export async function savePreferences(userId: string, columnVisibility: VisibilityState ) {
+  const { data, error} = await supabase
+  .from("user_preferences")
+  .upsert({
+    user_id: userId,
+    column_visibility: columnVisibility,
+    updated_at: new Date().toISOString(),
+  }, 
+  { onConflict: "user_id"}
+);
+
+  if (error) {
+    console.error("Failed to save preferences:", error);
+  }
+
+  return data;
+}
+
+export async function updateEntryMode(userId: string, mode: EntryMode): Promise<EntryMode> {
+  const { error } = await supabase
+    .from("user_preferences")
+    .upsert({
+      user_id: userId,
+      entry_mode: mode,
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error('Supabase error:', error); // ← log this
+    throw new Error("Error updating entry mode.");
+  }
+
+  return mode;
+}
+
+
+

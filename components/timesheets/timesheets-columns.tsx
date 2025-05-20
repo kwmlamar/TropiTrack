@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
@@ -56,58 +57,110 @@ export const columns: ColumnDef<Timesheet>[] = [
     enableHiding: false,
   },
   {
+    id: "date",
     accessorKey: "date",
     header: "Date",
   },
   {
+    id: "worker_id",
     accessorKey: "worker_id",
     header: "Worker",
   },
   {
+    id: "project_id",
     accessorKey: "project_id",
     header: "Project",
   },
   {
+    id: "task_description",
     accessorKey: "task_description",
     header: "Task Description",
   },
   {
+    id: "clock_in",
     accessorKey: "clock_in",
     header: "Clock In",
+    cell: ({ row }) => {
+      const [formattedTime, setFormattedTime] = useState("");
+  
+      useEffect(() => {
+        const value = row.getValue("clock_in") as string;
+        const date = new Date(value);
+        setFormattedTime(
+          date.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "America/Nassau",
+          })
+        );
+      }, [row]);
+  
+      return <span>{formattedTime}</span>;
+    },
   },
   {
+    id: "clock_out",
     accessorKey: "clock_out",
     header: "Clock Out",
+    cell: ({ row }) => {
+      const [formattedTime, setFormattedTime] = useState("");
+  
+      useEffect(() => {
+        const value = row.getValue("clock_out") as string;
+        const date = new Date(value);
+        setFormattedTime(
+          date.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "America/Nassau",
+          })
+        );
+      }, [row]);
+  
+      return <span>{formattedTime}</span>;
+    },
   },
+  
+  
   {
+    id: "break_duration",
     accessorKey: "break_duration",
     header: "Break",
   },
   {
+    id: "regular_hours",
     accessorKey: "regular_hours",
     header: "Regular Hours",
   },
   {
+    id: "overtime_hours",
     accessorKey: "overtime_hours",
     header: "Overtime Hours",
   },
   {
+    id: "total_hours",
     accessorKey: "total_hours",
     header: "Total Hours",
   },
   {
+    id: "hourly_rate",
     accessorKey: "hourly_rate",
     header: "Hourly Rate",
   },
   {
+    id: "total_pay",
     accessorKey: "total_pay",
     header: "Total Pay",
   },
   {
+    id: "supervisor_approval",
     accessorKey: "supervisor_approval",
     header: "Supervisor Approval",
   },
   {
+    id: "notes",
     accessorKey: "notes",
     header: "Notes",
   },

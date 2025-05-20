@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { User } from "@supabase/supabase-js";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -32,7 +31,6 @@ import {
 import { Input } from "@/components/ui/input";
 
 interface DataTableProps<TData, TValue> {
-  user: User;
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
@@ -47,7 +45,7 @@ export function DataTable<TData, TValue>({
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
-    const [rowSelection, setRowSelection] = React.useState({})
+    const [rowSelection, setRowSelection] = React.useState({})  
 
   const table = useReactTable({
     data,
@@ -78,7 +76,7 @@ export function DataTable<TData, TValue>({
             table.getColumn("worker_id")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
-        />
+        />  
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
