@@ -324,6 +324,7 @@ export async function updateProject(
 }
 
 // USER PREFERENCES
+
 export async function fetchPreferences(userId: string) {
   const { data, error} = await supabase
   .from("user_preferences")
@@ -362,8 +363,7 @@ export async function updateEntryMode(userId: string, mode: EntryMode): Promise<
     .upsert({
       user_id: userId,
       entry_mode: mode,
-    })
-    .eq("user_id", userId);
+    }, { onConflict: "user_id" });
 
   if (error) {
     console.error('Supabase error:', error); // ← log this
@@ -371,6 +371,21 @@ export async function updateEntryMode(userId: string, mode: EntryMode): Promise<
   }
 
   return mode;
+}
+
+// TIMESHEETS
+
+export async function fetchTimesheets({user}: {user: User}) {
+  const profile = await getProfile(user.id);
+
+  const { data, error } = await supabase
+  .from("timesheets")
+  .select("*")
+  .eq("company_id", profile.company_id)
+  
+  if (error) throw new Error("Error fetching timesheets:" + error.message);
+
+  return data;
 }
 
 
