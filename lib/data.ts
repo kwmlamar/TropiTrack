@@ -388,5 +388,48 @@ export async function fetchTimesheets({user}: {user: User}) {
   return data;
 }
 
+interface GenerateTimesheetParams {
+  user: User;
+  selectedWorker: Worker;
+  selectedProject: Project;
+  date: string;
+  regularHours: number;
+  overtimeHours: number;
+  supervisorApproval: boolean;
+  notes: string;
+}
+
+export async function generateTimesheet({
+  user,
+  selectedWorker,
+  selectedProject,
+  date,
+  regularHours,
+  overtimeHours,
+  supervisorApproval,
+  notes,
+}: GenerateTimesheetParams) {
+  const profile = await getProfile(user.id);
+
+  const { error } = await supabase.from("timesheets").insert({
+    worker_id: selectedWorker.id,
+    project_id: selectedProject.id,
+    date,
+    regular_hours: regularHours,
+    overtime_hours: overtimeHours,
+    supervisor_approval: supervisorApproval,
+    notes,
+    hourly_rate: selectedWorker.hourly_rate,
+    company_id: profile.company_id
+  });
+
+  if (error) {
+    console.error("Error saving timesheet:", error.message);
+    throw new Error("Failed to save timesheet");
+  }
+}
+
+
+
 
 

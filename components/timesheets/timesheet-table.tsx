@@ -18,9 +18,11 @@ type EntryMode = "clock-in-out" | "total hours";
 
 export default function TimesheetsTable({ user }: { user: User }) {
   const [entryMode, setEntryMode] = useState<EntryMode>("total hours");
-  const [data, setData] = useState<Timesheet[]>([]);
+  const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
   const [columns, setColumns] = useState<ColumnDef<Timesheet>[]>([]);
-  
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+   
   useEffect(() => {
     loadTimesheets();
     loadPreferences();
@@ -28,7 +30,7 @@ export default function TimesheetsTable({ user }: { user: User }) {
 
   const loadTimesheets = async () => {
     const data = await fetchTimesheets({ user });
-    setData(data);
+    setTimesheets(data);
   };
 
   const loadPreferences = async () => {
@@ -45,9 +47,11 @@ export default function TimesheetsTable({ user }: { user: User }) {
   const loadWorkersAndProjects = async (mode: EntryMode) => {
     const workers: Worker[] = await fetchWorkersForCompany({ user });
     const workerMap = new Map(workers.map(w => [w.id, w]));
+    setWorkers(workers);
 
     const projects: Project[] = await fetchProjectsForCompany({ user });
     const projectMap = new Map(projects.map(p => [p.id, p.name]))
+    setProjects(projects);
 
     const { clockInOutColumns, totalHoursColumns } = getTimesheetColumns(workerMap, projectMap);
     setColumns(mode === "clock-in-out" ? clockInOutColumns : totalHoursColumns);
@@ -73,10 +77,10 @@ export default function TimesheetsTable({ user }: { user: User }) {
           <div>{/* Render total hours inputs */}</div>
         )}
 
-        <TotalHoursCreateTimesheetForm />
+        <TotalHoursCreateTimesheetForm user={user} workers={workers} projects={projects}/>
       </div>
       <div className="container mx-auto py-10">
-        {columns.length > 0 && <DataTable columns={columns} data={data} />}
+        {columns.length > 0 && <DataTable columns={columns} data={timesheets} />}
       </div>
     </DashboardLayout>
   );

@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { User } from "@supabase/supabase-js";
 import {
   Sheet,
   SheetTrigger,
@@ -14,6 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Worker, Project } from "@/lib/types";
+import { SearchableCombobox } from "../searchable-combobox";
+import { generateTimesheet } from "@/lib/data";
 
 export function ClockInOutCreateTimesheetForm() {
   return (
@@ -24,7 +31,7 @@ export function ClockInOutCreateTimesheetForm() {
           Add Timesheet
         </Button>
       </SheetTrigger>
-      <SheetContent >
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>Add Timesheet</SheetTitle>
           <SheetDescription>
@@ -70,11 +77,7 @@ export function ClockInOutCreateTimesheetForm() {
             <Label htmlFor="clock_out" className="block mb-2">
               Clock Out
             </Label>
-            <Input
-              id="clock_out"
-              type="datetime-local"
-              className="w-full"
-            />
+            <Input id="clock_out" type="datetime-local" className="w-full" />
           </div>
 
           {/* Break Duration */}
@@ -126,7 +129,46 @@ export function ClockInOutCreateTimesheetForm() {
   );
 }
 
-export function TotalHoursCreateTimesheetForm() {
+export function TotalHoursCreateTimesheetForm({
+  user,
+  workers,
+  projects,
+}: {
+  user: User;
+  workers: Worker[];
+  projects: Project[];
+}) {
+  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [date, setDate] = useState("");
+  const [regularHours, setRegularHours] = useState("");
+  const [overtimeHours, setOvertimeHours] = useState("");
+  const [supervisorApproval, setSupervisorApproval] = useState(false);
+  const [notes, setNotes] = useState("");
+
+  const handleSave = async () => {
+    if (!selectedWorker || !selectedProject || !date.trim()) {
+      alert("Please fill out all required fields.");
+      return;
+    }
+    try {
+      await generateTimesheet({
+        user,
+        selectedWorker,
+        selectedProject,
+        date,
+        regularHours: Number(regularHours) || 0,
+        overtimeHours: Number(overtimeHours) || 0,
+        supervisorApproval,
+        notes,
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save timesheet. Try again.")
+    }
+    
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -135,7 +177,7 @@ export function TotalHoursCreateTimesheetForm() {
           Add Timesheet
         </Button>
       </SheetTrigger>
-      <SheetContent >
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>Add Timesheet</SheetTitle>
           <SheetDescription>
@@ -149,7 +191,7 @@ export function TotalHoursCreateTimesheetForm() {
             <Label htmlFor="date" className="block mb-2">
               Date
             </Label>
-            <Input id="date" type="date" className="w-full" />
+            <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full" />
           </div>
 
           {/* Worker ID */}
@@ -157,7 +199,13 @@ export function TotalHoursCreateTimesheetForm() {
             <Label htmlFor="worker_id" className="block mb-2">
               Worker
             </Label>
-            <Input id="worker_id" className="w-full" />
+            <SearchableCombobox
+              items={workers}
+              selectedItem={selectedWorker}
+              onSelect={setSelectedWorker}
+              displayKey="name"
+              placeholder="Select a worker"
+            />
           </div>
 
           {/* Project ID */}
@@ -165,7 +213,13 @@ export function TotalHoursCreateTimesheetForm() {
             <Label htmlFor="project_id" className="block mb-2">
               Project
             </Label>
-            <Input id="project_id" className="w-full" />
+            <SearchableCombobox
+              items={projects}
+              selectedItem={selectedProject}
+              onSelect={setSelectedProject}
+              displayKey="name"
+              placeholder="Select a project"
+            />
           </div>
 
           {/* Regular Hours */}
@@ -173,7 +227,7 @@ export function TotalHoursCreateTimesheetForm() {
             <Label htmlFor="regular_hours" className="block mb-2">
               Regular Hours
             </Label>
-            <Input id="regular_hours" type="number" className="w-full" />
+            <Input id="regular_hours" type="number" value={regularHours} onChange={(e) => setRegularHours(e.target.value)} className="w-full" />
           </div>
 
           {/* Overtime Hours */}
@@ -181,27 +235,27 @@ export function TotalHoursCreateTimesheetForm() {
             <Label htmlFor="overtime_hours" className="block mb-2">
               Overtime Hours
             </Label>
-            <Input id="overtime_hours" type="number" className="w-full" />
+            <Input id="overtime_hours" type="number" value={overtimeHours} onChange={(e) => setOvertimeHours(e.target.value)} className="w-full" />
           </div>
 
           {/* Supervisor Approval */}
           <div className="flex items-center space-x-2">
-            <Checkbox id="supervisor_approval" />
+            <Checkbox id="supervisor_approval" checked={supervisorApproval} onCheckedChange={(v) => setSupervisorApproval(!!v)}/>
             <Label htmlFor="supervisor_approval">Supervisor Approval</Label>
           </div>
 
           {/* Notes */}
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="notes" className="block mb-2 mt-2">
+          <div className="grid gap-2">
+            <Label htmlFor="notes" className="mt-4">
               Notes
             </Label>
-            <Textarea id="notes" className="w-full" />
+            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full" />
           </div>
         </div>
 
         <SheetFooter>
           <SheetClose asChild>
-            <Button type="button">Save Timesheet</Button>
+            <Button type="button" onClick={handleSave}>Save Timesheet</Button>
           </SheetClose>
         </SheetFooter>
       </SheetContent>
