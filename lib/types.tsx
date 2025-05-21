@@ -26,3 +26,21 @@ export interface ProjectAssignment {
 }
 
 export type EntryMode = "clock-in-out" | "total hours";
+
+export type Timesheet = {
+  id: string;
+  date: string;
+  worker_id: string;
+  project_id: string;
+  task_description: string;
+  clock_in: string;
+  clock_out: string;
+  break_duration: number;
+  regular_hours: number;
+  overtime_hours: number;
+  total_hours: number;
+  hourly_rate: number;
+  total_pay: number;
+  supervisor_approval: boolean;
+  notes?: string;
+};
