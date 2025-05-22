@@ -6,13 +6,29 @@ import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Timesheet,
-  getTimesheetColumns
+  getTimesheetColumns,
 } from "@/components/timesheets/timesheets-columns";
 import EntryModeToggle from "./entry-mode-toggle";
 import { User } from "@supabase/supabase-js";
-import { updateEntryMode, fetchPreferences, fetchTimesheets, fetchWorkersForCompany, fetchProjectsForCompany } from "@/lib/data";
-import { ClockInOutCreateTimesheetForm, TotalHoursCreateTimesheetForm } from "@/components/timesheets/timesheet-form";
-import { Worker, Project } from "@/lib/types"
+import {
+  updateEntryMode,
+  fetchPreferences,
+  fetchTimesheets,
+  fetchWorkersForCompany,
+  fetchProjectsForCompany,
+} from "@/lib/data";
+import {
+  TotalHoursCreateTimesheetForm,
+  TotalHoursEditTimesheetForm,
+} from "@/components/timesheets/timesheet-forms";
+import { Worker, Project } from "@/lib/types";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "../ui/sheet";
 
 type EntryMode = "clock-in-out" | "total hours";
 
@@ -22,7 +38,8 @@ export default function TimesheetsTable({ user }: { user: User }) {
   const [columns, setColumns] = useState<ColumnDef<Timesheet>[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-   
+  const [editTimesheet, setEditTimesheet] = useState<Timesheet | null>(null);
+
   useEffect(() => {
     loadTimesheets();
     loadPreferences();
@@ -37,27 +54,30 @@ export default function TimesheetsTable({ user }: { user: User }) {
     const prefs = await fetchPreferences(user.id);
     if (prefs) {
       setEntryMode(prefs.entry_mode);
-      await loadWorkersAndProjects(prefs.entry_mode); 
+      await loadWorkersAndProjects(prefs.entry_mode);
     } else {
       await loadWorkersAndProjects(entryMode);
     }
   };
-  
 
   const loadWorkersAndProjects = async (mode: EntryMode) => {
     const workers: Worker[] = await fetchWorkersForCompany({ user });
-    const workerMap = new Map(workers.map(w => [w.id, w]));
+    const workerMap = new Map(workers.map((w) => [w.id, w]));
     setWorkers(workers);
 
     const projects: Project[] = await fetchProjectsForCompany({ user });
-    const projectMap = new Map(projects.map(p => [p.id, p.name]))
+    const projectMap = new Map(projects.map((p) => [p.id, p.name]));
     setProjects(projects);
 
-    const { clockInOutColumns, totalHoursColumns } = getTimesheetColumns(user.id, workerMap, projectMap, async () => await loadTimesheets());
+    const { clockInOutColumns, totalHoursColumns } = getTimesheetColumns(
+      user,
+      workerMap,
+      projectMap,
+      async () => await loadTimesheets(),
+      (timesheet) => setEditTimesheet(timesheet)
+    );
     setColumns(mode === "clock-in-out" ? clockInOutColumns : totalHoursColumns);
   };
-
-  
 
   const handleSetEntryMode = async (entryMode: EntryMode) => {
     const new_mode = await updateEntryMode(user.id, entryMode);
@@ -77,11 +97,39 @@ export default function TimesheetsTable({ user }: { user: User }) {
           <div>{/* Render total hours inputs */}</div>
         )}
 
-        <TotalHoursCreateTimesheetForm user={user} workers={workers} projects={projects} onRefresh={loadTimesheets}/>
+        <TotalHoursCreateTimesheetForm
+          user={user}
+          workers={workers}
+          projects={projects}
+          onRefresh={loadTimesheets}
+        />
       </div>
-      <div className="container mx-auto py-10">
-        {columns.length > 0 && <DataTable columns={columns} data={timesheets} />}
+      <div>
+        {columns.length > 0 && (
+          <DataTable columns={columns} data={timesheets} />
+        )}
       </div>
+      <Sheet open={!!editTimesheet} onOpenChange={() => setEditTimesheet(null)}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Edit Timesheet</SheetTitle>
+            <SheetDescription>
+              Update the timesheet details below. Changes will be saved once you
+              click &apos;Save Timesheet&apos;.
+            </SheetDescription>
+          </SheetHeader>
+          {editTimesheet && (
+            <TotalHoursEditTimesheetForm
+              user={user}
+              workers={workers}
+              projects={projects}
+              timesheet={editTimesheet}
+              onRefresh={loadTimesheets}
+              onClose={() => setEditTimesheet(null)}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </DashboardLayout>
   );
 }

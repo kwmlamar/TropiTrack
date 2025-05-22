@@ -7,7 +7,6 @@ import { MoreHorizontal } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Input } from "../ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deleteTimesheet } from "@/lib/data";
-import { createClient } from "@/utils/supabase/server";
 import { Worker } from "@/lib/types";
 
 export type Timesheet = {
@@ -52,10 +50,11 @@ export type WeeklyTimesheetRow = {
 };
 
 export function getTimesheetColumns(
-  userId: string,
+  user: User,
   workerMap: Map<string, Worker>,
   projectMap: Map<string, string>,
-  onRefresh: () => void
+  onRefresh: () => void,
+  onEditTimesheet: (t: Timesheet) => void
 ) {
   const sharedColumnsBeginning: ColumnDef<Timesheet>[] = [
     {
@@ -138,7 +137,7 @@ export function getTimesheetColumns(
                 <DropdownMenuItem
                   onClick={() => {
                     // stub: replace with your edit modal logic
-                    console.log("Edit timesheet", timesheet.id);
+                    onEditTimesheet(timesheet)
                   }}
                 >
                   Edit Timesheet
@@ -147,7 +146,7 @@ export function getTimesheetColumns(
                   onClick={async () => {
                     try {
                       await deleteTimesheet({
-                        userId,
+                        userId: user.id,
                         timesheetId: timesheet.id,
                       });
                       console.log("Deleted timesheet, now refreshing...");

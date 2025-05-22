@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import {
   Sheet,
@@ -18,9 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Worker, Project } from "@/lib/types";
+import { Worker, Project, Timesheet } from "@/lib/types";
 import { SearchableCombobox } from "../searchable-combobox";
-import { generateTimesheet } from "@/lib/data";
+import { generateTimesheet, updateTimesheet } from "@/lib/data";
 
 export function ClockInOutCreateTimesheetForm() {
   return (
@@ -166,10 +166,9 @@ export function TotalHoursCreateTimesheetForm({
       });
     } catch (error) {
       console.error(error);
-      alert("Failed to save timesheet. Try again.")
+      alert("Failed to save timesheet. Try again.");
     }
     onRefresh();
-    
   };
 
   return (
@@ -194,7 +193,13 @@ export function TotalHoursCreateTimesheetForm({
             <Label htmlFor="date" className="block mb-2">
               Date
             </Label>
-            <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full" />
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full"
+            />
           </div>
 
           {/* Worker ID */}
@@ -230,7 +235,13 @@ export function TotalHoursCreateTimesheetForm({
             <Label htmlFor="regular_hours" className="block mb-2">
               Regular Hours
             </Label>
-            <Input id="regular_hours" type="number" value={regularHours} onChange={(e) => setRegularHours(e.target.value)} className="w-full" />
+            <Input
+              id="regular_hours"
+              type="number"
+              value={regularHours}
+              onChange={(e) => setRegularHours(e.target.value)}
+              className="w-full"
+            />
           </div>
 
           {/* Overtime Hours */}
@@ -238,12 +249,22 @@ export function TotalHoursCreateTimesheetForm({
             <Label htmlFor="overtime_hours" className="block mb-2">
               Overtime Hours
             </Label>
-            <Input id="overtime_hours" type="number" value={overtimeHours} onChange={(e) => setOvertimeHours(e.target.value)} className="w-full" />
+            <Input
+              id="overtime_hours"
+              type="number"
+              value={overtimeHours}
+              onChange={(e) => setOvertimeHours(e.target.value)}
+              className="w-full"
+            />
           </div>
 
           {/* Supervisor Approval */}
           <div className="flex items-center space-x-2">
-            <Checkbox id="supervisor_approval" checked={supervisorApproval} onCheckedChange={(v) => setSupervisorApproval(!!v)}/>
+            <Checkbox
+              id="supervisor_approval"
+              checked={supervisorApproval}
+              onCheckedChange={(v) => setSupervisorApproval(!!v)}
+            />
             <Label htmlFor="supervisor_approval">Supervisor Approval</Label>
           </div>
 
@@ -252,16 +273,192 @@ export function TotalHoursCreateTimesheetForm({
             <Label htmlFor="notes" className="mt-4">
               Notes
             </Label>
-            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full" />
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full"
+            />
           </div>
         </div>
 
         <SheetFooter>
           <SheetClose asChild>
-            <Button type="button" onClick={handleSave}>Save Timesheet</Button>
+            <Button type="button" onClick={handleSave}>
+              Save Timesheet
+            </Button>
           </SheetClose>
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+export function TotalHoursEditTimesheetForm({
+  user,
+  workers,
+  projects,
+  timesheet,
+  onRefresh,
+  onClose,
+}: {
+  user: User;
+  workers: Worker[];
+  projects: Project[];
+  timesheet: Timesheet;
+  onRefresh: () => void;
+  onClose?: () => void;
+}) {
+  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [date, setDate] = useState("");
+  const [regularHours, setRegularHours] = useState("");
+  const [overtimeHours, setOvertimeHours] = useState("");
+  const [supervisorApproval, setSupervisorApproval] = useState(false);
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (timesheet) {
+      const worker = workers.find((w) => w.id === timesheet.worker_id);
+      const project = projects.find((p) => p.id === timesheet.project_id);
+      setSelectedWorker(worker ?? null);
+      setSelectedProject(project ?? null);
+      setDate(timesheet.date ?? "");
+      setRegularHours(timesheet.regular_hours?.toString() ?? "");
+      setOvertimeHours(timesheet.overtime_hours?.toString() ?? "");
+      setSupervisorApproval(!!timesheet.supervisor_approval);
+      setNotes(timesheet.notes ?? "");
+    }
+  }, [timesheet, workers, projects]);
+
+  const handleSave = async () => {
+    if (!selectedWorker || !selectedProject || !date.trim()) {
+      alert("Please fill out all required fields.");
+      return;
+    }
+    try {
+      await updateTimesheet(timesheet.id, {
+        user,
+        selectedWorker,
+        selectedProject,
+        date,
+        regularHours: Number(regularHours) || 0,
+        overtimeHours: Number(overtimeHours) || 0,
+        supervisorApproval,
+        notes,
+      });
+      onRefresh();
+      onClose?.();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save timesheet. Try again.");
+    }
+  };
+
+  return (
+    <>
+      <div className="px-4 py-4 h-screen w-full max-w-[700px] overflow-y-auto will-change-auto">
+        {/* Date */}
+        <div className="mb-4">
+          <Label htmlFor="date" className="block mb-2">
+            Date
+          </Label>
+          <Input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full"
+          />
+        </div>
+
+        {/* Worker */}
+        <div className="mb-4">
+          <Label htmlFor="worker_id" className="block mb-2">
+            Worker
+          </Label>
+          <SearchableCombobox
+            items={workers}
+            selectedItem={selectedWorker}
+            onSelect={setSelectedWorker}
+            displayKey="name"
+            placeholder="Select a worker"
+          />
+        </div>
+
+        {/* Project */}
+        <div className="mb-4">
+          <Label htmlFor="project_id" className="block mb-2">
+            Project
+          </Label>
+          <SearchableCombobox
+            items={projects}
+            selectedItem={selectedProject}
+            onSelect={setSelectedProject}
+            displayKey="name"
+            placeholder="Select a project"
+          />
+        </div>
+
+        {/* Regular Hours */}
+        <div className="mb-4">
+          <Label htmlFor="regular_hours" className="block mb-2">
+            Regular Hours
+          </Label>
+          <Input
+            id="regular_hours"
+            type="number"
+            value={regularHours}
+            onChange={(e) => setRegularHours(e.target.value)}
+            className="w-full"
+          />
+        </div>
+
+        {/* Overtime Hours */}
+        <div className="mb-4">
+          <Label htmlFor="overtime_hours" className="block mb-2">
+            Overtime Hours
+          </Label>
+          <Input
+            id="overtime_hours"
+            type="number"
+            value={overtimeHours}
+            onChange={(e) => setOvertimeHours(e.target.value)}
+            className="w-full"
+          />
+        </div>
+
+        {/* Supervisor Approval */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="supervisor_approval"
+            checked={supervisorApproval}
+            onCheckedChange={(v) => setSupervisorApproval(!!v)}
+          />
+          <Label htmlFor="supervisor_approval">Supervisor Approval</Label>
+        </div>
+
+        {/* Notes */}
+        <div className="grid gap-2">
+          <Label htmlFor="notes" className="mt-4">
+            Notes
+          </Label>
+          <Textarea
+            id="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      <div className="px-4 pb-4">
+        <SheetClose asChild>
+          <Button type="button" className="w-full mb-4" onClick={handleSave}>
+            Save Timesheet
+          </Button>
+        </SheetClose>
+      </div>
+    </>
   );
 }

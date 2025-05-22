@@ -388,7 +388,7 @@ export async function fetchTimesheets({user}: {user: User}) {
   return data;
 }
 
-interface GenerateTimesheetParams {
+interface TimesheetProps {
   user: User;
   selectedWorker: Worker;
   selectedProject: Project;
@@ -408,7 +408,8 @@ export async function generateTimesheet({
   overtimeHours,
   supervisorApproval,
   notes,
-}: GenerateTimesheetParams) {
+}: TimesheetProps) {
+  
   const profile = await getProfile(user.id);
 
   const { error } = await supabase.from("timesheets").insert({
@@ -447,6 +448,42 @@ export async function deleteTimesheet({
   if (error) {
     console.error("Error deleting timesheet:", error.message);
     throw new Error("Failed to delete timesheet");
+  }
+}
+
+export async function updateTimesheet(id: string, {
+  user,
+  selectedWorker,
+  selectedProject,
+  date,
+  regularHours,
+  overtimeHours,
+  supervisorApproval,
+  notes,
+}: TimesheetProps) {
+  if (!id) {
+    throw new Error("Timesheet ID is required to update.")
+  }
+  
+  const profile = await getProfile(user.id);
+
+  const { error } = await supabase
+  .from("timesheets")
+  .update({
+    worker_id: selectedWorker.id,
+    project_id: selectedProject.id,
+    date,
+    regular_hours: regularHours,
+    overtime_hours: overtimeHours,
+    supervisor_approval: supervisorApproval,
+    notes,
+    hourly_rate: selectedWorker.hourly_rate,
+    company_id: profile.company_id
+  })
+  .eq("id", id);
+
+  if (error) {
+    throw new Error("Error updating timesheet:" + error.message)
   }
 }
 
