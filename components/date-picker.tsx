@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 interface DatePickerProps {
   date: Date | undefined;
-  setDate: (date: Date | undefined) => void;
+  setDate: (date: Date) => void;
 }
 
 export function DatePicker({ date, setDate }: DatePickerProps) {
@@ -37,7 +37,10 @@ export function DatePicker({ date, setDate }: DatePickerProps) {
         <Calendar
           mode="single"
           selected={date}
-          onSelect={(d) => setDate(d ? new Date(d) : undefined)}
+          onSelect={(d) => {
+            if (d) setDate(new Date(d));
+          }}
+          
         />
       </PopoverContent>
     </Popover>
