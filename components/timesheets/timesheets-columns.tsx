@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { User } from "@supabase/supabase-js";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
@@ -15,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { fetchWorkersForCompany } from "@/lib/data";
+import { deleteTimesheet } from "@/lib/data";
 import { createClient } from "@/utils/supabase/server";
 import { Worker } from "@/lib/types";
 
@@ -51,8 +52,10 @@ export type WeeklyTimesheetRow = {
 };
 
 export function getTimesheetColumns(
+  userId: string,
   workerMap: Map<string, Worker>,
-  projectMap: Map<string, string>
+  projectMap: Map<string, string>,
+  onRefresh: () => void
 ) {
   const sharedColumnsBeginning: ColumnDef<Timesheet>[] = [
     {
@@ -115,7 +118,7 @@ export function getTimesheetColumns(
       id: "actions",
       cell: ({ row }) => {
         const timesheet = row.original;
-    
+
         return (
           <div className="text-center">
             <DropdownMenu>
@@ -128,9 +131,7 @@ export function getTimesheetColumns(
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() =>
-                    navigator.clipboard.writeText(timesheet.id)
-                  }
+                  onClick={() => navigator.clipboard.writeText(timesheet.id)}
                 >
                   Copy Timesheet ID
                 </DropdownMenuItem>
@@ -143,9 +144,17 @@ export function getTimesheetColumns(
                   Edit Timesheet
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => {
-                    // stub: replace with your delete logic
-                    console.log("Delete timesheet", timesheet.id);
+                  onClick={async () => {
+                    try {
+                      await deleteTimesheet({
+                        userId,
+                        timesheetId: timesheet.id,
+                      });
+                      console.log("Deleted timesheet, now refreshing...");
+                      await onRefresh?.();
+                    } catch (err) {
+                      console.error("Error during delete or refresh:", err);
+                    }
                   }}
                 >
                   Delete Timesheet
@@ -164,7 +173,7 @@ export function getTimesheetColumns(
           </div>
         );
       },
-    }
+    },
   ];
 
   const clockSpecific: ColumnDef<Timesheet>[] = [
@@ -237,9 +246,8 @@ export function getTimesheetColumns(
       accessorKey: "hourly_rate",
       header: "Rate",
       cell: ({ row }) => {
-        const workerId = row.getValue("worker_id") as string;
-        const worker = workerMap.get(workerId);
-        return worker ? `$${worker.hourly_rate}/hr ` : workerId;
+        const rate = row.getValue<number>("hourly_rate");
+        return rate ? `$${rate}/hr` : "-";
       },
     },
     { accessorKey: "total_pay", header: "Pay" },

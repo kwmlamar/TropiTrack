@@ -429,6 +429,28 @@ export async function generateTimesheet({
   }
 }
 
+export async function deleteTimesheet({
+  userId,
+  timesheetId,
+}: {
+  userId: string;
+  timesheetId: string | number;
+}) {
+  const profile = await getProfile(userId);
+
+  const { error } = await supabase
+    .from("timesheets")
+    .delete()
+    .eq("id", timesheetId)
+    .eq("company_id", profile.company_id);
+
+  if (error) {
+    console.error("Error deleting timesheet:", error.message);
+    throw new Error("Failed to delete timesheet");
+  }
+}
+
+
 
 
 

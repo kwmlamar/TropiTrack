@@ -53,7 +53,7 @@ export default function TimesheetsTable({ user }: { user: User }) {
     const projectMap = new Map(projects.map(p => [p.id, p.name]))
     setProjects(projects);
 
-    const { clockInOutColumns, totalHoursColumns } = getTimesheetColumns(workerMap, projectMap);
+    const { clockInOutColumns, totalHoursColumns } = getTimesheetColumns(user.id, workerMap, projectMap, async () => await loadTimesheets());
     setColumns(mode === "clock-in-out" ? clockInOutColumns : totalHoursColumns);
   };
 
@@ -77,7 +77,7 @@ export default function TimesheetsTable({ user }: { user: User }) {
           <div>{/* Render total hours inputs */}</div>
         )}
 
-        <TotalHoursCreateTimesheetForm user={user} workers={workers} projects={projects}/>
+        <TotalHoursCreateTimesheetForm user={user} workers={workers} projects={projects} onRefresh={loadTimesheets}/>
       </div>
       <div className="container mx-auto py-10">
         {columns.length > 0 && <DataTable columns={columns} data={timesheets} />}

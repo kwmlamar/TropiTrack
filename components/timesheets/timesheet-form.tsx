@@ -133,10 +133,12 @@ export function TotalHoursCreateTimesheetForm({
   user,
   workers,
   projects,
+  onRefresh,
 }: {
   user: User;
   workers: Worker[];
   projects: Project[];
+  onRefresh: () => void;
 }) {
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -166,6 +168,7 @@ export function TotalHoursCreateTimesheetForm({
       console.error(error);
       alert("Failed to save timesheet. Try again.")
     }
+    onRefresh();
     
   };
 
