@@ -29,7 +29,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "../ui/sheet";
-import TimesheetViewControls from "./timesheets-view-controls"
+import TimesheetViewControls from "./timesheets-view-controls";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 
 type EntryMode = "clock-in-out" | "total hours";
 
@@ -41,15 +42,21 @@ export default function TimesheetsTable({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editTimesheet, setEditTimesheet] = useState<Timesheet | null>(null);
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date()
+  );
 
   useEffect(() => {
     loadTimesheets();
     loadPreferences();
-  }, []);
+  }, [selectedDate, viewMode]);
 
   const loadTimesheets = async () => {
-    const data = await fetchTimesheets({ user });
+    const data = await fetchTimesheets({
+      user,
+      date: selectedDate ?? new Date(),
+      viewMode,
+    });
     setTimesheets(data);
   };
 
@@ -87,15 +94,30 @@ export default function TimesheetsTable({ user }: { user: User }) {
     setEntryMode(new_mode);
     await loadWorkersAndProjects(new_mode); // refresh columns on toggle
   };
+
+  const formattedDateLabel =
+    viewMode === "daily"
+      ? format(selectedDate ?? new Date(), "EEEE, MMMM d, yyyy")
+      : `${format(
+          startOfWeek(selectedDate ?? new Date(), { weekStartsOn: 1 }),
+          "MMM d"
+        )} - ${format(
+          endOfWeek(selectedDate ?? new Date(), { weekStartsOn: 1 }),
+          "MMM d, yyyy"
+        )}`;
   return (
     <DashboardLayout title="Timesheets">
       <h1 className="text-2xl font-bold">Timesheets</h1>
+      <h2 className="text-sm text-muted-foreground mt-4">
+        {viewMode === "daily" ? "Viewing day:" : "Viewing week:"}{" "}
+        {formattedDateLabel}
+      </h2>
+
       {/* View Toggle */}
-      <div className="flex justify-between items-center mt-4">
-      </div>
+      <div className="flex justify-between items-center mt-4"></div>
       {/* Your page-specific content goes here */}
-      <div className="flex space-y-2 mt-4 justify-between">
-      <EntryModeToggle mode={entryMode} onChange={handleSetEntryMode} />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-4">
+        <EntryModeToggle mode={entryMode} onChange={handleSetEntryMode} />
         <TimesheetViewControls
           viewMode={viewMode}
           setViewMode={setViewMode}

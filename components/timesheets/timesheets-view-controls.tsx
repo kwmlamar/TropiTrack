@@ -43,7 +43,9 @@ export default function TimesheetViewControls({
         ←
       </Button>
 
-      <DatePicker date={selectedDate} setDate={setSelectedDate} />
+      <div className="scale-90">
+        <DatePicker date={selectedDate} setDate={setSelectedDate} />
+      </div>
 
       <Button
         variant="ghost"

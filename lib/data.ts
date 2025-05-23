@@ -1,5 +1,6 @@
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
 import { Worker, Client, Project, EntryMode } from "@/lib/types";
+import { startOfWeek, endOfWeek } from "date-fns";
 import { User } from "@supabase/supabase-js";
 
 const supabase = await createBrowserClient();
@@ -293,15 +294,15 @@ export async function updateProject(
 
   // Delete existing assingments for the project
   const { error: deleteAssignmentsError } = await supabase
-  .from("project_assignments")
-  .delete()
-  .eq("project_id", updatedProject.id);
+    .from("project_assignments")
+    .delete()
+    .eq("project_id", updatedProject.id);
 
   if (deleteAssignmentsError) {
     throw new Error(
-      "Error deleting existing project assignments:" + 
-      (deleteAssignmentsError?.message || "Unknown error")
-    )
+      "Error deleting existing project assignments:" +
+        (deleteAssignmentsError?.message || "Unknown error")
+    );
   }
 
   // Insert the updated assignments
@@ -326,29 +327,32 @@ export async function updateProject(
 // USER PREFERENCES
 
 export async function fetchPreferences(userId: string) {
-  const { data, error} = await supabase
-  .from("user_preferences")
-  .select("*")
-  .eq("user_id", userId)
-  .maybeSingle();
+  const { data, error } = await supabase
+    .from("user_preferences")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-  if (error) throw new Error("Failed to fetch user_preferences:" + error.message);
+  if (error)
+    throw new Error("Failed to fetch user_preferences:" + error.message);
 
   return data;
 }
 
-import { VisibilityState} from "@tanstack/react-table";
+import { VisibilityState } from "@tanstack/react-table";
 
-export async function savePreferences(userId: string, columnVisibility: VisibilityState ) {
-  const { data, error} = await supabase
-  .from("user_preferences")
-  .upsert({
-    user_id: userId,
-    column_visibility: columnVisibility,
-    updated_at: new Date().toISOString(),
-  }, 
-  { onConflict: "user_id"}
-);
+export async function savePreferences(
+  userId: string,
+  columnVisibility: VisibilityState
+) {
+  const { data, error } = await supabase.from("user_preferences").upsert(
+    {
+      user_id: userId,
+      column_visibility: columnVisibility,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
 
   if (error) {
     console.error("Failed to save preferences:", error);
@@ -357,16 +361,20 @@ export async function savePreferences(userId: string, columnVisibility: Visibili
   return data;
 }
 
-export async function updateEntryMode(userId: string, mode: EntryMode): Promise<EntryMode> {
-  const { error } = await supabase
-    .from("user_preferences")
-    .upsert({
+export async function updateEntryMode(
+  userId: string,
+  mode: EntryMode
+): Promise<EntryMode> {
+  const { error } = await supabase.from("user_preferences").upsert(
+    {
       user_id: userId,
       entry_mode: mode,
-    }, { onConflict: "user_id" });
+    },
+    { onConflict: "user_id" }
+  );
 
   if (error) {
-    console.error('Supabase error:', error); // ← log this
+    console.error("Supabase error:", error); // ← log this
     throw new Error("Error updating entry mode.");
   }
 
@@ -375,14 +383,31 @@ export async function updateEntryMode(userId: string, mode: EntryMode): Promise<
 
 // TIMESHEETS
 
-export async function fetchTimesheets({user}: {user: User}) {
+export async function fetchTimesheets({
+  user,
+  date,
+  viewMode,
+}: {
+  user: User;
+  date: Date;
+  viewMode: "daily" | "weekly";
+}) {
   const profile = await getProfile(user.id);
+  let startDate = date;
+  let endDate = date;
+
+  if (viewMode === "weekly") {
+    startDate = startOfWeek(date, { weekStartsOn: 1});
+    endDate = endOfWeek(date, { weekStartsOn: 1});
+  }
 
   const { data, error } = await supabase
-  .from("timesheets")
-  .select("*")
-  .eq("company_id", profile.company_id)
-  
+    .from("timesheets")
+    .select("*")
+    .eq("company_id", profile.company_id)
+    .gte("date", startDate.toISOString().split("T")[0])
+    .lte("date", endDate.toISOString().split("T")[0]);
+
   if (error) throw new Error("Error fetching timesheets:" + error.message);
 
   return data;
@@ -409,7 +434,6 @@ export async function generateTimesheet({
   supervisorApproval,
   notes,
 }: TimesheetProps) {
-  
   const profile = await getProfile(user.id);
 
   const { error } = await supabase.from("timesheets").insert({
@@ -421,7 +445,7 @@ export async function generateTimesheet({
     supervisor_approval: supervisorApproval,
     notes,
     hourly_rate: selectedWorker.hourly_rate,
-    company_id: profile.company_id
+    company_id: profile.company_id,
   });
 
   if (error) {
@@ -451,44 +475,41 @@ export async function deleteTimesheet({
   }
 }
 
-export async function updateTimesheet(id: string, {
-  user,
-  selectedWorker,
-  selectedProject,
-  date,
-  regularHours,
-  overtimeHours,
-  supervisorApproval,
-  notes,
-}: TimesheetProps) {
+export async function updateTimesheet(
+  id: string,
+  {
+    user,
+    selectedWorker,
+    selectedProject,
+    date,
+    regularHours,
+    overtimeHours,
+    supervisorApproval,
+    notes,
+  }: TimesheetProps
+) {
   if (!id) {
-    throw new Error("Timesheet ID is required to update.")
+    throw new Error("Timesheet ID is required to update.");
   }
-  
+
   const profile = await getProfile(user.id);
 
   const { error } = await supabase
-  .from("timesheets")
-  .update({
-    worker_id: selectedWorker.id,
-    project_id: selectedProject.id,
-    date,
-    regular_hours: regularHours,
-    overtime_hours: overtimeHours,
-    supervisor_approval: supervisorApproval,
-    notes,
-    hourly_rate: selectedWorker.hourly_rate,
-    company_id: profile.company_id
-  })
-  .eq("id", id);
+    .from("timesheets")
+    .update({
+      worker_id: selectedWorker.id,
+      project_id: selectedProject.id,
+      date,
+      regular_hours: regularHours,
+      overtime_hours: overtimeHours,
+      supervisor_approval: supervisorApproval,
+      notes,
+      hourly_rate: selectedWorker.hourly_rate,
+      company_id: profile.company_id,
+    })
+    .eq("id", id);
 
   if (error) {
-    throw new Error("Error updating timesheet:" + error.message)
+    throw new Error("Error updating timesheet:" + error.message);
   }
 }
-
-
-
-
-
-
