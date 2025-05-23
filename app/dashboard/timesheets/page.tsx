@@ -1,4 +1,4 @@
-import TimesheetsTable from "@/components/timesheets/timesheet-table";
+import TimesheetsTable from "@/components/timesheets/timesheets-table";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function TimesheetsPage() {

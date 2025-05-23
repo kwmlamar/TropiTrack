@@ -29,6 +29,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "../ui/sheet";
+import TimesheetViewControls from "./timesheets-view-controls"
 
 type EntryMode = "clock-in-out" | "total hours";
 
@@ -39,6 +40,8 @@ export default function TimesheetsTable({ user }: { user: User }) {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [editTimesheet, setEditTimesheet] = useState<Timesheet | null>(null);
+  const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
     loadTimesheets();
@@ -87,9 +90,18 @@ export default function TimesheetsTable({ user }: { user: User }) {
   return (
     <DashboardLayout title="Timesheets">
       <h1 className="text-2xl font-bold">Timesheets</h1>
+      {/* View Toggle */}
+      <div className="flex justify-between items-center mt-4">
+      </div>
       {/* Your page-specific content goes here */}
       <div className="flex space-y-2 mt-4 justify-between">
-        <EntryModeToggle mode={entryMode} onChange={handleSetEntryMode} />
+      <EntryModeToggle mode={entryMode} onChange={handleSetEntryMode} />
+        <TimesheetViewControls
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+        />
 
         {entryMode === "clock-in-out" ? (
           <div>{/* Render clock in/out inputs */}</div>
