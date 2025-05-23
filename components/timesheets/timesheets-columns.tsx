@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteTimesheet } from "@/lib/data";
+import { deleteTimesheet } from "@/lib/data/data";
 import { Worker } from "@/lib/types";
 
 export type Timesheet = {
@@ -267,6 +267,11 @@ export function getTimesheetColumns(
     {
       accessorKey: "worker_id",
       header: "Worker",
+      cell: ({ row }) => {
+        const workerId = row.getValue("worker_id") as string;
+        const worker = workerMap.get(workerId);
+        return worker ? `${worker.name}` : workerId;
+      },
     },
     {
       accessorKey: "mon",
@@ -313,5 +318,5 @@ export function getTimesheetColumns(
       },
     },
   ];
-  return { clockInOutColumns, totalHoursColumns };
+  return { clockInOutColumns, totalHoursColumns, weeklyColumns };
 }

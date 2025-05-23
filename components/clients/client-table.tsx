@@ -18,7 +18,7 @@ import {
   generateClient,
   deleteClient,
   updateClient,
-} from "@/lib/data";
+} from "@/lib/data/data";
 import { User } from "@supabase/supabase-js"
 
 import { Client } from "@/lib/types";

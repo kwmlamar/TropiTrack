@@ -16,12 +16,12 @@ import {
   fetchTimesheets,
   fetchWorkersForCompany,
   fetchProjectsForCompany,
-} from "@/lib/data";
+} from "@/lib/data/data";
 import {
   TotalHoursCreateTimesheetForm,
   TotalHoursEditTimesheetForm,
 } from "@/components/timesheets/timesheet-forms";
-import { Worker, Project } from "@/lib/types";
+import { Worker, Project, WeeklyTimesheetRow } from "@/lib/types";
 import {
   Sheet,
   SheetContent,
@@ -31,13 +31,16 @@ import {
 } from "../ui/sheet";
 import TimesheetViewControls from "./timesheets-view-controls";
 import { format, startOfWeek, endOfWeek } from "date-fns";
+import { groupToWeeklyRows } from "@/lib/data/transformers";
 
 type EntryMode = "clock-in-out" | "total hours";
 
 export default function TimesheetsTable({ user }: { user: User }) {
   const [entryMode, setEntryMode] = useState<EntryMode>("total hours");
-  const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
-  const [columns, setColumns] = useState<ColumnDef<Timesheet>[]>([]);
+  const [timesheets, setTimesheets] = useState<Timesheet[] | WeeklyTimesheetRow[]>([]);
+  const [columns, setColumns] = useState<
+    ColumnDef<Timesheet | WeeklyTimesheetRow>[]
+  >([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [editTimesheet, setEditTimesheet] = useState<Timesheet | null>(null);
@@ -52,11 +55,14 @@ export default function TimesheetsTable({ user }: { user: User }) {
   }, [selectedDate, viewMode]);
 
   const loadTimesheets = async () => {
-    const data = await fetchTimesheets({
+    const raw = await fetchTimesheets({
       user,
       date: selectedDate ?? new Date(),
       viewMode,
     });
+
+    const data = viewMode === "weekly" ? groupToWeeklyRows(raw) : raw;
+
     setTimesheets(data);
   };
 
@@ -79,14 +85,28 @@ export default function TimesheetsTable({ user }: { user: User }) {
     const projectMap = new Map(projects.map((p) => [p.id, p.name]));
     setProjects(projects);
 
-    const { clockInOutColumns, totalHoursColumns } = getTimesheetColumns(
+    const {
+      clockInOutColumns,
+      totalHoursColumns,
+      weeklyColumns: generatedWeeklyColumns,
+    } = getTimesheetColumns(
       user,
       workerMap,
       projectMap,
       async () => await loadTimesheets(),
       (timesheet) => setEditTimesheet(timesheet)
     );
-    setColumns(mode === "clock-in-out" ? clockInOutColumns : totalHoursColumns);
+    
+    setColumns(
+      viewMode === "weekly"
+        ? (generatedWeeklyColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
+        : (
+            entryMode === "clock-in-out"
+              ? (clockInOutColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
+              : (totalHoursColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
+          )
+    );
+    
   };
 
   const handleSetEntryMode = async (entryMode: EntryMode) => {

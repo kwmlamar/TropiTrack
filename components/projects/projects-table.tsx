@@ -22,7 +22,7 @@ import {
   fetchProjectAssignments,
   updateProject,
   deleteProject,
-} from "@/lib/data";
+} from "@/lib/data/data";
 import {
   DropdownMenu,
   DropdownMenuContent,

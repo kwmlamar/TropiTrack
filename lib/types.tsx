@@ -44,3 +44,16 @@ export type Timesheet = {
   supervisor_approval: boolean;
   notes?: string;
 };
+
+export type WeeklyTimesheetRow = {
+  worker_id: string;
+  worker_name?: string;
+  mon?: number;
+  tue?: number;
+  wed?: number;
+  thu?: number;
+  fri?: number;
+  sat?: number;
+  sun?: number;
+  approved?: boolean;
+};

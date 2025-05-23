@@ -10,7 +10,7 @@ import {
   fetchWorkersForCompany,
   deleteEmployee,
   updateEmployee,
-} from "@/lib/data";
+} from "@/lib/data/data";
 import { User } from "@supabase/supabase-js"
 import {
   DropdownMenu,

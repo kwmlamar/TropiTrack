@@ -8,7 +8,7 @@ import {
   
   type EntryMode = "clock-in-out" | "total hours";
   
-  export default function EntryModeSelect({
+  export default function EntryModeToggle({
     mode,
     onChange,
   }: {
@@ -16,6 +16,7 @@ import {
     onChange: (mode: EntryMode) => void;
   }) {
     return (
+      
       <Select value={mode} onValueChange={(val) => onChange(val as EntryMode)}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select Entry Mode" />

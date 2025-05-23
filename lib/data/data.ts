@@ -1,6 +1,6 @@
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
-import { Worker, Client, Project, EntryMode } from "@/lib/types";
-import { startOfWeek, endOfWeek } from "date-fns";
+import { Worker, Client, Project, EntryMode, Timesheet } from "@/lib/types";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { User } from "@supabase/supabase-js";
 
 const supabase = await createBrowserClient();
@@ -391,26 +391,31 @@ export async function fetchTimesheets({
   user: User;
   date: Date;
   viewMode: "daily" | "weekly";
-}) {
+}): Promise<Timesheet[]> {
   const profile = await getProfile(user.id);
+  if (!profile) throw new Error("No profile found for user.");
+
   let startDate = date;
   let endDate = date;
 
   if (viewMode === "weekly") {
-    startDate = startOfWeek(date, { weekStartsOn: 1});
-    endDate = endOfWeek(date, { weekStartsOn: 1});
+    startDate = startOfWeek(date, { weekStartsOn: 1 });
+    endDate = endOfWeek(date, { weekStartsOn: 1 });
   }
+
+  const formattedStart = format(startDate, "yyyy-MM-dd");
+  const formattedEnd = format(endDate, "yyyy-MM-dd");
 
   const { data, error } = await supabase
     .from("timesheets")
-    .select("*")
+    .select("*") // or a specific list of fields
     .eq("company_id", profile.company_id)
-    .gte("date", startDate.toISOString().split("T")[0])
-    .lte("date", endDate.toISOString().split("T")[0]);
+    .gte("date", formattedStart)
+    .lte("date", formattedEnd);
 
-  if (error) throw new Error("Error fetching timesheets:" + error.message);
+  if (error) throw new Error("Error fetching timesheets: " + error.message);
 
-  return data;
+  return data as Timesheet[];
 }
 
 interface TimesheetProps {

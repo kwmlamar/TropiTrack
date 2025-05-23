@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Worker, Project, Timesheet } from "@/lib/types";
 import { SearchableCombobox } from "../searchable-combobox";
-import { generateTimesheet, updateTimesheet } from "@/lib/data";
+import { generateTimesheet, updateTimesheet } from "@/lib/data/data";
 
 export function ClockInOutCreateTimesheetForm() {
   return (
