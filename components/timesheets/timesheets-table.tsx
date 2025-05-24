@@ -18,6 +18,7 @@ import {
   fetchProjectsForCompany,
 } from "@/lib/data/data";
 import {
+  CreateBulkTimesheetForm,
   TotalHoursCreateTimesheetForm,
   TotalHoursEditTimesheetForm,
 } from "@/components/timesheets/timesheet-forms";
@@ -32,18 +33,23 @@ import {
 import TimesheetViewControls from "./timesheets-view-controls";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { groupToWeeklyRows } from "@/lib/data/transformers";
+import { WeekNumberFormatter } from "react-day-picker";
 
 type EntryMode = "clock-in-out" | "total hours";
 
 export default function TimesheetsTable({ user }: { user: User }) {
   const [entryMode, setEntryMode] = useState<EntryMode>("total hours");
-  const [timesheets, setTimesheets] = useState<Timesheet[] | WeeklyTimesheetRow[]>([]);
+  const [timesheets, setTimesheets] = useState<
+    Timesheet[] | WeeklyTimesheetRow[]
+  >([]);
   const [columns, setColumns] = useState<
     ColumnDef<Timesheet | WeeklyTimesheetRow>[]
   >([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [editTimesheet, setEditTimesheet] = useState<Timesheet | null>(null);
+  const [editWeeklyTimesheet, setEditWeeklyTimesheet] =
+    useState<WeeklyTimesheetRow | null>(null);
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
@@ -96,23 +102,22 @@ export default function TimesheetsTable({ user }: { user: User }) {
       async () => await loadTimesheets(),
       (timesheet) => setEditTimesheet(timesheet)
     );
-    
+
     setColumns(
       viewMode === "weekly"
-        ? (generatedWeeklyColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
-        : (
-            entryMode === "clock-in-out"
-              ? (clockInOutColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
-              : (totalHoursColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
-          )
+        ? (generatedWeeklyColumns as ColumnDef<
+            Timesheet | WeeklyTimesheetRow
+          >[])
+        : mode === "clock-in-out"
+        ? (clockInOutColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
+        : (totalHoursColumns as ColumnDef<Timesheet | WeeklyTimesheetRow>[])
     );
-    
   };
 
-  const handleSetEntryMode = async (entryMode: EntryMode) => {
-    const new_mode = await updateEntryMode(user.id, entryMode);
-    setEntryMode(new_mode);
-    await loadWorkersAndProjects(new_mode); // refresh columns on toggle
+  const handleSetEntryMode = async (newMode: EntryMode) => {
+    const updatedMode = await updateEntryMode(user.id, newMode);
+    setEntryMode(updatedMode);
+    await loadWorkersAndProjects(updatedMode); // refresh columns on toggle
   };
 
   const formattedDateLabel =
@@ -151,12 +156,21 @@ export default function TimesheetsTable({ user }: { user: User }) {
           <div>{/* Render total hours inputs */}</div>
         )}
 
-        <TotalHoursCreateTimesheetForm
-          user={user}
-          workers={workers}
-          projects={projects}
-          onRefresh={loadTimesheets}
-        />
+        {viewMode === "weekly" ? (
+          <CreateBulkTimesheetForm
+            user={user}
+            workers={workers}
+            projects={projects}
+            onRefresh={loadTimesheets}
+          />
+        ) : (
+          <TotalHoursCreateTimesheetForm
+            user={user}
+            workers={workers}
+            projects={projects}
+            onRefresh={loadTimesheets}
+          />
+        )}
       </div>
       <div>
         {columns.length > 0 && (

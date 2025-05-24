@@ -1,6 +1,6 @@
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
 import { Worker, Client, Project, EntryMode, Timesheet } from "@/lib/types";
-import { format, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { User } from "@supabase/supabase-js";
 
 const supabase = await createBrowserClient();
@@ -416,6 +416,58 @@ export async function fetchTimesheets({
   if (error) throw new Error("Error fetching timesheets: " + error.message);
 
   return data as Timesheet[];
+}
+
+interface WeeklyTimesheetProps {
+  user: User;
+  selectedWorker: Worker;
+  selectedProject: Project;
+  startDate: string;
+  regularHours: number;
+  overtimeHours: number;
+  supervisorApproval: boolean;
+  notes: string;
+}
+
+export async function generateWeeklyTimesheet(input: WeeklyTimesheetProps) {
+  const {
+    user,
+    selectedWorker,
+    selectedProject,
+    startDate,
+    regularHours,
+    overtimeHours,
+    supervisorApproval,
+    notes,
+  } = input;
+
+  const profile = await getProfile(user.id);
+
+  const weekStart = startOfWeek(new Date(startDate), { weekStartsOn: 1 }); // Monday
+
+  const timesheets = Array.from({ length: 7 })
+    .map((_, i) => {
+      const date = addDays(weekStart, i); // Mon–Sun
+      return {
+        company_id: profile.company_id,
+        worker_id: selectedWorker.id,
+        project_id: selectedProject.id,
+        date: date.toISOString().split("T")[0],
+        regular_hours: regularHours,
+        overtime_hours: overtimeHours,
+        hourly_rate: selectedWorker.hourly_rate,
+        supervisor_approval: supervisorApproval,
+        notes,
+      };
+    })
+    .filter((entry) => {
+      const day = new Date(entry.date).getDay(); // 0 = Sunday
+      return day !== 0; // exclude Sunday
+    });
+
+  const { error } = await supabase.from("timesheets").insert(timesheets);
+
+  if (error) throw error;
 }
 
 interface TimesheetProps {
