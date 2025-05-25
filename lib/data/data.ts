@@ -513,6 +513,33 @@ export async function generateTimesheet({
   }
 }
 
+export async function deleteWeeklyTimesheets({
+  userId,
+  workerId,
+  startDate,
+} : { 
+  userId: string;
+  workerId: string;
+  startDate: string | Date;
+}) {
+  const profile = await getProfile(userId);
+
+  const weekStart = startOfWeek(new Date(startDate), { weekStartsOn: 1 }); // Monday
+  const weekEnd = endOfWeek(new Date(startDate), { weekStartsOn: 1 });
+
+  const { error } = await supabase
+  .from("timesheets")
+  .delete()
+  .match({ company_id: profile.company_id, worker_id: workerId })
+  .gte("date", weekStart.toISOString())
+  .lte("date", weekEnd.toISOString());
+
+  if (error) {
+    console.error("Error deleting weekly timesheets:", error.message);
+    throw new Error("Failed to delete weekly timesheets");
+  }
+}
+
 export async function deleteTimesheet({
   userId,
   timesheetId,

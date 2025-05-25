@@ -15,8 +15,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteTimesheet } from "@/lib/data/data";
+import { deleteTimesheet, deleteWeeklyTimesheets } from "@/lib/data/data";
 import { Worker } from "@/lib/types";
+import { startOfWeek } from "date-fns";
 
 export type Timesheet = {
   id: string;
@@ -55,7 +56,8 @@ export function getTimesheetColumns(
   workerMap: Map<string, Worker>,
   projectMap: Map<string, string>,
   onRefresh: () => void,
-  onEditTimesheet: (t: Timesheet) => void
+  onEditTimesheet: (t: Timesheet) => void,
+  selectedDate: Date,
 ) {
   const sharedColumnsBeginning: ColumnDef<Timesheet>[] = [
     {
@@ -371,9 +373,10 @@ export function getTimesheetColumns(
                 <DropdownMenuItem
                   onClick={async () => {
                     try {
-                      await deleteTimesheet({
+                      await deleteWeeklyTimesheets({
                         userId: user.id,
-                        timesheetId: timesheet.id,
+                        workerId: timesheet.worker_id,
+                        startDate: startOfWeek(selectedDate ?? new Date(), { weekStartsOn: 1})
                       });
                       await onRefresh?.();
                     } catch (err) {
@@ -381,7 +384,7 @@ export function getTimesheetColumns(
                     }
                   }}
                 >
-                  Delete Timesheet
+                  Bulk Delete Timesheets
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

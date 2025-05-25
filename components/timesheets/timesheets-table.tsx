@@ -33,7 +33,6 @@ import {
 import TimesheetViewControls from "./timesheets-view-controls";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { groupToWeeklyRows } from "@/lib/data/transformers";
-import { WeekNumberFormatter } from "react-day-picker";
 
 type EntryMode = "clock-in-out" | "total hours";
 
@@ -100,7 +99,8 @@ export default function TimesheetsTable({ user }: { user: User }) {
       workerMap,
       projectMap,
       async () => await loadTimesheets(),
-      (timesheet) => setEditTimesheet(timesheet)
+      (timesheet) => setEditTimesheet(timesheet),
+      selectedDate ?? new Date()
     );
 
     setColumns(
