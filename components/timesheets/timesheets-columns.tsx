@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -18,6 +17,7 @@ import {
 import { deleteTimesheet, deleteWeeklyTimesheets } from "@/lib/data/data";
 import { Worker } from "@/lib/types";
 import { startOfWeek } from "date-fns";
+import {ClockInCell, ClockOutCell} from "@/components/timesheets/column-helpers"
 
 export type Timesheet = {
   id: string;
@@ -183,47 +183,13 @@ export function getTimesheetColumns(
       id: "clock_in",
       accessorKey: "clock_in",
       header: "Clock In",
-      cell: ({ row }) => {
-        const [formattedTime, setFormattedTime] = useState("");
-
-        useEffect(() => {
-          const value = row.getValue("clock_in") as string;
-          const date = new Date(value);
-          setFormattedTime(
-            date.toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-              timeZone: "America/Nassau",
-            })
-          );
-        }, [row]);
-
-        return <span>{formattedTime}</span>;
-      },
+      cell: ({ row }) => <ClockInCell row={row} />
     },
     {
       id: "clock_out",
       accessorKey: "clock_out",
       header: "Clock Out",
-      cell: ({ row }) => {
-        const [formattedTime, setFormattedTime] = useState("");
-
-        useEffect(() => {
-          const value = row.getValue("clock_out") as string;
-          const date = new Date(value);
-          setFormattedTime(
-            date.toLocaleTimeString([], {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-              timeZone: "America/Nassau",
-            })
-          );
-        }, [row]);
-
-        return <span>{formattedTime}</span>;
-      },
+      cell: ({ row }) => <ClockOutCell row={row} />  
     },
     { accessorKey: "break_duration", header: "Break (min)" },
     { accessorKey: "regular_hours", header: "Reg Hrs" },
@@ -403,3 +369,5 @@ export function getTimesheetColumns(
   ];
   return { clockInOutColumns, totalHoursColumns, weeklyColumns };
 }
+
+

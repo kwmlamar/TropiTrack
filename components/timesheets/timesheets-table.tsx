@@ -47,8 +47,8 @@ export default function TimesheetsTable({ user }: { user: User }) {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [editTimesheet, setEditTimesheet] = useState<Timesheet | null>(null);
-  const [editWeeklyTimesheet, setEditWeeklyTimesheet] =
-    useState<WeeklyTimesheetRow | null>(null);
+  //const [editWeeklyTimesheet, setEditWeeklyTimesheet] =
+    //useState<WeeklyTimesheetRow | null>(null);
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
