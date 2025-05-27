@@ -1,9 +1,7 @@
-import { createClient as createBrowserClient } from "@/utils/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import { Worker, Client, Project, EntryMode, Timesheet } from "@/lib/types";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { User } from "@supabase/supabase-js";
-
-const supabase = await createBrowserClient();
 
 // PROFILE INFO
 export async function getProfile(userId: string) {

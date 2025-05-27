@@ -15,9 +15,8 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconBriefcase,
 } from "@tabler/icons-react";
-import TropiTrackLogo from "./tropitrack-logo";
-import { Briefcase } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
@@ -31,6 +30,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
+
 
 const data = {
   user: {
@@ -41,7 +42,7 @@ const data = {
   navMain: [
     { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
     { title: "Projects", url: "/dashboard/projects", icon: IconFolder },
-    { title: "Clients", url: "/dashboard/clients", icon: Briefcase },
+    { title: "Clients", url: "/dashboard/clients", icon: IconBriefcase },
     { title: "Workers", url: "/dashboard/workers", icon: IconUsers },
     {
       title: "Timesheets",
@@ -95,21 +96,37 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <a href="#">
-                <TropiTrackLogo />
-                <span className="text-base font-semibold">TropiTrack</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      <SidebarHeader >
+  <SidebarMenu className="flex justify-center">
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        className="data-[slot=sidebar-menu-button]:!py-6 data-[slot=sidebar-menu-button]:!px-1.5 bg-transparent hover:bg-transparent"
+      >
+        <a href="#" className="">
+  <Image
+    src="/logo/1.png"
+    alt="TropiTrack Logo"
+    width={100}
+    height={50}
+    className="block dark:hidden"
+    priority
+  />
+  <Image
+    src="/logo/2.png"
+    alt="TropiTrack Dark Logo"
+    width={100}
+    height={50}
+    className="hidden dark:block"
+    priority
+  />
+</a>
+
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  </SidebarMenu>
+</SidebarHeader>
+
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
