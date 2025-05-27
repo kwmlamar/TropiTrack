@@ -153,7 +153,7 @@ export default function WorkersTable({ user }: {user: User}) {
 
       {/* Employees Table*/}
       <div className="mt-4">
-        <div className="w-full px-4">
+        <div className="w-full">
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_1fr_1fr_40px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
             {columns.map((col) => (

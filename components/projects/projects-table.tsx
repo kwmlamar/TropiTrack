@@ -293,7 +293,7 @@ export default function ProjectsTable({ user }: { user: User }) {
 
       {/* Projects Table*/}
       <div className="mt-4">
-        <div className="w-full px-4">
+        <div className="w-full">
           {/* Column Headers */}
           <div className="overflow-x-auto">
             <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
