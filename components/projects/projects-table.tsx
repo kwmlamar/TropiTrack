@@ -150,16 +150,20 @@ export default function ProjectsTable({ user }: { user: User }) {
     project: Project & { assigned_worker_ids: (string | number)[] }
   ) => {
     try {
-      const { project: updatedProject } = await updateProject(project, { user });
-  
+      const { project: updatedProject } = await updateProject(project, {
+        user,
+      });
+
       // Merge assigned_worker_ids into updatedProject if your state relies on it
       const fullUpdatedProject = {
         ...updatedProject,
         assigned_worker_ids: project.assigned_worker_ids,
       };
-  
+
       setProjects((prev) =>
-        prev.map((p) => (p.id === fullUpdatedProject.id ? fullUpdatedProject : p))
+        prev.map((p) =>
+          p.id === fullUpdatedProject.id ? fullUpdatedProject : p
+        )
       );
     } catch (error) {
       console.error("Failed to update project:", error);
@@ -170,21 +174,23 @@ export default function ProjectsTable({ user }: { user: User }) {
       loadProjectAssignments();
     }
   };
-  
 
   const handleDeleteProject = async () => {
     if (!selectedProject) return;
     try {
-        await deleteProject(selectedProject.id, {user});
-        console.log(`Project "${selectedProject.name}" deleted successfully.`)
+      await deleteProject(selectedProject.id, { user });
+      console.log(`Project "${selectedProject.name}" deleted successfully.`);
     } catch (error) {
-        console.log("Failed to delete project:", error instanceof Error ? error.message : error);
+      console.log(
+        "Failed to delete project:",
+        error instanceof Error ? error.message : error
+      );
     } finally {
-        setSelectedProject(null);
-        setIsDeleteDialogOpen(false);
-        loadProjects();
+      setSelectedProject(null);
+      setIsDeleteDialogOpen(false);
+      loadProjects();
     }
-  }
+  };
 
   const assignmentCounts = useMemo(() => {
     const map = new Map<string, number>();
@@ -196,12 +202,33 @@ export default function ProjectsTable({ user }: { user: User }) {
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
-      const matchesClient = selectedClient ? project.client_id === selectedClient.id : true;
-      const matchesStatus = statusFilter === "all" ? true : project.status === statusFilter;
+      const matchesClient = selectedClient
+        ? project.client_id === selectedClient.id
+        : true;
+      const matchesStatus =
+        statusFilter === "all" ? true : project.status === statusFilter;
       return matchesClient && matchesStatus;
     });
   }, [projects, selectedClient, statusFilter]);
-  
+
+  function getBadgeClass(status: string) {
+    const base = "rounded-md px-2 py-0.5 text-xs font-medium";
+
+    switch (status) {
+      case "not_started":
+        return `${base} bg-[#e2e8f0] text-[#1e293b] dark:bg-[#334155] dark:text-[#f9fafb]`;
+      case "in_progress":
+        return `${base} bg-[#38bdf8] text-[#1e293b] dark:bg-[#0ea5e9] dark:text-[#f9fafb]`;
+      case "paused":
+        return `${base} bg-[#fcd34d] text-[#1e293b] dark:bg-[#fde68a] dark:text-[#1e293b]`;
+      case "completed":
+        return `${base} bg-[#10b981] text-white dark:bg-[#10b981] dark:text-white`;
+      case "cancelled":
+        return `${base} bg-[#dc2626] text-white dark:bg-[#dc2626] dark:text-white`;
+      default:
+        return `${base} bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground`;
+    }
+  }
 
   return (
     <DashboardLayout title="Projects">
@@ -270,15 +297,27 @@ export default function ProjectsTable({ user }: { user: User }) {
                 project={selectedProject}
                 clients={clients}
                 workers={workers}
-                {...(selectedProject ? { assigned_worker_ids: projectAssignments
-                    .filter((pa) => pa.project_id === selectedProject.id)
-                    .map((pa) => pa.worker_id) } : {})}
+                {...(selectedProject
+                  ? {
+                      assigned_worker_ids: projectAssignments
+                        .filter((pa) => pa.project_id === selectedProject.id)
+                        .map((pa) => pa.worker_id),
+                    }
+                  : {})}
                 onSubmit={(project) => {
-                    if (selectedProject) {
-                        handleUpdateProject(project as Project & { assigned_worker_ids: (string | number)[] });
-                      } else {
-                        handleCreateProject(project as Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] });
+                  if (selectedProject) {
+                    handleUpdateProject(
+                      project as Project & {
+                        assigned_worker_ids: (string | number)[];
                       }
+                    );
+                  } else {
+                    handleCreateProject(
+                      project as Omit<Project, "id"> & {
+                        assigned_worker_ids: (string | number)[];
+                      }
+                    );
+                  }
                 }}
                 onCancel={() => {
                   setSelectedProject(null);
@@ -296,11 +335,13 @@ export default function ProjectsTable({ user }: { user: User }) {
         <div className="w-full">
           {/* Column Headers */}
           <div className="overflow-x-auto">
-            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
+            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 px-4 py-2 items-center text-sm font-semibold text-gray-600">
               {columns.map((col) => (
-                <div key={col}>{col}</div>
+                <div key={col} className="p-0">
+                  {col}
+                </div>
               ))}
-              <div /> {/* Empty column for the meatball */}
+              <div className="p-0" /> {/* Empty meatball slot */}
             </div>
           </div>
 
@@ -310,25 +351,35 @@ export default function ProjectsTable({ user }: { user: User }) {
               Loading projects...
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               {filteredProjects.map((project, i) => (
                 <Card
                   key={i}
-                  className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 p-4 items-center"
+                  className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_20px] gap-4 px-4 py-2 items-center"
                 >
-                  <CardContent className="p-0">{project.name}</CardContent>
+                  <CardContent className="p-0 font-semibold">
+                    {project.name}
+                  </CardContent>
                   <CardContent className="p-0">
                     {clients.find((c) => c.id === project.client_id)?.name ||
                       "Unknown Client"}
                   </CardContent>
-                  <CardContent>
+                  <CardContent className="p-0">
                     {format(parseISO(project.start_date), "MMMM do, yyyy")}
                   </CardContent>
-                  <CardContent>
-                    <Badge variant="outline">{project.status}</Badge>
+                  <CardContent className="p-0">
+                    <Badge
+                      variant="outline"
+                      className={getBadgeClass(project.status)}
+                    >
+                      {project.status.replaceAll("_", " ")}
+                    </Badge>
                   </CardContent>
-                  <CardContent>
-                  {assignmentCounts.get(project.id) || 0} { (assignmentCounts.get(project.id) || 0) === 1 ? 'worker' : 'workers' }
+                  <CardContent className="p-0">
+                    {assignmentCounts.get(project.id) || 0}{" "}
+                    {(assignmentCounts.get(project.id) || 0) === 1
+                      ? "worker"
+                      : "workers"}
                   </CardContent>
                   <CardContent className="p-0 justify-self-end">
                     <DropdownMenu>
@@ -373,8 +424,8 @@ export default function ProjectsTable({ user }: { user: User }) {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete {selectedProject?.name}.
-                      This action cannot be undone.
+                      This will permanently delete {selectedProject?.name}. This
+                      action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

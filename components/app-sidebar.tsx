@@ -8,7 +8,7 @@ import {
   IconFileAi,
   IconFileDescription,
   IconFileWord,
-  IconFolder,
+  IconBuilding,
   IconHelp,
   IconDevicesDollar,
   IconReport,
@@ -41,7 +41,7 @@ const data = {
   },
   navMain: [
     { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
-    { title: "Projects", url: "/dashboard/projects", icon: IconFolder },
+    { title: "Projects", url: "/dashboard/projects", icon: IconBuilding },
     { title: "Clients", url: "/dashboard/clients", icon: IconBriefcase },
     { title: "Workers", url: "/dashboard/workers", icon: IconUsers },
     {

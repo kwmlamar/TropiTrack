@@ -22,7 +22,7 @@ export function SearchForm({ placeholder = "Search...", ...props }: SearchFormPr
           <SidebarInput
             id="search"
             placeholder={placeholder}
-            className="pl-8"
+            className="pl-8 bg-white dark:bg-transparent"
           />
           <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
         </SidebarGroupContent>

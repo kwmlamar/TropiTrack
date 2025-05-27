@@ -75,7 +75,7 @@ export function DataTable<TData, TValue>({
           onChange={(event) =>
             table.getColumn("worker_id")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="max-w-sm bg-white"
         />  
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -108,10 +108,16 @@ export function DataTable<TData, TValue>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+  key={headerGroup.id}
+  className="bg-[#f3ece6] dark:bg-slate-800"
+>
+
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead 
+                    className="font-semibold text-gray-700 dark:text-gray-300"
+                    key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(

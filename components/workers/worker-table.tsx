@@ -155,7 +155,7 @@ export default function WorkersTable({ user }: {user: User}) {
       <div className="mt-4">
         <div className="w-full">
           {/* Column Headers */}
-          <div className="grid grid-cols-[2fr_1fr_1fr_40px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-2">
+          <div className="grid grid-cols-[2fr_1fr_1fr_40px] gap-4 text-sm font-semibold text-gray-600 mb-2 px-4">
             {columns.map((col) => (
               <div key={col}>{col}</div>
             ))}
@@ -168,13 +168,14 @@ export default function WorkersTable({ user }: {user: User}) {
               Loading employees...
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               {workers.map((worker, i) => (
                 <Card
                   key={i}
-                  className="grid grid-cols-[2fr_1fr_1fr_min-content] gap-4 p-4 items-center"
+                  className="grid grid-cols-[2fr_1fr_1fr_min-content] gap-4 px-4 py-2 items-center"
+
                 >
-                  <CardContent className="p-0">{worker.name}</CardContent>
+                  <CardContent className="p-0 font-semibold">{worker.name}</CardContent>
                   <CardContent className="p-0">
                     ${worker.hourly_rate}/hr
                   </CardContent>
