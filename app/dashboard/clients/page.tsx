@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import ClientTable from "@/components/clients/client-table";
+import DashboardLayout from '@/components/layouts/DashboardLayout';
 
 export default async function ClientPage() {
     const supabase = await createClient();
@@ -11,6 +12,8 @@ export default async function ClientPage() {
     }
 
     return (
-        <ClientTable user={user}/>
+        <DashboardLayout title='Clients' >
+            <ClientTable user={user}/>
+        </DashboardLayout>
     )
 }

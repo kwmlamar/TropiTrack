@@ -1,7 +1,8 @@
-import TimesheetsTable from "@/components/timesheets/timesheets-table";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import TimesheetsPage from "@/components/timesheets2/timesheets-page";
 import { createClient } from "@/utils/supabase/server";
 
-export default async function TimesheetsPage() {
+export default async function Page() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -12,5 +13,9 @@ export default async function TimesheetsPage() {
     throw new Error("User not found");
   }
 
-  return <TimesheetsTable user={user} />;
+  return (
+    <DashboardLayout title="Timesheets">
+      <TimesheetsPage />
+    </DashboardLayout>
+  );
 }

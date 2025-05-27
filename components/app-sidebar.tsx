@@ -1,26 +1,30 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import type * as React from "react"
 import {
-  IconCamera,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
   IconFileDescription,
-  IconFileWord,
   IconBuilding,
   IconHelp,
   IconDevicesDollar,
-  IconReport,
   IconSearch,
   IconSettings,
   IconUsers,
   IconBriefcase,
-} from "@tabler/icons-react";
+  IconPlus,
+  IconBell,
+  IconChevronRight,
+  IconClock,
+  IconCalendar,
+} from "@tabler/icons-react"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavMain } from "@/components/nav-main"
+import { NavSecondary } from "@/components/nav-secondary"
+import { NavUser } from "@/components/nav-user"
+import { QuickActions } from "@/components/quick-actions"
+import { SearchCommand } from "@/components/search-command"
 import {
   Sidebar,
   SidebarContent,
@@ -29,111 +33,248 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import Image from "next/image";
-
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import Image from "next/image"
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "John Smith",
+    email: "john@constructionco.bs",
+    avatar: "/avatars/user.jpg",
+    role: "Project Manager",
   },
   navMain: [
-    { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
-    { title: "Projects", url: "/dashboard/projects", icon: IconBuilding },
-    { title: "Clients", url: "/dashboard/clients", icon: IconBriefcase },
-    { title: "Workers", url: "/dashboard/workers", icon: IconUsers },
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: IconDashboard,
+      badge: null,
+      description: "Overview and analytics",
+    },
+    {
+      title: "Projects",
+      url: "/dashboard/projects",
+      icon: IconBuilding,
+      badge: "3",
+      description: "Manage construction projects",
+    },
+    {
+      title: "Clients",
+      url: "/dashboard/clients",
+      icon: IconBriefcase,
+      badge: null,
+      description: "Client relationships",
+    },
+    {
+      title: "Workers",
+      url: "/dashboard/workers",
+      icon: IconUsers,
+      badge: "12",
+      description: "Team management",
+    },
     {
       title: "Timesheets",
       url: "/dashboard/timesheets",
       icon: IconFileDescription,
+      badge: "2",
+      description: "Track work hours",
     },
-    { title: "Payroll", url: "/dashboard/payroll", icon: IconDevicesDollar },
+    {
+      title: "Payroll",
+      url: "/dashboard/payroll",
+      icon: IconDevicesDollar,
+      badge: null,
+      description: "Manage payments",
+    },
   ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        { title: "Active Proposals", url: "#" },
-        { title: "Archived", url: "#" },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        { title: "Active Proposals", url: "#" },
-        { title: "Archived", url: "#" },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        { title: "Active Proposals", url: "#" },
-        { title: "Archived", url: "#" },
-      ],
-    },
+  quickActions: [
+    { title: "New Project", icon: IconBuilding, action: "create-project" },
+    { title: "Add Worker", icon: IconUsers, action: "add-worker" },
+    { title: "Clock In", icon: IconClock, action: "clock-in" },
+    { title: "Schedule", icon: IconCalendar, action: "schedule" },
   ],
   navSecondary: [
-    { title: "Settings", url: "/dashboard/settings", icon: IconSettings },
-    { title: "Get Help", url: "#", icon: IconHelp },
-    { title: "Search", url: "#", icon: IconSearch },
+    {
+      title: "Search",
+      url: "#",
+      icon: IconSearch,
+      shortcut: "⌘K",
+      description: "Search everything",
+    },
+    {
+      title: "Settings",
+      url: "/dashboard/settings",
+      icon: IconSettings,
+      description: "App preferences",
+    },
+    {
+      title: "Help & Support",
+      url: "#",
+      icon: IconHelp,
+      description: "Get assistance",
+    },
   ],
-  documents: [
-    { name: "Data Library", url: "#", icon: IconDatabase },
-    { name: "Reports", url: "#", icon: IconReport },
-    { name: "Word Assistant", url: "#", icon: IconFileWord },
+  recentProjects: [
+    { name: "Paradise Resort Phase 1", status: "active", progress: 75 },
+    { name: "Cable Beach Condos", status: "planning", progress: 25 },
+    { name: "Downtown Office Complex", status: "active", progress: 60 },
   ],
-};
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname()
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
+
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader >
-  <SidebarMenu className="flex justify-center">
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        className="data-[slot=sidebar-menu-button]:!py-6 data-[slot=sidebar-menu-button]:!px-1.5 bg-transparent hover:bg-transparent"
-      >
-        <a href="#" className="">
-  <Image
-    src="/logo/1.png"
-    alt="TropiTrack Logo"
-    width={100}
-    height={50}
-    className="block dark:hidden"
-    priority
-  />
-  <Image
-    src="/logo/2.png"
-    alt="TropiTrack Dark Logo"
-    width={100}
-    height={50}
-    className="hidden dark:block"
-    priority
-  />
-</a>
+    <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-sidebar/50 backdrop-blur-sm" {...props}>
+      {/* Enhanced Header with Logo and Quick Search */}
+      <SidebarHeader className="border-b border-border/50 bg-sidebar/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-2 py-3">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className="data-[slot=sidebar-menu-button]:!py-2 data-[slot=sidebar-menu-button]:!px-2 bg-transparent hover:bg-sidebar-accent/50 transition-colors duration-200"
+              >
+                <a href="/dashboard" className="flex items-center gap-2">
+                  <div className="relative">
+                    <Image
+                      src="/logo/1.png"
+                      alt="TropiTrack Logo"
+                      width={isCollapsed ? 32 : 100}
+                      height={isCollapsed ? 32 : 50}
+                      className="block dark:hidden transition-all duration-200"
+                      priority
+                    />
+                    <Image
+                      src="/logo/2.png"
+                      alt="TropiTrack Dark Logo"
+                      width={isCollapsed ? 32 : 100}
+                      height={isCollapsed ? 32 : 50}
+                      className="hidden dark:block transition-all duration-200"
+                      priority
+                    />
+                  </div>
+                  {isCollapsed && (
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-sidebar-foreground">TropiTrack</span>
+                      <span className="text-xs text-sidebar-foreground/60">Construction Suite</span>
+                    </div>
+                  )}
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
 
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  </SidebarMenu>
-</SidebarHeader>
+          {!isCollapsed && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+              >
+                <IconBell className="h-4 w-4" />
+              </Button>
+              <SearchCommand />
+            </div>
+          )}
+        </div>
+      </SidebarHeader>
 
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+      <SidebarContent className="px-2 py-4 space-y-6">
+        {/* Quick Actions Section */}
+        {!isCollapsed && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2">
+              Quick Actions
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <QuickActions items={data.quickActions} />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Main Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2">
+            {isCollapsed ? "Nav" : "Navigation"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavMain items={data.navMain} />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Recent Projects - Only show when expanded */}
+        {!isCollapsed && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2 flex items-center justify-between">
+              Recent Projects
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 text-sidebar-foreground/40 hover:text-sidebar-foreground"
+              >
+                <IconPlus className="h-3 w-3" />
+              </Button>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="space-y-1">
+                {data.recentProjects.map((project, index) => (
+                  <div
+                    key={index}
+                    className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/50 cursor-pointer transition-colors duration-150"
+                  >
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        project.status === "active" ? "bg-green-500" : "bg-yellow-500",
+                      )}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-sidebar-foreground truncate">{project.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <div className="w-12 h-1 bg-sidebar-accent rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all duration-300"
+                            style={{ width: `${project.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-sidebar-foreground/60">{project.progress}%</span>
+                      </div>
+                    </div>
+                    <IconChevronRight className="h-3 w-3 text-sidebar-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                ))}
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Separator */}
+        <Separator className="bg-border/50" />
+
+        {/* Secondary Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2">
+            {isCollapsed ? "More" : "More Options"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <NavSecondary items={data.navSecondary} />
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+
+      {/* Enhanced Footer */}
+      <SidebarFooter className="border-t border-border/50 bg-sidebar/80 backdrop-blur-sm p-2">
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>
-  );
+  )
 }

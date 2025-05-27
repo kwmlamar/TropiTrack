@@ -1,8 +1,7 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { SearchForm } from "@/components/search-form";
+import { useState, useEffect } from "react"
+import { SearchForm } from "@/components/search-form"
 import {
   Dialog,
   DialogContent,
@@ -10,27 +9,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ClientForm } from "@/components/clients/client-form";
-import {
-  fetchClientsForCompany,
-  generateClient,
-  deleteClient,
-  updateClient,
-} from "@/lib/data/data";
-import { User } from "@supabase/supabase-js"
-
-import { Client } from "@/lib/types";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical, Plus, UserCheck, UserX } from "lucide-react";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { ClientForm } from "@/components/clients/client-form"
+import { fetchClientsForCompany, generateClient, deleteClient, updateClient } from "@/lib/data/data"
+import type { User } from "@supabase/supabase-js"
+import type { Client } from "@/lib/types"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Card, CardContent } from "@/components/ui/card"
+import { MoreVertical, Plus, UserCheck, UserX, Users, Building2, Mail, Phone } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,217 +27,311 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"
 
-const columns = ["Name", "Email"];
+const columns = ["Name", "Email"]
 
-export default function ClientTable({ user }: {user: User} ) {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+export default function ClientTable({ user }: { user: User }) {
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [clients, setClients] = useState<Client[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
-
-    loadClients();
-  }, [user]);
+    loadClients()
+  }, [user])
 
   const loadClients = async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const data = await fetchClientsForCompany({user});
-      setClients(data);
+      const data = await fetchClientsForCompany({ user })
+      setClients(data)
     } catch (error) {
-      console.log("Error fetching clients", error);
+      console.log("Error fetching clients", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleCreateClient = async (client: Client) => {
     try {
-      const data = await generateClient(client, {user} );
-      setClients((prev) => [...prev, data]);
+      const data = await generateClient(client, { user })
+      setClients((prev) => [...prev, data])
     } catch (error) {
-      console.log("Error creating client:", error);
+      console.log("Error creating client:", error)
     } finally {
-      setIsFormOpen(false);
-      loadClients();
+      setIsFormOpen(false)
+      loadClients()
     }
-  };
+  }
 
   const handleUpdateClient = async (client: Client) => {
-    if (!selectedClient) return;
+    if (!selectedClient) return
     try {
-      const updatedClient = await updateClient(client, {user});
-      if (!updatedClient) throw new Error("No client returned from update.");
+      const updatedClient = await updateClient(client, { user })
+      if (!updatedClient) throw new Error("No client returned from update.")
 
-      setClients(clients.map((c) => (c.id === client.id ? updatedClient : c)));
+      setClients(clients.map((c) => (c.id === client.id ? updatedClient : c)))
     } catch (error) {
-      console.log("Error updating client:", error);
+      console.log("Error updating client:", error)
     } finally {
-      setSelectedClient(null);
-      setIsFormOpen(false);
-      loadClients();
+      setSelectedClient(null)
+      setIsFormOpen(false)
+      loadClients()
     }
-  };
+  }
 
   const handleDeleteClient = async () => {
-    if (!selectedClient) return;
+    if (!selectedClient) return
     try {
-      await deleteClient(selectedClient.id, {user});
+      await deleteClient(selectedClient.id, { user })
     } catch (error) {
-      console.log("Error deleting client:", error);
+      console.log("Error deleting client:", error)
     } finally {
-      setIsDeleteDialogOpen(false);
-      setSelectedClient(null);
-      loadClients();
+      setIsDeleteDialogOpen(false)
+      setSelectedClient(null)
+      loadClients()
     }
-  };
+  }
+
+  // Calculate statistics
+  const totalClients = clients.length
+  const clientsWithProjects = clients.filter((c) => c.projects && c.projects.length > 0).length
+  const recentClients = clients.filter((c) => {
+    const createdAt = new Date(c.created_at || Date.now())
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    return createdAt > thirtyDaysAgo
+  }).length
 
   return (
-    <DashboardLayout title="Clients">
-      <h1 className="text-2xl font-bold">Add to your clients</h1>
-      <div className="mt-4 flex w-full items-center justify-between">
-        <SearchForm
-          placeholder="Search clients..."
-          className="w-1/3 max-w-md"
-        />
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Management</h1>
+        <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Clients</p>
+                <p className="text-2xl font-bold text-foreground">{totalClients}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
+                <p className="text-2xl font-bold text-foreground">{clientsWithProjects}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <UserCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">New This Month</p>
+                <p className="text-2xl font-bold text-foreground">{recentClients}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Controls Section */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <SearchForm placeholder="Search clients..." className="w-full sm:w-80" />
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button onClick={console.log}>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
               <Plus className="mr-2 h-4 w-4" />
               Add Client
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>
-                {selectedClient ? "Edit Client" : "Add Client"}
-              </DialogTitle>
+              <DialogTitle className="text-foreground">{selectedClient ? "Edit Client" : "Add New Client"}</DialogTitle>
               <DialogDescription>
                 {selectedClient
-                  ? "Update the client's information below"
-                  : "Fill in the details to add a new client."}
+                  ? "Update the client's information below."
+                  : "Fill in the details to add a new client to your portfolio."}
               </DialogDescription>
             </DialogHeader>
             <ClientForm
               client={selectedClient}
-              onSubmit={
-                selectedClient ? handleUpdateClient : handleCreateClient
-              }
+              onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
               onCancel={() => {
-                setSelectedClient(null);
-                setIsFormOpen(false);
+                setSelectedClient(null)
+                setIsFormOpen(false)
               }}
             />
-            <div className="flex flex-col gap-4"></div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Clients Table*/}
-      <div className="mt-4">
-        <div className="w-full">
+      {/* Clients Table */}
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-0">
           {/* Column Headers */}
-          <div className="grid grid-cols-[2fr_2fr_40px] gap-4 px-4 py-2 items-center text-sm font-semibold text-gray-600">
+          <div className="grid grid-cols-[2fr_2fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
             {columns.map((col) => (
-              <div key={col} className="p-0">{col}</div>
+              <div key={col} className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {col}
+              </div>
             ))}
-            <div className="p-0"/> {/* Empty column for the meatball */}
+            <div /> {/* Empty column for the menu */}
           </div>
 
-          {/* Data Cards as Rows */}
+          {/* Data Rows */}
           {isLoading ? (
-            <div className="text-center text-sm text-gray-500 py-4">
-              Loading employees...
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm">Loading clients...</span>
+              </div>
+            </div>
+          ) : clients.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-6">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                <UserX className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">No clients found</h3>
+              <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
+                You haven&apos;t added any clients yet. Add your first client to start building your project portfolio.
+              </p>
+              <Button
+                onClick={() => setIsFormOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <UserCheck className="mr-2 h-4 w-4" />
+                Add Your First Client
+              </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-1.5">
+            <div className="divide-y divide-border/50">
               {clients.map((client, i) => (
-                <Card
-                  key={i}
-                  className="grid grid-cols-[2fr_2fr_40px] gap-4 px-4 py-2 items-center"
+                <div
+                  key={client.id || i}
+                  className="grid grid-cols-[2fr_2fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
                 >
-                  <CardContent className="p-0 font-semibold">{client.name}</CardContent>
-                  <CardContent className="p-0">{client.email}</CardContent>
-                  <CardContent className="p-0 justify-self-end">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-primary">
+                        {client.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{client.name}</p>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        {client.phone && (
+                          <div className="flex items-center space-x-1">
+                            <Phone className="h-3 w-3" />
+                            <span>{client.phone}</span>
+                          </div>
+                        )}
+                        {client.address && (
+                          <div className="flex items-center space-x-1">
+                            <Building2 className="h-3 w-3" />
+                            <span className="truncate max-w-32">{client.address}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-foreground">{client.email}</span>
+                  </div>
+
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem
                           onClick={() => {
-                            setSelectedClient(client);
-                            setIsFormOpen(true);
+                            setSelectedClient(client)
+                            setIsFormOpen(true)
                           }}
+                          className="cursor-pointer"
                         >
-                          Edit
+                          Edit Client
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          variant="destructive"
                           onClick={() => {
-                            setSelectedClient(client);
-                            setIsDeleteDialogOpen(true);
+                            setSelectedClient(client)
+                            setIsDeleteDialogOpen(true)
                           }}
+                          className="cursor-pointer text-destructive focus:text-destructive"
                         >
-                          Delete
+                          Delete Client
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
-              <AlertDialog
-                open={isDeleteDialogOpen}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setSelectedClient(null);
-                  }
-                  setIsDeleteDialogOpen(open);
-                }}
-              >
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete {selectedClient?.name}. This
-                      action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteClient}>
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           )}
+        </CardContent>
+      </Card>
 
-          {clients.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center h-64 border rounded-lg p-6">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
-                <UserX className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">No clients found</h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                You haven&apos;t added any clients yet. Add your first client to
-                get started.
-              </p>
-              <Button onClick={() => setIsFormOpen(true)}>
-                <UserCheck className="mr-2 h-4 w-4" />
-                Add Your First client
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedClient(null)
+          }
+          setIsDeleteDialogOpen(open)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{selectedClient?.name}</strong> and all associated project data. This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Delete Client
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
 }

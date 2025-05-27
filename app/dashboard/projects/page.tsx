@@ -1,14 +1,20 @@
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 import ProjectsTable from "@/components/projects/projects-table";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (error || !user) throw new Error("User not found")
+  if (error || !user) throw new Error("User not found");
 
   return (
-    <ProjectsTable user={user}/>
+    <DashboardLayout title="Projects">
+      <ProjectsTable user={user} />
+    </DashboardLayout>
   );
 }
