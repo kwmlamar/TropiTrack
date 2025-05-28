@@ -2,17 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { SearchForm } from "@/components/search-form"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { ClientForm } from "@/components/clients/client-form"
-import { fetchClientsForCompany, generateClient, deleteClient, updateClient } from "@/lib/data/data"
+import { fetchClientsForCompany, deleteClient } from "@/lib/data/data"
 import type { User } from "@supabase/supabase-js"
 import type { Client } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -28,15 +19,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { ClientDialog } from "@/components/forms/form-dialogs"
 
 const columns = ["Name", "Email"]
 
 export default function ClientTable({ user }: { user: User }) {
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [clients, setClients] = useState<Client[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
   useEffect(() => {
     loadClients()
@@ -51,34 +42,6 @@ export default function ClientTable({ user }: { user: User }) {
       console.log("Error fetching clients", error)
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleCreateClient = async (client: Client) => {
-    try {
-      const data = await generateClient(client, { user })
-      setClients((prev) => [...prev, data])
-    } catch (error) {
-      console.log("Error creating client:", error)
-    } finally {
-      setIsFormOpen(false)
-      loadClients()
-    }
-  }
-
-  const handleUpdateClient = async (client: Client) => {
-    if (!selectedClient) return
-    try {
-      const updatedClient = await updateClient(client, { user })
-      if (!updatedClient) throw new Error("No client returned from update.")
-
-      setClients(clients.map((c) => (c.id === client.id ? updatedClient : c)))
-    } catch (error) {
-      console.log("Error updating client:", error)
-    } finally {
-      setSelectedClient(null)
-      setIsFormOpen(false)
-      loadClients()
     }
   }
 
@@ -160,32 +123,15 @@ export default function ClientTable({ user }: { user: User }) {
       {/* Controls Section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <SearchForm placeholder="Search clients..." className="w-full sm:w-80" />
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
+        <ClientDialog
+          onSuccess={loadClients}
+          trigger={
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
               <Plus className="mr-2 h-4 w-4" />
               Add Client
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">{selectedClient ? "Edit Client" : "Add New Client"}</DialogTitle>
-              <DialogDescription>
-                {selectedClient
-                  ? "Update the client's information below."
-                  : "Fill in the details to add a new client to your portfolio."}
-              </DialogDescription>
-            </DialogHeader>
-            <ClientForm
-              client={selectedClient}
-              onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
-              onCancel={() => {
-                setSelectedClient(null)
-                setIsFormOpen(false)
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+          }
+        />
       </div>
 
       {/* Clients Table */}
@@ -218,13 +164,15 @@ export default function ClientTable({ user }: { user: User }) {
               <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
                 You haven&apos;t added any clients yet. Add your first client to start building your project portfolio.
               </p>
-              <Button
-                onClick={() => setIsFormOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <UserCheck className="mr-2 h-4 w-4" />
-                Add Your First Client
-              </Button>
+              <ClientDialog
+                onSuccess={loadClients}
+                trigger={
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    Add Your First Client
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <div className="divide-y divide-border/50">
@@ -275,15 +223,13 @@ export default function ClientTable({ user }: { user: User }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedClient(client)
-                            setIsFormOpen(true)
-                          }}
-                          className="cursor-pointer"
-                        >
-                          Edit Client
-                        </DropdownMenuItem>
+                        <ClientDialog
+                          client={client}
+                          onSuccess={loadClients}
+                          trigger={
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit Client</DropdownMenuItem>
+                          }
+                        />
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedClient(client)

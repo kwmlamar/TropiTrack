@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { CalendarDays, Clock, Users, Building2, Download, Plus, Search } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { CalendarDays, Clock, Users, Building2, Download, Plus, Search, UsersRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,17 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+// Updated imports
+import {
+  getTimesheets,
+  updateTimesheet as updateTimesheetData,
+  deleteTimesheet,
+  getTimesheetSummary,
+} from "@/lib/data/timesheets"
+import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
+import { TimesheetDialog, BulkTimesheetDialog } from "@/components/forms/form-dialogs"
 
 // Mock data - replace with real data from your backend
 const mockWorkers = [
@@ -30,96 +41,164 @@ const mockProjects = [
   { id: "4", name: "Atlantis Expansion", location: "Paradise Island" },
 ]
 
-const mockTimesheets = [
-  {
-    id: "1",
-    workerId: "1",
-    projectId: "1",
-    date: "2024-01-15",
-    hoursWorked: 8,
-    overtimeHours: 0,
-    status: "present",
-    notes: "Regular shift",
-  },
-  {
-    id: "2",
-    workerId: "1",
-    projectId: "1",
-    date: "2024-01-16",
-    hoursWorked: 9,
-    overtimeHours: 1,
-    status: "present",
-    notes: "Extra hour for deadline",
-  },
-  {
-    id: "3",
-    workerId: "2",
-    projectId: "2",
-    date: "2024-01-15",
-    hoursWorked: 7.5,
-    overtimeHours: 0,
-    status: "present",
-    notes: "",
-  },
-  {
-    id: "4",
-    workerId: "2",
-    projectId: "2",
-    date: "2024-01-16",
-    hoursWorked: 0,
-    overtimeHours: 0,
-    status: "absent",
-    notes: "Sick leave",
-  },
-  {
-    id: "5",
-    workerId: "3",
-    projectId: "1",
-    date: "2024-01-15",
-    hoursWorked: 8,
-    overtimeHours: 0,
-    status: "late",
-    notes: "Arrived 30 min late",
-  },
-  {
-    id: "6",
-    workerId: "3",
-    projectId: "1",
-    date: "2024-01-16",
-    hoursWorked: 8,
-    overtimeHours: 0,
-    status: "present",
-    notes: "",
-  },
-]
-
 type AttendanceStatus = "present" | "absent" | "late"
 
-interface Timesheet {
-  id: string
-  workerId: string
-  projectId: string
-  date: string
-  hoursWorked: number
-  overtimeHours: number
-  status: AttendanceStatus
-  notes: string
-}
-
 export default function TimesheetsPage() {
-  const [timesheets, setTimesheets] = useState<Timesheet[]>(mockTimesheets)
+  // Updated state to use TimesheetWithDetails
+  const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [summary, setSummary] = useState({
+    totalHours: 0,
+    totalRegularHours: 0,
+    totalOvertimeHours: 0,
+    totalPay: 0,
+    timesheetCount: 0,
+  })
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedWorker, setSelectedWorker] = useState<string>("all")
   const [selectedProject, setSelectedProject] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly")
   const [searchTerm, setSearchTerm] = useState("")
 
+  // Load timesheets effect
+  useEffect(() => {
+    loadTimesheets()
+  }, [selectedDate, selectedWorker, selectedProject, viewMode])
+
+  // CRUD operations
+  const loadTimesheets = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const filters: TimesheetFilters = {}
+
+      // Apply date filters based on view mode
+      if (viewMode === "daily") {
+        filters.date_from = format(selectedDate, "yyyy-MM-dd")
+        filters.date_to = format(selectedDate, "yyyy-MM-dd")
+      } else {
+        const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
+        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+        filters.date_from = format(weekStart, "yyyy-MM-dd")
+        filters.date_to = format(weekEnd, "yyyy-MM-dd")
+      }
+
+      // Apply other filters
+      if (selectedWorker !== "all") {
+        filters.worker_id = selectedWorker
+      }
+
+      if (selectedProject !== "all") {
+        filters.project_id = selectedProject
+      }
+
+      const [timesheetsResult, summaryResult] = await Promise.all([
+        getTimesheets(filters),
+        getTimesheetSummary(filters),
+      ])
+
+      if (timesheetsResult.success && timesheetsResult.data) {
+        setTimesheets(timesheetsResult.data)
+      } else {
+        setError(timesheetsResult.error || "Failed to load timesheets")
+      }
+
+      if (summaryResult.success && summaryResult.data) {
+        setSummary(summaryResult.data)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Updated to work with TimesheetWithDetails
+  const handleUpdateTimesheet = async (id: string, field: keyof TimesheetWithDetails, value: any) => {
+    try {
+      // Only update fields that exist on the base Timesheet type
+      const validFields = [
+        "date",
+        "worker_id",
+        "project_id",
+        "task_description",
+        "clock_in",
+        "clock_out",
+        "break_duration",
+        "regular_hours",
+        "overtime_hours",
+        "total_hours",
+        "hourly_rate",
+        "total_pay",
+        "supervisor_approval",
+        "notes",
+      ]
+
+      if (!validFields.includes(field)) {
+        console.warn(`Field ${field} is not updatable`)
+        return
+      }
+
+      const result = await updateTimesheetData({ id, [field]: value })
+
+      if (result.success && result.data) {
+        // Update local state - merge the updated data with existing nested data
+        setTimesheets((prev) =>
+          prev.map((ts) => {
+            if (ts.id === id) {
+              return {
+                ...ts,
+                ...result.data,
+                // Preserve nested worker and project data
+                worker: ts.worker,
+                project: ts.project,
+              }
+            }
+            return ts
+          }),
+        )
+
+        // Reload summary if it's a field that affects calculations
+        const calculationFields = ["clock_in", "clock_out", "break_duration", "hourly_rate"]
+        if (calculationFields.includes(field)) {
+          loadTimesheets() // Reload to get updated calculations
+        }
+      } else {
+        setError(result.error || "Failed to update timesheet")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update timesheet")
+    }
+  }
+
+  const handleDeleteTimesheet = async (id: string) => {
+    try {
+      const result = await deleteTimesheet(id)
+
+      if (result.success) {
+        setTimesheets((prev) => prev.filter((ts) => ts.id !== id))
+        loadTimesheets() // Reload to update summary
+      } else {
+        setError(result.error || "Failed to delete timesheet")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete timesheet")
+    }
+  }
+
+  // Helper function to get attendance status from timesheet data
+  const getAttendanceStatus = (timesheet: TimesheetWithDetails): AttendanceStatus => {
+    if (timesheet.total_hours === 0) return "absent"
+    if (timesheet.notes?.toLowerCase().includes("late")) return "late"
+    return "present"
+  }
+
   // Filter timesheets based on selected filters
   const filteredTimesheets = useMemo(() => {
     return timesheets.filter((timesheet) => {
       const timesheetDate = parseISO(timesheet.date)
-      const worker = mockWorkers.find((w) => w.id === timesheet.workerId)
-      const project = mockProjects.find((p) => p.id === timesheet.projectId)
 
       // Date filter
       let dateMatch = false
@@ -132,31 +211,30 @@ export default function TimesheetsPage() {
       }
 
       // Worker filter
-      const workerMatch = selectedWorker === "all" || timesheet.workerId === selectedWorker
+      const workerMatch = selectedWorker === "all" || timesheet.worker_id === selectedWorker
 
       // Project filter
-      const projectMatch = selectedProject === "all" || timesheet.projectId === selectedProject
+      const projectMatch = selectedProject === "all" || timesheet.project_id === selectedProject
 
       // Search filter
       const searchMatch =
         searchTerm === "" ||
-        worker?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project?.name.toLowerCase().includes(searchTerm.toLowerCase())
+        timesheet.worker?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        timesheet.project?.name.toLowerCase().includes(searchTerm.toLowerCase())
 
       return dateMatch && workerMatch && projectMatch && searchMatch
     })
   }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, searchTerm])
 
-  // Calculate weekly summaries
+  // Calculate weekly summaries using TimesheetWithDetails
   const weeklySummaries = useMemo(() => {
     const summaries = new Map()
 
     filteredTimesheets.forEach((timesheet) => {
-      const key = timesheet.workerId
+      const key = timesheet.worker_id
       if (!summaries.has(key)) {
-        const worker = mockWorkers.find((w) => w.id === timesheet.workerId)
         summaries.set(key, {
-          worker,
+          worker: timesheet.worker || { id: timesheet.worker_id, name: "Unknown Worker" },
           totalHours: 0,
           overtimeHours: 0,
           daysWorked: 0,
@@ -166,26 +244,23 @@ export default function TimesheetsPage() {
       }
 
       const summary = summaries.get(key)
-      summary.totalHours += timesheet.hoursWorked
-      summary.overtimeHours += timesheet.overtimeHours
+      summary.totalHours += timesheet.total_hours
+      summary.overtimeHours += timesheet.overtime_hours
 
-      if (timesheet.status === "present" || timesheet.status === "late") {
+      const status = getAttendanceStatus(timesheet)
+      if (status === "present" || status === "late") {
         summary.daysWorked += 1
       }
-      if (timesheet.status === "absent") {
+      if (status === "absent") {
         summary.daysAbsent += 1
       }
-      if (timesheet.status === "late") {
+      if (status === "late") {
         summary.daysLate += 1
       }
     })
 
     return Array.from(summaries.values())
   }, [filteredTimesheets])
-
-  const updateTimesheet = (id: string, field: keyof Timesheet, value: any) => {
-    setTimesheets((prev) => prev.map((ts) => (ts.id === id ? { ...ts, [field]: value } : ts)))
-  }
 
   const getStatusBadge = (status: AttendanceStatus) => {
     const variants = {
@@ -213,12 +288,42 @@ export default function TimesheetsPage() {
     return eachDayOfInterval({ start: weekStart, end: weekEnd })
   }, [selectedDate])
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading timesheets...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button onClick={loadTimesheets} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Timesheets</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Timesheets</h1>
           <p className="text-muted-foreground">Track worker hours and manage attendance for construction projects</p>
         </div>
         <div className="flex items-center space-x-2">
@@ -226,12 +331,42 @@ export default function TimesheetsPage() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Entry
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Entry
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <TimesheetDialog
+                workers={mockWorkers}
+                projects={mockProjects}
+                onSuccess={loadTimesheets}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Clock className="h-4 w-4 mr-2" />
+                    Single Timesheet
+                  </DropdownMenuItem>
+                }
+              />
+              <BulkTimesheetDialog
+                workers={mockWorkers}
+                projects={mockProjects}
+                onSuccess={loadTimesheets}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <UsersRound className="h-4 w-4 mr-2" />
+                    Bulk Entry
+                  </DropdownMenuItem>
+                }
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -245,33 +380,36 @@ export default function TimesheetsPage() {
             <p className="text-xs text-muted-foreground">Active this {viewMode === "daily" ? "day" : "week"}</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{weeklySummaries.reduce((sum, s) => sum + s.totalHours, 0)}</div>
+            <div className="text-2xl font-bold">{summary.totalRegularHours}</div>
             <p className="text-xs text-muted-foreground">Regular hours worked</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overtime Hours</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{weeklySummaries.reduce((sum, s) => sum + s.overtimeHours, 0)}</div>
+            <div className="text-2xl font-bold">{summary.totalOvertimeHours}</div>
             <p className="text-xs text-muted-foreground">Extra hours worked</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{new Set(filteredTimesheets.map((ts) => ts.projectId)).size}</div>
+            <div className="text-2xl font-bold">{new Set(filteredTimesheets.map((ts) => ts.project_id)).size}</div>
             <p className="text-xs text-muted-foreground">Projects with activity</p>
           </CardContent>
         </Card>
@@ -407,15 +545,15 @@ export default function TimesheetsPage() {
                       <tr key={summary.worker.id} className="border-b hover:bg-muted/50">
                         <td className="p-2">
                           <div className="font-medium">{summary.worker.name}</div>
-                          <div className="text-sm text-muted-foreground">{summary.worker.role}</div>
+                          <div className="text-sm text-muted-foreground">{summary.worker.role || "Worker"}</div>
                         </td>
                         <td className="p-2">
                           <div className="text-sm">
                             {Array.from(
                               new Set(
                                 filteredTimesheets
-                                  .filter((ts) => ts.workerId === summary.worker.id)
-                                  .map((ts) => mockProjects.find((p) => p.id === ts.projectId)?.name),
+                                  .filter((ts) => ts.worker_id === summary.worker.id)
+                                  .map((ts) => ts.project?.name || "Unknown Project"),
                               ),
                             ).join(", ")}
                           </div>
@@ -423,7 +561,7 @@ export default function TimesheetsPage() {
                         {weekDays.map((day) => {
                           const dayTimesheet = filteredTimesheets.find(
                             (ts) =>
-                              ts.workerId === summary.worker.id &&
+                              ts.worker_id === summary.worker.id &&
                               format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
                           )
                           return (
@@ -432,11 +570,11 @@ export default function TimesheetsPage() {
                                 <div className="space-y-1">
                                   <Input
                                     type="number"
-                                    value={dayTimesheet.hoursWorked}
+                                    value={dayTimesheet.total_hours}
                                     onChange={(e) =>
-                                      updateTimesheet(
+                                      handleUpdateTimesheet(
                                         dayTimesheet.id,
-                                        "hoursWorked",
+                                        "total_hours",
                                         Number.parseFloat(e.target.value) || 0,
                                       )
                                     }
@@ -445,7 +583,7 @@ export default function TimesheetsPage() {
                                     min="0"
                                     max="24"
                                   />
-                                  {getStatusBadge(dayTimesheet.status)}
+                                  {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                 </div>
                               ) : (
                                 <span className="text-muted-foreground">-</span>
@@ -462,57 +600,59 @@ export default function TimesheetsPage() {
                       </tr>
                     ))
                   : // Daily view
-                    filteredTimesheets.map((timesheet) => {
-                      const worker = mockWorkers.find((w) => w.id === timesheet.workerId)
-                      const project = mockProjects.find((p) => p.id === timesheet.projectId)
-                      return (
-                        <tr key={timesheet.id} className="border-b hover:bg-muted/50">
-                          <td className="p-2">
-                            <div className="font-medium">{worker?.name}</div>
-                            <div className="text-sm text-muted-foreground">{worker?.role}</div>
-                          </td>
-                          <td className="p-2">
-                            <div className="font-medium">{project?.name}</div>
-                            <div className="text-sm text-muted-foreground">{project?.location}</div>
-                          </td>
-                          <td className="p-2 text-center">
-                            <Input
-                              type="number"
-                              value={timesheet.hoursWorked}
-                              onChange={(e) =>
-                                updateTimesheet(timesheet.id, "hoursWorked", Number.parseFloat(e.target.value) || 0)
-                              }
-                              className="w-20 h-8 text-center"
-                              step="0.5"
-                              min="0"
-                              max="24"
-                            />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Input
-                              type="number"
-                              value={timesheet.overtimeHours}
-                              onChange={(e) =>
-                                updateTimesheet(timesheet.id, "overtimeHours", Number.parseFloat(e.target.value) || 0)
-                              }
-                              className="w-20 h-8 text-center"
-                              step="0.5"
-                              min="0"
-                              max="12"
-                            />
-                          </td>
-                          <td className="p-2 text-center">{getStatusBadge(timesheet.status)}</td>
-                          <td className="p-2">
-                            <Input
-                              value={timesheet.notes}
-                              onChange={(e) => updateTimesheet(timesheet.id, "notes", e.target.value)}
-                              placeholder="Add notes..."
-                              className="h-8 text-sm"
-                            />
-                          </td>
-                        </tr>
-                      )
-                    })}
+                    filteredTimesheets.map((timesheet) => (
+                      <tr key={timesheet.id} className="border-b hover:bg-muted/50">
+                        <td className="p-2">
+                          <div className="font-medium">{timesheet.worker?.name || "Unknown Worker"}</div>
+                          <div className="text-sm text-muted-foreground">{timesheet.worker?.role || "Worker"}</div>
+                        </td>
+                        <td className="p-2">
+                          <div className="font-medium">{timesheet.project?.name || "Unknown Project"}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {timesheet.project?.location || "Location TBD"}
+                          </div>
+                        </td>
+                        <td className="p-2 text-center">
+                          <Input
+                            type="number"
+                            value={timesheet.total_hours}
+                            onChange={(e) =>
+                              handleUpdateTimesheet(timesheet.id, "total_hours", Number.parseFloat(e.target.value) || 0)
+                            }
+                            className="w-20 h-8 text-center"
+                            step="0.5"
+                            min="0"
+                            max="24"
+                          />
+                        </td>
+                        <td className="p-2 text-center">
+                          <Input
+                            type="number"
+                            value={timesheet.overtime_hours}
+                            onChange={(e) =>
+                              handleUpdateTimesheet(
+                                timesheet.id,
+                                "overtime_hours",
+                                Number.parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            className="w-20 h-8 text-center"
+                            step="0.5"
+                            min="0"
+                            max="12"
+                          />
+                        </td>
+                        <td className="p-2 text-center">{getStatusBadge(getAttendanceStatus(timesheet))}</td>
+                        <td className="p-2">
+                          <Input
+                            value={timesheet.notes || ""}
+                            onChange={(e) => handleUpdateTimesheet(timesheet.id, "notes", e.target.value)}
+                            placeholder="Add notes..."
+                            className="h-8 text-sm"
+                          />
+                        </td>
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </div>
@@ -531,7 +671,7 @@ export default function TimesheetsPage() {
                 <Card key={summary.worker.id} className="p-4">
                   <div className="space-y-2">
                     <div className="font-medium">{summary.worker.name}</div>
-                    <div className="text-sm text-muted-foreground">{summary.worker.role}</div>
+                    <div className="text-sm text-muted-foreground">{summary.worker.role || "Worker"}</div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         Total Hours: <span className="font-medium">{summary.totalHours}h</span>
@@ -551,8 +691,8 @@ export default function TimesheetsPage() {
                       <span className="font-medium text-green-600">
                         $
                         {(
-                          summary.totalHours * summary.worker.hourlyRate +
-                          summary.overtimeHours * summary.worker.hourlyRate * 1.5
+                          summary.totalHours * (summary.worker.hourlyRate || 20) +
+                          summary.overtimeHours * (summary.worker.hourlyRate || 20) * 1.5
                         ).toFixed(2)}
                       </span>
                     </div>

@@ -17,7 +17,6 @@ import {
   IconClock,
   IconCalendar,
 } from "@tabler/icons-react"
-import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 import { NavMain } from "@/components/nav-main"
@@ -128,7 +127,6 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname()
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
 

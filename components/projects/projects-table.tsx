@@ -20,16 +20,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Card, CardContent } from "@/components/ui/card"
 import { MoreVertical, Plus, Building2, Users, Calendar, TrendingUp, Clock, X } from "lucide-react"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { format, parseISO } from "date-fns"
-import { ProjectForm } from "@/components/projects/projects-form"
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,6 +30,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
+import { format, parseISO } from "date-fns"
+import { ProjectDialog } from "@/components/forms/form-dialogs"
 
 const columns = ["Project", "Client", "Start Date", "Status", "Workers Assigned"]
 
@@ -49,11 +41,10 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [workers, setWorkers] = useState<Worker[]>([])
   const [projectAssignments, setProjectAssignments] = useState<ProjectAssignment[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [statusFilter, setStatusFilter] = useState("all")
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
   useEffect(() => {
     loadProjects()
@@ -109,7 +100,6 @@ export default function ProjectsTable({ user }: { user: User }) {
     } catch (error) {
       console.log("Failed to create project:", error)
     } finally {
-      setIsFormOpen(false)
       loadProjects()
       loadProjectAssignments()
     }
@@ -127,23 +117,21 @@ export default function ProjectsTable({ user }: { user: User }) {
       console.error("Failed to update project:", error)
     } finally {
       setLoading(false)
-      setIsFormOpen(false)
       loadProjects()
       loadProjectAssignments()
     }
   }
 
   const handleDeleteProject = async () => {
-    if (!selectedProject) return
-    try {
-      await deleteProject(selectedProject.id, { user })
-      console.log(`Project "${selectedProject.name}" deleted successfully.`)
-    } catch (error) {
-      console.log("Failed to delete project:", error instanceof Error ? error.message : error)
-    } finally {
-      setSelectedProject(null)
-      setIsDeleteDialogOpen(false)
-      loadProjects()
+    if (selectedProject) {
+      try {
+        await deleteProject(selectedProject.id, { user })
+        console.log(`Project "${selectedProject.name}" deleted successfully.`)
+      } catch (error) {
+        console.log("Failed to delete project:", error instanceof Error ? error.message : error)
+      } finally {
+        loadProjects()
+      }
     }
   }
 
@@ -323,57 +311,17 @@ export default function ProjectsTable({ user }: { user: User }) {
 
             {/* Add Project Button */}
             <div className="flex items-end">
-              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogTrigger asChild>
+              <ProjectDialog
+                clients={clients}
+                workers={workers}
+                onSuccess={loadProjects}
+                trigger={
                   <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
                     <Plus className="mr-2 h-4 w-4" />
                     New Project
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-foreground">
-                      {selectedProject ? "Edit Project" : "Add New Project"}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {selectedProject
-                        ? "Update the project's information below."
-                        : "Fill in the details to add a new project to your portfolio."}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <ProjectForm
-                    project={selectedProject}
-                    clients={clients}
-                    workers={workers}
-                    {...(selectedProject
-                      ? {
-                          assigned_worker_ids: projectAssignments
-                            .filter((pa) => pa.project_id === selectedProject.id)
-                            .map((pa) => pa.worker_id),
-                        }
-                      : {})}
-                    onSubmit={(project) => {
-                      if (selectedProject) {
-                        handleUpdateProject(
-                          project as Project & {
-                            assigned_worker_ids: (string | number)[]
-                          },
-                        )
-                      } else {
-                        handleCreateProject(
-                          project as Omit<Project, "id"> & {
-                            assigned_worker_ids: (string | number)[]
-                          },
-                        )
-                      }
-                    }}
-                    onCancel={() => {
-                      setSelectedProject(null)
-                      setIsFormOpen(false)
-                    }}
-                  />
-                </DialogContent>
-              </Dialog>
+                }
+              />
             </div>
           </div>
         </CardContent>
@@ -411,10 +359,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                   ? "No projects match your current filters. Try adjusting your search criteria."
                   : "You haven't added any projects yet. Add your first project to start building your portfolio."}
               </p>
-              <Button
-                onClick={() => setIsFormOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Building2 className="mr-2 h-4 w-4" />
                 Add Your First Project
               </Button>
@@ -463,15 +408,20 @@ export default function ProjectsTable({ user }: { user: User }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedProject(project)
-                            setIsFormOpen(true)
+                        <ProjectDialog
+                          project={{
+                            ...project,
+                            assigned_worker_ids: projectAssignments
+                              .filter((pa) => pa.project_id === project.id)
+                              .map((pa) => pa.worker_id),
                           }}
-                          className="cursor-pointer"
-                        >
-                          Edit Project
-                        </DropdownMenuItem>
+                          clients={clients}
+                          workers={workers}
+                          onSuccess={loadProjects}
+                          trigger={
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit Project</DropdownMenuItem>
+                          }
+                        />
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedProject(project)

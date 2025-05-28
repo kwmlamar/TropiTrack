@@ -1,3 +1,4 @@
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 import WorkersTable from "@/components/workers/worker-table";
 import { createClient } from "@/utils/supabase/server";
 
@@ -8,7 +9,10 @@ export default async function WorkerPage() {
     if (error || !user) throw new Error("User not found");
     
     return (
-        <WorkersTable user={user} />
+        <DashboardLayout title="Workers" >
+            <WorkersTable user={user} />
+        </DashboardLayout>
+        
     )
 
 }
