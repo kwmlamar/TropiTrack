@@ -13,16 +13,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 
 import { clientSchema, type ClientFormData } from "@/lib/validations"
-import { generateClient, updateClient } from "@/lib/data/data"
-import type { Client } from "@/lib/types"
+import { insertClient, updateClient } from "@/lib/data/clients"
+import type { Client } from "@/lib/types/client"
 
 interface ClientFormProps {
   client?: Client
+  userId: string;
   onSuccess?: (client: Client) => void
   onCancel?: () => void
 }
 
-export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
+export function ClientForm({ client, userId, onSuccess, onCancel }: ClientFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isEditing = !!client
@@ -45,9 +46,9 @@ export function ClientForm({ client, onSuccess, onCancel }: ClientFormProps) {
     try {
       let result
       if (isEditing) {
-        result = await updateClient({ id: client.id, ...data }, { user: null })
+        result = await updateClient(userId, client.id, data)
       } else {
-        result = await generateClient(data as any, { user: null })
+        result = await insertClient(userId, data)
       }
 
       if (result) {

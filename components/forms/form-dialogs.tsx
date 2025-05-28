@@ -16,11 +16,11 @@ import { ProjectForm } from "./project-form";
 import { ClientForm } from "./client-form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Worker } from "@/lib/types/worker"
+import type { Client } from "@/lib/types/client"
 
 import type {
   TimesheetWithDetails,
   Project,
-  Client,
 } from "@/lib/types";
 
 // Timesheet Dialog
@@ -242,12 +242,14 @@ export function ProjectDialog({
 // Client Dialog
 interface ClientDialogProps {
   client?: Client;
+  userId: string;
   onSuccess?: (client: Client) => void;
   trigger?: React.ReactNode;
 }
 
 export function ClientDialog({
   client,
+  userId,
   onSuccess,
   trigger,
 }: ClientDialogProps) {
@@ -277,8 +279,16 @@ export function ClientDialog({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <VisuallyHidden>
+            <DialogTitle>
+              {client ? "Edit Project" : "New Project"}
+            </DialogTitle>
+          </VisuallyHidden>
+        </DialogHeader>
         <ClientForm
           client={client}
+          userId={userId}
           onSuccess={handleSuccess}
           onCancel={handleCancel}
         />

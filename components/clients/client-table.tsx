@@ -124,6 +124,7 @@ export default function ClientTable({ user }: { user: User }) {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <SearchForm placeholder="Search clients..." className="w-full sm:w-80" />
         <ClientDialog
+        userId={user.id}
           onSuccess={loadClients}
           trigger={
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
@@ -165,6 +166,7 @@ export default function ClientTable({ user }: { user: User }) {
                 You haven&apos;t added any clients yet. Add your first client to start building your project portfolio.
               </p>
               <ClientDialog
+              userId={user.id}
                 onSuccess={loadClients}
                 trigger={
                   <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -224,6 +226,7 @@ export default function ClientTable({ user }: { user: User }) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
                         <ClientDialog
+                          userId={user.id}
                           client={client}
                           onSuccess={loadClients}
                           trigger={
