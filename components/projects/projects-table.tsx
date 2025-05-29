@@ -1,24 +1,44 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import type { User } from "@supabase/supabase-js"
-import { SearchForm } from "@/components/search-form"
-import { Select, SelectItem, SelectValue, SelectContent, SelectTrigger } from "@/components/ui/select"
-import { SearchableCombobox } from "@/components/searchable-combobox"
-import { Button } from "@/components/ui/button"
-import type { Client, Project, Worker, ProjectAssignment } from "@/lib/types"
+import { useState, useEffect, useMemo } from "react";
+import type { User } from "@supabase/supabase-js";
+import { SearchForm } from "@/components/search-form";
+import {
+  Select,
+  SelectItem,
+  SelectValue,
+  SelectContent,
+  SelectTrigger,
+} from "@/components/ui/select";
+import { SearchableCombobox } from "@/components/searchable-combobox";
+import { Button } from "@/components/ui/button";
+import type { Project, ProjectAssignment } from "@/lib/types";
+import type { Client } from "@/lib/types/client";
+import type { Worker } from "@/lib/types/worker";
 import {
   fetchProjectsForCompany,
   fetchClientsForCompany,
-  generateProject,
   fetchWorkersForCompany,
   fetchProjectAssignments,
-  updateProject,
   deleteProject,
-} from "@/lib/data/data"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Card, CardContent } from "@/components/ui/card"
-import { MoreVertical, Plus, Building2, Users, Calendar, TrendingUp, Clock, X } from "lucide-react"
+} from "@/lib/data/data";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  MoreVertical,
+  Plus,
+  Building2,
+  Users,
+  Calendar,
+  TrendingUp,
+  Clock,
+  X,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,179 +48,177 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { format, parseISO } from "date-fns"
-import { ProjectDialog } from "@/components/forms/form-dialogs"
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from "date-fns";
+import { ProjectDialog } from "@/components/forms/form-dialogs";
 
-const columns = ["Project", "Client", "Start Date", "Status", "Workers Assigned"]
+const columns = [
+  "Project",
+  "Client",
+  "Start Date",
+  "Status",
+  "Workers Assigned",
+];
 
 export default function ProjectsTable({ user }: { user: User }) {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [workers, setWorkers] = useState<Worker[]>([])
-  const [projectAssignments, setProjectAssignments] = useState<ProjectAssignment[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [projectAssignments, setProjectAssignments] = useState<
+    ProjectAssignment[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    loadProjects()
-    loadClients()
-    loadWorkers()
-    loadProjectAssignments()
-  }, [])
+    loadProjects();
+    loadClients();
+    loadWorkers();
+    loadProjectAssignments();
+  }, []);
 
   const loadProjects = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await fetchProjectsForCompany({ user })
-      setProjects(data)
+      const data = await fetchProjectsForCompany({ user });
+      setProjects(data);
     } catch (error) {
-      console.log("Failed to load projects:", error)
+      console.log("Failed to load projects:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const loadClients = async () => {
     try {
-      const data = await fetchClientsForCompany({ user })
-      setClients(data)
+      const data = await fetchClientsForCompany({ user });
+      setClients(data);
     } catch (error) {
-      console.log("Failed to load clients:", error)
+      console.log("Failed to load clients:", error);
     }
-  }
+  };
 
   const loadWorkers = async () => {
     try {
-      const data = await fetchWorkersForCompany({ user })
-      setWorkers(data)
+      const data = await fetchWorkersForCompany({ user });
+      setWorkers(data);
     } catch (error) {
-      console.log("Failed to load workers:", error)
+      console.log("Failed to load workers:", error);
     }
-  }
+  };
 
   const loadProjectAssignments = async () => {
     try {
-      const data = await fetchProjectAssignments({ user })
-      setProjectAssignments(data)
+      const data = await fetchProjectAssignments({ user });
+      setProjectAssignments(data);
     } catch (error) {
-      console.log("Failed to load project assignments:", error)
+      console.log("Failed to load project assignments:", error);
     }
-  }
-
-  const handleCreateProject = async (project: Omit<Project, "id"> & { assigned_worker_ids: (string | number)[] }) => {
-    setLoading(true)
-    try {
-      const data = await generateProject(project, { user })
-      setProjects((prev) => [...prev, data])
-    } catch (error) {
-      console.log("Failed to create project:", error)
-    } finally {
-      loadProjects()
-      loadProjectAssignments()
-    }
-  }
-
-  const handleUpdateProject = async (project: Project & { assigned_worker_ids: (string | number)[] }) => {
-    try {
-      const { project: updatedProject } = await updateProject(project, { user })
-      const fullUpdatedProject = {
-        ...updatedProject,
-        assigned_worker_ids: project.assigned_worker_ids,
-      }
-      setProjects((prev) => prev.map((p) => (p.id === fullUpdatedProject.id ? fullUpdatedProject : p)))
-    } catch (error) {
-      console.error("Failed to update project:", error)
-    } finally {
-      setLoading(false)
-      loadProjects()
-      loadProjectAssignments()
-    }
-  }
+  };
 
   const handleDeleteProject = async () => {
     if (selectedProject) {
       try {
-        await deleteProject(selectedProject.id, { user })
-        console.log(`Project "${selectedProject.name}" deleted successfully.`)
+        await deleteProject(selectedProject.id, { user });
+        console.log(`Project "${selectedProject.name}" deleted successfully.`);
       } catch (error) {
-        console.log("Failed to delete project:", error instanceof Error ? error.message : error)
+        console.log(
+          "Failed to delete project:",
+          error instanceof Error ? error.message : error
+        );
       } finally {
-        loadProjects()
+        loadProjects();
       }
     }
-  }
+  };
 
   const assignmentCounts = useMemo(() => {
-    const map = new Map<string, number>()
+    const map = new Map<string, number>();
     projectAssignments.forEach((pa) => {
-      map.set(pa.project_id, (map.get(pa.project_id) || 0) + 1)
-    })
-    return map
-  }, [projectAssignments])
+      map.set(pa.project_id, (map.get(pa.project_id) || 0) + 1);
+    });
+    return map;
+  }, [projectAssignments]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
-      const matchesClient = selectedClient ? project.client_id === selectedClient.id : true
-      const matchesStatus = statusFilter === "all" ? true : project.status === statusFilter
-      return matchesClient && matchesStatus
-    })
-  }, [projects, selectedClient, statusFilter])
+      const matchesClient = selectedClient
+        ? project.client_id === selectedClient.id
+        : true;
+      const matchesStatus =
+        statusFilter === "all" ? true : project.status === statusFilter;
+      return matchesClient && matchesStatus;
+    });
+  }, [projects, selectedClient, statusFilter]);
 
   // Calculate statistics
-  const totalProjects = projects.length
-  const activeProjects = projects.filter((p) => p.status === "in_progress").length
-  const completedProjects = projects.filter((p) => p.status === "completed").length
-  const totalWorkerAssignments = projectAssignments.length
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter(
+    (p) => p.status === "in_progress"
+  ).length;
+  const completedProjects = projects.filter(
+    (p) => p.status === "completed"
+  ).length;
+  const totalWorkerAssignments = projectAssignments.length;
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       not_started: {
         label: "Not Started",
         variant: "secondary" as const,
-        className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+        className:
+          "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
       },
       in_progress: {
         label: "In Progress",
         variant: "default" as const,
-        className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+        className:
+          "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
       },
       paused: {
         label: "Paused",
         variant: "secondary" as const,
-        className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+        className:
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
       },
       completed: {
         label: "Completed",
         variant: "default" as const,
-        className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+        className:
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
       },
       cancelled: {
         label: "Cancelled",
         variant: "destructive" as const,
         className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
       },
-    }
+    };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.not_started
+    const config =
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.not_started;
 
     return (
       <Badge variant={config.variant} className={config.className}>
         {config.label}
       </Badge>
-    )
-  }
+    );
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Project Management</h1>
-        <p className="text-muted-foreground">Manage construction projects and track progress across your portfolio</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Project Management
+        </h1>
+        <p className="text-muted-foreground">
+          Manage construction projects and track progress across your portfolio
+        </p>
       </div>
 
       {/* Statistics Cards */}
@@ -212,8 +230,12 @@ export default function ProjectsTable({ user }: { user: User }) {
                 <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
-                <p className="text-2xl font-bold text-foreground">{totalProjects}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Projects
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {totalProjects}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -226,8 +248,12 @@ export default function ProjectsTable({ user }: { user: User }) {
                 <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
-                <p className="text-2xl font-bold text-foreground">{activeProjects}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Projects
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {activeProjects}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -240,8 +266,12 @@ export default function ProjectsTable({ user }: { user: User }) {
                 <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                <p className="text-2xl font-bold text-foreground">{completedProjects}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Completed
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {completedProjects}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -254,8 +284,12 @@ export default function ProjectsTable({ user }: { user: User }) {
                 <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Worker Assignments</p>
-                <p className="text-2xl font-bold text-foreground">{totalWorkerAssignments}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Worker Assignments
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {totalWorkerAssignments}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -269,7 +303,9 @@ export default function ProjectsTable({ user }: { user: User }) {
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Status</label>
+                <label className="text-sm font-medium text-foreground">
+                  Status
+                </label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select status" />
@@ -286,7 +322,9 @@ export default function ProjectsTable({ user }: { user: User }) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Client</label>
+                <label className="text-sm font-medium text-foreground">
+                  Client
+                </label>
                 <div className="flex items-center gap-2">
                   <SearchableCombobox
                     items={clients}
@@ -296,7 +334,12 @@ export default function ProjectsTable({ user }: { user: User }) {
                     placeholder="Select a client"
                   />
                   {selectedClient && (
-                    <Button variant="outline" size="icon" onClick={() => setSelectedClient(null)} className="h-10 w-10">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setSelectedClient(null)}
+                      className="h-10 w-10"
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   )}
@@ -304,17 +347,26 @@ export default function ProjectsTable({ user }: { user: User }) {
               </div>
 
               <div className="space-y-2 flex-1">
-                <label className="text-sm font-medium text-foreground">Search</label>
-                <SearchForm placeholder="Search projects..." className="w-full" />
+                <label className="text-sm font-medium text-foreground">
+                  Search
+                </label>
+                <SearchForm
+                  placeholder="Search projects..."
+                  className="w-full"
+                />
               </div>
             </div>
 
             {/* Add Project Button */}
             <div className="flex items-end">
               <ProjectDialog
+                userId={user.id}
                 clients={clients}
                 workers={workers}
-                onSuccess={loadProjects}
+                onSuccess={() => {
+                  loadProjects();
+                  loadProjectAssignments();
+                }}
                 trigger={
                   <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
                     <Plus className="mr-2 h-4 w-4" />
@@ -333,7 +385,10 @@ export default function ProjectsTable({ user }: { user: User }) {
           {/* Column Headers */}
           <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
             {columns.map((col) => (
-              <div key={col} className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              <div
+                key={col}
+                className="text-sm font-semibold text-muted-foreground uppercase tracking-wide"
+              >
                 {col}
               </div>
             ))}
@@ -353,7 +408,9 @@ export default function ProjectsTable({ user }: { user: User }) {
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
                 <Building2 className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No projects found
+              </h3>
               <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
                 {statusFilter !== "all" || selectedClient
                   ? "No projects match your current filters. Try adjusting your search criteria."
@@ -376,18 +433,25 @@ export default function ProjectsTable({ user }: { user: User }) {
                       <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{project.name}</p>
-                      <p className="text-sm text-muted-foreground">{project.location || "Location TBD"}</p>
+                      <p className="font-semibold text-foreground">
+                        {project.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {project.location || "Location TBD"}
+                      </p>
                     </div>
                   </div>
 
                   <div className="text-foreground">
-                    {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
+                    {clients.find((c) => c.id === project.client_id)?.name ||
+                      "Unknown Client"}
                   </div>
 
                   <div className="flex items-center space-x-2 text-foreground">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{format(parseISO(project.start_date), "MMM d, yyyy")}</span>
+                    <span>
+                      {format(parseISO(project.start_date), "MMM d, yyyy")}
+                    </span>
                   </div>
 
                   <div>{getStatusBadge(project.status)}</div>
@@ -396,19 +460,26 @@ export default function ProjectsTable({ user }: { user: User }) {
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {assignmentCounts.get(project.id) || 0}{" "}
-                      {(assignmentCounts.get(project.id) || 0) === 1 ? "worker" : "workers"}
+                      {(assignmentCounts.get(project.id) || 0) === 1
+                        ? "worker"
+                        : "workers"}
                     </span>
                   </div>
 
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-muted"
+                        >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
                         <ProjectDialog
+                          userId={user.id}
                           project={{
                             ...project,
                             assigned_worker_ids: projectAssignments
@@ -417,15 +488,22 @@ export default function ProjectsTable({ user }: { user: User }) {
                           }}
                           clients={clients}
                           workers={workers}
-                          onSuccess={loadProjects}
+                          onSuccess={() => {
+                            loadProjects();
+                            loadProjectAssignments();
+                          }}
                           trigger={
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit Project</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              Edit Project
+                            </DropdownMenuItem>
                           }
                         />
                         <DropdownMenuItem
                           onClick={() => {
-                            setSelectedProject(project)
-                            setIsDeleteDialogOpen(true)
+                            setSelectedProject(project);
+                            setIsDeleteDialogOpen(true);
                           }}
                           className="cursor-pointer text-destructive focus:text-destructive"
                         >
@@ -446,17 +524,20 @@ export default function ProjectsTable({ user }: { user: User }) {
         open={isDeleteDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedProject(null)
+            setSelectedProject(null);
           }
-          setIsDeleteDialogOpen(open)
+          setIsDeleteDialogOpen(open);
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle className="text-foreground">
+              Are you absolutely sure?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <strong>{selectedProject?.name}</strong> and all associated timesheet data.
-              This action cannot be undone.
+              This will permanently delete{" "}
+              <strong>{selectedProject?.name}</strong> and all associated
+              timesheet data. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -471,5 +552,5 @@ export default function ProjectsTable({ user }: { user: User }) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

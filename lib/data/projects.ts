@@ -1,0 +1,231 @@
+import { createClient } from "@supabase/supabase-js";
+import type {
+  Project,
+  NewProject,
+  UpdateProject,
+  ProjectFilters,
+  ProjectWithDetails,
+} from "@/lib/types/project";
+import type { ApiResponse } from "@/lib/types";
+import { getProfile } from "./data";
+import { assignWorkersToProject } from "./project-assignments";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+/**
+ * Get projects with optional filtering (company scoped)
+ */
+export async function getProjects(
+  companyId: string,
+  filters: ProjectFilters = {}
+): Promise<ApiResponse<ProjectWithDetails[]>> {
+  try {
+    let query = supabase
+      .from("projects")
+      .select(
+        `
+        *,
+        client:clients(id, name, company),
+        project_manager:users(id, first_name, last_name),
+        assigned_workers:project_assignments(
+          worker:workers(id, name, role)
+        ),
+        _count:time_entries(count)
+      `
+      )
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false });
+
+    if (filters.client_id) {
+      query = query.eq("client_id", filters.client_id);
+    }
+
+    if (filters.status) {
+      query = query.eq("status", filters.status);
+    }
+
+    if (filters.priority) {
+      query = query.eq("priority", filters.priority);
+    }
+
+    if (filters.project_manager_id) {
+      query = query.eq("project_manager_id", filters.project_manager_id);
+    }
+
+    if (filters.is_active !== undefined) {
+      query = query.eq("is_active", filters.is_active);
+    }
+
+    if (filters.search) {
+      query = query.or(
+        `name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,location.ilike.%${filters.search}%`
+      );
+    }
+
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    if (filters.offset) {
+      query = query.range(
+        filters.offset,
+        filters.offset + (filters.limit || 50) - 1
+      );
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching projects:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: data as ProjectWithDetails[], error: null, success: true };
+  } catch (error) {
+    console.error("Unexpected error fetching projects:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
+/**
+ * Get a single project by ID (company scoped)
+ */
+export async function getProject(
+  companyId: string,
+  id: string
+): Promise<ApiResponse<ProjectWithDetails>> {
+  try {
+    const { data, error } = await supabase
+      .from("projects")
+      .select(
+        `
+        *,
+        client:clients(id, name, company),
+        project_manager:users(id, first_name, last_name),
+        assigned_workers:project_assignments(
+          worker:workers(id, name, role)
+        ),
+        _count:time_entries(count)
+      `
+      )
+      .eq("company_id", companyId)
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching project:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: data as ProjectWithDetails, error: null, success: true };
+  } catch (error) {
+    console.error("Unexpected error fetching project:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
+/**
+ * Create a new project
+ */
+export async function createProject(
+  userId: string,
+  project: NewProject
+): Promise<ApiResponse<Project>> {
+  const profile = await getProfile(userId);
+  try {
+    const { data, error } = await supabase
+      .from("projects")
+      .insert([{ ...project, company_id: profile.company_id }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating project:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: data as Project, error: null, success: true };
+  } catch (error) {
+    console.error("Unexpected error creating project:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
+/**
+ * Update an existing project (company scoped)
+ */
+export async function updateProject(
+  userId: string,
+  id: string,
+  project: UpdateProject
+): Promise<ApiResponse<Project>> {
+    const profile = await getProfile(userId);
+  try {
+    const { data, error } = await supabase
+      .from("projects")
+      .update(project)
+      .eq("company_id", profile.company_id)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating project:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: data as Project, error: null, success: true };
+  } catch (error) {
+    console.error("Unexpected error updating project:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
+/**
+ * Delete a project (company scoped)
+ */
+export async function deleteProject(
+  companyId: string,
+  id: string
+): Promise<ApiResponse<boolean>> {
+  try {
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("company_id", companyId)
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting project:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: true, error: null, success: true };
+  } catch (error) {
+    console.error("Unexpected error deleting project:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}

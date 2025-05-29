@@ -56,7 +56,7 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
     resolver: zodResolver(workerSchema),
     defaultValues: {
       name: worker?.name || "",
-      email: worker?.email || "",
+      email: worker?.email || null,
       phone: worker?.phone || "",
       role: worker?.role || "",
       hourly_rate: worker?.hourly_rate || 20,
@@ -68,12 +68,24 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
     },
   })
 
+  const nullify = (val?: string | null) =>
+  val?.trim() === "" || val == null ? null : val.trim();
+
+
   const onSubmit = async (data: WorkerFormData) => {
+    const cleanedData = {
+    ...data,
+    email: nullify(data.email),
+    phone: nullify(data.phone),
+    address: nullify(data.address),
+    emergency_contact: nullify(data.emergency_contact),
+    emergency_phone: nullify(data.emergency_phone),
+  };
     setIsSubmitting(true)
     try {
       let result
       if (isEditing) {
-        result = await updateWorker(userId, worker.id, data)
+        result = await updateWorker(userId, worker.id, cleanedData)
       } else {
         result = await createWorker(userId, data)
       }

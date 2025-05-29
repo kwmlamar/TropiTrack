@@ -178,6 +178,7 @@ export function WorkerSheet({ worker, userId, onSuccess, trigger }: WorkerSheetP
 
 // Project Dialog
 interface ProjectDialogProps {
+  userId: string;
   project?: Project & { assigned_worker_ids?: (string | number)[] };
   clients: Client[];
   workers: Worker[];
@@ -186,6 +187,7 @@ interface ProjectDialogProps {
 }
 
 export function ProjectDialog({
+  userId,
   project,
   clients,
   workers,
@@ -228,6 +230,7 @@ export function ProjectDialog({
         </DialogHeader>
 
         <ProjectForm
+          userId={userId}
           project={project}
           clients={clients}
           workers={workers}

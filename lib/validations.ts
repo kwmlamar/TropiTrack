@@ -17,7 +17,7 @@ export const timesheetSchema = z.object({
 // Worker validation schema
 export const workerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")).nullable(),
   phone: z.string().optional(),
   role: z.string().min(1, "Role is required"),
   hourly_rate: z.number().min(0, "Hourly rate must be positive"),
