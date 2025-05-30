@@ -1,31 +1,54 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarIcon, User, Mail, Phone, MapPin, Loader2 } from "lucide-react"
-import { format } from "date-fns"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarIcon, User, Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-import { workerSchema, type WorkerFormData } from "@/lib/validations"
-import { createWorker, updateWorker } from "@/lib/data/workers"
-import type { Worker } from "@/lib/types/worker"
-import { cn } from "@/lib/utils"
+import { workerSchema, type WorkerFormData } from "@/lib/validations";
+import { createWorker, updateWorker } from "@/lib/data/workers";
+import type { Worker } from "@/lib/types/worker";
+import { cn } from "@/lib/utils";
 
 interface WorkerFormProps {
-  worker?: Worker
-  userId: string
-  onSuccess?: (worker: Worker) => void
-  onCancel?: () => void
+  worker?: Worker;
+  userId: string;
+  onSuccess?: (worker: Worker) => void;
+  onCancel?: () => void;
 }
 
 const workerRoles = [
@@ -42,21 +65,26 @@ const workerRoles = [
   "HVAC Technician",
   "Concrete Worker",
   "Other",
-]
+];
 
-export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function WorkerForm({
+  worker,
+  userId,
+  onSuccess,
+  onCancel,
+}: WorkerFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    worker?.hire_date ? new Date(worker.hire_date) : new Date(),
-  )
+    worker?.hire_date ? new Date(worker.hire_date) : new Date()
+  );
 
-  const isEditing = !!worker
+  const isEditing = !!worker;
 
   const form = useForm<WorkerFormData>({
     resolver: zodResolver(workerSchema),
     defaultValues: {
       name: worker?.name || "",
-      email: worker?.email || null,
+      email: worker?.email || "",
       phone: worker?.phone || "",
       role: worker?.role || "",
       hourly_rate: worker?.hourly_rate || 20,
@@ -66,42 +94,30 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
       emergency_contact: worker?.emergency_contact || "",
       emergency_phone: worker?.emergency_phone || "",
     },
-  })
-
-  const nullify = (val?: string | null) =>
-  val?.trim() === "" || val == null ? null : val.trim();
-
+  });
 
   const onSubmit = async (data: WorkerFormData) => {
-    const cleanedData = {
-    ...data,
-    email: nullify(data.email),
-    phone: nullify(data.phone),
-    address: nullify(data.address),
-    emergency_contact: nullify(data.emergency_contact),
-    emergency_phone: nullify(data.emergency_phone),
-  };
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      let result
+      let result;
       if (isEditing) {
-        result = await updateWorker(userId, worker.id, cleanedData)
+        result = await updateWorker(userId, worker.id, data);
       } else {
-        result = await createWorker(userId, data)
+        result = await createWorker(userId, data);
       }
 
       if (result) {
-        onSuccess?.(result)
+        onSuccess?.(result);
       } else {
-        throw new Error("Failed to save worker")
+        throw new Error("Failed to save worker");
       }
     } catch (error) {
-      console.error("Error saving worker:", error)
+      console.error("Error saving worker:", error);
       // You could add toast notification here
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -113,7 +129,9 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
               {isEditing ? "Edit Worker" : "New Worker"}
             </CardTitle>
             <CardDescription>
-              {isEditing ? "Update worker information" : "Add a new worker to your team"}
+              {isEditing
+                ? "Update worker information"
+                : "Add a new worker to your team"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -139,7 +157,10 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Role</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a role" />
@@ -170,7 +191,11 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3 inset-y-0 my-auto h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="john@example.com" className="pl-10" {...field} />
+                        <Input
+                          placeholder="john@example.com"
+                          className="pl-10"
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -187,7 +212,11 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
                     <FormControl>
                       <div className="relative">
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="+1 (555) 123-4567" className="pl-10" {...field} />
+                        <Input
+                          placeholder="+1 (555) 123-4567"
+                          className="pl-10"
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -205,7 +234,11 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
                   <FormControl>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="123 Main St, City, State 12345" className="pl-10" {...field} />
+                      <Input
+                        placeholder="123 Main St, City, State 12345"
+                        className="pl-10"
+                        {...field}
+                      />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -228,9 +261,16 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
                         <FormControl>
                           <Button
                             variant="outline"
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
                           >
-                            {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                            {field.value ? (
+                              format(parseISO(field.value), "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -238,13 +278,17 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={selectedDate}
+                          selected={
+                            field.value ? parseISO(field.value) : undefined
+                          }
                           onSelect={(date) => {
-                            setSelectedDate(date)
-                            field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                            field.onChange(
+                              date ? date.toISOString().split("T")[0] : null
+                            );
                           }}
-                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                          initialFocus
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
                         />
                       </PopoverContent>
                     </Popover>
@@ -281,7 +325,10 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Active Employee</FormLabel>
@@ -297,7 +344,9 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
 
             {/* Emergency Contact */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium">Emergency Contact (Optional)</h4>
+              <h4 className="text-sm font-medium">
+                Emergency Contact (Optional)
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -322,7 +371,11 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
                       <FormControl>
                         <div className="relative">
                           <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="+1 (555) 987-6543" className="pl-10" {...field} />
+                          <Input
+                            placeholder="+1 (555) 987-6543"
+                            className="pl-10"
+                            {...field}
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -346,5 +399,5 @@ export function WorkerForm({ worker, userId, onSuccess, onCancel }: WorkerFormPr
         </div>
       </form>
     </Form>
-  )
+  );
 }

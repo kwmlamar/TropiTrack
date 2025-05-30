@@ -112,14 +112,14 @@ export function ProjectForm({
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
-      name: project?.name || "",
-      description: project?.description || "",
-      client_id: project?.client_id || "",
-      location: project?.location || "",
-      start_date: project?.start_date || "",
-      end_date: project?.end_date || "",
-      budget: project?.budget || undefined,
-      status: project?.status || "not_started",
+      name: project?.name ?? "",
+      description: project?.description ?? "",
+      client_id: project?.client_id ?? "",
+      location: project?.location ?? "",
+      start_date: project?.start_date ?? null, // null is valid for dates
+      end_date: project?.end_date ?? null,
+      budget: project?.budget ?? undefined, // ok if you know it's optional
+      status: project?.status ?? "not_started",
     },
   });
 
@@ -139,14 +139,17 @@ export function ProjectForm({
           client_id: data.client_id,
           location: data.location,
           start_date: data.start_date,
-          end_date: data.end_date,
+          end_date: data.end_date || null,
           budget: data.budget,
           status: data.status,
         };
         result = await updateProject(userId, project.id, updateData);
-        if (result.project) {
+        if (result.data) {
           // 1. Fetch current assigned workers (active only)
-          const existingAssignments = await fetchProjectAssignments(userId)
+          const existingAssignments = await fetchProjectAssignments(
+            userId,
+            project.id
+          );
 
           const existingWorkerIds =
             existingAssignments?.map((a) => a.worker_id) || [];
@@ -169,7 +172,7 @@ export function ProjectForm({
             await assignWorkersToProject(userId, project.id, addedWorkerIds);
           }
 
-          onSuccess?.(result.project);
+          onSuccess?.(result.data);
         }
       } else {
         const newProject: NewProject = {
@@ -178,13 +181,17 @@ export function ProjectForm({
           client_id: data.client_id,
           location: data.location,
           start_date: data.start_date,
-          end_date: data.end_date,
+          end_date: data.end_date || null,
           budget: data.budget,
           status: data.status || "not_started",
           priority: data.priority || "medium",
           is_active: true,
         };
-        const result = await createProject(userId, newProject);
+
+        console.log("🆕 Creating project with:", newProject);
+
+        result = await createProject(userId, newProject);
+        console.log("✅ Create result:", result);
 
         if (result.success && result.data) {
           await assignWorkersToProject(userId, result.data.id, selectedWorkers);
@@ -341,12 +348,11 @@ export function ProjectForm({
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            {field.value ? (
+                            {field.value && typeof field.value === "string" ? (
                               format(parseISO(field.value), "PPP")
                             ) : (
                               <span>Pick a date</span>
                             )}
-
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -354,9 +360,11 @@ export function ProjectForm({
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={startDate}
+                          selected={
+                            field.value ? new Date(field.value) : undefined
+                          }
                           onSelect={(date) => {
-                            setStartDate(date);
+                            setStartDate(date ?? undefined);
                             field.onChange(
                               date ? date.toISOString().split("T")[0] : null
                             );
@@ -431,10 +439,11 @@ export function ProjectForm({
                         <Input
                           type="number"
                           min="0"
-                          step="0.01"
+                          step="1"
                           placeholder="100000.00"
                           className="pl-10"
                           {...field}
+                          value={field.value ?? ""} // ✅ control it
                           onChange={(e) =>
                             field.onChange(
                               e.target.value

@@ -8,22 +8,43 @@ import type {
 } from "@/lib/types/project-assignment"
 import type { ApiResponse } from "@/lib/types"
 import { getProfile } from "./data"
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-
+import { supabase } from "@/lib/supabaseClient"
 // fetch project assignments
-export async function fetchProjectAssignments(userId: string) {
+export async function fetchProjectAssignments(userId: string, projectId?: string) {
+  const profile = await getProfile(userId);
+
+  let query = supabase
+    .from("project_assignments")
+    .select("*")
+    .eq("company_id", profile.company_id)
+    .eq("is_active", true); // ✅ Only get currently assigned workers
+
+  if (projectId) {
+    query = query.eq("project_id", projectId); // ✅ Scoped to project
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data) {
+    throw new Error("Error fetching project assignments: " + error?.message);
+  }
+
+  return data;
+}
+
+
+export async function fetchActiveProjectAssignments(userId: string ) {
   const profile = await getProfile(userId);
 
   const { data, error } = await supabase
-    .from("project_assignments")
-    .select("*")
-    .eq("company_id", profile.company_id);
+  .from("project_assignments")
+  .select("*")
+  .eq("company_id", profile.company_id)
+  .eq("is_active", true);
 
   if (error || !data) {
     throw new Error("Error fetching project assignments:" + error.message);
   }
-
   return data;
 }
 
@@ -219,35 +240,89 @@ export async function assignWorkersToProject(
   createdBy?: string,
 ): Promise<ApiResponse<ProjectAssignment[]>> {
   const profile = await getProfile(userId);
+  const today = new Date().toISOString().split("T")[0];
+
+  const assigned: ProjectAssignment[] = [];
+
   try {
-    const assignments: NewProjectAssignment[] = workerIds.map((workerId) => ({
-      company_id: profile.company_id,
-      project_id: projectId,
-      worker_id: workerId,
-      assigned_date: new Date().toISOString().split("T")[0],
-      role_on_project: roleOnProject,
-      hourly_rate: hourlyRate,
-      is_active: true,
-      created_by: createdBy,
-    }))
+    for (const workerId of workerIds) {
+      // 1. Check if assignment exists for today
+      const { data: existing, error: fetchError } = await supabase
+        .from("project_assignments")
+        .select("*")
+        .eq("company_id", profile.company_id)
+        .eq("project_id", projectId)
+        .eq("worker_id", workerId)
+        .eq("assigned_date", today)
+        .maybeSingle(); // ← handles no match without throwing
 
-    const { data, error } = await supabase.from("project_assignments").insert(assignments).select()
+      if (fetchError && fetchError.code !== "PGRST116") {
+        console.error("Fetch error during assignment check:", fetchError);
+        return { data: null, error: fetchError.message, success: false };
+      }
 
-    if (error) {
-      console.error("Error assigning workers to project:", error)
-      return { data: null, error: error.message, success: false }
+      if (existing) {
+        // 2. If it was previously unassigned, reactivate it
+        if (!existing.is_active) {
+          const { data: updated, error: updateError } = await supabase
+            .from("project_assignments")
+            .update({
+              is_active: true,
+              unassigned_date: null,
+              role_on_project: roleOnProject ?? existing.role_on_project,
+              hourly_rate: hourlyRate ?? existing.hourly_rate,
+            })
+            .eq("id", existing.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error("Error reactivating assignment:", updateError);
+            return { data: null, error: updateError.message, success: false };
+          }
+
+          assigned.push(updated as ProjectAssignment);
+        }
+        // Else: assignment already exists and is active → do nothing
+      } else {
+        // 3. Create new assignment
+        const insert = {
+          company_id: profile.company_id,
+          project_id: projectId,
+          worker_id: workerId,
+          assigned_date: today,
+          is_active: true,
+          role_on_project: roleOnProject,
+          hourly_rate: hourlyRate,
+          created_by: createdBy,
+        };
+
+        const { data: inserted, error: insertError } = await supabase
+          .from("project_assignments")
+          .insert(insert)
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error("Error inserting assignment:", insertError);
+          return { data: null, error: insertError.message, success: false };
+        }
+
+        assigned.push(inserted as ProjectAssignment);
+      }
     }
 
-    return { data: data as ProjectAssignment[], error: null, success: true }
+    return { data: assigned, error: null, success: true };
   } catch (error) {
-    console.error("Unexpected error assigning workers to project:", error)
+    console.error("Unexpected error assigning workers to project:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }
+
 
 /**
  * Unassign a worker from a project

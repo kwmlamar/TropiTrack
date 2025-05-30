@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js"
 import type {
   Timesheet,
   CreateTimesheetInput,
@@ -8,8 +7,7 @@ import type {
   TimesheetWithDetails,
 } from "@/lib/types"
 
-// Initialize Supabase client
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+import { supabase } from "@/lib/supabaseClient"
 
 /**
  * Get timesheets with optional filtering and related data

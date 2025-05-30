@@ -34,8 +34,8 @@ export const projectSchema = z.object({
   description: z.string().optional(),
   client_id: z.string().min(1, "Client is required"),
   location: z.string().optional(),
-  start_date: z.string().min(1, "Start date is required"),
-  end_date: z.string().optional(),
+  start_date: z.string().min(1, "Start date is required").nullable(),
+  end_date: z.string().optional().nullable(),
   budget: z.number().min(0, "Budget must be positive").optional(),
   status: z.enum(["not_started", "in_progress", "paused", "completed", "cancelled"]).default("not_started"),
 })

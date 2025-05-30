@@ -6,8 +6,8 @@ export interface Project {
   name: string
   description?: string
   location?: string
-  start_date: string
-  end_date?: string
+  start_date: string | null
+  end_date?: string | null
   estimated_end_date?: string
   budget?: number
   status: "not_started" | "in_progress" | "paused" | "completed" | "cancelled"

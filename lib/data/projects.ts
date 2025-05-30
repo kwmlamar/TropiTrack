@@ -10,10 +10,7 @@ import type { ApiResponse } from "@/lib/types";
 import { getProfile } from "./data";
 import { assignWorkersToProject } from "./project-assignments";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabaseClient"
 
 /**
  * Get projects with optional filtering (company scoped)

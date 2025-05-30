@@ -19,9 +19,9 @@ import {
   fetchProjectsForCompany,
   fetchClientsForCompany,
   fetchWorkersForCompany,
-  fetchProjectAssignments,
   deleteProject,
 } from "@/lib/data/data";
+import { fetchProjectAssignments } from "@/lib/data/project-assignments";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,7 +113,7 @@ export default function ProjectsTable({ user }: { user: User }) {
 
   const loadProjectAssignments = async () => {
     try {
-      const data = await fetchProjectAssignments({ user });
+      const data = await fetchProjectAssignments(user.id);
       setProjectAssignments(data);
     } catch (error) {
       console.log("Failed to load project assignments:", error);

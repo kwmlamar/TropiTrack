@@ -4,16 +4,16 @@ export interface Worker {
   company_id?: string
   user_id?: string
   name: string
-  email?: string | null
-  phone?: string | null
+  email?: string 
+  phone?: string 
   role: string
   hourly_rate: number
   overtime_rate?: number
   hire_date: string
   termination_date?: string
-  address?: string | null
-  emergency_contact?: string | null
-  emergency_phone?: string | null
+  address?: string 
+  emergency_contact?: string 
+  emergency_phone?: string 
   skills?: string[]
   certifications?: string[]
   notes?: string

@@ -6,8 +6,20 @@ import { useState } from "react";
 import { Plus, Edit, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 import { TimesheetForm } from "./timesheet-form";
 import { BulkTimesheetForm } from "./bulk-timesheet-form";
@@ -15,13 +27,10 @@ import { WorkerForm } from "./worker-form";
 import { ProjectForm } from "./project-form";
 import { ClientForm } from "./client-form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
-import type { Worker } from "@/lib/types/worker"
-import type { Client } from "@/lib/types/client"
+import type { Worker } from "@/lib/types/worker";
+import type { Client } from "@/lib/types/client";
 
-import type {
-  TimesheetWithDetails,
-  Project,
-} from "@/lib/types";
+import type { TimesheetWithDetails, Project } from "@/lib/types";
 
 // Timesheet Dialog
 interface TimesheetDialogProps {
@@ -132,7 +141,12 @@ interface WorkerSheetProps {
   trigger?: React.ReactNode;
 }
 
-export function WorkerSheet({ worker, userId, onSuccess, trigger }: WorkerSheetProps) {
+export function WorkerSheet({
+  worker,
+  userId,
+  onSuccess,
+  trigger,
+}: WorkerSheetProps) {
   const [open, setOpen] = useState(false);
 
   const handleSuccess = (data: Worker) => {
@@ -159,8 +173,8 @@ export function WorkerSheet({ worker, userId, onSuccess, trigger }: WorkerSheetP
         )}
       </SheetTrigger>
       <VisuallyHidden>
-          <SheetTitle>{worker ? "Edit Worker" : "Add Worker"}</SheetTitle>
-        </VisuallyHidden>
+        <SheetTitle>{worker ? "Edit Worker" : "Add Worker"}</SheetTitle>
+      </VisuallyHidden>
       <SheetContent
         side="right"
         className="w-full sm:max-w-2xl overflow-y-auto"
@@ -222,11 +236,14 @@ export function ProjectDialog({
 
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <VisuallyHidden>
-            <DialogTitle>
-              {project ? "Edit Project" : "New Project"}
-            </DialogTitle>
-          </VisuallyHidden>
+          <DialogTitle className="sr-only">
+            {project ? "Edit Project" : "New Project"}
+          </DialogTitle>
+          <DialogDescription>
+            {project
+              ? "Update the project details and assigned workers."
+              : "Create a new project and assign team members."}
+          </DialogDescription>
         </DialogHeader>
 
         <ProjectForm
@@ -284,9 +301,7 @@ export function ClientDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <VisuallyHidden>
-            <DialogTitle>
-              {client ? "Edit Project" : "New Project"}
-            </DialogTitle>
+            <DialogTitle>{client ? "Edit Project" : "New Project"}</DialogTitle>
           </VisuallyHidden>
         </DialogHeader>
         <ClientForm

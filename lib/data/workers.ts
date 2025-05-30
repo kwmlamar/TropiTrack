@@ -1,10 +1,9 @@
-import { createClient } from "@supabase/supabase-js"
 import type { Worker, NewWorker, UpdateWorker, WorkerFilters, WorkerWithDetails } from "@/lib/types/worker"
 import type { ApiResponse } from "@/lib/types" 
 import { User } from "@supabase/supabase-js"
 import { getProfile } from "./data"
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+import { supabase } from "@/lib/supabaseClient"
 
 /**
  * Get workers with optional filtering (company scoped)

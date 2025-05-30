@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import type { ApiResponse } from "@/lib/types";
 import type {
   Client,
@@ -9,10 +8,7 @@ import type {
 } from "@/lib/types/client";
 import { getProfile } from "./data";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabaseClient"
 
 /**
  * Get clients with optional filtering (company scoped)
