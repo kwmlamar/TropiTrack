@@ -1,41 +1,72 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarIcon, Clock, User, Building2, Loader2 } from "lucide-react"
-import { format } from "date-fns"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarIcon, Clock, User, Building2, Loader2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-import { timesheetSchema, type TimesheetFormData } from "@/lib/validations"
-import { createTimesheet, updateTimesheet } from "@/lib/data/timesheets"
-import type { TimesheetWithDetails, Project } from "@/lib/types"
-import type { Worker } from "@/lib/types/worker"
-import { cn } from "@/lib/utils"
+import { timesheetSchema, type TimesheetFormData } from "@/lib/validations";
+import { createTimesheet, updateTimesheet } from "@/lib/data/timesheets";
+import type { TimesheetWithDetails, Project } from "@/lib/types";
+import type { Worker } from "@/lib/types/worker";
+import { cn } from "@/lib/utils";
 
 interface TimesheetFormProps {
-  timesheet?: TimesheetWithDetails
-  workers: Worker[]
-  projects: Project[]
-  onSuccess?: (timesheet: any) => void
-  onCancel?: () => void
+  timesheet?: TimesheetWithDetails;
+  workers: Worker[];
+  projects: Project[];
+  onSuccess?: (timesheet: any) => void;
+  onCancel?: () => void;
 }
 
-export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCancel }: TimesheetFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(timesheet ? new Date(timesheet.date) : new Date())
+export function TimesheetForm({
+  timesheet,
+  workers,
+  projects,
+  onSuccess,
+  onCancel,
+}: TimesheetFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    timesheet ? new Date(timesheet.date) : new Date()
+  );
 
-  const isEditing = !!timesheet
+  const isEditing = !!timesheet;
 
   const form = useForm<TimesheetFormData>({
     resolver: zodResolver(timesheetSchema),
@@ -51,41 +82,41 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
       supervisor_approval: timesheet?.supervisor_approval || false,
       notes: timesheet?.notes || "",
     },
-  })
+  });
 
   // Update hourly rate when worker changes
-  const selectedWorkerId = form.watch("worker_id")
+  const selectedWorkerId = form.watch("worker_id");
   useEffect(() => {
     if (selectedWorkerId && !isEditing) {
-      const worker = workers.find((w) => w.id === selectedWorkerId)
+      const worker = workers.find((w) => w.id === selectedWorkerId);
       if (worker) {
-        form.setValue("hourly_rate", worker.hourly_rate)
+        form.setValue("hourly_rate", worker.hourly_rate);
       }
     }
-  }, [selectedWorkerId, workers, form, isEditing])
+  }, [selectedWorkerId, workers, form, isEditing]);
 
   const onSubmit = async (data: TimesheetFormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      let result
+      let result;
       if (isEditing) {
-        result = await updateTimesheet({ id: timesheet.id, ...data })
+        result = await updateTimesheet({ id: timesheet.id, ...data });
       } else {
-        result = await createTimesheet(data)
+        result = await createTimesheet(data);
       }
 
       if (result.success && result.data) {
-        onSuccess?.(result.data)
+        onSuccess?.(result.data);
       } else {
-        throw new Error(result.error || "Failed to save timesheet")
+        throw new Error(result.error || "Failed to save timesheet");
       }
     } catch (error) {
-      console.error("Error saving timesheet:", error)
+      console.error("Error saving timesheet:", error);
       // You could add toast notification here
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -97,7 +128,9 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
               {isEditing ? "Edit Timesheet" : "New Timesheet"}
             </CardTitle>
             <CardDescription>
-              {isEditing ? "Update timesheet information" : "Create a new timesheet entry"}
+              {isEditing
+                ? "Update timesheet information"
+                : "Create a new timesheet entry"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -114,9 +147,16 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                         <FormControl>
                           <Button
                             variant="outline"
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
                           >
-                            {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                            {field.value ? (
+                              format(parseISO(field.value), "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -126,11 +166,14 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                           mode="single"
                           selected={selectedDate}
                           onSelect={(date) => {
-                            setSelectedDate(date)
-                            field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                            setSelectedDate(date);
+                            field.onChange(
+                              date ? date.toISOString().split("T")[0] : null
+                            );
                           }}
-                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                          initialFocus
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
                         />
                       </PopoverContent>
                     </Popover>
@@ -145,7 +188,10 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Worker</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a worker" />
@@ -157,7 +203,9 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4" />
                               <span>{worker.name}</span>
-                              <span className="text-muted-foreground">({worker.role})</span>
+                              <span className="text-muted-foreground">
+                                ({worker.role})
+                              </span>
                             </div>
                           </SelectItem>
                         ))}
@@ -177,7 +225,10 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Project</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a project" />
@@ -189,7 +240,11 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4" />
                               <span>{project.name}</span>
-                              {project.location && <span className="text-muted-foreground">({project.location})</span>}
+                              {project.location && (
+                                <span className="text-muted-foreground">
+                                  ({project.location})
+                                </span>
+                              )}
                             </div>
                           </SelectItem>
                         ))}
@@ -207,7 +262,11 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                   <FormItem>
                     <FormLabel>Task Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Describe the work performed..." className="resize-none" {...field} />
+                      <Textarea
+                        placeholder="Describe the work performed..."
+                        className="resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -296,11 +355,16 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>Supervisor Approval</FormLabel>
-                      <p className="text-sm text-muted-foreground">Mark as approved by supervisor</p>
+                      <p className="text-sm text-muted-foreground">
+                        Mark as approved by supervisor
+                      </p>
                     </div>
                   </FormItem>
                 )}
@@ -313,7 +377,11 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
                   <FormItem>
                     <FormLabel>Notes (Optional)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Additional notes or comments..." className="resize-none" {...field} />
+                      <Textarea
+                        placeholder="Additional notes or comments..."
+                        className="resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -335,5 +403,5 @@ export function TimesheetForm({ timesheet, workers, projects, onSuccess, onCance
         </div>
       </form>
     </Form>
-  )
+  );
 }

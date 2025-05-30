@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { User } from "@supabase/supabase-js"
 import { CalendarDays, Clock, Users, Building2, Download, Plus, Search, UsersRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,29 +24,17 @@ import {
 } from "@/lib/data/timesheets"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
 import { TimesheetDialog, BulkTimesheetDialog } from "@/components/forms/form-dialogs"
-
-// Mock data - replace with real data from your backend
-const mockWorkers = [
-  { id: "1", name: "Marcus Johnson", role: "Foreman", hourlyRate: 25 },
-  { id: "2", name: "David Williams", role: "Carpenter", hourlyRate: 22 },
-  { id: "3", name: "James Brown", role: "Electrician", hourlyRate: 28 },
-  { id: "4", name: "Robert Davis", role: "Plumber", hourlyRate: 26 },
-  { id: "5", name: "Michael Wilson", role: "Laborer", hourlyRate: 18 },
-  { id: "6", name: "Christopher Moore", role: "Mason", hourlyRate: 24 },
-]
-
-const mockProjects = [
-  { id: "1", name: "Paradise Resort Phase 1", location: "Nassau" },
-  { id: "2", name: "Cable Beach Condos", location: "Cable Beach" },
-  { id: "3", name: "Downtown Office Complex", location: "Nassau" },
-  { id: "4", name: "Atlantis Expansion", location: "Paradise Island" },
-]
+import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
+import type { Worker } from "@/lib/types/worker"
+import type { Project } from "@/lib/types/project"
 
 type AttendanceStatus = "present" | "absent" | "late"
 
-export default function TimesheetsPage() {
+export default function TimesheetsPage({user}: {user: User}) {
   // Updated state to use TimesheetWithDetails
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
+  const [workers, setWorkers] = useState<Worker[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [summary, setSummary] = useState({
@@ -63,7 +52,9 @@ export default function TimesheetsPage() {
 
   // Load timesheets effect
   useEffect(() => {
-    loadTimesheets()
+    loadTimesheets();
+    loadWorkers();
+    loadProjects();
   }, [selectedDate, selectedWorker, selectedProject, viewMode])
 
   // CRUD operations
@@ -93,10 +84,9 @@ export default function TimesheetsPage() {
       if (selectedProject !== "all") {
         filters.project_id = selectedProject
       }
-
       const [timesheetsResult, summaryResult] = await Promise.all([
-        getTimesheets(filters),
-        getTimesheetSummary(filters),
+        getTimesheets(user.id, filters),
+        getTimesheetSummary(user.id, filters),
       ])
 
       if (timesheetsResult.success && timesheetsResult.data) {
@@ -114,6 +104,30 @@ export default function TimesheetsPage() {
       setLoading(false)
     }
   }
+
+  const loadWorkers = async () => {
+      setLoading(true)
+      try {
+        const data = await fetchWorkersForCompany({ user })
+        setWorkers(data)
+      } catch (error) {
+        console.log("Failed to fetch Workers:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+  const loadProjects = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchProjectsForCompany({ user });
+        setProjects(data);
+      } catch (error) {
+        console.log("Failed to load projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // Updated to work with TimesheetWithDetails
   const handleUpdateTimesheet = async (id: string, field: keyof TimesheetWithDetails, value: any) => {
@@ -341,8 +355,8 @@ export default function TimesheetsPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <TimesheetDialog
-                workers={mockWorkers}
-                projects={mockProjects}
+                workers={workers}
+                projects={projects}
                 onSuccess={loadTimesheets}
                 trigger={
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -352,8 +366,8 @@ export default function TimesheetsPage() {
                 }
               />
               <BulkTimesheetDialog
-                workers={mockWorkers}
-                projects={mockProjects}
+                workers={workers}
+                projects={projects}
                 onSuccess={loadTimesheets}
                 trigger={
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -460,7 +474,7 @@ export default function TimesheetsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Workers</SelectItem>
-                  {mockWorkers.map((worker) => (
+                  {workers.map((worker) => (
                     <SelectItem key={worker.id} value={worker.id}>
                       {worker.name}
                     </SelectItem>
@@ -477,7 +491,7 @@ export default function TimesheetsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
-                  {mockProjects.map((project) => (
+                  {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
                     </SelectItem>

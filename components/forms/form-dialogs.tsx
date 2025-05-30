@@ -30,7 +30,8 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Worker } from "@/lib/types/worker";
 import type { Client } from "@/lib/types/client";
 
-import type { TimesheetWithDetails, Project } from "@/lib/types";
+import type { TimesheetWithDetails } from "@/lib/types";
+import type { Project } from "@/lib/types/project"
 
 // Timesheet Dialog
 interface TimesheetDialogProps {
@@ -74,6 +75,17 @@ export function TimesheetDialog({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="sr-only">
+            {timesheet ? "Edit Timesheet" : "Create Timesheet"}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {timesheet 
+            ? "Edit timesheet entry"
+            : "Create a new timesheet entry"
+            }
+          </DialogDescription>
+        </DialogHeader>
         <TimesheetForm
           timesheet={timesheet}
           workers={workers}
@@ -122,6 +134,14 @@ export function BulkTimesheetDialog({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="sr-only">
+            Bulk Timesheet Entry
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Create multiple timesheet entries for the same project and date
+          </DialogDescription>
+        </DialogHeader>
         <BulkTimesheetForm
           workers={workers}
           projects={projects}
@@ -239,7 +259,7 @@ export function ProjectDialog({
           <DialogTitle className="sr-only">
             {project ? "Edit Project" : "New Project"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="sr-only">
             {project
               ? "Update the project details and assigned workers."
               : "Create a new project and assign team members."}

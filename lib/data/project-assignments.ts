@@ -9,6 +9,7 @@ import type {
 import type { ApiResponse } from "@/lib/types"
 import { getProfile } from "./data"
 import { supabase } from "@/lib/supabaseClient"
+
 // fetch project assignments
 export async function fetchProjectAssignments(userId: string, projectId?: string) {
   const profile = await getProfile(userId);

@@ -15,7 +15,7 @@ export default async function Page() {
 
   return (
     <DashboardLayout title="Timesheets">
-      <TimesheetsPage />
+      <TimesheetsPage user={user}/>
     </DashboardLayout>
   );
 }

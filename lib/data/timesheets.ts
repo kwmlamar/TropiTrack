@@ -8,11 +8,13 @@ import type {
 } from "@/lib/types"
 
 import { supabase } from "@/lib/supabaseClient"
+import { getProfile } from "./data"
 
 /**
  * Get timesheets with optional filtering and related data
  */
-export async function getTimesheets(filters: TimesheetFilters = {}): Promise<ApiResponse<TimesheetWithDetails[]>> {
+export async function getTimesheets( userId: string, filters: TimesheetFilters = {} ): Promise<ApiResponse<TimesheetWithDetails[]>> {
+  const profile = await getProfile(userId);
   try {
     let query = supabase
       .from("timesheets")
@@ -22,6 +24,7 @@ export async function getTimesheets(filters: TimesheetFilters = {}): Promise<Api
         project:projects(id, name, location)
       `)
       .order("date", { ascending: false })
+      .eq("company_id", profile.company_id)
 
     // Apply filters
     if (filters.worker_id) {
