@@ -39,7 +39,7 @@ interface TimesheetDialogProps {
   timesheet?: TimesheetWithDetails;
   workers: Worker[];
   projects: Project[];
-  onSuccess?: (timesheet: any) => void;
+  onSuccess?: (timesheet: TimesheetWithDetails) => void;
   trigger?: React.ReactNode;
 }
 
@@ -52,7 +52,8 @@ export function TimesheetDialog({
   trigger,
 }: TimesheetDialogProps) {
   const [open, setOpen] = useState(false);
-
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSuccess = (data: any) => {
     setOpen(false);
     onSuccess?.(data);
@@ -105,7 +106,7 @@ interface BulkTimesheetDialogProps {
   userId: string;
   workers: Worker[];
   projects: Project[];
-  onSuccess?: (timesheets: any[]) => void;
+  onSuccess?: (timesheets: TimesheetWithDetails[]) => void;
   trigger?: React.ReactNode;
 }
 
@@ -117,7 +118,8 @@ export function BulkTimesheetDialog({
   trigger,
 }: BulkTimesheetDialogProps) {
   const [open, setOpen] = useState(false);
-
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSuccess = (data: any[]) => {
     setOpen(false);
     onSuccess?.(data);

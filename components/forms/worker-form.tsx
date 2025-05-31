@@ -74,9 +74,6 @@ export function WorkerForm({
   onCancel,
 }: WorkerFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    worker?.hire_date ? new Date(worker.hire_date) : new Date()
-  );
 
   const isEditing = !!worker;
 

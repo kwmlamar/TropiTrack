@@ -42,7 +42,8 @@ import { Separator } from "@/components/ui/separator";
 
 import { timesheetSchema, type TimesheetFormData } from "@/lib/validations";
 import { createTimesheet, updateTimesheet } from "@/lib/data/timesheets";
-import type { TimesheetWithDetails, Project } from "@/lib/types";
+import type { TimesheetWithDetails } from "@/lib/types";
+import type { Project } from "@/lib/types/project"
 import type { Worker } from "@/lib/types/worker";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ interface TimesheetFormProps {
   timesheet?: TimesheetWithDetails;
   workers: Worker[];
   projects: Project[];
-  onSuccess?: (timesheet: any) => void;
+  onSuccess?: (timesheet: TimesheetWithDetails) => void;
   onCancel?: () => void;
 }
 

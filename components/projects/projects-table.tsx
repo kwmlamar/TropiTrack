@@ -79,6 +79,7 @@ export default function ProjectsTable({ user }: { user: User }) {
     loadClients();
     loadWorkers();
     loadProjectAssignments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadProjects = async () => {

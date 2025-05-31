@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layouts/DashboardLayout";
-import TimesheetsPage from "@/components/timesheets2/timesheets-page";
+import TimesheetsPage from "@/components/timesheets/timesheets-page";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function Page() {

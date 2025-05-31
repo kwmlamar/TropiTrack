@@ -31,6 +31,7 @@ export default function ClientTable({ user }: { user: User }) {
 
   useEffect(() => {
     loadClients()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const loadClients = async () => {

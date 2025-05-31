@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { z } from "zod";
-import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +59,9 @@ import {
 } from "@/components/ui/tooltip";
 
 import { createTimesheet } from "@/lib/data/timesheets";
-import type { Worker, Project, CreateTimesheetInput } from "@/lib/types";
+import type { CreateTimesheetInput, TimesheetWithDetails } from "@/lib/types";
+import type { Worker } from "@/lib/types/worker"
+import type { Project } from "@/lib/types/project"
 import { cn } from "@/lib/utils";
 
 // Schema for a single timesheet entry
@@ -99,7 +100,7 @@ interface BulkTimesheetFormProps {
   userId: string;
   workers: Worker[];
   projects: Project[];
-  onSuccess?: (timesheets: any[]) => void;
+  onSuccess?: (timesheets: TimesheetWithDetails[]) => void;
   onCancel?: () => void;
 }
 
@@ -111,10 +112,6 @@ export function BulkTimesheetForm({
   onCancel,
 }: BulkTimesheetFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: undefined,
-  });
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
 
@@ -211,6 +208,7 @@ export function BulkTimesheetForm({
       }
 
       // Create timesheet entries for each worker × each date combination
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const timesheetPromises: Promise<any>[] = [];
 
       data.entries.forEach((entry) => {
@@ -390,7 +388,6 @@ export function BulkTimesheetForm({
                           }
                           onSelect={(range) => {
                             field.onChange(range);
-                            setDateRange(range);
                           }}
                           numberOfMonths={2}
                           disabled={(date) =>

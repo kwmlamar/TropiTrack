@@ -19,7 +19,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import {
   getTimesheets,
   updateTimesheet as updateTimesheetData,
-  deleteTimesheet,
   getTimesheetSummary,
 } from "@/lib/data/timesheets"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
@@ -55,6 +54,7 @@ export default function TimesheetsPage({user}: {user: User}) {
     loadTimesheets();
     loadWorkers();
     loadProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, selectedWorker, selectedProject, viewMode])
 
   // CRUD operations
@@ -130,6 +130,7 @@ export default function TimesheetsPage({user}: {user: User}) {
     };
 
   // Updated to work with TimesheetWithDetails
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdateTimesheet = async (id: string, field: keyof TimesheetWithDetails, value: any) => {
     try {
       // Only update fields that exist on the base Timesheet type
@@ -184,21 +185,6 @@ export default function TimesheetsPage({user}: {user: User}) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update timesheet")
-    }
-  }
-
-  const handleDeleteTimesheet = async (id: string) => {
-    try {
-      const result = await deleteTimesheet(id)
-
-      if (result.success) {
-        setTimesheets((prev) => prev.filter((ts) => ts.id !== id))
-        loadTimesheets() // Reload to update summary
-      } else {
-        setError(result.error || "Failed to delete timesheet")
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete timesheet")
     }
   }
 

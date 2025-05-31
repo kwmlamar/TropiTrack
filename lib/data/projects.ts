@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import type {
   Project,
   NewProject,
@@ -8,7 +7,6 @@ import type {
 } from "@/lib/types/project";
 import type { ApiResponse } from "@/lib/types";
 import { getProfile } from "./data";
-import { assignWorkersToProject } from "./project-assignments";
 
 import { supabase } from "@/lib/supabaseClient"
 

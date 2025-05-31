@@ -126,10 +126,6 @@ export function ProjectForm({
   const onSubmit = async (data: ProjectFormData) => {
     setIsSubmitting(true);
     try {
-      const projectData = {
-        ...data,
-        assigned_worker_ids: selectedWorkers,
-      };
 
       let result;
       if (isEditing) {

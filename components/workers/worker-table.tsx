@@ -1,15 +1,28 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { SearchForm } from "@/components/search-form"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { fetchWorkersForCompany, deleteEmployee, } from "@/lib/data/data"
-import type { User } from "@supabase/supabase-js"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Card, CardContent } from "@/components/ui/card"
-import { MoreVertical, Plus, UserCheck, UserX, Users, DollarSign, Activity } from "lucide-react"
-import type { Worker } from "@/lib/types/worker"
+import { useState, useEffect } from "react";
+import { SearchForm } from "@/components/search-form";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { fetchWorkersForCompany, deleteEmployee } from "@/lib/data/data";
+import type { User } from "@supabase/supabase-js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  MoreVertical,
+  Plus,
+  UserCheck,
+  UserX,
+  Users,
+  DollarSign,
+  Activity,
+} from "lucide-react";
+import type { Worker } from "@/lib/types/worker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,58 +32,65 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { WorkerSheet } from "@/components/forms/form-dialogs"
+} from "@/components/ui/alert-dialog";
+import { WorkerSheet } from "@/components/forms/form-dialogs";
 
-const columns = ["Name", "Pay Rate", "Status"]
+const columns = ["Name", "Pay Rate", "Status"];
 
 export default function WorkersTable({ user }: { user: User }) {
-  const [workers, setWorkers] = useState<Worker[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
-    loadWorkers()
-  }, [])
+    loadWorkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadWorkers = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await fetchWorkersForCompany({ user })
-      setWorkers(data)
+      const data = await fetchWorkersForCompany({ user });
+      setWorkers(data);
     } catch (error) {
-      console.log("Failed to fetch Workers:", error)
+      console.log("Failed to fetch Workers:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleDeleteWorker = async () => {
-    if (!selectedWorker) return
+    if (!selectedWorker) return;
     try {
-      await deleteEmployee(selectedWorker.id, { user })
+      await deleteEmployee(selectedWorker.id, { user });
     } catch (error) {
-      console.log("Failed to delete employee:", error)
+      console.log("Failed to delete employee:", error);
     } finally {
-      setSelectedWorker(null)
-      setIsDeleteDialogOpen(false)
-      loadWorkers()
+      setSelectedWorker(null);
+      setIsDeleteDialogOpen(false);
+      loadWorkers();
     }
-  }
+  };
 
   // Calculate statistics
-  const activeWorkers = workers.filter((w) => w.is_active).length
-  const totalWorkers = workers.length
-  const averageRate = workers.length > 0 ? workers.reduce((sum, w) => sum + w.hourly_rate, 0) / workers.length : 0
+  const activeWorkers = workers.filter((w) => w.is_active).length;
+  const totalWorkers = workers.length;
+  const averageRate =
+    workers.length > 0
+      ? workers.reduce((sum, w) => sum + w.hourly_rate, 0) / workers.length
+      : 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Team Management</h1>
-        <p className="text-muted-foreground">Manage your construction team and track worker information</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Team Management
+        </h1>
+        <p className="text-muted-foreground">
+          Manage your construction team and track worker information
+        </p>
       </div>
 
       {/* Statistics Cards */}
@@ -82,8 +102,12 @@ export default function WorkersTable({ user }: { user: User }) {
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Workers</p>
-                <p className="text-2xl font-bold text-foreground">{totalWorkers}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Workers
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {totalWorkers}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -96,8 +120,12 @@ export default function WorkersTable({ user }: { user: User }) {
                 <Activity className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Workers</p>
-                <p className="text-2xl font-bold text-foreground">{activeWorkers}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Workers
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {activeWorkers}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -110,8 +138,12 @@ export default function WorkersTable({ user }: { user: User }) {
                 <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg. Hourly Rate</p>
-                <p className="text-2xl font-bold text-foreground">${averageRate.toFixed(2)}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Avg. Hourly Rate
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  ${averageRate.toFixed(2)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -120,9 +152,12 @@ export default function WorkersTable({ user }: { user: User }) {
 
       {/* Controls Section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <SearchForm placeholder="Search workers..." className="w-full sm:w-80" />
+        <SearchForm
+          placeholder="Search workers..."
+          className="w-full sm:w-80"
+        />
         <WorkerSheet
-        userId={user.id}
+          userId={user.id}
           onSuccess={loadWorkers}
           trigger={
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
@@ -139,7 +174,10 @@ export default function WorkersTable({ user }: { user: User }) {
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
             {columns.map((col) => (
-              <div key={col} className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              <div
+                key={col}
+                className="text-sm font-semibold text-muted-foreground uppercase tracking-wide"
+              >
                 {col}
               </div>
             ))}
@@ -159,17 +197,25 @@ export default function WorkersTable({ user }: { user: User }) {
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
                 <UserX className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No workers found</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No workers found
+              </h3>
               <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
-                You haven&apos;t added any workers yet. Add your first worker to get started with team management.
+                You haven&apos;t added any workers yet. Add your first worker to
+                get started with team management.
               </p>
-              <Button
-                onClick={() => setIsFormOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <UserCheck className="mr-2 h-4 w-4" />
-                Add Your First Worker
-              </Button>
+              <WorkerSheet
+                userId={user.id}
+                onSuccess={loadWorkers}
+                trigger={
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    Add Your First Worker
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <div className="divide-y divide-border/50">
@@ -189,8 +235,12 @@ export default function WorkersTable({ user }: { user: User }) {
                       </span>
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{worker.name}</p>
-                      <p className="text-sm text-muted-foreground">{worker.role || "Construction Worker"}</p>
+                      <p className="font-semibold text-foreground">
+                        {worker.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {worker.role || "Construction Worker"}
+                      </p>
                     </div>
                   </div>
 
@@ -215,7 +265,11 @@ export default function WorkersTable({ user }: { user: User }) {
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-muted"
+                        >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -225,13 +279,17 @@ export default function WorkersTable({ user }: { user: User }) {
                           worker={worker}
                           onSuccess={loadWorkers}
                           trigger={
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit Worker</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              Edit Worker
+                            </DropdownMenuItem>
                           }
                         />
                         <DropdownMenuItem
                           onClick={() => {
-                            setSelectedWorker(worker)
-                            setIsDeleteDialogOpen(true)
+                            setSelectedWorker(worker);
+                            setIsDeleteDialogOpen(true);
                           }}
                           className="cursor-pointer text-destructive focus:text-destructive"
                         >
@@ -252,17 +310,21 @@ export default function WorkersTable({ user }: { user: User }) {
         open={isDeleteDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
-            setSelectedWorker(null)
+            setSelectedWorker(null);
           }
-          setIsDeleteDialogOpen(open)
+          setIsDeleteDialogOpen(open);
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle className="text-foreground">
+              Are you absolutely sure?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <strong>{selectedWorker?.name}</strong> from your team. This action cannot be
-              undone and will remove all associated timesheet data.
+              This will permanently delete{" "}
+              <strong>{selectedWorker?.name}</strong> from your team. This
+              action cannot be undone and will remove all associated timesheet
+              data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -277,5 +339,5 @@ export default function WorkersTable({ user }: { user: User }) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

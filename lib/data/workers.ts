@@ -1,6 +1,5 @@
 import type { Worker, NewWorker, UpdateWorker, WorkerFilters, WorkerWithDetails } from "@/lib/types/worker"
 import type { ApiResponse } from "@/lib/types" 
-import { User } from "@supabase/supabase-js"
 import { getProfile } from "./data"
 
 import { supabase } from "@/lib/supabaseClient"
