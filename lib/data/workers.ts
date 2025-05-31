@@ -116,9 +116,15 @@ export async function createWorker(userId: string, worker: NewWorker): Promise<A
   const profile = await getProfile(userId)
 
   try {
+    // Normalize empty email to null to avoid unique constraint issues
+    const normalizedWorker = {
+      ...worker,
+      email: worker.email && worker.email.trim() !== "" ? worker.email.trim() : null,
+    }
+
     const { data, error } = await supabase
       .from("workers")
-      .insert([{ ...worker, company_id: profile.company_id }]) 
+      .insert([{ ...normalizedWorker, company_id: profile.company_id }]) 
       .select()
       .single()
 
