@@ -355,6 +355,7 @@ export default function TimesheetsPage({user}: {user: User}) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <TimesheetDialog
+                userId={user.id}
                 workers={workers}
                 projects={projects}
                 onSuccess={loadTimesheets}
@@ -366,6 +367,7 @@ export default function TimesheetsPage({user}: {user: User}) {
                 }
               />
               <BulkTimesheetDialog
+                userId={user.id}
                 workers={workers}
                 projects={projects}
                 onSuccess={loadTimesheets}

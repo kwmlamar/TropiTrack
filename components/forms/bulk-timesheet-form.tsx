@@ -1,197 +1,300 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useForm, useFieldArray } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarIcon, Clock, Building2, Loader2, Plus, Trash2, User, Calculator } from "lucide-react"
-import { format } from "date-fns"
-import { z } from "zod"
+import { useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  CalendarIcon,
+  Clock,
+  Building2,
+  Loader2,
+  Plus,
+  Trash2,
+  User,
+  Calculator,
+} from "lucide-react";
+import { format } from "date-fns";
+import { z } from "zod";
+import type { DateRange } from "react-day-picker";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-import { createTimesheet } from "@/lib/data/timesheets"
-import type { Worker, Project, CreateTimesheetInput } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { createTimesheet } from "@/lib/data/timesheets";
+import type { Worker, Project, CreateTimesheetInput } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 // Schema for a single timesheet entry
 const timesheetEntrySchema = z.object({
   worker_id: z.string().min(1, "Worker is required"),
   clock_in: z.string().min(1, "Clock in time is required"),
   clock_out: z.string().min(1, "Clock out time is required"),
-  break_duration: z.number().min(0, "Break duration must be positive").max(480, "Break cannot exceed 8 hours"),
+  break_duration: z
+    .number()
+    .min(0, "Break duration must be positive")
+    .max(480, "Break cannot exceed 8 hours"),
   hourly_rate: z.number().min(0, "Hourly rate must be positive"),
   task_description: z.string().min(1, "Task description is required"),
   notes: z.string().optional(),
-})
+});
 
 // Schema for the bulk timesheet form
 const bulkTimesheetSchema = z.object({
   project_id: z.string().min(1, "Project is required"),
-  date: z.string().min(1, "Date is required"),
-  entries: z.array(timesheetEntrySchema).min(1, "At least one worker entry is required"),
-})
+  date_range: z
+    .object({
+      from: z.date(),
+      to: z.date().optional(),
+    })
+    .refine((data) => data.from, {
+      message: "Start date is required",
+    }),
+  entries: z
+    .array(timesheetEntrySchema)
+    .min(1, "At least one worker entry is required"),
+});
 
-type BulkTimesheetFormData = z.infer<typeof bulkTimesheetSchema>
+type BulkTimesheetFormData = z.infer<typeof bulkTimesheetSchema>;
 
 interface BulkTimesheetFormProps {
-  workers: Worker[]
-  projects: Project[]
-  onSuccess?: (timesheets: any[]) => void
-  onCancel?: () => void
+  userId: string;
+  workers: Worker[];
+  projects: Project[];
+  onSuccess?: (timesheets: any[]) => void;
+  onCancel?: () => void;
 }
 
-export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: BulkTimesheetFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false)
+export function BulkTimesheetForm({
+  userId,
+  workers,
+  projects,
+  onSuccess,
+  onCancel,
+}: BulkTimesheetFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: undefined,
+  });
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
 
   const form = useForm<BulkTimesheetFormData>({
     resolver: zodResolver(bulkTimesheetSchema),
     defaultValues: {
       project_id: "",
-      date: format(new Date(), "yyyy-MM-dd"),
+      date_range: {
+        from: new Date(),
+        to: undefined,
+      },
       entries: [
         {
           worker_id: "",
-          clock_in: "08:00",
-          clock_out: "17:00",
-          break_duration: 30,
+          clock_in: "07:00",
+          clock_out: "16:00",
+          break_duration: 60,
           hourly_rate: 0,
           task_description: "",
           notes: "",
         },
       ],
     },
-  })
+  });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "entries",
-  })
+  });
 
   // Calculate total hours and cost
   const calculateTotals = () => {
-    const entries = form.getValues().entries
-    let totalHours = 0
-    let totalCost = 0
+    const formData = form.getValues();
+    const entries = formData.entries;
+    const dateRange = formData.date_range;
+
+    // Calculate number of days
+    let numberOfDays = 1;
+    if (dateRange && dateRange.from && dateRange.to) {
+      const diffTime = Math.abs(
+        dateRange.to.getTime() - dateRange.from.getTime()
+      );
+      numberOfDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    let totalHours = 0;
+    let totalCost = 0;
 
     entries.forEach((entry) => {
       if (entry.clock_in && entry.clock_out) {
-        const clockIn = new Date(`2000-01-01T${entry.clock_in}:00`)
-        const clockOut = new Date(`2000-01-01T${entry.clock_out}:00`)
+        const clockIn = new Date(`2000-01-01T${entry.clock_in}:00`);
+        const clockOut = new Date(`2000-01-01T${entry.clock_out}:00`);
 
-        // Handle clock out after midnight
-        let diffMs = clockOut.getTime() - clockIn.getTime()
+        let diffMs = clockOut.getTime() - clockIn.getTime();
         if (diffMs < 0) {
-          diffMs += 24 * 60 * 60 * 1000 // Add 24 hours
+          diffMs += 24 * 60 * 60 * 1000;
         }
 
-        const breakMs = (entry.break_duration || 0) * 60 * 1000
-        const hours = Math.max(0, (diffMs - breakMs) / (1000 * 60 * 60))
+        const breakMs = (entry.break_duration || 0) * 60 * 1000;
+        const hours = Math.max(0, (diffMs - breakMs) / (1000 * 60 * 60));
 
-        totalHours += hours
-        totalCost += hours * (entry.hourly_rate || 0)
+        totalHours += hours * numberOfDays;
+        totalCost += hours * numberOfDays * (entry.hourly_rate || 0);
       }
-    })
+    });
 
     return {
       hours: totalHours.toFixed(2),
       cost: totalCost.toFixed(2),
-    }
-  }
+      days: numberOfDays,
+      workers: entries.length,
+    };
+  };
 
-  const totals = calculateTotals()
+  const totals = calculateTotals();
 
   const onSubmit = async (data: BulkTimesheetFormData) => {
-    setIsSubmitting(true)
-    setSubmissionError(null)
-    setSubmissionSuccess(false)
+    setIsSubmitting(true);
+    setSubmissionError(null);
+    setSubmissionSuccess(false);
 
     try {
-      const timesheetPromises = data.entries.map((entry) => {
-        const timesheetData: CreateTimesheetInput = {
-          date: data.date,
-          project_id: data.project_id,
-          worker_id: entry.worker_id,
-          task_description: entry.task_description,
-          clock_in: entry.clock_in,
-          clock_out: entry.clock_out,
-          break_duration: entry.break_duration,
-          hourly_rate: entry.hourly_rate,
-          regular_hours: 0, // Will be calculated by the backend
-          overtime_hours: 0, // Will be calculated by the backend
-          total_hours: 0, // Will be calculated by the backend
-          total_pay: 0, // Will be calculated by the backend
-          supervisor_approval: false,
-          notes: entry.notes,
-        }
+      // Generate array of dates from the range
+      const dates: string[] = [];
+      const startDate = data.date_range.from;
+      const endDate = data.date_range.to || data.date_range.from;
 
-        return createTimesheet(timesheetData)
-      })
+      const currentDate = new Date(startDate);
+      const finalDate = new Date(endDate);
 
-      const results = await Promise.all(timesheetPromises)
+      while (currentDate <= finalDate) {
+        dates.push(format(currentDate, "yyyy-MM-dd"));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
 
-      // Check if any submissions failed
-      const failures = results.filter((result) => !result.success)
+      // Create timesheet entries for each worker × each date combination
+      const timesheetPromises: Promise<any>[] = [];
+
+      data.entries.forEach((entry) => {
+        dates.forEach((date) => {
+          const timesheetData: CreateTimesheetInput = {
+            date: date,
+            project_id: data.project_id,
+            worker_id: entry.worker_id,
+            task_description: entry.task_description,
+            clock_in: entry.clock_in,
+            clock_out: entry.clock_out,
+            break_duration: entry.break_duration,
+            hourly_rate: entry.hourly_rate,
+            regular_hours: 0,
+            overtime_hours: 0,
+            total_hours: 0,
+            total_pay: 0,
+            supervisor_approval: false,
+            notes: entry.notes,
+          };
+
+          timesheetPromises.push(createTimesheet(userId, timesheetData));
+        });
+      });
+
+      const results = await Promise.all(timesheetPromises);
+
+      const failures = results.filter((result) => !result.success);
       if (failures.length > 0) {
-        setSubmissionError(`${failures.length} out of ${results.length} entries failed to submit.`)
+        setSubmissionError(
+          `${failures.length} out of ${results.length} entries failed to submit.`
+        );
       } else {
-        setSubmissionSuccess(true)
-        const successData = results.map((result) => result.data)
-        onSuccess?.(successData)
+        setSubmissionSuccess(true);
+        const successData = results.map((result) => result.data);
+        onSuccess?.(successData);
       }
     } catch (error) {
-      console.error("Error submitting timesheets:", error)
-      setSubmissionError("An unexpected error occurred while submitting timesheets.")
+      console.error("Error submitting timesheets:", error);
+      setSubmissionError(
+        "An unexpected error occurred while submitting timesheets."
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Auto-fill hourly rate when worker changes
   const handleWorkerChange = (index: number, workerId: string) => {
-    const worker = workers.find((w) => w.id === workerId)
+    const worker = workers.find((w) => w.id === workerId);
     if (worker) {
-      form.setValue(`entries.${index}.hourly_rate`, worker.hourly_rate)
+      form.setValue(`entries.${index}.hourly_rate`, worker.hourly_rate);
     }
-  }
+  };
 
   // Add a new empty row
   const addRow = () => {
     append({
       worker_id: "",
-      clock_in: "08:00",
-      clock_out: "17:00",
-      break_duration: 30,
+      clock_in: "07:00",
+      clock_out: "16:00",
+      break_duration: 60,
       hourly_rate: 0,
       task_description: "",
       notes: "",
-    })
-  }
+    });
+  };
 
   // Copy values from the previous row
   const copyFromPrevious = (index: number) => {
     if (index > 0) {
-      const previousEntry = form.getValues().entries[index - 1]
-      form.setValue(`entries.${index}.clock_in`, previousEntry.clock_in)
-      form.setValue(`entries.${index}.clock_out`, previousEntry.clock_out)
-      form.setValue(`entries.${index}.break_duration`, previousEntry.break_duration)
-      form.setValue(`entries.${index}.task_description`, previousEntry.task_description)
+      const previousEntry = form.getValues().entries[index - 1];
+      form.setValue(`entries.${index}.clock_in`, previousEntry.clock_in);
+      form.setValue(`entries.${index}.clock_out`, previousEntry.clock_out);
+      form.setValue(
+        `entries.${index}.break_duration`,
+        previousEntry.break_duration
+      );
+      form.setValue(
+        `entries.${index}.task_description`,
+        previousEntry.task_description
+      );
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -202,10 +305,13 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
               <Clock className="h-5 w-5" />
               Bulk Timesheet Entry
             </CardTitle>
-            <CardDescription>Create multiple timesheet entries for the same project and date</CardDescription>
+            <CardDescription>
+              Create multiple timesheet entries for selected workers and date
+              range
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Common Fields: Project and Date */}
+          <CardContent className="space-y-6 pb-0">
+            {/* Common Fields: Project and Date Range */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -213,7 +319,10 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Project</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a project" />
@@ -225,7 +334,11 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4" />
                               <span>{project.name}</span>
-                              {project.location && <span className="text-muted-foreground">({project.location})</span>}
+                              {project.location && (
+                                <span className="text-muted-foreground">
+                                  ({project.location})
+                                </span>
+                              )}
                             </div>
                           </SelectItem>
                         ))}
@@ -238,32 +351,51 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
 
               <FormField
                 control={form.control}
-                name="date"
+                name="date_range"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Date Range</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant="outline"
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value?.from && "text-muted-foreground"
+                            )}
                           >
-                            {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                            {field.value?.from ? (
+                              field.value.to ? (
+                                <>
+                                  {format(field.value.from, "LLL dd, y")} -{" "}
+                                  {format(field.value.to, "LLL dd, y")}
+                                </>
+                              ) : (
+                                format(field.value.from, "LLL dd, y")
+                              )
+                            ) : (
+                              <span>Pick date range</span>
+                            )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => {
-                            setSelectedDate(date || new Date())
-                            field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                          mode="range"
+                          defaultMonth={field.value?.from ?? new Date()}
+                          selected={
+                            field.value ?? { from: undefined, to: undefined }
+                          }
+                          onSelect={(range) => {
+                            field.onChange(range);
+                            setDateRange(range);
                           }}
-                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                          initialFocus
+                          numberOfMonths={2}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
                         />
                       </PopoverContent>
                     </Popover>
@@ -279,23 +411,35 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Worker Entries</h3>
-                <Button type="button" variant="outline" size="sm" onClick={addRow} className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addRow}
+                  className="flex items-center gap-1"
+                >
                   <Plus className="h-4 w-4" />
                   Add Worker
                 </Button>
               </div>
 
-              <ScrollArea className="max-h-[500px] pr-4">
+              <div className="space-y-6">
                 <div className="space-y-6">
                   {fields.map((field, index) => (
                     <Card
                       key={field.id}
-                      className={cn("border-border/50", index % 2 === 0 ? "bg-card/50" : "bg-muted/30")}
+                      className={cn(
+                        "border-border/50",
+                        index % 2 === 0 ? "bg-card/50" : "bg-muted/30"
+                      )}
                     >
                       <CardHeader className="p-4 pb-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-primary/10 text-primary">
+                            <Badge
+                              variant="outline"
+                              className="bg-primary/10 text-primary"
+                            >
                               #{index + 1}
                             </Badge>
                             <FormField
@@ -305,8 +449,8 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
                                 <FormItem className="flex-1">
                                   <Select
                                     onValueChange={(value) => {
-                                      workerField.onChange(value)
-                                      handleWorkerChange(index, value)
+                                      workerField.onChange(value);
+                                      handleWorkerChange(index, value);
                                     }}
                                     defaultValue={workerField.value}
                                   >
@@ -317,11 +461,16 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
                                     </FormControl>
                                     <SelectContent>
                                       {workers.map((worker) => (
-                                        <SelectItem key={worker.id} value={worker.id}>
+                                        <SelectItem
+                                          key={worker.id}
+                                          value={worker.id}
+                                        >
                                           <div className="flex items-center gap-2">
                                             <User className="h-4 w-4" />
                                             <span>{worker.name}</span>
-                                            <span className="text-muted-foreground">({worker.role})</span>
+                                            <span className="text-muted-foreground">
+                                              ({worker.role})
+                                            </span>
                                           </div>
                                         </SelectItem>
                                       ))}
@@ -409,7 +558,9 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
                                     min="0"
                                     max="480"
                                     {...field}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -429,7 +580,9 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
                                     min="0"
                                     step="0.01"
                                     {...field}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -479,11 +632,13 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
                     </Card>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
 
               {fields.length === 0 && (
                 <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
-                  <p className="text-muted-foreground mb-4">No worker entries added yet</p>
+                  <p className="text-muted-foreground mb-4">
+                    No worker entries added yet
+                  </p>
                   <Button type="button" variant="outline" onClick={addRow}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Worker
@@ -492,7 +647,7 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
               )}
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+          <CardFooter className="flex flex-col space-y-4 border-t bg-muted/20 mt-6">
             {/* Summary */}
             <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2">
@@ -501,16 +656,36 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 <div>
-                  <span className="text-sm text-muted-foreground">Workers:</span>{" "}
-                  <span className="font-medium">{fields.length}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Workers:
+                  </span>{" "}
+                  <span className="font-medium">{totals.workers}</span>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Total Hours:</span>{" "}
+                  <span className="text-sm text-muted-foreground">Days:</span>{" "}
+                  <span className="font-medium">{totals.days}</span>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">
+                    Total Entries:
+                  </span>{" "}
+                  <span className="font-medium">
+                    {totals.workers * totals.days}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">
+                    Total Hours:
+                  </span>{" "}
                   <span className="font-medium">{totals.hours}h</span>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Total Cost:</span>{" "}
-                  <span className="font-medium text-green-600">${totals.cost}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Total Cost:
+                  </span>{" "}
+                  <span className="font-medium text-green-600">
+                    ${totals.cost}
+                  </span>
                 </div>
               </div>
             </div>
@@ -523,24 +698,31 @@ export function BulkTimesheetForm({ workers, projects, onSuccess, onCancel }: Bu
             )}
 
             {submissionSuccess && (
-              <Alert variant="default" className="bg-green-50 text-green-800 border-green-200">
-                <AlertDescription>All timesheet entries were successfully submitted!</AlertDescription>
+              <Alert
+                variant="default"
+                className="bg-green-50 text-green-800 border-green-200"
+              >
+                <AlertDescription>
+                  All timesheet entries were successfully submitted!
+                </AlertDescription>
               </Alert>
             )}
+
+            {/* Form Actions */}
+            <div className="flex items-center justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isSubmitting ? "Submitting..." : "Submit All Entries"}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
-
-        {/* Form Actions */}
-        <div className="flex items-center justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? "Submitting..." : "Submit All Entries"}
-          </Button>
-        </div>
       </form>
     </Form>
-  )
+  );
 }

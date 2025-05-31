@@ -5,237 +5,276 @@ import type {
   ApiResponse,
   TimesheetFilters,
   TimesheetWithDetails,
-} from "@/lib/types"
+} from "@/lib/types";
 
-import { supabase } from "@/lib/supabaseClient"
-import { getProfile } from "./data"
+import { supabase } from "@/lib/supabaseClient";
+import { getProfile } from "./data";
 
 /**
  * Get timesheets with optional filtering and related data
  */
-export async function getTimesheets( userId: string, filters: TimesheetFilters = {} ): Promise<ApiResponse<TimesheetWithDetails[]>> {
+export async function getTimesheets(
+  userId: string,
+  filters: TimesheetFilters = {}
+): Promise<ApiResponse<TimesheetWithDetails[]>> {
   const profile = await getProfile(userId);
   try {
     let query = supabase
       .from("timesheets")
-      .select(`
+      .select(
+        `
         *,
         worker:workers(id, name, role),
         project:projects(id, name, location)
-      `)
+      `
+      )
       .order("date", { ascending: false })
-      .eq("company_id", profile.company_id)
+      .eq("company_id", profile.company_id);
 
     // Apply filters
     if (filters.worker_id) {
-      query = query.eq("worker_id", filters.worker_id)
+      query = query.eq("worker_id", filters.worker_id);
     }
 
     if (filters.project_id) {
-      query = query.eq("project_id", filters.project_id)
+      query = query.eq("project_id", filters.project_id);
     }
 
     if (filters.date_from) {
-      query = query.gte("date", filters.date_from)
+      query = query.gte("date", filters.date_from);
     }
 
     if (filters.date_to) {
-      query = query.lte("date", filters.date_to)
+      query = query.lte("date", filters.date_to);
     }
 
     if (filters.supervisor_approval !== undefined) {
-      query = query.eq("supervisor_approval", filters.supervisor_approval)
+      query = query.eq("supervisor_approval", filters.supervisor_approval);
     }
 
     // Apply pagination
     if (filters.limit) {
-      query = query.limit(filters.limit)
+      query = query.limit(filters.limit);
     }
 
     if (filters.offset) {
-      query = query.range(filters.offset, filters.offset + (filters.limit || 50) - 1)
+      query = query.range(
+        filters.offset,
+        filters.offset + (filters.limit || 50) - 1
+      );
     }
 
-    const { data, error } = await query
+    const { data, error } = await query;
 
     if (error) {
-      console.error("Error fetching timesheets:", error)
+      console.error("Error fetching timesheets:", error);
       return {
         data: null,
         error: error.message,
         success: false,
-      }
+      };
     }
 
     return {
       data: data as TimesheetWithDetails[],
       error: null,
       success: true,
-    }
+    };
   } catch (error) {
-    console.error("Unexpected error fetching timesheets:", error)
+    console.error("Unexpected error fetching timesheets:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }
 
 /**
  * Get a single timesheet by ID
  */
-export async function getTimesheet(id: string): Promise<ApiResponse<TimesheetWithDetails>> {
+export async function getTimesheet(
+  id: string
+): Promise<ApiResponse<TimesheetWithDetails>> {
   try {
     const { data, error } = await supabase
       .from("timesheets")
-      .select(`
+      .select(
+        `
         *,
         worker:workers(id, name, role),
         project:projects(id, name, location)
-      `)
+      `
+      )
       .eq("id", id)
-      .single()
+      .single();
 
     if (error) {
-      console.error("Error fetching timesheet:", error)
+      console.error("Error fetching timesheet:", error);
       return {
         data: null,
         error: error.message,
         success: false,
-      }
+      };
     }
 
     return {
       data: data as TimesheetWithDetails,
       error: null,
       success: true,
-    }
+    };
   } catch (error) {
-    console.error("Unexpected error fetching timesheet:", error)
+    console.error("Unexpected error fetching timesheet:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }
 
 /**
  * Create a new timesheet
  */
-export async function createTimesheet(timesheet: CreateTimesheetInput): Promise<ApiResponse<Timesheet>> {
+export async function createTimesheet(
+  userId: string,
+  timesheet: CreateTimesheetInput
+): Promise<ApiResponse<Timesheet>> {
+  const profile = await getProfile(userId);
   try {
     // Calculate totals before inserting
-    const calculatedTimesheet = calculateTimesheetTotals(timesheet)
+    const calculatedTimesheet = calculateTimesheetTotals(timesheet);
 
-    const { data, error } = await supabase.from("timesheets").insert([calculatedTimesheet]).select().single()
+    const { data, error } = await supabase
+      .from("timesheets")
+      .insert({
+        ...calculatedTimesheet,
+        company_id: profile.company_id,
+      })
+      .select()
+      .single();
 
     if (error) {
-      console.error("Error creating timesheet:", error)
+      console.error("Error creating timesheet:", error);
       return {
         data: null,
         error: error.message,
         success: false,
-      }
+      };
     }
 
     return {
       data: data as Timesheet,
       error: null,
       success: true,
-    }
+    };
   } catch (error) {
-    console.error("Unexpected error creating timesheet:", error)
+    console.error("Unexpected error creating timesheet:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }
 
 /**
  * Update an existing timesheet
  */
-export async function updateTimesheet(timesheet: UpdateTimesheetInput): Promise<ApiResponse<Timesheet>> {
+export async function updateTimesheet(
+  timesheet: UpdateTimesheetInput
+): Promise<ApiResponse<Timesheet>> {
   try {
-    const { id, ...updateData } = timesheet
+    const { id, ...updateData } = timesheet;
 
     // Recalculate totals if time-related fields are being updated
-    const fieldsToRecalculate = ["clock_in", "clock_out", "break_duration", "hourly_rate"]
-    const shouldRecalculate = fieldsToRecalculate.some((field) => field in updateData)
+    const fieldsToRecalculate = [
+      "clock_in",
+      "clock_out",
+      "break_duration",
+      "hourly_rate",
+    ];
+    const shouldRecalculate = fieldsToRecalculate.some(
+      (field) => field in updateData
+    );
 
-    let finalUpdateData = updateData
+    let finalUpdateData = updateData;
     if (shouldRecalculate) {
       // Get current timesheet data to merge with updates
-      const currentResult = await getTimesheet(id)
+      const currentResult = await getTimesheet(id);
       if (!currentResult.success || !currentResult.data) {
         return {
           data: null,
           error: "Could not fetch current timesheet for calculation",
           success: false,
-        }
+        };
       }
 
-      const mergedData = { ...currentResult.data, ...updateData }
-      finalUpdateData = calculateTimesheetTotals(mergedData)
+      const mergedData = { ...currentResult.data, ...updateData };
+      finalUpdateData = calculateTimesheetTotals(mergedData);
     }
 
-    const { data, error } = await supabase.from("timesheets").update(finalUpdateData).eq("id", id).select().single()
+    const { data, error } = await supabase
+      .from("timesheets")
+      .update(finalUpdateData)
+      .eq("id", id)
+      .select()
+      .single();
 
     if (error) {
-      console.error("Error updating timesheet:", error)
+      console.error("Error updating timesheet:", error);
       return {
         data: null,
         error: error.message,
         success: false,
-      }
+      };
     }
 
     return {
       data: data as Timesheet,
       error: null,
       success: true,
-    }
+    };
   } catch (error) {
-    console.error("Unexpected error updating timesheet:", error)
+    console.error("Unexpected error updating timesheet:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }
 
 /**
  * Delete a timesheet
  */
-export async function deleteTimesheet(id: string): Promise<ApiResponse<boolean>> {
+export async function deleteTimesheet(
+  id: string
+): Promise<ApiResponse<boolean>> {
   try {
-    const { error } = await supabase.from("timesheets").delete().eq("id", id)
+    const { error } = await supabase.from("timesheets").delete().eq("id", id);
 
     if (error) {
-      console.error("Error deleting timesheet:", error)
+      console.error("Error deleting timesheet:", error);
       return {
         data: null,
         error: error.message,
         success: false,
-      }
+      };
     }
 
     return {
       data: true,
       error: null,
       success: true,
-    }
+    };
   } catch (error) {
-    console.error("Unexpected error deleting timesheet:", error)
+    console.error("Unexpected error deleting timesheet:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }
 
@@ -243,63 +282,69 @@ export async function deleteTimesheet(id: string): Promise<ApiResponse<boolean>>
  * Bulk update multiple timesheets (useful for supervisor approval)
  */
 export async function bulkUpdateTimesheets(
-  updates: { id: string; supervisor_approval?: boolean; notes?: string }[],
+  updates: { id: string; supervisor_approval?: boolean; notes?: string }[]
 ): Promise<ApiResponse<Timesheet[]>> {
   try {
-    const results = await Promise.all(updates.map((update) => updateTimesheet(update)))
+    const results = await Promise.all(
+      updates.map((update) => updateTimesheet(update))
+    );
 
-    const errors = results.filter((result) => !result.success)
+    const errors = results.filter((result) => !result.success);
     if (errors.length > 0) {
       return {
         data: null,
         error: `Failed to update ${errors.length} timesheets`,
         success: false,
-      }
+      };
     }
 
-    const data = results.map((result) => result.data).filter(Boolean) as Timesheet[]
+    const data = results
+      .map((result) => result.data)
+      .filter(Boolean) as Timesheet[];
 
     return {
       data,
       error: null,
       success: true,
-    }
+    };
   } catch (error) {
-    console.error("Unexpected error in bulk update:", error)
+    console.error("Unexpected error in bulk update:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }
 
 /**
  * Helper function to calculate timesheet totals
  */
-function calculateTimesheetTotals(timesheet: Partial<Timesheet>): Partial<Timesheet> {
+function calculateTimesheetTotals(
+  timesheet: Partial<Timesheet>
+): Partial<Timesheet> {
   if (!timesheet.clock_in || !timesheet.clock_out || !timesheet.hourly_rate) {
-    return timesheet
+    return timesheet;
   }
 
   try {
-    const clockIn = new Date(`${timesheet.date}T${timesheet.clock_in}`)
-    const clockOut = new Date(`${timesheet.date}T${timesheet.clock_out}`)
+    const clockIn = new Date(`${timesheet.date}T${timesheet.clock_in}`);
+    const clockOut = new Date(`${timesheet.date}T${timesheet.clock_out}`);
 
     // Calculate total hours worked (in hours)
-    const totalMinutes = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60)
-    const breakMinutes = timesheet.break_duration || 0
-    const workedMinutes = totalMinutes - breakMinutes
-    const totalHours = Math.max(0, workedMinutes / 60)
+    const totalMinutes = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60);
+    const breakMinutes = timesheet.break_duration || 0;
+    const workedMinutes = totalMinutes - breakMinutes;
+    const totalHours = Math.max(0, workedMinutes / 60);
 
     // Calculate regular and overtime hours (assuming 8 hours is regular)
-    const regularHours = Math.min(totalHours, 8)
-    const overtimeHours = Math.max(0, totalHours - 8)
+    const regularHours = Math.min(totalHours, 8);
+    const overtimeHours = Math.max(0, totalHours - 8);
 
     // Calculate total pay (overtime is typically 1.5x)
-    const regularPay = regularHours * timesheet.hourly_rate
-    const overtimePay = overtimeHours * timesheet.hourly_rate * 1.5
-    const totalPay = regularPay + overtimePay
+    const regularPay = regularHours * timesheet.hourly_rate;
+    const overtimePay = overtimeHours * timesheet.hourly_rate * 1.5;
+    const totalPay = regularPay + overtimePay;
 
     return {
       ...timesheet,
@@ -307,34 +352,37 @@ function calculateTimesheetTotals(timesheet: Partial<Timesheet>): Partial<Timesh
       regular_hours: Math.round(regularHours * 100) / 100,
       overtime_hours: Math.round(overtimeHours * 100) / 100,
       total_pay: Math.round(totalPay * 100) / 100,
-    }
+    };
   } catch (error) {
-    console.error("Error calculating timesheet totals:", error)
-    return timesheet
+    console.error("Error calculating timesheet totals:", error);
+    return timesheet;
   }
 }
 
 /**
  * Get timesheet summary for a date range
  */
-export async function getTimesheetSummary(filters: TimesheetFilters): Promise<
+export async function getTimesheetSummary(
+  userId: string,
+  filters: TimesheetFilters
+): Promise<
   ApiResponse<{
-    totalHours: number
-    totalRegularHours: number
-    totalOvertimeHours: number
-    totalPay: number
-    timesheetCount: number
+    totalHours: number;
+    totalRegularHours: number;
+    totalOvertimeHours: number;
+    totalPay: number;
+    timesheetCount: number;
   }>
 > {
   try {
-    const result = await getTimesheets(filters)
+    const result = await getTimesheets(userId, filters);
 
     if (!result.success || !result.data) {
       return {
         data: null,
         error: result.error,
         success: false,
-      }
+      };
     }
 
     const summary = result.data.reduce(
@@ -351,8 +399,8 @@ export async function getTimesheetSummary(filters: TimesheetFilters): Promise<
         totalOvertimeHours: 0,
         totalPay: 0,
         timesheetCount: 0,
-      },
-    )
+      }
+    );
 
     return {
       data: {
@@ -364,13 +412,13 @@ export async function getTimesheetSummary(filters: TimesheetFilters): Promise<
       },
       error: null,
       success: true,
-    }
+    };
   } catch (error) {
-    console.error("Unexpected error calculating summary:", error)
+    console.error("Unexpected error calculating summary:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
       success: false,
-    }
+    };
   }
 }

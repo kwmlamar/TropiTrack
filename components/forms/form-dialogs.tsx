@@ -31,10 +31,11 @@ import type { Worker } from "@/lib/types/worker";
 import type { Client } from "@/lib/types/client";
 
 import type { TimesheetWithDetails } from "@/lib/types";
-import type { Project } from "@/lib/types/project"
+import type { Project } from "@/lib/types/project";
 
 // Timesheet Dialog
 interface TimesheetDialogProps {
+  userId: string;
   timesheet?: TimesheetWithDetails;
   workers: Worker[];
   projects: Project[];
@@ -43,6 +44,7 @@ interface TimesheetDialogProps {
 }
 
 export function TimesheetDialog({
+  userId,
   timesheet,
   workers,
   projects,
@@ -80,13 +82,13 @@ export function TimesheetDialog({
             {timesheet ? "Edit Timesheet" : "Create Timesheet"}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {timesheet 
-            ? "Edit timesheet entry"
-            : "Create a new timesheet entry"
-            }
+            {timesheet
+              ? "Edit timesheet entry"
+              : "Create a new timesheet entry"}
           </DialogDescription>
         </DialogHeader>
         <TimesheetForm
+          userId={userId}
           timesheet={timesheet}
           workers={workers}
           projects={projects}
@@ -100,6 +102,7 @@ export function TimesheetDialog({
 
 // Bulk Timesheet Dialog
 interface BulkTimesheetDialogProps {
+  userId: string;
   workers: Worker[];
   projects: Project[];
   onSuccess?: (timesheets: any[]) => void;
@@ -107,6 +110,7 @@ interface BulkTimesheetDialogProps {
 }
 
 export function BulkTimesheetDialog({
+  userId,
   workers,
   projects,
   onSuccess,
@@ -133,21 +137,22 @@ export function BulkTimesheetDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="sr-only">
-            Bulk Timesheet Entry
-          </DialogTitle>
+          <DialogTitle className="sr-only">Bulk Timesheet Entry</DialogTitle>
           <DialogDescription className="sr-only">
             Create multiple timesheet entries for the same project and date
           </DialogDescription>
         </DialogHeader>
-        <BulkTimesheetForm
-          workers={workers}
-          projects={projects}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
+        <div className="flex-1 overflow-y-auto">
+          <BulkTimesheetForm
+          userId={userId}
+            workers={workers}
+            projects={projects}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

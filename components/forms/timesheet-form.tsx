@@ -47,6 +47,7 @@ import type { Worker } from "@/lib/types/worker";
 import { cn } from "@/lib/utils";
 
 interface TimesheetFormProps {
+  userId: string;
   timesheet?: TimesheetWithDetails;
   workers: Worker[];
   projects: Project[];
@@ -55,6 +56,7 @@ interface TimesheetFormProps {
 }
 
 export function TimesheetForm({
+  userId,
   timesheet,
   workers,
   projects,
@@ -102,7 +104,7 @@ export function TimesheetForm({
       if (isEditing) {
         result = await updateTimesheet({ id: timesheet.id, ...data });
       } else {
-        result = await createTimesheet(data);
+        result = await createTimesheet(userId, data);
       }
 
       if (result.success && result.data) {
