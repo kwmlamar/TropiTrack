@@ -1,52 +1,92 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { toast } from "sonner"
-import { Eye, EyeOff, Loader2, CheckCircle, XCircle, Clock, User, Lock } from "lucide-react"
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  User,
+  Lock,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
-import { getInviteByToken, acceptInvite } from "@/lib/data/invites"
-import type { InviteWithDetails } from "@/lib/types/invite"
+import { getInviteByToken, acceptInvite } from "@/lib/data/invites";
+import type { InviteWithDetails } from "@/lib/types/invite";
 
 const onboardingSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required").max(50, "First name too long"),
-    lastName: z.string().min(1, "Last name is required").max(50, "Last name too long"),
+    firstName: z
+      .string()
+      .min(1, "First name is required")
+      .max(50, "First name too long"),
+    lastName: z
+      .string()
+      .min(1, "Last name is required")
+      .max(50, "Last name too long"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Password must contain uppercase, lowercase, and number"
+      ),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
-  })
+  });
 
-type OnboardingFormData = z.infer<typeof onboardingSchema>
+type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
-type InviteState = "loading" | "valid" | "expired" | "used" | "invalid" | "error"
+type InviteState =
+  | "loading"
+  | "valid"
+  | "expired"
+  | "used"
+  | "invalid"
+  | "error";
 
 export function OnboardingForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
+  const supabaseClient = createClient();
 
-  const [invite, setInvite] = useState<InviteWithDetails | null>(null)
-  const [inviteState, setInviteState] = useState<InviteState>("loading")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [invite, setInvite] = useState<InviteWithDetails | null>(null);
+  const [inviteState, setInviteState] = useState<InviteState>("loading");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema),
@@ -56,93 +96,75 @@ export function OnboardingForm() {
       password: "",
       confirmPassword: "",
     },
-  })
+  });
 
   useEffect(() => {
     async function validateInvite() {
       if (!token) {
-        setInviteState("invalid")
-        return
+        setInviteState("invalid");
+        return;
       }
 
       try {
-        const response = await getInviteByToken(token)
+        const response = await getInviteByToken(token);
 
         if (!response.success || !response.data) {
-          setInviteState("invalid")
-          return
+          setInviteState("invalid");
+          return;
         }
 
-        const inviteData = response.data
-        setInvite(inviteData)
+        const inviteData = response.data;
+        setInvite(inviteData);
 
         // Check if invite is already used
         if (inviteData.is_used) {
-          setInviteState("used")
-          return
+          setInviteState("used");
+          return;
         }
 
         // Check if invite is expired
-        const now = new Date()
-        const expiresAt = new Date(inviteData.expires_at)
+        const now = new Date();
+        const expiresAt = new Date(inviteData.expires_at);
         if (expiresAt < now) {
-          setInviteState("expired")
-          return
+          setInviteState("expired");
+          return;
         }
 
-        setInviteState("valid")
+        setInviteState("valid");
       } catch (error) {
-        console.error("Error validating invite:", error)
-        setInviteState("error")
+        console.error("Error validating invite:", error);
+        setInviteState("error");
       }
     }
 
-    validateInvite()
-  }, [token])
+    validateInvite();
+  }, [token]);
 
-  const onSubmit = async (data: OnboardingFormData) => {
-    if (!token || !invite) return
+const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
+    if (!invite) return;
 
-    setIsSubmitting(true)
-    try {
-      // In a real app, you would:
-      // 1. Create the user account with Supabase Auth
-      // 2. Update the user profile with the provided information
-      // 3. Accept the invite and link the user to the company
+    const res = await fetch("/auth/invite-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: invite.email,
+        password: data.password,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        inviteId: invite.id,
+      }),
+    });
 
-      const userId = crypto.randomUUID() // Placeholder - would come from auth
+    const result = await res.json();
 
-      const response = await acceptInvite(token, userId)
-
-      if (response.success) {
-        toast.success("Welcome to TropiTrack!", {
-          description: "Your account has been created successfully",
-        })
-
-        // Redirect to dashboard
-        router.push("/dashboard")
-      } else {
-        toast.error("Failed to complete onboarding", {
-          description: response.error || "Please try again",
-        })
-      }
-    } catch (error) {
-      console.error("Error completing onboarding:", error)
-      toast.error("An unexpected error occurred", {
-        description: "Please try again or contact support",
-      })
-    } finally {
-      setIsSubmitting(false)
+    if (!res.ok) {
+      toast.error("Signup failed", { description: result.error });
+      return;
     }
-  }
 
-  if (inviteState === "loading") {
-    return <LoadingState />
-  }
-
-  if (inviteState !== "valid") {
-    return <ErrorState state={inviteState} />
-  }
+    toast.success("Signup complete! Please log in.");
+    router.push("/login");
+  };
 
   return (
     <Card className="mt-8 border-0 shadow-xl">
@@ -168,7 +190,9 @@ export function OnboardingForm() {
             <User className="h-4 w-4" />
             <AlertDescription>
               <strong>{invite.email}</strong> has been invited by{" "}
-              {invite.inviter ? `${invite.inviter.first_name} ${invite.inviter.last_name}` : "your team"}
+              {invite.inviter
+                ? `${invite.inviter.first_name} ${invite.inviter.last_name}`
+                : "your team"}
             </AlertDescription>
           </Alert>
         )}
@@ -262,7 +286,9 @@ export function OnboardingForm() {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -278,8 +304,15 @@ export function OnboardingForm() {
             />
 
             <div className="pt-4">
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 {isSubmitting ? "Setting up your account..." : "Complete Setup"}
               </Button>
             </div>
@@ -291,7 +324,7 @@ export function OnboardingForm() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function LoadingState() {
@@ -300,15 +333,17 @@ function LoadingState() {
       <CardContent className="flex items-center justify-center py-12">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">Validating your invitation...</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Validating your invitation...
+          </p>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function ErrorState({ state }: { state: InviteState }) {
-  const router = useRouter()
+  const router = useRouter();
 
   const getErrorContent = () => {
     switch (state) {
@@ -319,7 +354,7 @@ function ErrorState({ state }: { state: InviteState }) {
           description:
             "This invitation link has expired. Please request a new invitation from your team administrator.",
           action: "Contact Administrator",
-        }
+        };
       case "used":
         return {
           icon: <CheckCircle className="h-12 w-12 text-green-500" />,
@@ -327,25 +362,27 @@ function ErrorState({ state }: { state: InviteState }) {
           description:
             "This invitation has already been used. If you're having trouble accessing your account, please contact support.",
           action: "Sign In",
-        }
+        };
       case "invalid":
         return {
           icon: <XCircle className="h-12 w-12 text-red-500" />,
           title: "Invalid Invitation",
-          description: "This invitation link is invalid or malformed. Please check the link and try again.",
+          description:
+            "This invitation link is invalid or malformed. Please check the link and try again.",
           action: "Go Home",
-        }
+        };
       default:
         return {
           icon: <XCircle className="h-12 w-12 text-red-500" />,
           title: "Something Went Wrong",
-          description: "We encountered an error while processing your invitation. Please try again later.",
+          description:
+            "We encountered an error while processing your invitation. Please try again later.",
           action: "Try Again",
-        }
+        };
     }
-  }
+  };
 
-  const { icon, title, description, action } = getErrorContent()
+  const { icon, title, description, action } = getErrorContent();
 
   return (
     <Card className="mt-8 border-0 shadow-xl">
@@ -357,11 +394,15 @@ function ErrorState({ state }: { state: InviteState }) {
           <Button onClick={() => window.location.reload()} className="w-full">
             {action}
           </Button>
-          <Button variant="outline" onClick={() => router.push("/")} className="w-full">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/")}
+            className="w-full"
+          >
             Return to Home
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

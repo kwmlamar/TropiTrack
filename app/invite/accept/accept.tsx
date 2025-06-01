@@ -29,11 +29,11 @@ function OnboardingFormSkeleton() {
   )
 }
 
-type AcceptInvitePageProps = {
-  userId: string
+type Props = {
+  userId: string;
 }
 
-export default function AcceptInvitePage({userId}: AcceptInvitePageProps) {
+export default function AcceptInvitePage({userId}: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
@@ -86,8 +86,6 @@ export default function AcceptInvitePage({userId}: AcceptInvitePageProps) {
 
     setAccepting(true)
     try {
-      // In a real app, you'd get the user ID from auth context
-      // For now, we'll use a placeholder
 
       const response = await acceptInvite(token, userId)
       if (response.success) {
@@ -157,34 +155,17 @@ export default function AcceptInvitePage({userId}: AcceptInvitePageProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle>Join {invite.company_id}</CardTitle>
-          <CardDescription>
-            You have been invited to join as a <span className="font-medium capitalize">{invite.role}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="text-center">
-              <p>
-                Invitation sent to: <span className="font-medium">{invite.email}</span>
-              </p>
-              {invite.inviter && (
-                <p className="text-sm text-muted-foreground">
-                  Invited by: {invite.inviter.first_name} {invite.inviter.last_name}
-                </p>
-              )}
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+          <div className="w-full max-w-md">
+            <OnboardingHeader />
+            <Suspense fallback={<OnboardingFormSkeleton />}>
+              <OnboardingForm />
+            </Suspense>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button onClick={handleAccept} disabled={accepting}>
-            {accepting ? "Accepting..." : "Accept Invitation"}
-          </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
