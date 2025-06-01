@@ -15,7 +15,6 @@ export async function getProfile(userId: string) {
     throw new Error(
       "error fetching profile info: " + JSON.stringify(profileError)
     );
-    console.log("user in fetchProfileInfo: ");
   }
 
   return profile;

@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import DashboardLayout from "@/components/layouts/dashboard-layout";
 import TimesheetsPage from "@/components/timesheets/timesheets-page";
 import { createClient } from "@/utils/supabase/server";
 
