@@ -19,20 +19,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserProfileWithCompany } from "@/lib/types/userProfile"
+import { useRouter } from "next/navigation" 
 
 type SiteHeaderProps = {
   title?: string
   rightSlot?: React.ReactNode
-  user?: {
-    name: string
-    email: string
-    avatar?: string
-    role?: string
-  }
-  company?: {
-    name: string
-    logo?: string
-  }
+  user: UserProfileWithCompany
   notifications?: Array<{
     id: string
     title: string
@@ -50,14 +43,7 @@ type SiteHeaderProps = {
 export function SiteHeader({
   title = "Dashboard",
   rightSlot,
-  user = {
-    name: "John Smith",
-    email: "john@constructionco.bs",
-    role: "Project Manager",
-  },
-  company = {
-    name: "Nassau Construction Co.",
-  },
+  user,
   notifications = [
     {
       id: "1",
@@ -91,6 +77,7 @@ export function SiteHeader({
 }: SiteHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const unreadCount = notifications.filter((n) => !n.read).length
+  const router = useRouter();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -127,7 +114,7 @@ export function SiteHeader({
             <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
               <Building2 className="h-3 w-3 text-primary" />
             </div>
-            <span className="text-sm font-medium text-foreground max-w-32 truncate">{company.name}</span>
+            <span className="text-sm font-medium text-foreground max-w-32 truncate">{user.company?.name}</span>
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </Button>
 
@@ -259,11 +246,11 @@ export function SiteHeader({
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onUserMenuAction?.("team")}>
+              <DropdownMenuItem onClick={() => router.push("/invites")}>
                 <Users className="mr-2 h-4 w-4" />
                 <span>Team Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onUserMenuAction?.("settings")}>
+              <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
