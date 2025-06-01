@@ -1,18 +1,19 @@
-// components/layouts/DashboardLayout.tsx
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"; // adjust imports
 import { AppSidebar } from "@/components/app-sidebar"; // adjust path
 import { SiteHeader } from "@/components/site-header"; // adjust path
 import { ModeToggle } from "../mode-toggle";
+import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
 
 type DashboardLayoutProps = {
     children: React.ReactNode;
     title?: string;
 };
 
-export default function DashboardLayout({ 
+export default async function DashboardLayout({ 
     children,
     title = "Dashboard",
  }: DashboardLayoutProps) {
+  const profile = await getUserProfileWithCompany();
   return (
     <SidebarProvider
       style={
@@ -22,9 +23,9 @@ export default function DashboardLayout({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar profile={profile} variant="inset" />
       <SidebarInset>
-        <SiteHeader title={title} rightSlot={<ModeToggle />} />
+        <SiteHeader profile={profile} title={title} rightSlot={<ModeToggle />} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

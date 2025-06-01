@@ -40,6 +40,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import Image from "next/image"
+import type { UserProfileWithCompany } from "@/lib/types/userProfile";
 
 const data = {
   user: {
@@ -126,9 +127,20 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  profile: UserProfileWithCompany;
+};
+
+export function AppSidebar({ profile, ...props }: AppSidebarProps) {
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
+
+  const sidebarUser = {
+  name: profile.name,
+  email: profile.email ?? "no-email@tropitrack.bs",
+  avatar: profile.avatar_url ?? "/avatars/default.jpg",
+  role: profile.role ?? "Worker",
+};
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-sidebar/50 backdrop-blur-sm" {...props}>
@@ -271,7 +283,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* Enhanced Footer */}
       <SidebarFooter className="border-t border-border/50 bg-sidebar/80 backdrop-blur-sm p-2">
-        <NavUser user={data.user} />
+        <NavUser user={sidebarUser} />
       </SidebarFooter>
     </Sidebar>
   )

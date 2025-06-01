@@ -3,6 +3,7 @@ export type UserProfile = {
   name: string;
   email: string;
   company_id: string;
+  role: string;
   // ... other fields
 };
 
