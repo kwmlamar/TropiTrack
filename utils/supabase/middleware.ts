@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const publicPaths = ['/signup','/login', '/auth', '/verify-email', '/error'];
+  const publicPaths = ['/signup','/login', '/auth', '/verify-email', '/error', '/'];
 
   if (
     !user &&
@@ -46,7 +46,7 @@ export async function updateSession(request: NextRequest) {
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
