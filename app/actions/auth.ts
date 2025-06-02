@@ -53,6 +53,8 @@ export async function signup(formData: FormData) {
     return redirect("/error");
   }
 
+  // needs to be fixed
+
   // Insert company data
   const { data: companyData, error: companyError } = await supabase
     .from("companies")
