@@ -72,6 +72,7 @@ export function OnboardingForm() {
   const [invite, setInvite] = useState<InviteWithDetails | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema),
@@ -120,6 +121,7 @@ export function OnboardingForm() {
   }, [token]);
 
 const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
+  setIsSubmitting(true);
     if (!invite) return;
 
     const res = await fetch("/auth/invite-signup", {
@@ -143,6 +145,7 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
 
     toast.success("Signup complete! Please log in.");
     router.push("/login");
+    setIsSubmitting(false);
   };
 
   return (

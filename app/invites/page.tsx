@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { InvitesList } from "@/components/invites/invites-list"
 import { InvitesHeader } from "@/components/invites/invites-header"
 import  DashboardLayout  from "@/components/layouts/dashboard-layout"
-import { getUserProfile as getUserProfileWithCompany } from "@/lib/data/userProfiles"
+import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 
 export const metadata = {
   title: "Invites | Construction Timesheets",

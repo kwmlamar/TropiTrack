@@ -12,8 +12,8 @@ type InviteHeaderProps = {
 export function InvitesHeader({profile}: InviteHeaderProps) {
   return (
     <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Invites</h1>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Invites</h1>
         <p className="text-muted-foreground">Manage invitations to your company</p>
       </div>
       <InviteDialog
