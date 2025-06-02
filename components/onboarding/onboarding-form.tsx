@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,8 +11,6 @@ import {
   EyeOff,
   Loader2,
   CheckCircle,
-  XCircle,
-  Clock,
   User,
   Lock,
 } from "lucide-react";
@@ -38,7 +35,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-import { getInviteByToken, acceptInvite } from "@/lib/data/invites";
+import { getInviteByToken } from "@/lib/data/invites";
 import type { InviteWithDetails } from "@/lib/types/invite";
 
 const onboardingSchema = z
@@ -67,24 +64,12 @@ const onboardingSchema = z
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
-type InviteState =
-  | "loading"
-  | "valid"
-  | "expired"
-  | "used"
-  | "invalid"
-  | "error";
-
 export function OnboardingForm() {
-  const supabaseClient = createClient();
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
   const [invite, setInvite] = useState<InviteWithDetails | null>(null);
-  const [inviteState, setInviteState] = useState<InviteState>("loading");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -101,7 +86,6 @@ export function OnboardingForm() {
   useEffect(() => {
     async function validateInvite() {
       if (!token) {
-        setInviteState("invalid");
         return;
       }
 
@@ -109,7 +93,6 @@ export function OnboardingForm() {
         const response = await getInviteByToken(token);
 
         if (!response.success || !response.data) {
-          setInviteState("invalid");
           return;
         }
 
@@ -118,7 +101,6 @@ export function OnboardingForm() {
 
         // Check if invite is already used
         if (inviteData.is_used) {
-          setInviteState("used");
           return;
         }
 
@@ -126,14 +108,11 @@ export function OnboardingForm() {
         const now = new Date();
         const expiresAt = new Date(inviteData.expires_at);
         if (expiresAt < now) {
-          setInviteState("expired");
           return;
         }
 
-        setInviteState("valid");
       } catch (error) {
         console.error("Error validating invite:", error);
-        setInviteState("error");
       }
     }
 
@@ -173,7 +152,7 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
           <div>
             <CardTitle className="text-xl">Complete Your Setup</CardTitle>
             <CardDescription className="mt-1">
-              You're joining as a{" "}
+              You&apos;re joining as a{" "}
               <Badge variant="secondary" className="ml-1 capitalize">
                 {invite?.role}
               </Badge>
@@ -321,86 +300,6 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
 
         <div className="mt-6 text-center text-xs text-muted-foreground">
           By continuing, you agree to our Terms of Service and Privacy Policy
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function LoadingState() {
-  return (
-    <Card className="mt-8 border-0 shadow-xl">
-      <CardContent className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            Validating your invitation...
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ErrorState({ state }: { state: InviteState }) {
-  const router = useRouter();
-
-  const getErrorContent = () => {
-    switch (state) {
-      case "expired":
-        return {
-          icon: <Clock className="h-12 w-12 text-amber-500" />,
-          title: "Invitation Expired",
-          description:
-            "This invitation link has expired. Please request a new invitation from your team administrator.",
-          action: "Contact Administrator",
-        };
-      case "used":
-        return {
-          icon: <CheckCircle className="h-12 w-12 text-green-500" />,
-          title: "Already Accepted",
-          description:
-            "This invitation has already been used. If you're having trouble accessing your account, please contact support.",
-          action: "Sign In",
-        };
-      case "invalid":
-        return {
-          icon: <XCircle className="h-12 w-12 text-red-500" />,
-          title: "Invalid Invitation",
-          description:
-            "This invitation link is invalid or malformed. Please check the link and try again.",
-          action: "Go Home",
-        };
-      default:
-        return {
-          icon: <XCircle className="h-12 w-12 text-red-500" />,
-          title: "Something Went Wrong",
-          description:
-            "We encountered an error while processing your invitation. Please try again later.",
-          action: "Try Again",
-        };
-    }
-  };
-
-  const { icon, title, description, action } = getErrorContent();
-
-  return (
-    <Card className="mt-8 border-0 shadow-xl">
-      <CardContent className="py-12 text-center">
-        <div className="mx-auto mb-4 flex justify-center">{icon}</div>
-        <h2 className="mb-2 text-xl font-semibold">{title}</h2>
-        <p className="mb-6 text-sm text-muted-foreground">{description}</p>
-        <div className="space-y-2">
-          <Button onClick={() => window.location.reload()} className="w-full">
-            {action}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/")}
-            className="w-full"
-          >
-            Return to Home
-          </Button>
         </div>
       </CardContent>
     </Card>

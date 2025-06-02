@@ -417,10 +417,21 @@ export default function ProjectsTable({ user }: { user: User }) {
                   ? "No projects match your current filters. Try adjusting your search criteria."
                   : "You haven't added any projects yet. Add your first project to start building your portfolio."}
               </p>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Building2 className="mr-2 h-4 w-4" />
-                Add Your First Project
-              </Button>
+              <ProjectDialog
+                userId={user.id}
+                clients={clients}
+                workers={workers}
+                onSuccess={() => {
+                  loadProjects();
+                  loadProjectAssignments();
+                }}
+                trigger={
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Add Your First Project
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <div className="divide-y divide-border/50">

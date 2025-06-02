@@ -10,12 +10,14 @@ export interface Invite {
   accepted_at?: string
   accepted_by?: string
   is_used: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any>
   created_at: string
 }
 
 export type NewInvite = Omit<Invite, "id" | "created_at" | "token" | "is_used"> & {
   role?: "admin" | "manager" | "employee"
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any>
 }
 

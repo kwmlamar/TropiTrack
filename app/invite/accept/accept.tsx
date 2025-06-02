@@ -4,8 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { getInviteByToken, acceptInvite } from "@/lib/data/invites"
+import { getInviteByToken } from "@/lib/data/invites"
 import type { InviteWithDetails } from "@/lib/types/invite"
 import { Suspense } from "react"
 import { OnboardingForm } from "@/components/onboarding/onboarding-form"
@@ -29,18 +28,13 @@ function OnboardingFormSkeleton() {
   )
 }
 
-type Props = {
-  userId: string;
-}
-
-export default function AcceptInvitePage({userId}: Props) {
+export default function AcceptInvitePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 
   const [invite, setInvite] = useState<InviteWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const [accepting, setAccepting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -80,31 +74,6 @@ export default function AcceptInvitePage({userId}: Props) {
 
     fetchInvite()
   }, [token])
-
-  const handleAccept = async () => {
-    if (!token || !invite) return
-
-    setAccepting(true)
-    try {
-
-      const response = await acceptInvite(token, userId)
-      if (response.success) {
-        toast.success("Invitation accepted!", {
-          description: "You have successfully joined the company",
-        })
-
-        // In a real app, you'd redirect to onboarding or dashboard
-        router.push("/dashboard")
-      } else {
-        setError(response.error || "Failed to accept invitation")
-      }
-    } catch (err) {
-      console.error("Error accepting invite:", err)
-      setError("An unexpected error occurred")
-    } finally {
-      setAccepting(false)
-    }
-  }
 
   if (loading) {
     return (

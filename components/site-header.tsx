@@ -22,6 +22,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { useRouter } from "next/navigation" 
 
+async function logout() {
+  const res = await fetch('/auth/signout', {
+    method: 'POST',
+  })
+
+  // Optional: redirect manually if the server didn't do it
+  if (res.redirected) {
+    window.location.href = res.url
+  }
+}
+
 type SiteHeaderProps = {
   title?: string
   rightSlot?: React.ReactNode
@@ -260,7 +271,7 @@ export function SiteHeader({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => onUserMenuAction?.("logout")}
+                onClick={logout}
                 className="text-destructive focus:text-destructive"
               >
                 <LogOut className="mr-2 h-4 w-4" />

@@ -1,28 +1,30 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/utils/supabase/server-admin";
 
-export async function login(formData: FormData) {
+type LoginResult =
+  | { success: true }
+  | { error: string; field?: string } // <-- allow field optionally with error
+
+
+
+export async function login(formData: FormData): Promise<LoginResult> {
   const supabase = await createClient();
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
   if (error) {
-  console.error("Login failed:", error.message); // 🔍 log it
-  redirect("/error");
-}
+    console.error("Login failed:", error.message);
+    return { error: error.message, field: "email" }; // Optional: field-specific error
+  }
 
-  revalidatePath("/dashboard", "layout");
-  redirect("/dashboard");
+  return { success: true };
 }
 
 export async function signup(formData: FormData) {

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { UserPlus } from "lucide-react"
 import { InviteDialog } from "./invite-dialog"
@@ -11,8 +10,6 @@ type InviteHeaderProps = {
 }
 
 export function InvitesHeader({profile}: InviteHeaderProps) {
-  const [open, setOpen] = useState(false)
-
   return (
     <div className="flex items-center justify-between">
       <div>
