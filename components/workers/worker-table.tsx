@@ -42,6 +42,7 @@ export default function WorkersTable({ user }: { user: User }) {
   const [loading, setLoading] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     loadWorkers();
@@ -51,7 +52,7 @@ export default function WorkersTable({ user }: { user: User }) {
   const loadWorkers = async () => {
     setLoading(true);
     try {
-      const data = await fetchWorkersForCompany({ user });
+      const data = await fetchWorkersForCompany(user.id);
       setWorkers(data);
     } catch (error) {
       console.log("Failed to fetch Workers:", error);
@@ -159,6 +160,8 @@ export default function WorkersTable({ user }: { user: User }) {
         <WorkerSheet
           userId={user.id}
           onSuccess={loadWorkers}
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
           trigger={
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
               <Plus className="mr-2 h-4 w-4" />
@@ -208,9 +211,7 @@ export default function WorkersTable({ user }: { user: User }) {
                 userId={user.id}
                 onSuccess={loadWorkers}
                 trigger={
-                  <Button
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <UserCheck className="mr-2 h-4 w-4" />
                     Add Your First Worker
                   </Button>

@@ -105,7 +105,7 @@ export default function ProjectsTable({ user }: { user: User }) {
 
   const loadWorkers = async () => {
     try {
-      const data = await fetchWorkersForCompany({ user });
+      const data = await fetchWorkersForCompany(user.id);
       setWorkers(data);
     } catch (error) {
       console.log("Failed to load workers:", error);

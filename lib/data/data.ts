@@ -23,8 +23,9 @@ export async function getProfile(userId: string) {
 // WORKERS
 
 // Get all workers
-export async function fetchWorkersForCompany({ user }: { user: User }) {
-  const profile = await getProfile(user.id);
+
+export async function fetchWorkersForCompany(userId: string) {
+  const profile = await getProfile(userId);
 
   const { data, error } = await supabase
     .from("workers")

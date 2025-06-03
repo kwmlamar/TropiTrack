@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
-import type * as React from "react"
+import type * as React from "react";
+import { useState, useEffect } from "react";
 import {
   IconDashboard,
   IconFileDescription,
@@ -16,14 +17,14 @@ import {
   IconChevronRight,
   IconClock,
   IconCalendar,
-} from "@tabler/icons-react"
-import { cn } from "@/lib/utils"
+} from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
-import { QuickActions } from "@/components/quick-actions"
-import { SearchCommand } from "@/components/search-command"
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
+import { QuickActions } from "@/components/quick-actions";
+import { SearchCommand } from "@/components/search-command";
 import {
   Sidebar,
   SidebarContent,
@@ -36,11 +37,14 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import Image from "next/image"
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 import type { UserProfileWithCompany } from "@/lib/types/userProfile";
+import type { Worker } from "@/lib/types/worker";
+import { fetchWorkersForCompany } from "@/lib/data/data";
+import { WorkerSheet } from "./forms/form-dialogs";
 
 const data = {
   user: {
@@ -61,7 +65,7 @@ const data = {
       title: "Projects",
       url: "/dashboard/projects",
       icon: IconBuilding,
-      badge: "3",
+      badge: null,
       description: "Manage construction projects",
     },
     {
@@ -75,14 +79,14 @@ const data = {
       title: "Workers",
       url: "/dashboard/workers",
       icon: IconUsers,
-      badge: "12",
+      badge: null,
       description: "Team management",
     },
     {
       title: "Timesheets",
       url: "/dashboard/timesheets",
       icon: IconFileDescription,
-      badge: "2",
+      badge: null,
       description: "Track work hours",
     },
     {
@@ -125,25 +129,65 @@ const data = {
     { name: "Cable Beach Condos", status: "planning", progress: 25 },
     { name: "Downtown Office Complex", status: "active", progress: 60 },
   ],
-}
+};
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   profile: UserProfileWithCompany;
 };
 
 export function AppSidebar({ profile, ...props }: AppSidebarProps) {
-  const { state } = useSidebar()
-  const isCollapsed = state === "collapsed"
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  const [loading, setLoading] = useState(false);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [workerSheet, setWorkerSheet] = useState(false);
+
+  useEffect(() => {
+    loadWorkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadWorkers = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchWorkersForCompany(profile.id);
+      setWorkers(data);
+    } catch (error) {
+      console.log("Failed to fetch Workers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case "add-worker":
+        // Trigger add worker sheet/modal
+        setWorkerSheet(true);
+        console.log("Open Add Worker");
+        break;
+      case "create-project":
+        // Trigger project form
+        console.log("Open New Project Form");
+        break;
+      default:
+        console.log(`Unhandled action: ${action}`);
+    }
+  };
 
   const sidebarUser = {
-  name: profile.name,
-  email: profile.email ?? "no-email@tropitrack.bs",
-  avatar: profile.avatar_url ?? "/avatars/default.jpg",
-  role: profile.role ?? "Worker",
-};
+    name: profile.name,
+    email: profile.email ?? "no-email@tropitrack.bs",
+    avatar: profile.avatar_url ?? "/avatars/default.jpg",
+    role: profile.role ?? "Worker",
+  };
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-sidebar/50 backdrop-blur-sm" {...props}>
+    <Sidebar
+      collapsible="offcanvas"
+      className="border-r border-border/50 bg-sidebar/50 backdrop-blur-sm"
+      {...props}
+    >
       {/* Enhanced Header with Logo and Quick Search */}
       <SidebarHeader className="border-b border-border/50 bg-sidebar/80 backdrop-blur-sm">
         <div className="flex items-center justify-between px-2 py-3">
@@ -174,8 +218,12 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                   </div>
                   {isCollapsed && (
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-sidebar-foreground">TropiTrack</span>
-                      <span className="text-xs text-sidebar-foreground/60">Construction Suite</span>
+                      <span className="text-sm font-semibold text-sidebar-foreground">
+                        TropiTrack
+                      </span>
+                      <span className="text-xs text-sidebar-foreground/60">
+                        Construction Suite
+                      </span>
                     </div>
                   )}
                 </a>
@@ -206,7 +254,16 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
               Quick Actions
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <QuickActions items={data.quickActions} />
+              <QuickActions
+                items={data.quickActions}
+                onAction={handleQuickAction}
+              />
+              <WorkerSheet
+                userId={profile.id}
+                onSuccess={loadWorkers}
+                open={workerSheet}
+                onOpenChange={setWorkerSheet}
+              />
             </SidebarGroupContent>
           </SidebarGroup>
         )}
@@ -244,11 +301,15 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                     <div
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        project.status === "active" ? "bg-green-500" : "bg-yellow-500",
+                        project.status === "active"
+                          ? "bg-green-500"
+                          : "bg-yellow-500"
                       )}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-sidebar-foreground truncate">{project.name}</p>
+                      <p className="text-sm font-medium text-sidebar-foreground truncate">
+                        {project.name}
+                      </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <div className="w-12 h-1 bg-sidebar-accent rounded-full overflow-hidden">
                           <div
@@ -256,7 +317,9 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                             style={{ width: `${project.progress}%` }}
                           />
                         </div>
-                        <span className="text-xs text-sidebar-foreground/60">{project.progress}%</span>
+                        <span className="text-xs text-sidebar-foreground/60">
+                          {project.progress}%
+                        </span>
                       </div>
                     </div>
                     <IconChevronRight className="h-3 w-3 text-sidebar-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -286,5 +349,5 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
         <NavUser user={sidebarUser} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

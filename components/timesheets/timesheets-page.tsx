@@ -108,7 +108,7 @@ export default function TimesheetsPage({user}: {user: User}) {
   const loadWorkers = async () => {
       setLoading(true)
       try {
-        const data = await fetchWorkersForCompany({ user })
+        const data = await fetchWorkersForCompany(user.id)
         setWorkers(data)
       } catch (error) {
         console.log("Failed to fetch Workers:", error)

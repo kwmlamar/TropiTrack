@@ -1,14 +1,24 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Bell, ChevronDown, Search, Settings, User, LogOut, Building2, Users, HelpCircle } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import {
+  Bell,
+  ChevronDown,
+  Search,
+  Settings,
+  User,
+  LogOut,
+  Building2,
+  Users,
+  HelpCircle,
+} from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,40 +26,44 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { UserProfileWithCompany } from "@/lib/types/userProfile"
-import { useRouter } from "next/navigation" 
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserProfileWithCompany } from "@/lib/types/userProfile";
+import Link from "next/link";
 
 async function logout() {
-  const res = await fetch('/auth/signout', {
-    method: 'POST',
-  })
+  const res = await fetch("/auth/signout", {
+    method: "POST",
+  });
 
   // Optional: redirect manually if the server didn't do it
   if (res.redirected) {
-    window.location.href = res.url
+    window.location.href = res.url;
   }
 }
 
 type SiteHeaderProps = {
-  title?: string
-  rightSlot?: React.ReactNode
-  user: UserProfileWithCompany
+  title?: string;
+  rightSlot?: React.ReactNode;
+  user: UserProfileWithCompany;
   notifications?: Array<{
-    id: string
-    title: string
-    message: string
-    time: string
-    read: boolean
-    type: "info" | "warning" | "success" | "error"
-  }>
-  onSearch?: (query: string) => void
-  onNotificationClick?: (notificationId: string) => void
-  onUserMenuAction?: (action: string) => void
-  onCompanySwitch?: () => void
-}
+    id: string;
+    title: string;
+    message: string;
+    time: string;
+    read: boolean;
+    type: "info" | "warning" | "success" | "error";
+  }>;
+  onSearch?: (query: string) => void;
+  onNotificationClick?: (notificationId: string) => void;
+  onUserMenuAction?: (action: string) => void;
+  onCompanySwitch?: () => void;
+};
 
 export function SiteHeader({
   title = "Dashboard",
@@ -86,27 +100,26 @@ export function SiteHeader({
   onUserMenuAction,
   onCompanySwitch,
 }: SiteHeaderProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const unreadCount = notifications.filter((n) => !n.read).length
-  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "warning":
-        return "🟡"
+        return "🟡";
       case "error":
-        return "🔴"
+        return "🔴";
       case "success":
-        return "🟢"
+        return "🟢";
       default:
-        return "🔵"
+        return "🔵";
     }
-  }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSearch?.(searchQuery)
-  }
+    e.preventDefault();
+    onSearch?.(searchQuery);
+  };
 
   return (
     <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width,height] ease-linear">
@@ -125,11 +138,16 @@ export function SiteHeader({
             <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
               <Building2 className="h-3 w-3 text-primary" />
             </div>
-            <span className="text-sm font-medium text-foreground max-w-32 truncate">{user.company?.name}</span>
+            <span className="text-sm font-medium text-foreground max-w-32 truncate">
+              {user.company?.name}
+            </span>
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </Button>
 
-          <Separator orientation="vertical" className="mx-2 h-4 hidden sm:block" />
+          <Separator
+            orientation="vertical"
+            className="mx-2 h-4 hidden sm:block"
+          />
           <h1 className="text-lg font-semibold text-foreground">{title}</h1>
         </div>
 
@@ -188,7 +206,9 @@ export function SiteHeader({
             <PopoverContent className="w-80 p-0" align="end">
               <div className="p-4 border-b">
                 <h4 className="font-semibold text-foreground">Notifications</h4>
-                <p className="text-sm text-muted-foreground">You have {unreadCount} unread notifications</p>
+                <p className="text-sm text-muted-foreground">
+                  You have {unreadCount} unread notifications
+                </p>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.map((notification) => (
@@ -200,14 +220,24 @@ export function SiteHeader({
                     onClick={() => onNotificationClick?.(notification.id)}
                   >
                     <div className="flex items-start gap-3">
-                      <span className="text-lg">{getNotificationIcon(notification.type)}</span>
+                      <span className="text-lg">
+                        {getNotificationIcon(notification.type)}
+                      </span>
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-foreground">{notification.title}</p>
-                          {!notification.read && <div className="w-2 h-2 bg-primary rounded-full" />}
+                          <p className="text-sm font-medium text-foreground">
+                            {notification.title}
+                          </p>
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-primary rounded-full" />
+                          )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{notification.message}</p>
-                        <p className="text-xs text-muted-foreground">{notification.time}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {notification.time}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -229,7 +259,10 @@ export function SiteHeader({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                  <AvatarImage
+                    src={user.avatar || "/placeholder.svg"}
+                    alt={user.name}
+                  />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                     {user.name
                       .split(" ")
@@ -243,8 +276,12 @@ export function SiteHeader({
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none text-foreground">{user.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  <p className="text-sm font-medium leading-none text-foreground">
+                    {user.name}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
                   {user.role && (
                     <Badge variant="secondary" className="w-fit text-xs mt-1">
                       {user.role}
@@ -253,18 +290,24 @@ export function SiteHeader({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onUserMenuAction?.("profile")}>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/invites")}>
+              <Link href="/dashboard/profile">
+                <DropdownMenuItem onClick={() => onUserMenuAction?.("profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/dashboard/invites">
+                <DropdownMenuItem >
                 <Users className="mr-2 h-4 w-4" />
                 <span>Team Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
+              </Link>
+              <Link href="/dashboard/settings">
+                <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem onClick={() => onUserMenuAction?.("help")}>
                 <HelpCircle className="mr-2 h-4 w-4" />
                 <span>Help & Support</span>
@@ -282,5 +325,5 @@ export function SiteHeader({
         </div>
       </div>
     </header>
-  )
+  );
 }

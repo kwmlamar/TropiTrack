@@ -17,6 +17,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
@@ -52,7 +53,7 @@ export function TimesheetDialog({
   trigger,
 }: TimesheetDialogProps) {
   const [open, setOpen] = useState(false);
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSuccess = (data: any) => {
     setOpen(false);
@@ -118,7 +119,7 @@ export function BulkTimesheetDialog({
   trigger,
 }: BulkTimesheetDialogProps) {
   const [open, setOpen] = useState(false);
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSuccess = (data: any[]) => {
     setOpen(false);
@@ -148,7 +149,7 @@ export function BulkTimesheetDialog({
         </DialogHeader>
         <div className="flex-1 overflow-y-auto">
           <BulkTimesheetForm
-          userId={userId}
+            userId={userId}
             workers={workers}
             projects={projects}
             onSuccess={handleSuccess}
@@ -166,6 +167,8 @@ interface WorkerSheetProps {
   userId: string;
   onSuccess?: (worker: Worker) => void;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function WorkerSheet({
@@ -173,35 +176,33 @@ export function WorkerSheet({
   userId,
   onSuccess,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: WorkerSheetProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const open = controlledOpen ?? internalOpen;
+  const onOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
   const handleSuccess = (data: Worker) => {
-    setOpen(false);
+    onOpenChange(false);
     onSuccess?.(data);
   };
 
   const handleCancel = () => {
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {trigger || (
-          <Button>
-            {worker ? (
-              <Edit className="h-4 w-4 mr-2" />
-            ) : (
-              <Plus className="h-4 w-4 mr-2" />
-            )}
-            {worker ? "Edit Worker" : "Add Worker"}
-          </Button>
-        )}
-      </SheetTrigger>
-      <VisuallyHidden>
-        <SheetTitle>{worker ? "Edit Worker" : "Add Worker"}</SheetTitle>
-      </VisuallyHidden>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
+
+      <SheetTitle className="sr-only">
+        {worker ? "Edit Worker" : "Add Worker"}
+      </SheetTitle>
+      <SheetDescription className="sr-only">
+        {worker ? "Update worker details." : "Create a new worker."}
+      </SheetDescription>
       <SheetContent
         side="right"
         className="w-full sm:max-w-2xl overflow-y-auto"
