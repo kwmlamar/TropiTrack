@@ -96,8 +96,8 @@ export async function updateEmployee(worker: Worker, { user }: { user: User }) {
 // CLIENTS
 
 // fetch Clients
-export async function fetchClientsForCompany({ user }: { user: User }) {
-  const profile = await getProfile(user.id);
+export async function fetchClientsForCompany(userId: string) {
+  const profile = await getProfile(userId);
   const { data, error } = await supabase
     .from("clients")
     .select("*")
@@ -166,8 +166,8 @@ export async function updateClient(client: Client, { user }: { user: User }) {
 
 // PROJECTS
 
-export async function fetchProjectsForCompany({ user }: { user: User }) {
-  const profile = await getProfile(user.id);
+export async function fetchProjectsForCompany(userId: string) {
+  const profile = await getProfile(userId);
 
   const { data, error } = await supabase
     .from("projects")
@@ -182,8 +182,8 @@ export async function fetchProjectsForCompany({ user }: { user: User }) {
 }
 
 // fetch project assignments
-export async function fetchProjectAssignments({ user }: { user: User }) {
-  const profile = await getProfile(user.id);
+export async function fetchProjectAssignments(userId: string) {
+  const profile = await getProfile(userId);
 
   const { data, error } = await supabase
     .from("project_assignments")

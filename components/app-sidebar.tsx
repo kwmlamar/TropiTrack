@@ -43,8 +43,16 @@ import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import type { UserProfileWithCompany } from "@/lib/types/userProfile";
 import type { Worker } from "@/lib/types/worker";
-import { fetchWorkersForCompany } from "@/lib/data/data";
-import { WorkerSheet } from "./forms/form-dialogs";
+import type { Client } from "@/lib/types/client";
+import type { Project } from "@/lib/types/project";
+import {
+  fetchClientsForCompany,
+  fetchProjectAssignments,
+  fetchProjectsForCompany,
+  fetchWorkersForCompany,
+} from "@/lib/data/data";
+import { ProjectDialog, WorkerSheet } from "./forms/form-dialogs";
+import { ProjectAssignment } from "@/lib/types";
 
 const data = {
   user: {
@@ -138,24 +146,54 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 export function AppSidebar({ profile, ...props }: AppSidebarProps) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const [loading, setLoading] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [projectAssignments, setProjectAssignments] = useState<ProjectAssignment[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [workerSheet, setWorkerSheet] = useState(false);
+  const [projectDialog, setProjectDialog] = useState(false);
 
   useEffect(() => {
     loadWorkers();
+    loadClients();
+    loadProjects();
+    loadProjectAssignments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadProjects = async () => {
+      try {
+        const data = await fetchProjectsForCompany(profile.id);
+        setProjects(data);
+      } catch (error) {
+        console.log("Failed to load projects:", error);
+      } 
+    };
+
+    const loadProjectAssignments = async () => {
+        try {
+          const data = await fetchProjectAssignments(profile.id);
+          setProjectAssignments(data);
+        } catch (error) {
+          console.log("Failed to load project assignments:", error);
+        }
+      };
+
+  const loadClients = async () => {
+    try {
+      const data = await fetchClientsForCompany(profile.id);
+      setClients(data);
+    } catch (error) {
+      console.log("Failed to load clients:", error);
+    }
+  };
+
   const loadWorkers = async () => {
-    setLoading(true);
     try {
       const data = await fetchWorkersForCompany(profile.id);
       setWorkers(data);
     } catch (error) {
-      console.log("Failed to fetch Workers:", error);
-    } finally {
-      setLoading(false);
+      console.log("Failed to load workers:", error);
     }
   };
 
@@ -168,6 +206,7 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
         break;
       case "create-project":
         // Trigger project form
+        setProjectDialog(true);
         console.log("Open New Project Form");
         break;
       default:
@@ -263,6 +302,17 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                 onSuccess={loadWorkers}
                 open={workerSheet}
                 onOpenChange={setWorkerSheet}
+              />
+              <ProjectDialog
+                userId={profile.id}
+                clients={clients}
+                workers={workers}
+                open={projectDialog}
+                onOpenChange={setProjectDialog}
+                onSuccess={() => {
+                  loadProjects();
+                  loadProjectAssignments();
+                }}
               />
             </SidebarGroupContent>
           </SidebarGroup>

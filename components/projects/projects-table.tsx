@@ -85,7 +85,7 @@ export default function ProjectsTable({ user }: { user: User }) {
   const loadProjects = async () => {
     setLoading(true);
     try {
-      const data = await fetchProjectsForCompany({ user });
+      const data = await fetchProjectsForCompany(user.id);
       setProjects(data);
     } catch (error) {
       console.log("Failed to load projects:", error);
@@ -96,7 +96,7 @@ export default function ProjectsTable({ user }: { user: User }) {
 
   const loadClients = async () => {
     try {
-      const data = await fetchClientsForCompany({ user });
+      const data = await fetchClientsForCompany(user.id);
       setClients(data);
     } catch (error) {
       console.log("Failed to load clients:", error);
