@@ -37,7 +37,7 @@ export default function ClientTable({ user }: { user: User }) {
   const loadClients = async () => {
     setIsLoading(true)
     try {
-      const data = await fetchClientsForCompany({ user })
+      const data = await fetchClientsForCompany(user.id)
       setClients(data)
     } catch (error) {
       console.log("Error fetching clients", error)
