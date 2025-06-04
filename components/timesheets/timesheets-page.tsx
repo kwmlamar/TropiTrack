@@ -15,7 +15,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-// Updated imports
 import {
   getTimesheets,
   updateTimesheet as updateTimesheetData,
