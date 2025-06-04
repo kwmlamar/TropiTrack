@@ -120,7 +120,7 @@ export default function TimesheetsPage({user}: {user: User}) {
   const loadProjects = async () => {
       setLoading(true);
       try {
-        const data = await fetchProjectsForCompany({ user });
+        const data = await fetchProjectsForCompany(user.id);
         setProjects(data);
       } catch (error) {
         console.log("Failed to load projects:", error);
