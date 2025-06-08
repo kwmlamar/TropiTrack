@@ -19,6 +19,7 @@ import {
   getTimesheets,
   updateTimesheet as updateTimesheetData,
   getTimesheetSummary,
+  approveTimesheet,
 } from "@/lib/data/timesheets"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
 import { TimesheetDialog, BulkTimesheetDialog } from "@/components/forms/form-dialogs"
@@ -371,7 +372,7 @@ export default function TimesheetsPage({user}: {user: User}) {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Workers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -382,7 +383,7 @@ export default function TimesheetsPage({user}: {user: User}) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -393,7 +394,7 @@ export default function TimesheetsPage({user}: {user: User}) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overtime Hours</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -404,7 +405,7 @@ export default function TimesheetsPage({user}: {user: User}) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -417,7 +418,7 @@ export default function TimesheetsPage({user}: {user: User}) {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-lg">Filters</CardTitle>
         </CardHeader>
@@ -504,7 +505,7 @@ export default function TimesheetsPage({user}: {user: User}) {
       </Card>
 
       {/* Timesheet Table */}
-      <Card>
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-lg">
             {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
@@ -652,6 +653,15 @@ export default function TimesheetsPage({user}: {user: User}) {
                             className="h-8 text-sm"
                           />
                         </td>
+                        <td>
+                          {timesheet.status === "approved" ? (
+                            <Badge className="bg-green-500/10 text-green-700">Approved</Badge>
+                          ) : (
+                            <Button size="sm" onClick={async () => { await approveTimesheet(timesheet.id); loadTimesheets(); }}>
+                              Approve
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                     ))}
               </tbody>
@@ -662,7 +672,7 @@ export default function TimesheetsPage({user}: {user: User}) {
 
       {/* Weekly Summary */}
       {viewMode === "weekly" && (
-        <Card>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-lg">Weekly Summary</CardTitle>
           </CardHeader>

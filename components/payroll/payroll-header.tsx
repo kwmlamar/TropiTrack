@@ -1,5 +1,3 @@
-import { Building2, DollarSign } from "lucide-react"
-
 export function PayrollHeader() {
   return (
     <div className="flex items-center justify-between">

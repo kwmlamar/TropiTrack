@@ -4,11 +4,10 @@ import { Badge } from "@/components/ui/badge"
 
 interface NibComplianceProps {
   totalNibContributions: number
-  employeeCount: number
   payPeriod: string
 }
 
-export function NibComplianceCard({ totalNibContributions, employeeCount, payPeriod }: NibComplianceProps) {
+export function NibComplianceCard({ totalNibContributions, payPeriod }: NibComplianceProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-BS", {
       style: "currency",
@@ -34,10 +33,10 @@ export function NibComplianceCard({ totalNibContributions, employeeCount, payPer
   ]
 
   return (
-    <Card>
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Shield className="h-5 w-5 text-blue-600" />
+          <Shield className="h-5 w-5 text-[var(--info)]" />
           NIB Compliance
         </CardTitle>
       </CardHeader>
@@ -52,11 +51,11 @@ export function NibComplianceCard({ totalNibContributions, employeeCount, payPer
             <div key={index} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <item.icon
-                  className={`h-4 w-4 ${item.status === "compliant" ? "text-green-600" : "text-orange-600"}`}
+                  className={`h-4 w-4 ${item.status === "compliant" ? "text-[var(--primary)]" : "text-[var(--warning)]"}`}
                 />
                 <span className="text-sm">{item.label}</span>
               </div>
-              <span className="font-mono text-sm font-medium">{item.value}</span>
+              <span className="font-sans text-sm font-medium">{item.value}</span>
             </div>
           ))}
         </div>
@@ -64,7 +63,7 @@ export function NibComplianceCard({ totalNibContributions, employeeCount, payPer
         <div className="border-t pt-3">
           <div className="flex justify-between items-center">
             <span className="font-medium">Total NIB Remittance</span>
-            <span className="font-mono font-bold text-blue-600">
+            <span className="font-sans font-bold text-[var(--info)]">
               {formatCurrency(totalNibContributions * 2.475)} {/* Employee + Employer */}
             </span>
           </div>

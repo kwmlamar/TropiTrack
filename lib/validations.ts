@@ -38,6 +38,7 @@ export const projectSchema = z.object({
   end_date: z.string().optional().nullable(),
   budget: z.number().min(0, "Budget must be positive").optional(),
   status: z.enum(["not_started", "in_progress", "paused", "completed", "cancelled"]).default("not_started"),
+  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
 })
 
 // Client validation schema

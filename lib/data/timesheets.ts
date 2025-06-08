@@ -70,7 +70,7 @@ export async function getTimesheets(
       console.error("Error fetching timesheets:", error);
       return {
         data: null,
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
         success: false,
       };
     }
@@ -113,7 +113,7 @@ export async function getTimesheet(
       console.error("Error fetching timesheet:", error);
       return {
         data: null,
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
         success: false,
       };
     }
@@ -158,7 +158,7 @@ export async function createTimesheet(
       console.error("Error creating timesheet:", error);
       return {
         data: null,
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
         success: false,
       };
     }
@@ -225,7 +225,7 @@ export async function updateTimesheet(
       console.error("Error updating timesheet:", error);
       return {
         data: null,
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
         success: false,
       };
     }
@@ -258,7 +258,7 @@ export async function deleteTimesheet(
       console.error("Error deleting timesheet:", error);
       return {
         data: null,
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
         success: false,
       };
     }
@@ -421,4 +421,8 @@ export async function getTimesheetSummary(
       success: false,
     };
   }
+}
+
+export async function approveTimesheet(id: string) {
+  return supabase.from("timesheets").update({ status: "approved" }).eq("id", id);
 }

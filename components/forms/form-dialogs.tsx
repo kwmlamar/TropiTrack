@@ -205,14 +205,16 @@ export function WorkerSheet({
       </SheetDescription>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-2xl overflow-y-auto"
+        className="w-full sm:max-w-2xl overflow-y-auto px-4 sm:px-6"
       >
-        <WorkerForm
-          worker={worker}
-          userId={userId}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
+        <div className="pt-8">
+          <WorkerForm
+            worker={worker}
+            userId={userId}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        </div>
       </SheetContent>
     </Sheet>
   );
@@ -258,7 +260,7 @@ export function ProjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">
             {project ? "Edit Project" : "New Project"}
@@ -322,7 +324,7 @@ export function ClientDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto px-4 sm:px-6">
         <DialogHeader>
           <VisuallyHidden>
             <DialogTitle>{client ? "Edit Project" : "New Project"}</DialogTitle>

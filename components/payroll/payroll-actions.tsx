@@ -26,7 +26,7 @@ export function PayrollActions() {
       toast.success("Payslips generated successfully", {
         description: "All payslips have been generated and are ready for distribution.",
       })
-    } catch (error) {
+    } catch {
       toast.error("Failed to generate payslips", {
         description: "Please try again or contact support if the issue persists.",
       })
@@ -43,7 +43,7 @@ export function PayrollActions() {
       toast.success(`Payroll exported as ${format.toUpperCase()}`, {
         description: "The file has been downloaded to your device.",
       })
-    } catch (error) {
+    } catch {
       toast.error("Export failed", {
         description: "Please try again or contact support if the issue persists.",
       })
@@ -59,7 +59,7 @@ export function PayrollActions() {
       toast.success("Payslips sent successfully", {
         description: "All employees have been notified via email.",
       })
-    } catch (error) {
+    } catch {
       toast.error("Failed to send payslips", {
         description: "Please try again or contact support if the issue persists.",
       })
@@ -67,7 +67,7 @@ export function PayrollActions() {
   }
 
   return (
-    <Card>
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-lg">Actions</CardTitle>
       </CardHeader>

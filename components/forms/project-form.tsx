@@ -344,7 +344,7 @@ export function ProjectForm({
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            {field.value && typeof field.value === "string" ? (
+                            {field.value ? (
                               format(parseISO(field.value), "PPP")
                             ) : (
                               <span>Pick a date</span>
@@ -357,7 +357,11 @@ export function ProjectForm({
                         <Calendar
                           mode="single"
                           selected={
-                            field.value ? new Date(field.value) : undefined
+                            field.value
+                              ? typeof field.value === 'string'
+                                ? parseISO(field.value)
+                                : field.value
+                              : undefined
                           }
                           onSelect={(date) => {
                             setStartDate(date ?? undefined);
