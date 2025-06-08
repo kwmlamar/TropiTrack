@@ -5,12 +5,12 @@ export const timesheetSchema = z.object({
   date: z.string().min(1, "Date is required"),
   worker_id: z.string().min(1, "Worker is required"),
   project_id: z.string().min(1, "Project is required"),
-  task_description: z.string().min(1, "Task description is required"),
+  task_description: z.string().optional(),
   clock_in: z.string().min(1, "Clock in time is required"),
   clock_out: z.string().min(1, "Clock out time is required"),
   break_duration: z.number().min(0, "Break duration must be positive").max(480, "Break cannot exceed 8 hours"),
   hourly_rate: z.number().min(0, "Hourly rate must be positive"),
-  supervisor_approval: z.boolean().default(false),
+  supervisor_approval: z.boolean().optional().default(false),
   notes: z.string().optional(),
 })
 

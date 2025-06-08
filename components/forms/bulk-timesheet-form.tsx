@@ -74,7 +74,7 @@ const timesheetEntrySchema = z.object({
     .min(0, "Break duration must be positive")
     .max(480, "Break cannot exceed 8 hours"),
   hourly_rate: z.number().min(0, "Hourly rate must be positive"),
-  task_description: z.string().min(1, "Task description is required"),
+  task_description: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -594,7 +594,7 @@ export function BulkTimesheetForm({
                             name={`entries.${index}.task_description`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Task Description</FormLabel>
+                                <FormLabel>Task Description (Optional)</FormLabel>
                                 <FormControl>
                                   <Textarea
                                     placeholder="Describe the work performed..."

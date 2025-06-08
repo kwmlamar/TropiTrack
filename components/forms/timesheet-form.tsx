@@ -82,7 +82,7 @@ export function TimesheetForm({
       clock_out: timesheet?.clock_out || "17:00",
       break_duration: timesheet?.break_duration || 30,
       hourly_rate: timesheet?.hourly_rate || 20,
-      supervisor_approval: timesheet?.supervisor_approval || false,
+      supervisor_approval: timesheet?.supervisor_approval,
       notes: timesheet?.notes || "",
     },
   });
@@ -263,7 +263,7 @@ export function TimesheetForm({
                 name="task_description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Task Description</FormLabel>
+                    <FormLabel>Task Description (Optional)</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe the work performed..."
