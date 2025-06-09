@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/app-sidebar"; // adjust path
 import { SiteHeader } from "@/components/site-header"; // adjust path
 import { ModeToggle } from "../mode-toggle";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
+import { redirect } from 'next/navigation';
 
 type DashboardLayoutProps = {
     children: React.ReactNode;
@@ -14,6 +15,11 @@ export default async function DashboardLayout({
     title = "Dashboard",
  }: DashboardLayoutProps) {
   const profile = await getUserProfileWithCompany();
+
+  if (!profile) {
+    redirect('/login'); 
+  }
+
   return (
     <SidebarProvider
       style={

@@ -26,8 +26,6 @@ interface PayrollRecord {
   otherDeductions: number
   totalDeductions: number
   netPay: number
-  position: string
-  department: string
   status: 'pending' | 'approved' | 'rejected'
 }
 
@@ -68,10 +66,9 @@ export function PayrollTable({ data }: PayrollTableProps) {
     return 0
   })
 
-  // Define columns for grid: Worker, Position, Total Hours, Overtime, Hourly Rate, Gross Pay, NIB Deduction, Other Deductions, Net Pay, Actions
+  // Define columns for grid: Worker, Total Hours, Overtime, Hourly Rate, Gross Pay, NIB Deduction, Other Deductions, Net Pay, Actions
   const columns = [
     { label: "Worker", sortable: true, field: "workerId" },
-    { label: "Position", sortable: false },
     { label: "Total Hours", sortable: true, field: "totalHours" },
     { label: "Overtime", sortable: true, field: "overtimeHours" },
     { label: "Hourly Rate", sortable: true, field: "hourlyRate" },
@@ -85,7 +82,7 @@ export function PayrollTable({ data }: PayrollTableProps) {
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardContent className="p-0">
         {/* Column Headers */}
-        <div className="grid grid-cols-[2fr_1.2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
+        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
           {columns.map((col) => (
             <div
               key={col.label}
@@ -105,9 +102,9 @@ export function PayrollTable({ data }: PayrollTableProps) {
           {sortedData.map((record) => (
             <div
               key={record.id}
-              className="grid grid-cols-[2fr_1.2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
+              className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
             >
-              {/* Worker cell: avatar, name, ID */}
+              {/* Worker cell: avatar, name */}
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="text-sm font-semibold text-primary">
@@ -120,15 +117,7 @@ export function PayrollTable({ data }: PayrollTableProps) {
                   <p className="font-semibold text-foreground">
                     {record.workerName || record.workerId}
                   </p>
-                  <p className="text-sm text-muted-foreground">ID: {record.workerId}</p>
                 </div>
-              </div>
-              {/* Position/Department */}
-              <div>
-                <div className="text-sm">{record.position}</div>
-                <Badge className="w-fit text-xs mt-1 border-0 bg-[var(--primary)] text-[var(--primary-foreground)]">
-                  {record.department}
-                </Badge>
               </div>
               {/* Total Hours */}
               <div className="text-right">

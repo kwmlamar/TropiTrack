@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import type { PayrollRecord } from "@/lib/types/payroll";
+import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
 
 export type CreatePayrollInput = Omit<PayrollRecord, "id">;
 export type UpdatePayrollInput = Partial<Omit<PayrollRecord, "id">> & { id: string };
@@ -12,9 +13,21 @@ export type ApiResponse<T> = {
 
 export async function getPayrolls(): Promise<ApiResponse<PayrollRecord[]>> {
   try {
+    const profile = await getUserProfileWithCompany();
+    if (!profile || !profile.company_id) {
+      return { data: null, error: "User profile or company ID not found.", success: false };
+    }
+
+    console.log("Fetching payrolls for company ID:", profile.company_id);
+
     const { data, error } = await supabase
       .from("payroll")
       .select(`*, worker:workers(name)`)
+      .eq("company_id", profile.company_id);
+
+    console.log("Supabase raw payroll data:", data);
+    console.log("Supabase raw payroll error:", error);
+
     if (error) {
       return { data: null, error: error.message, success: false };
     }

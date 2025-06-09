@@ -17,16 +17,20 @@ export default function PayrollPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchPayrolls() {
-      setLoading(true)
-      const res = await getPayrolls()
-      if (res.success && res.data) {
-        setPayrolls(res.data)
-      }
-      setLoading(false)
-    }
-    fetchPayrolls()
+    loadPayroll();
   }, [])
+
+  const loadPayroll = async () => {
+    try {
+      const response = await getPayrolls();
+      setPayrolls(response.data || []);
+      console.log("Payroll:", payrolls)
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load payroll data:', error);
+      setLoading(false);
+    }
+  }
 
   // Calculate summary data from payrolls
   const totalGrossPay = payrolls.reduce((sum, record) => sum + record.grossPay, 0)

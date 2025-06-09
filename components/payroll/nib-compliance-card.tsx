@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 interface NibComplianceProps {
   totalNibContributions: number
   payPeriod: string
+  employeeCount: number
 }
 
 export function NibComplianceCard({ totalNibContributions, payPeriod }: NibComplianceProps) {

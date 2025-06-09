@@ -12,4 +12,5 @@ export type PayrollRecord = {
   netPay: number;
   position: string;
   department: string;
+  status: 'pending' | 'approved' | 'rejected'
 };
