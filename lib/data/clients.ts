@@ -119,9 +119,15 @@ export async function insertClient(
 ): Promise<ApiResponse<Client>> {
   const profile = await getProfile(userId);
   try {
+    // Normalize empty email to null to avoid unique constraint issues
+    const normalizedClient = {
+      ...client,
+      email: client.email && client.email.trim() !== "" ? client.email.trim() : null,
+    };
+
     const { data, error } = await supabase
       .from("clients")
-      .insert([{ ...client, company_id: profile.company_id }])
+      .insert([{ ...normalizedClient, company_id: profile.company_id }])
       .select()
       .single();
 
@@ -151,9 +157,15 @@ export async function updateClient(
 ): Promise<ApiResponse<Client>> {
     const profile = await getProfile(userId);
   try {
+    // Normalize empty email to null to avoid unique constraint issues
+    const normalizedClient = {
+      ...client,
+      email: client.email && client.email.trim() !== "" ? client.email.trim() : null,
+    };
+
     const { data, error } = await supabase
       .from("clients")
-      .update(client)
+      .update(normalizedClient)
       .eq("company_id", profile.company_id)
       .eq("id", id)
       .select()

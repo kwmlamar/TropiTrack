@@ -150,9 +150,15 @@ export async function createWorker(userId: string, worker: NewWorker): Promise<A
 export async function updateWorker(userId: string, id: string, worker: UpdateWorker): Promise<ApiResponse<Worker>> {
     const profile = await getProfile(userId);
   try {
+    // Normalize empty email to null to avoid unique constraint issues
+    const normalizedWorker = {
+      ...worker,
+      email: worker.email && worker.email.trim() !== "" ? worker.email.trim() : null,
+    };
+
     const { data, error } = await supabase
       .from("workers")
-      .update(worker)
+      .update(normalizedWorker)
       .eq("company_id", profile.company_id)
       .eq("id", id)
       .select()

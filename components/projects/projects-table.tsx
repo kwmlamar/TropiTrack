@@ -73,6 +73,7 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadProjects();
@@ -152,9 +153,13 @@ export default function ProjectsTable({ user }: { user: User }) {
         : true;
       const matchesStatus =
         statusFilter === "all" ? true : project.status === statusFilter;
-      return matchesClient && matchesStatus;
+      const matchesSearch =
+        searchTerm.trim() === "" ||
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesClient && matchesStatus && matchesSearch;
     });
-  }, [projects, selectedClient, statusFilter]);
+  }, [projects, selectedClient, statusFilter, searchTerm]);
 
   // Calculate statistics
   const totalProjects = projects.length;
@@ -354,6 +359,8 @@ export default function ProjectsTable({ user }: { user: User }) {
                 <SearchForm
                   placeholder="Search projects..."
                   className="w-full"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>

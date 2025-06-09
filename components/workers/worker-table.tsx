@@ -43,6 +43,7 @@ export default function WorkersTable({ user }: { user: User }) {
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadWorkers();
@@ -81,6 +82,16 @@ export default function WorkersTable({ user }: { user: User }) {
     workers.length > 0
       ? workers.reduce((sum, w) => sum + w.hourly_rate, 0) / workers.length
       : 0;
+
+  const filteredWorkers = workers.filter((worker) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return (
+      worker.name.toLowerCase().includes(term) ||
+      (worker.email && worker.email.toLowerCase().includes(term)) ||
+      (worker.role && worker.role.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -156,6 +167,8 @@ export default function WorkersTable({ user }: { user: User }) {
         <SearchForm
           placeholder="Search workers..."
           className="w-full sm:w-80"
+          value={searchTerm}
+          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
         />
         <WorkerSheet
           userId={user.id}
@@ -195,7 +208,7 @@ export default function WorkersTable({ user }: { user: User }) {
                 <span className="text-sm">Loading workers...</span>
               </div>
             </div>
-          ) : workers.length === 0 ? (
+          ) : filteredWorkers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
                 <UserX className="h-8 w-8 text-muted-foreground" />
@@ -220,7 +233,7 @@ export default function WorkersTable({ user }: { user: User }) {
             </div>
           ) : (
             <div className="divide-y divide-border/50">
-              {workers.map((worker, i) => (
+              {filteredWorkers.map((worker, i) => (
                 <div
                   key={worker.id || i}
                   className="grid grid-cols-[2fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"

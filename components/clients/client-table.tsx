@@ -28,6 +28,7 @@ export default function ClientTable({ user }: { user: User }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
     loadClients()
@@ -67,6 +68,16 @@ export default function ClientTable({ user }: { user: User }) {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     return createdAt > thirtyDaysAgo
   }).length
+
+  const filteredClients = clients.filter((client) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return (
+      client.name.toLowerCase().includes(term) ||
+      (client.email && client.email.toLowerCase().includes(term)) ||
+      (typeof client.company === "string" && client.company.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -123,7 +134,12 @@ export default function ClientTable({ user }: { user: User }) {
 
       {/* Controls Section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <SearchForm placeholder="Search clients..." className="w-full sm:w-80" />
+        <SearchForm
+          placeholder="Search clients..."
+          className="w-full sm:w-80"
+          value={searchTerm}
+          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
+        />
         <ClientDialog
         userId={user.id}
           onSuccess={loadClients}
@@ -157,7 +173,7 @@ export default function ClientTable({ user }: { user: User }) {
                 <span className="text-sm">Loading clients...</span>
               </div>
             </div>
-          ) : clients.length === 0 ? (
+          ) : filteredClients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
                 <UserX className="h-8 w-8 text-muted-foreground" />
@@ -179,7 +195,7 @@ export default function ClientTable({ user }: { user: User }) {
             </div>
           ) : (
             <div className="divide-y divide-border/50">
-              {clients.map((client, i) => (
+              {filteredClients.map((client, i) => (
                 <div
                   key={client.id || i}
                   className="grid grid-cols-[2fr_2fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
