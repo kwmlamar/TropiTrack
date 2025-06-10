@@ -37,6 +37,14 @@ export async function getPayrolls(): Promise<ApiResponse<PayrollRecord[]>> {
       return {
         ...r,
         workerName: r.worker?.name || r.workerName || "",
+        totalHours: r.total_hours,
+        overtimeHours: r.overtime_hours,
+        hourlyRate: r.hourly_rate,
+        grossPay: r.gross_pay,
+        nibDeduction: r.nib_deduction,
+        otherDeductions: r.other_deductions,
+        totalDeductions: r.total_deductions,
+        netPay: r.net_pay,
       };
     });
     return { data: mapped as PayrollRecord[], error: null, success: true };

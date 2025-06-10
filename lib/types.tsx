@@ -43,17 +43,16 @@ export type Timesheet = {
   break_duration: number
   regular_hours: number
   overtime_hours: number
-  total_hours: number
-  hourly_rate: number
   total_pay: number
-  supervisor_approval: boolean
+  supervisor_approval: "pending" | "approved" | "rejected"
   notes?: string
   created_at?: string
   updated_at?: string
+  total_hours: number
 }
 
 // Input type for creating new timesheets (without id and timestamps)
-export type CreateTimesheetInput = Omit<Timesheet, "id" | "created_at" | "updated_at">
+export type CreateTimesheetInput = Omit<Timesheet, "id" | "created_at" | "updated_at" | "supervisor_approval"> & {supervisor_approval?: "pending" | "approved" | "rejected"}
 
 // Input type for updating timesheets (partial fields except id)
 export type UpdateTimesheetInput = Partial<Omit<Timesheet, "id" | "created_at" | "updated_at">> & {
@@ -73,7 +72,7 @@ export type TimesheetFilters = {
   project_id?: string
   date_from?: string
   date_to?: string
-  supervisor_approval?: boolean
+  supervisor_approval?: "pending" | "approved" | "rejected"
   limit?: number
   offset?: number
 }
@@ -84,6 +83,7 @@ export type TimesheetWithDetails = Timesheet & {
     id: string
     name: string
     role?: string
+    hourly_rate?: number
   }
   project?: {
     id: string

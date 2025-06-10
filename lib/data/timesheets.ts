@@ -9,6 +9,7 @@ import type {
 
 import { supabase } from "@/lib/supabaseClient";
 import { getProfile } from "./data";
+import { parse } from "date-fns";
 
 /**
  * Get timesheets with optional filtering and related data
@@ -142,14 +143,32 @@ export async function createTimesheet(
 ): Promise<ApiResponse<Timesheet>> {
   const profile = await getProfile(userId);
   try {
+    // Fetch worker's hourly rate
+    const { data: workerData, error: workerError } = await supabase
+      .from("workers")
+      .select("hourly_rate")
+      .eq("id", timesheet.worker_id)
+      .single();
+
+    if (workerError || !workerData) {
+      console.error("Error fetching worker hourly rate:", workerError);
+      return {
+        data: null,
+        error: workerError?.message || "Could not fetch worker hourly rate",
+        success: false,
+      };
+    }
+    const workerHourlyRate = workerData.hourly_rate;
+
     // Calculate totals before inserting
-    const calculatedTimesheet = calculateTimesheetTotals(timesheet);
+    const calculatedTimesheet = calculateTimesheetTotals(timesheet, workerHourlyRate);
 
     const { data, error } = await supabase
       .from("timesheets")
       .insert({
         ...calculatedTimesheet,
         company_id: profile.company_id,
+        supervisor_approval: "pending",
       })
       .select()
       .single();
@@ -211,7 +230,9 @@ export async function updateTimesheet(
       }
 
       const mergedData = { ...currentResult.data, ...updateData };
-      finalUpdateData = calculateTimesheetTotals(mergedData);
+      // Pass worker's hourly_rate to calculateTimesheetTotals
+      const workerHourlyRate = mergedData.worker?.hourly_rate || 0;
+      finalUpdateData = calculateTimesheetTotals(mergedData, workerHourlyRate);
     }
 
     const { data, error } = await supabase
@@ -282,7 +303,7 @@ export async function deleteTimesheet(
  * Bulk update multiple timesheets (useful for supervisor approval)
  */
 export async function bulkUpdateTimesheets(
-  updates: { id: string; supervisor_approval?: boolean; notes?: string }[]
+  updates: { id: string; supervisor_approval?: "pending" | "approved" | "rejected"; notes?: string }[]
 ): Promise<ApiResponse<Timesheet[]>> {
   try {
     const results = await Promise.all(
@@ -321,42 +342,33 @@ export async function bulkUpdateTimesheets(
  * Helper function to calculate timesheet totals
  */
 function calculateTimesheetTotals(
-  timesheet: Partial<Timesheet>
+  timesheet: Partial<Timesheet>,
+  workerHourlyRate: number
 ): Partial<Timesheet> {
-  if (!timesheet.clock_in || !timesheet.clock_out || !timesheet.hourly_rate) {
-    return timesheet;
+  const clockIn = timesheet.clock_in ? parse(timesheet.clock_in, 'HH:mm', new Date()) : null;
+  const clockOut = timesheet.clock_out ? parse(timesheet.clock_out, 'HH:mm', new Date()) : null;
+  const breakDuration = timesheet.break_duration || 0; // in minutes
+
+  let totalHours = 0;
+  if (clockIn && clockOut) {
+    const durationMs = clockOut.getTime() - clockIn.getTime();
+    totalHours = durationMs / (1000 * 60 * 60) - (breakDuration / 60);
   }
 
-  try {
-    const clockIn = new Date(`${timesheet.date}T${timesheet.clock_in}`);
-    const clockOut = new Date(`${timesheet.date}T${timesheet.clock_out}`);
+  const overtimeHours = Math.max(0, totalHours - 8); // Assuming 8 hours is regular
+  const regularHours = Math.max(0, totalHours - overtimeHours);
 
-    // Calculate total hours worked (in hours)
-    const totalMinutes = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60);
-    const breakMinutes = timesheet.break_duration || 0;
-    const workedMinutes = totalMinutes - breakMinutes;
-    const totalHours = Math.max(0, workedMinutes / 60);
+  const totalPay =
+    regularHours * workerHourlyRate +
+    overtimeHours * workerHourlyRate * 1.5;
 
-    // Calculate regular and overtime hours (assuming 8 hours is regular)
-    const regularHours = Math.min(totalHours, 8);
-    const overtimeHours = Math.max(0, totalHours - 8);
-
-    // Calculate total pay (overtime is typically 1.5x)
-    const regularPay = regularHours * timesheet.hourly_rate;
-    const overtimePay = overtimeHours * timesheet.hourly_rate * 1.5;
-    const totalPay = regularPay + overtimePay;
-
-    return {
-      ...timesheet,
-      total_hours: Math.round(totalHours * 100) / 100, // Round to 2 decimal places
-      regular_hours: Math.round(regularHours * 100) / 100,
-      overtime_hours: Math.round(overtimeHours * 100) / 100,
-      total_pay: Math.round(totalPay * 100) / 100,
-    };
-  } catch (error) {
-    console.error("Error calculating timesheet totals:", error);
-    return timesheet;
-  }
+  return {
+    ...timesheet,
+    regular_hours: regularHours,
+    overtime_hours: overtimeHours,
+    total_hours: totalHours,
+    total_pay: totalPay,
+  };
 }
 
 /**
@@ -423,6 +435,33 @@ export async function getTimesheetSummary(
   }
 }
 
-export async function approveTimesheet(id: string) {
-  return supabase.from("timesheets").update({ status: "approved" }).eq("id", id);
+export async function approveTimesheet(id: string): Promise<ApiResponse<boolean>> {
+  try {
+    const { error } = await supabase
+      .from("timesheets")
+      .update({ supervisor_approval: "approved" })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error approving timesheet:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+        success: false,
+      };
+    }
+
+    return {
+      data: true,
+      error: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Unexpected error approving timesheet:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
 }

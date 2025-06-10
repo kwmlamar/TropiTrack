@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { MoreHorizontal, Eye, Download } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -81,97 +80,99 @@ export function PayrollTable({ data }: PayrollTableProps) {
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardContent className="p-0">
-        {/* Column Headers */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
-          {columns.map((col) => (
-            <div
-              key={col.label}
-              className={`text-xs font-semibold text-muted-foreground uppercase tracking-wide ${col.sortable ? "cursor-pointer hover:text-foreground" : ""}`}
-              onClick={col.sortable ? () => handleSort(col.field as keyof PayrollRecord) : undefined}
-            >
-              {col.label}
-              {col.sortable && sortField === col.field && (
-                <span className="ml-1">{sortDirection === "asc" ? "▲" : "▼"}</span>
-              )}
-            </div>
-          ))}
-          <div /> {/* Empty column for actions */}
-        </div>
-        {/* Data Rows */}
-        <div className="divide-y divide-border/50">
-          {sortedData.map((record) => (
-            <div
-              key={record.id}
-              className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
-            >
-              {/* Worker cell: avatar, name */}
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-primary">
-                    {record.workerName
-                      ? record.workerName.split(" ").map((n) => n[0]).join("").toUpperCase()
-                      : record.workerId.slice(0, 2).toUpperCase()}
-                  </span>
+        <div className="overflow-x-auto">
+          {/* Column Headers */}
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30 min-w-[1000px]">
+            {columns.map((col) => (
+              <div
+                key={col.label}
+                className={`text-xs font-semibold text-muted-foreground uppercase tracking-wide ${col.sortable ? "cursor-pointer hover:text-foreground" : ""}`}
+                onClick={col.sortable ? () => handleSort(col.field as keyof PayrollRecord) : undefined}
+              >
+                {col.label}
+                {col.sortable && sortField === col.field && (
+                  <span className="ml-1">{sortDirection === "asc" ? "▲" : "▼"}</span>
+                )}
+              </div>
+            ))}
+            <div /> {/* Empty column for actions */}
+          </div>
+          {/* Data Rows */}
+          <div className="divide-y divide-border/50 min-w-[1000px]">
+            {sortedData.map((record) => (
+              <div
+                key={record.id}
+                className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
+              >
+                {/* Worker cell: avatar, name */}
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-primary">
+                      {record.workerName
+                        ? record.workerName.split(" ").map((n) => n[0]).join("").toUpperCase()
+                        : record.workerId.slice(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {record.workerName || record.workerId}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {record.workerName || record.workerId}
-                  </p>
+                {/* Total Hours */}
+                <div className="text-right">
+                  <span className="font-sans">{record.totalHours}</span>
+                </div>
+                {/* Overtime */}
+                <div className="text-right">
+                  <span className="font-sans text-orange-600">{record.overtimeHours}</span>
+                </div>
+                {/* Hourly Rate */}
+                <div className="text-right">
+                  <span className="font-sans">{formatCurrency(record.hourlyRate)}</span>
+                </div>
+                {/* Gross Pay */}
+                <div className="text-right">
+                  <span className="font-sans font-medium">{formatCurrency(record.grossPay)}</span>
+                </div>
+                {/* NIB Deduction */}
+                <div className="text-right">
+                  <span className="font-sans text-[var(--info)]">-{formatCurrency(record.nibDeduction)}</span>
+                </div>
+                {/* Other Deductions */}
+                <div className="text-right">
+                  <span className="font-sans text-[var(--destructive)]">-{formatCurrency(record.otherDeductions)}</span>
+                </div>
+                {/* Net Pay */}
+                <div className="text-right">
+                  <span className="font-sans font-bold text-[var(--primary)]">{formatCurrency(record.netPay)}</span>
+                </div>
+                {/* Actions */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem className="text-sm">
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-sm">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Payslip
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-sm">Edit Record</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
-              {/* Total Hours */}
-              <div className="text-right">
-                <span className="font-sans">{record.totalHours}h</span>
-              </div>
-              {/* Overtime */}
-              <div className="text-right">
-                <span className="font-sans text-orange-600">{record.overtimeHours}h</span>
-              </div>
-              {/* Hourly Rate */}
-              <div className="text-right">
-                <span className="font-sans">{formatCurrency(record.hourlyRate)}</span>
-              </div>
-              {/* Gross Pay */}
-              <div className="text-right">
-                <span className="font-sans font-medium">{formatCurrency(record.grossPay)}</span>
-              </div>
-              {/* NIB Deduction */}
-              <div className="text-right">
-                <span className="font-sans text-[var(--info)]">-{formatCurrency(record.nibDeduction)}</span>
-              </div>
-              {/* Other Deductions */}
-              <div className="text-right">
-                <span className="font-sans text-[var(--destructive)]">-{formatCurrency(record.otherDeductions)}</span>
-              </div>
-              {/* Net Pay */}
-              <div className="text-right">
-                <span className="font-sans font-bold text-[var(--primary)]">{formatCurrency(record.netPay)}</span>
-              </div>
-              {/* Actions */}
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity text-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem className="text-sm">
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Payslip
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-sm">Edit Record</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

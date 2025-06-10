@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Clock, Users, Building2, Download, Plus, Search, UsersRound } from "lucide-react"
+import { CalendarDays, Clock, Users, Building2, Download, Plus, Search, UsersRound, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,12 +15,14 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Checkbox } from "@/components/ui/checkbox"
+import { toast } from "sonner"
 
 import {
   getTimesheets,
   updateTimesheet as updateTimesheetData,
   getTimesheetSummary,
-  approveTimesheet,
+  deleteTimesheet,
 } from "@/lib/data/timesheets"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
 import { TimesheetDialog, BulkTimesheetDialog } from "@/components/forms/form-dialogs"
@@ -48,6 +51,9 @@ export default function TimesheetsPage({user}: {user: User}) {
   const [selectedProject, setSelectedProject] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly")
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedTimesheetIds, setSelectedTimesheetIds] = useState<Set<string>>(new Set())
+  const [isApproving, setIsApproving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Load timesheets effect
   useEffect(() => {
@@ -226,41 +232,163 @@ export default function TimesheetsPage({user}: {user: User}) {
     })
   }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, searchTerm])
 
-  // Calculate weekly summaries using TimesheetWithDetails
-  const weeklySummaries = useMemo(() => {
-    const summaries = new Map()
+  const groupedTimesheets = useMemo(() => {
+    const grouped = new Map<string, Map<string, TimesheetWithDetails[]>>()
 
-    filteredTimesheets.forEach((timesheet) => {
-      const key = timesheet.worker_id
-      if (!summaries.has(key)) {
-        summaries.set(key, {
-          worker: timesheet.worker || { id: timesheet.worker_id, name: "Unknown Worker" },
-          totalHours: 0,
-          overtimeHours: 0,
-          daysWorked: 0,
-          daysAbsent: 0,
-          daysLate: 0,
-        })
-      }
+    filteredTimesheets.forEach(timesheet => {
+      const workerId = timesheet.worker_id
+      const weekStart = format(startOfWeek(parseISO(timesheet.date), { weekStartsOn: 1 }), 'yyyy-MM-dd')
 
-      const summary = summaries.get(key)
-      summary.totalHours += timesheet.total_hours
-      summary.overtimeHours += timesheet.overtime_hours
-
-      const status = getAttendanceStatus(timesheet)
-      if (status === "present" || status === "late") {
-        summary.daysWorked += 1
+      if (!grouped.has(workerId)) {
+        grouped.set(workerId, new Map<string, TimesheetWithDetails[]>())
       }
-      if (status === "absent") {
-        summary.daysAbsent += 1
+      const workerWeeks = grouped.get(workerId)!
+      if (!workerWeeks.has(weekStart)) {
+        workerWeeks.set(weekStart, [])
       }
-      if (status === "late") {
-        summary.daysLate += 1
-      }
+      workerWeeks.get(weekStart)!.push(timesheet)
     })
-
-    return Array.from(summaries.values())
+    return grouped
   }, [filteredTimesheets])
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(filteredTimesheets.map(ts => ts.id));
+      setSelectedTimesheetIds(allIds);
+    } else {
+      setSelectedTimesheetIds(new Set());
+    }
+  };
+
+  const handleSelectTimesheet = (id: string, checked: boolean) => {
+    setSelectedTimesheetIds(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(id);
+      } else {
+        newSet.delete(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllInWeek = (workerId: string, weekStart: string, checked: boolean) => {
+    setSelectedTimesheetIds(prev => {
+      const newSet = new Set(prev);
+      const workerWeeks = groupedTimesheets.get(workerId);
+      if (workerWeeks) {
+        const timesheetsInWeek = workerWeeks.get(weekStart);
+        if (timesheetsInWeek) {
+          timesheetsInWeek.forEach(ts => {
+            if (checked) {
+              newSet.add(ts.id);
+            } else {
+              newSet.delete(ts.id);
+            }
+          });
+        }
+      }
+      return newSet;
+    });
+  };
+
+  const handleApproveSelected = async () => {
+    setIsApproving(true);
+    try {
+      const updates = Array.from(selectedTimesheetIds).map(id =>
+        updateTimesheetData({ id, supervisor_approval: "approved" })
+      );
+      const results = await Promise.all(updates);
+
+      const failedApprovals = results.filter(result => !result.success);
+      if (failedApprovals.length > 0) {
+        toast.error("Failed to approve some timesheets", {
+          description: `${failedApprovals.length} timesheets could not be approved.`, 
+        });
+      } else {
+        toast.success("Timesheets approved successfully", {
+          description: "All selected timesheets have been marked as approved.",
+        });
+      }
+
+      setSelectedTimesheetIds(new Set());
+      loadTimesheets();
+    } catch (error) {
+      console.error("Error approving timesheets:", error);
+      toast.error("Error approving timesheets", {
+        description: "An unexpected error occurred while approving timesheets.",
+      });
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    setIsDeleting(true);
+    try {
+      const deletes = Array.from(selectedTimesheetIds).map(id =>
+        deleteTimesheet(id)
+      );
+      const results = await Promise.all(deletes);
+
+      const failedDeletions = results.filter(result => !result.success);
+      if (failedDeletions.length > 0) {
+        toast.error("Failed to delete some timesheets", {
+          description: `${failedDeletions.length} timesheets could not be deleted.`, 
+        });
+      } else {
+        toast.success("Timesheets deleted successfully", {
+          description: "All selected timesheets have been deleted.",
+        });
+      }
+
+      setSelectedTimesheetIds(new Set());
+      loadTimesheets();
+    } catch (error) {
+      console.error("Error deleting timesheets:", error);
+      toast.error("Error deleting timesheets", {
+        description: "An unexpected error occurred while deleting timesheets.",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Calculate weekly summaries using TimesheetWithDetails
+  // const weeklySummaries = useMemo(() => {
+  //   const summaries = new Map()
+
+  //   filteredTimesheets.forEach((timesheet) => {
+  //     const key = timesheet.worker_id
+  //     if (!summaries.has(key)) {
+  //       summaries.set(key, {
+  //         worker: timesheet.worker || { id: timesheet.worker_id, name: "Unknown Worker" },
+  //         totalHours: 0,
+  //         overtimeHours: 0,
+  //         daysWorked: 0,
+  //         daysAbsent: 0,
+  //         daysLate: 0,
+  //       })
+  //     }
+
+  //     const summary = summaries.get(key)
+  //     summary.totalHours += timesheet.total_hours
+  //     summary.overtimeHours += timesheet.overtime_hours
+
+  //     const status = getAttendanceStatus(timesheet)
+  //     if (status === "present" || status === "late") {
+  //       summary.daysWorked += 1
+  //     }
+  //     if (status === "absent") {
+  //       summary.daysAbsent += 1
+  //     }
+  //     if (status === "late") {
+  //       summary.daysLate += 1
+  //     }
+  //   })
+
+  //   return Array.from(summaries.values())
+  // }, [filteredTimesheets])
 
   const getStatusBadge = (status: AttendanceStatus) => {
     const variants = {
@@ -378,7 +506,7 @@ export default function TimesheetsPage({user}: {user: User}) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{weeklySummaries.length}</div>
+            <div className="text-2xl font-bold">{groupedTimesheets.size}</div>
             <p className="text-xs text-muted-foreground">Active this {viewMode === "daily" ? "day" : "week"}</p>
           </CardContent>
         </Card>
@@ -506,20 +634,48 @@ export default function TimesheetsPage({user}: {user: User}) {
 
       {/* Timesheet Table */}
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">
-            {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
-          </CardTitle>
-          <CardDescription>
-            {viewMode === "weekly" &&
-              `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d, yyyy")}`}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+          <div>
+            <CardTitle className="text-lg">
+              {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
+            </CardTitle>
+            <CardDescription>
+              {viewMode === "weekly" &&
+                `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d, yyyy")}`}
+            </CardDescription>
+          </div>
+          {selectedTimesheetIds.size > 0 && (
+            <div className="flex space-x-2">
+              <Button
+                onClick={handleDeleteSelected}
+                disabled={isDeleting || isApproving}
+                variant="outline"
+                size="sm"
+              >
+                {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
+              </Button>
+              <Button
+                onClick={handleApproveSelected}
+                disabled={isApproving || isDeleting}
+                size="sm"
+              >
+                {isApproving ? "Approving..." : "Approve Selected"}
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b">
+                  <th className="text-left p-2 font-medium w-12">
+                    <Checkbox
+                      checked={selectedTimesheetIds.size === filteredTimesheets.length && filteredTimesheets.length > 0}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all timesheets"
+                    />
+                  </th>
                   <th className="text-left p-2 font-medium">Worker</th>
                   <th className="text-left p-2 font-medium">Project</th>
                   {viewMode === "weekly" ? (
@@ -538,72 +694,116 @@ export default function TimesheetsPage({user}: {user: User}) {
                     </>
                   )}
                   {viewMode === "weekly" && <th className="text-center p-2 font-medium">Total</th>}
+                  {viewMode === "weekly" && <th className="text-center p-2 font-medium"></th>}
                 </tr>
               </thead>
               <tbody>
                 {viewMode === "weekly"
-                  ? // Weekly view - group by worker
-                    weeklySummaries.map((summary) => (
-                      <tr key={summary.worker.id} className="border-b hover:bg-muted/50">
-                        <td className="p-2">
-                          <div className="font-medium">{summary.worker.name}</div>
-                          <div className="text-sm text-muted-foreground">{summary.worker.role || "Worker"}</div>
-                        </td>
-                        <td className="p-2">
-                          <div className="text-sm">
-                            {Array.from(
-                              new Set(
-                                filteredTimesheets
-                                  .filter((ts) => ts.worker_id === summary.worker.id)
-                                  .map((ts) => ts.project?.name || "Unknown Project"),
-                              ),
-                            ).join(", ")}
-                          </div>
-                        </td>
-                        {weekDays.map((day) => {
-                          const dayTimesheet = filteredTimesheets.find(
-                            (ts) =>
-                              ts.worker_id === summary.worker.id &&
-                              format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
-                          )
+                  ? // Weekly view - group by worker and week
+                    Array.from(groupedTimesheets.entries()).map(([workerId, workerWeeks]) => (
+                      <React.Fragment key={workerId}>
+                        {Array.from(workerWeeks.entries()).map(([weekStart, timesheetsInWeek]) => {
+                          const worker = workers.find(w => w.id === workerId);
+                          const isAllInWeekSelected = timesheetsInWeek.length > 0 && timesheetsInWeek.every(ts => selectedTimesheetIds.has(ts.id));
+                          const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
+                          const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
+
+                          // Determine if all timesheets in the week are approved
+                          const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
+
                           return (
-                            <td key={day.toISOString()} className="p-2 text-center">
-                              {dayTimesheet ? (
-                                <div className="space-y-1">
-                                  <Input
-                                    type="number"
-                                    value={dayTimesheet.total_hours}
-                                    onChange={(e) =>
-                                      handleUpdateTimesheet(
-                                        dayTimesheet.id,
-                                        "total_hours",
-                                        Number.parseFloat(e.target.value) || 0,
-                                      )
-                                    }
-                                    className="w-16 h-8 text-center text-sm"
-                                    step="0.5"
-                                    min="0"
-                                    max="24"
-                                  />
-                                  {getStatusBadge(getAttendanceStatus(dayTimesheet))}
+                            <tr key={`${workerId}-${weekStart}`} className="border-b hover:bg-muted/50">
+                              <td className="p-2 w-12">
+                                <Checkbox
+                                  checked={isAllInWeekSelected}
+                                  onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, weekStart, checked)}
+                                  aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week ${weekStart}`}
+                                />
+                              </td>
+                              <td className="p-2">
+                                <div className="font-medium">{worker?.name || "Unknown Worker"}</div>
+                                <div className="text-sm text-muted-foreground">{worker?.role || "Worker"}</div>
+                              </td>
+                              <td className="p-2">
+                                <div className="text-sm">
+                                  {Array.from(
+                                    new Set(
+                                      timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
+                                    ),
+                                  ).join(", ")}
                                 </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </td>
-                          )
+                              </td>
+                              {weekDays.map((day) => {
+                                const dayTimesheet = timesheetsInWeek.find(
+                                  (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
+                                )
+                                return (
+                                  <td key={day.toISOString()} className="p-2 text-center">
+                                    {dayTimesheet ? (
+                                      <div className="space-y-1">
+                                        <Input
+                                          type="number"
+                                          value={dayTimesheet.total_hours}
+                                          onChange={(e) =>
+                                            handleUpdateTimesheet(
+                                              dayTimesheet.id,
+                                              "total_hours",
+                                              Number.parseFloat(e.target.value) || 0,
+                                            )
+                                          }
+                                          className="w-16 h-8 text-center text-sm"
+                                          step="0.5"
+                                          min="0"
+                                          max="24"
+                                        />
+                                        {getStatusBadge(getAttendanceStatus(dayTimesheet))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )}
+                                  </td>
+                                )
+                              })}
+                              <td className="p-2 text-center font-medium">
+                                {weekTotalHours}h
+                                {weekOvertimeHours > 0 && (
+                                  <div className="text-xs text-orange-600">+{weekOvertimeHours}h OT</div>
+                                )}
+                              </td>
+                              <td className="p-2 text-center">
+                                {isWeekApproved ? (
+                                  <Badge className="bg-green-500/10 text-green-700">Approved</Badge>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    onClick={async () => {
+                                      const updates = timesheetsInWeek.map(ts =>
+                                        updateTimesheetData({ id: ts.id, supervisor_approval: "approved" })
+                                      );
+                                      await Promise.all(updates);
+                                      loadTimesheets();
+                                      toast.success("Week approved!", { description: `${worker?.name}'s timesheets for ${weekStart} approved.` });
+                                    }}
+                                  >
+                                    Approve Week
+                                  </Button>
+                                )}
+                              </td>
+                            </tr>
+                          );
                         })}
-                        <td className="p-2 text-center font-medium">
-                          {summary.totalHours}h
-                          {summary.overtimeHours > 0 && (
-                            <div className="text-xs text-orange-600">+{summary.overtimeHours}h OT</div>
-                          )}
-                        </td>
-                      </tr>
+                      </React.Fragment>
                     ))
                   : // Daily view
                     filteredTimesheets.map((timesheet) => (
                       <tr key={timesheet.id} className="border-b hover:bg-muted/50">
+                        <td className="p-2 w-12">
+                          <Checkbox
+                            checked={selectedTimesheetIds.has(timesheet.id)}
+                            onCheckedChange={(checked: boolean) => handleSelectTimesheet(timesheet.id, checked)}
+                            aria-label={`Select timesheet for ${timesheet.worker?.name}`}
+                          />
+                        </td>
                         <td className="p-2">
                           <div className="font-medium">{timesheet.worker?.name || "Unknown Worker"}</div>
                           <div className="text-sm text-muted-foreground">{timesheet.worker?.role || "Worker"}</div>
@@ -654,10 +854,17 @@ export default function TimesheetsPage({user}: {user: User}) {
                           />
                         </td>
                         <td>
-                          {timesheet.status === "approved" ? (
+                          {timesheet.supervisor_approval === "approved" ? (
                             <Badge className="bg-green-500/10 text-green-700">Approved</Badge>
                           ) : (
-                            <Button size="sm" onClick={async () => { await approveTimesheet(timesheet.id); loadTimesheets(); }}>
+                            <Button
+                              size="sm"
+                              onClick={async () => {
+                                await updateTimesheetData({ id: timesheet.id, supervisor_approval: "approved" });
+                                loadTimesheets();
+                                toast.success("Timesheet approved!", { description: `${timesheet.worker?.name}'s timesheet on ${format(parseISO(timesheet.date), 'MMM d, yyyy')} approved.` });
+                              }}
+                            >
                               Approve
                             </Button>
                           )}
@@ -678,23 +885,17 @@ export default function TimesheetsPage({user}: {user: User}) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {weeklySummaries.map((summary) => (
-                <Card key={summary.worker.id} className="p-4">
+              {Array.from(groupedTimesheets.entries()).map(([workerId, workerWeeks]) => (
+                <Card key={workerId} className="p-4">
                   <div className="space-y-2">
-                    <div className="font-medium">{summary.worker.name}</div>
-                    <div className="text-sm text-muted-foreground">{summary.worker.role || "Worker"}</div>
+                    <div className="font-medium">{workers.find(w => w.id === workerId)?.name || "Unknown Worker"}</div>
+                    <div className="text-sm text-muted-foreground">{workers.find(w => w.id === workerId)?.role || "Worker"}</div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        Total Hours: <span className="font-medium">{summary.totalHours}h</span>
+                        Total Hours: <span className="font-medium">{Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.total_hours, 0)}h</span>
                       </div>
                       <div>
-                        Overtime: <span className="font-medium">{summary.overtimeHours}h</span>
-                      </div>
-                      <div>
-                        Days Worked: <span className="font-medium">{summary.daysWorked}</span>
-                      </div>
-                      <div>
-                        Days Late: <span className="font-medium text-orange-600">{summary.daysLate}</span>
+                        Overtime: <span className="font-medium">{Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.overtime_hours, 0)}h</span>
                       </div>
                     </div>
                     <div className="text-sm">
@@ -702,8 +903,8 @@ export default function TimesheetsPage({user}: {user: User}) {
                       <span className="font-medium text-green-600">
                         $
                         {(
-                          summary.totalHours * (summary.worker.hourlyRate || 20) +
-                          summary.overtimeHours * (summary.worker.hourlyRate || 20) * 1.5
+                          Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.total_hours, 0) * (workers.find(w => w.id === workerId)?.hourly_rate || 20) +
+                          Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.overtime_hours, 0) * (workers.find(w => w.id === workerId)?.hourly_rate || 20) * 1.5
                         ).toFixed(2)}
                       </span>
                     </div>
