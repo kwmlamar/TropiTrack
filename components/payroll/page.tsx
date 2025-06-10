@@ -6,19 +6,25 @@ import { PayrollFilters } from "@/components/payroll/payroll-filters"
 import { PayrollTable } from "@/components/payroll/payroll-table"
 import { PayrollSummary } from "@/components/payroll/payroll-summary"
 import { PayrollActions } from "@/components/payroll/payroll-actions"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { NibComplianceCard } from "@/components/payroll/nib-compliance-card"
 import { getPayrolls } from "@/lib/data/payroll"
 import type { PayrollRecord } from "@/lib/types/payroll"
+import { fetchWorkersForCompany } from "@/lib/data/data"
+import type { Worker } from "@/lib/types/worker"
+import type { User } from "@supabase/supabase-js"
 
-export default function PayrollPage() {
+export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [workers, setWorkers] = useState<Worker[]>([])
 
   useEffect(() => {
     loadPayroll();
-  }, [])
+    loadWorkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const loadPayroll = async () => {
     try {
@@ -29,6 +35,18 @@ export default function PayrollPage() {
     } catch (error) {
       console.error('Failed to load payroll data:', error);
       setLoading(false);
+    }
+  }
+
+  const loadWorkers = async () => {
+    setLoading(true)
+    try {
+      const data = await fetchWorkersForCompany(user.id);
+      setWorkers(data)
+    } catch (error) {
+      console.log("Failed to fetch Workers:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -57,10 +75,13 @@ export default function PayrollPage() {
       <PayrollHeader />
 
       <div className="grid gap-6 lg:grid-cols-4">
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-3 space-y-6 overflow-x-auto">
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <PayrollFilters />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg">Filters</CardTitle>
+            </CardHeader>
+            <CardContent className="px-6">
+              <PayrollFilters workers={workers} />
             </CardContent>
           </Card>
 

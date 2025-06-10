@@ -86,7 +86,7 @@ export function PayrollTable({ data }: PayrollTableProps) {
             {columns.map((col) => (
               <div
                 key={col.label}
-                className={`text-xs font-semibold text-muted-foreground uppercase tracking-wide ${col.sortable ? "cursor-pointer hover:text-foreground" : ""}`}
+                className={`text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide ${col.sortable ? "cursor-pointer hover:text-foreground" : ""}`}
                 onClick={col.sortable ? () => handleSort(col.field as keyof PayrollRecord) : undefined}
               >
                 {col.label}
@@ -120,31 +120,31 @@ export function PayrollTable({ data }: PayrollTableProps) {
                   </div>
                 </div>
                 {/* Total Hours */}
-                <div className="text-right">
+                <div className="text-left">
                   <span className="font-sans">{record.totalHours}</span>
                 </div>
                 {/* Overtime */}
-                <div className="text-right">
+                <div className="text-left">
                   <span className="font-sans text-orange-600">{record.overtimeHours}</span>
                 </div>
                 {/* Hourly Rate */}
-                <div className="text-right">
+                <div className="text-left">
                   <span className="font-sans">{formatCurrency(record.hourlyRate)}</span>
                 </div>
                 {/* Gross Pay */}
-                <div className="text-right">
+                <div className="text-left">
                   <span className="font-sans font-medium">{formatCurrency(record.grossPay)}</span>
                 </div>
                 {/* NIB Deduction */}
-                <div className="text-right">
+                <div className="text-left">
                   <span className="font-sans text-[var(--info)]">-{formatCurrency(record.nibDeduction)}</span>
                 </div>
                 {/* Other Deductions */}
-                <div className="text-right">
+                <div className="text-left">
                   <span className="font-sans text-[var(--destructive)]">-{formatCurrency(record.otherDeductions)}</span>
                 </div>
                 {/* Net Pay */}
-                <div className="text-right">
+                <div className="text-left">
                   <span className="font-sans font-bold text-[var(--primary)]">{formatCurrency(record.netPay)}</span>
                 </div>
                 {/* Actions */}
