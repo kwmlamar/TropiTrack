@@ -113,13 +113,40 @@ export async function createPayroll(input: CreatePayrollInput): Promise<ApiRespo
 
 export async function updatePayroll(input: UpdatePayrollInput): Promise<ApiResponse<PayrollRecord>> {
   try {
-    const { id, ...updateData } = input;
-    const { data, error } = await supabase.from("payroll").update(updateData).eq("id", id).select().single();
+    const { id, ...updates } = input;
+    const { data, error } = await supabase.from("payroll").update(updates).eq("id", id).select().single();
+
     if (error) {
       return { data: null, error: error.message, success: false };
     }
     return { data: data as PayrollRecord, error: null, success: true };
   } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
+export async function updatePayrollStatus(
+  payrollIds: string[],
+  status: PayrollRecord["status"]
+): Promise<ApiResponse<PayrollRecord[]>> {
+  try {
+    const { data, error } = await supabase
+      .from("payroll")
+      .update({ status: status })
+      .in("id", payrollIds)
+      .select();
+
+    if (error) {
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: data as PayrollRecord[], error: null, success: true };
+  } catch (error) {
+    console.error("Error updating payroll status:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",

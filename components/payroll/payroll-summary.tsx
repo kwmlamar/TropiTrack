@@ -1,4 +1,4 @@
-import { Users, Clock, DollarSign, TrendingUp } from "lucide-react"
+import { Users, Clock, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface PayrollSummaryData {
@@ -73,7 +73,6 @@ export function PayrollSummary({ data }: PayrollSummaryProps) {
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <DollarSign className="h-5 w-5" />
             Financial Summary
           </CardTitle>
         </CardHeader>

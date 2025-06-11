@@ -16,6 +16,10 @@ import type { Worker } from "@/lib/types/worker"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
 import { format } from "date-fns"
+import { Button } from "@/components/ui/button"
+import { CheckCircle } from "lucide-react"
+import { updatePayrollStatus } from "@/lib/data/payroll"
+import { toast } from "sonner"
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
@@ -88,6 +92,25 @@ export default function PayrollPage({ user }: { user: User }) {
     totalNetPay,
   }
 
+  const handleMarkAsPaid = async () => {
+    if (selectedPayrollIds.size === 0) {
+      return;
+    }
+
+    const payrollIdsToUpdate = Array.from(selectedPayrollIds);
+    const result = await updatePayrollStatus(payrollIdsToUpdate, "paid");
+
+    if (result.success) {
+      toast.success("Selected payrolls marked as paid.");
+      setSelectedPayrollIds(new Set());
+      loadPayroll(); // Refresh payroll data
+    } else {
+      toast.error("Failed to mark payrolls as paid.", {
+        description: result.error || "An unknown error occurred.",
+      });
+    }
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6">
       <PayrollHeader />
@@ -99,23 +122,31 @@ export default function PayrollPage({ user }: { user: User }) {
               <CardTitle className="text-lg">Filters</CardTitle>
             </CardHeader>
             <CardContent className="px-6">
-              <PayrollFilters workers={workers} date={dateRange} setDate={setDateRange} setPayPeriodType={setPayPeriodType} />
+              <PayrollFilters workers={workers} date={dateRange} setDate={setDateRange} setPayPeriodType={setPayPeriodType} payPeriodType={payPeriodType} />
             </CardContent>
           </Card>
 
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                Payroll Overview
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Payroll:
-                {dateRange?.from && dateRange?.to
-                  ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
-                  : " Select a date range"}
-              </p>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <CardTitle className="text-lg">Payroll Overview</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Payroll:
+                  {dateRange?.from && dateRange?.to
+                    ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
+                    : " Select a date range"}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleMarkAsPaid}
+                disabled={selectedPayrollIds.size === 0}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Mark as Paid
+              </Button>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="px-6">
               {loading ? (
                 <PayrollTableSkeleton />
               ) : (

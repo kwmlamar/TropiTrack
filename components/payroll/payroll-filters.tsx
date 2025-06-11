@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarIcon } from "lucide-react"
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks } from "date-fns"
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, addWeeks, subMonths, addMonths } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -17,9 +17,10 @@ interface PayrollFiltersProps {
   date: DateRange | undefined;
   setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
   setPayPeriodType: React.Dispatch<React.SetStateAction<string>>;
+  payPeriodType: string;
 }
 
-export function PayrollFilters({ workers, date, setDate, setPayPeriodType }: PayrollFiltersProps) {
+export function PayrollFilters({ workers, date, setDate, setPayPeriodType, payPeriodType }: PayrollFiltersProps) {
   const [payPeriod, setPayPeriod] = useState("bi-weekly")
   const [selectedWorker, setSelectedWorker] = useState("all")
   const [paymentStatus, setPaymentStatus] = useState("all")
@@ -74,8 +75,42 @@ export function PayrollFilters({ workers, date, setDate, setPayPeriodType }: Pay
 
   }, [payPeriod, setDate, setPayPeriodType]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const navigatePeriod = (direction: 'previous' | 'next') => {
+    if (!date?.from || !date?.to) return;
+
+    let newFrom = date.from;
+    let newTo = date.to;
+
+    if (payPeriodType === "weekly") {
+      if (direction === 'previous') {
+        newFrom = subWeeks(date.from, 1);
+        newTo = subWeeks(date.to, 1);
+      } else {
+        newFrom = addWeeks(date.from, 1);
+        newTo = addWeeks(date.to, 1);
+      }
+    } else if (payPeriodType === "bi-weekly") {
+      if (direction === 'previous') {
+        newFrom = subWeeks(date.from, 2);
+        newTo = subWeeks(date.to, 2);
+      } else {
+        newFrom = addWeeks(date.from, 2);
+        newTo = addWeeks(date.to, 2);
+      }
+    } else if (payPeriodType === "monthly") {
+      if (direction === 'previous') {
+        newFrom = subMonths(date.from, 1);
+        newTo = subMonths(date.to, 1);
+      } else {
+        newFrom = addMonths(date.from, 1);
+        newTo = addMonths(date.to, 1);
+      }
+    }
+    setDate({ from: newFrom, to: newTo });
+  };
+
   return (
-    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       {/* Pay Period Selector */}
       <div className="space-y-2">
         <Label htmlFor="pay-period">Pay Period</Label>
@@ -95,40 +130,59 @@ export function PayrollFilters({ workers, date, setDate, setPayPeriodType }: Pay
       {/* Date Range Picker */}
       <div className="space-y-2">
         <Label>Date Range</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="date"
-              variant="outline"
-              className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              <span className="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">
-                {date?.from ? (
-                  date.to ? (
-                    <>
-                      {format(date.from, "MMM d")}{" "}-{" "}{format(date.to, "MMM d, yyyy")}
-                    </>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigatePeriod('previous')}
+            disabled={!date?.from || !date?.to || payPeriod === "custom"}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant="outline"
+                className={cn("flex-1 justify-start text-left font-normal", !date && "text-muted-foreground")}
+                disabled={payPeriod === "custom"}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                <span className="flex-1 overflow-hidden whitespace-nowrap text-ellipsis">
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, "MMM d")}{" "}-{" "}{format(date.to, "MMM d, yyyy")}
+                      </>
+                    ) : (
+                      format(date.from, "MMM d, yyyy")
+                    )
                   ) : (
-                    format(date.from, "MMM d, yyyy")
-                  )
-                ) : (
-                  <span>Pick a date range</span>
-                )}
-              </span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
+                    <span>Pick a date range</span>
+                  )}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigatePeriod('next')}
+            disabled={!date?.from || !date?.to || payPeriod === "custom"}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Worker Selector */}
