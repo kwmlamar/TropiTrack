@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { NibComplianceCard } from "@/components/payroll/nib-compliance-card"
 import { getPayrolls } from "@/lib/data/payroll"
-import type { PayrollRecord } from "@/lib/types/payroll"
+import type { PayrollRecord } from "@/lib/types"
 import { fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { User } from "@supabase/supabase-js"
@@ -25,12 +25,14 @@ export default function PayrollPage({ user }: { user: User }) {
     from: new Date(),
     to: new Date(),
   })
+  const [payPeriodType, setPayPeriodType] = useState<string>("bi-weekly")
+  const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadPayroll();
     loadWorkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, dateRange])
+  }, [user, dateRange, payPeriodType])
 
   const loadPayroll = async () => {
     setLoading(true);
@@ -67,13 +69,13 @@ export default function PayrollPage({ user }: { user: User }) {
   }
 
   // Calculate summary data from payrolls
-  const totalGrossPay = payrolls.reduce((sum, record) => sum + record.grossPay, 0)
-  const totalDeductions = payrolls.reduce((sum, record) => sum + record.totalDeductions, 0)
-  const totalNetPay = payrolls.reduce((sum, record) => sum + record.netPay, 0)
-  const totalHours = payrolls.reduce((sum, record) => sum + record.totalHours, 0)
-  const totalOvertimeHours = payrolls.reduce((sum, record) => sum + record.overtimeHours, 0)
-  const totalNibDeductions = payrolls.reduce((sum, record) => sum + record.nibDeduction, 0)
-  const totalOtherDeductions = payrolls.reduce((sum, record) => sum + record.otherDeductions, 0)
+  const totalGrossPay = payrolls.reduce((sum, record) => sum + record.gross_pay, 0)
+  const totalDeductions = payrolls.reduce((sum, record) => sum + record.total_deductions, 0)
+  const totalNetPay = payrolls.reduce((sum, record) => sum + record.net_pay, 0)
+  const totalHours = payrolls.reduce((sum, record) => sum + record.total_hours, 0)
+  const totalOvertimeHours = payrolls.reduce((sum, record) => sum + record.overtime_hours, 0)
+  const totalNibDeductions = payrolls.reduce((sum, record) => sum + record.nib_deduction, 0)
+  const totalOtherDeductions = payrolls.reduce((sum, record) => sum + record.other_deductions, 0)
 
   const summaryData = {
     totalEmployees: payrolls.length,
@@ -97,15 +99,30 @@ export default function PayrollPage({ user }: { user: User }) {
               <CardTitle className="text-lg">Filters</CardTitle>
             </CardHeader>
             <CardContent className="px-6">
-              <PayrollFilters workers={workers} date={dateRange} setDate={setDateRange} />
+              <PayrollFilters workers={workers} date={dateRange} setDate={setDateRange} setPayPeriodType={setPayPeriodType} />
             </CardContent>
           </Card>
 
-          {loading ? (
-            <PayrollTableSkeleton />
-          ) : (
-            <PayrollTable data={payrolls} />
-          )}
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Payroll Overview
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Payroll:
+                {dateRange?.from && dateRange?.to
+                  ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
+                  : " Select a date range"}
+              </p>
+            </CardHeader>
+            <CardContent className="p-6">
+              {loading ? (
+                <PayrollTableSkeleton />
+              ) : (
+                <PayrollTable data={payrolls} selectedPayrollIds={selectedPayrollIds} setSelectedPayrollIds={setSelectedPayrollIds} />
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -113,7 +130,7 @@ export default function PayrollPage({ user }: { user: User }) {
           <NibComplianceCard
             totalNibContributions={totalNibDeductions}
             employeeCount={payrolls.length}
-            payPeriod="Weekly: Dec 4-10, 2023"
+            payPeriod={dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}` : "N/A"}
           />
           <PayrollActions />
         </div>

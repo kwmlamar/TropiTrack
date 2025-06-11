@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -16,12 +16,63 @@ interface PayrollFiltersProps {
   workers: Worker[];
   date: DateRange | undefined;
   setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
+  setPayPeriodType: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export function PayrollFilters({ workers, date, setDate }: PayrollFiltersProps) {
+export function PayrollFilters({ workers, date, setDate, setPayPeriodType }: PayrollFiltersProps) {
   const [payPeriod, setPayPeriod] = useState("bi-weekly")
   const [selectedWorker, setSelectedWorker] = useState("all")
   const [paymentStatus, setPaymentStatus] = useState("all")
+
+  useEffect(() => {
+    const today = new Date();
+    let newDateRange: DateRange | undefined;
+
+    switch (payPeriod) {
+      case "weekly":
+        newDateRange = {
+          from: startOfWeek(today, { weekStartsOn: 1 }), // Monday as start of week
+          to: endOfWeek(today, { weekStartsOn: 1 }),
+        };
+        break;
+      case "bi-weekly":
+        // Assuming bi-weekly periods start on a Monday and run for two weeks
+        // This might need adjustment based on the company's specific pay period start date
+        const twoWeeksAgo = subWeeks(today, 1);
+        newDateRange = {
+          from: startOfWeek(twoWeeksAgo, { weekStartsOn: 1 }),
+          to: endOfWeek(today, { weekStartsOn: 1 }),
+        };
+        break;
+      case "monthly":
+        newDateRange = {
+          from: startOfMonth(today),
+          to: endOfMonth(today),
+        };
+        break;
+      case "custom":
+        // Do not set date automatically for custom range
+        newDateRange = undefined; // Clear the date if selecting custom
+        break;
+      default:
+        // Default to bi-weekly for initial load or unknown value
+        const defaultTwoWeeksAgo = subWeeks(today, 1);
+        newDateRange = {
+          from: startOfWeek(defaultTwoWeeksAgo, { weekStartsOn: 1 }),
+          to: endOfWeek(today, { weekStartsOn: 1 }),
+        };
+        break;
+    }
+
+    // Only update date if it's not a custom range, or if it's the initial load
+    // This prevents clearing the date picker when 'custom' is selected and dates are already set.
+    if (payPeriod !== "custom" || (payPeriod === "custom" && !date?.from && !date?.to)) {
+      setDate(newDateRange);
+    }
+
+    setPayPeriodType(payPeriod);
+
+  }, [payPeriod, setDate, setPayPeriodType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
