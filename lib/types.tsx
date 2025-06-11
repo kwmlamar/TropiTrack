@@ -84,6 +84,8 @@ export type TimesheetWithDetails = Timesheet & {
     name: string
     role?: string
     hourly_rate?: number
+    position?: string
+    department?: string
   }
   project?: {
     id: string
@@ -91,3 +93,28 @@ export type TimesheetWithDetails = Timesheet & {
     location?: string
   }
 }
+
+export type PayrollRecord = {
+  id: string;
+  worker_id: string;
+  worker_name: string;
+  total_hours: number;
+  overtime_hours: number;
+  hourly_rate: number;
+  gross_pay: number;
+  nib_deduction: number;
+  other_deductions: number;
+  total_deductions: number;
+  net_pay: number;
+  position?: string;
+  department?: string;
+  status: "pending" | "paid" | "void";
+  company_id: string;
+  created_at: string;
+  updated_at?: string;
+  pay_period_start: string;
+  pay_period_end: string;
+};
+
+export type CreatePayrollInput = Omit<PayrollRecord, "id" | "created_at" | "updated_at" | "total_deductions" | "net_pay">;
+export type UpdatePayrollInput = Partial<Omit<PayrollRecord, "id" | "created_at" | "updated_at" | "total_deductions" | "net_pay">> & { id: string };

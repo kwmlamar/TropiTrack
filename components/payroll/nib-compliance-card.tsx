@@ -9,6 +9,9 @@ interface NibComplianceProps {
 }
 
 export function NibComplianceCard({ totalNibContributions, payPeriod }: NibComplianceProps) {
+  const EMPLOYEE_NIB_RATE = 0.0465; // 4.65%
+  const EMPLOYER_NIB_RATE = 0.0665; // 6.65%
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-BS", {
       style: "currency",
@@ -17,17 +20,22 @@ export function NibComplianceCard({ totalNibContributions, payPeriod }: NibCompl
     }).format(amount)
   }
 
+  const employeeContributionDisplay = formatCurrency(totalNibContributions);
+  const employerContribution = (totalNibContributions / EMPLOYEE_NIB_RATE) * EMPLOYER_NIB_RATE;
+  const employerContributionDisplay = formatCurrency(employerContribution);
+  const totalNIBRemittance = totalNibContributions + employerContribution;
+
   // NIB compliance checks
   const complianceItems = [
     {
-      label: "Employee Contributions (4%)",
-      value: formatCurrency(totalNibContributions),
+      label: `Employee Contributions (${(EMPLOYEE_NIB_RATE * 100).toFixed(2)}%)`,
+      value: employeeContributionDisplay,
       status: "compliant" as const,
       icon: CheckCircle,
     },
     {
-      label: "Employer Contributions (5.9%)",
-      value: formatCurrency(totalNibContributions * 1.475), // 5.9% vs 4%
+      label: `Employer Contributions (${(EMPLOYER_NIB_RATE * 100).toFixed(2)}%)`,
+      value: employerContributionDisplay,
       status: "pending" as const,
       icon: AlertCircle,
     },
@@ -65,7 +73,7 @@ export function NibComplianceCard({ totalNibContributions, payPeriod }: NibCompl
           <div className="flex justify-between items-center">
             <span className="font-medium">Total NIB Remittance</span>
             <span className="font-sans font-bold text-[var(--info)]">
-              {formatCurrency(totalNibContributions * 2.475)} {/* Employee + Employer */}
+              {formatCurrency(totalNIBRemittance)}
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">Due by 15th of following month</p>

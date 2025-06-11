@@ -12,5 +12,9 @@ export type PayrollRecord = {
   netPay: number;
   position: string;
   department: string;
+  company_id: string;
   status: 'pending' | 'approved' | 'rejected'
 };
+
+export type CreatePayrollInput = Omit<PayrollRecord, "id">;
+export type UpdatePayrollInput = Partial<Omit<PayrollRecord, "id">> & { id: string };

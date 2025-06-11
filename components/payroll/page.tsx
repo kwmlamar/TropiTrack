@@ -14,21 +14,37 @@ import type { PayrollRecord } from "@/lib/types/payroll"
 import { fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { User } from "@supabase/supabase-js"
+import type { DateRange } from "react-day-picker"
+import { format } from "date-fns"
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [workers, setWorkers] = useState<Worker[]>([])
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  })
 
   useEffect(() => {
     loadPayroll();
     loadWorkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user, dateRange])
 
   const loadPayroll = async () => {
+    setLoading(true);
     try {
-      const response = await getPayrolls();
+      const filters: { date_from?: string; date_to?: string } = {};
+
+      if (dateRange?.from) {
+        filters.date_from = format(dateRange.from, "yyyy-MM-dd");
+      }
+      if (dateRange?.to) {
+        filters.date_to = format(dateRange.to, "yyyy-MM-dd");
+      }
+
+      const response = await getPayrolls(filters);
       setPayrolls(response.data || []);
       console.log("Payroll:", payrolls)
       setLoading(false);
@@ -81,7 +97,7 @@ export default function PayrollPage({ user }: { user: User }) {
               <CardTitle className="text-lg">Filters</CardTitle>
             </CardHeader>
             <CardContent className="px-6">
-              <PayrollFilters workers={workers} />
+              <PayrollFilters workers={workers} date={dateRange} setDate={setDateRange} />
             </CardContent>
           </Card>
 

@@ -6,7 +6,7 @@ export interface Worker {
   name: string
   email?: string 
   phone?: string 
-  role: string
+  role: 'employee' | 'contractor' | 'subcontractor'
   hourly_rate: number
   overtime_rate?: number
   hire_date: string
@@ -21,6 +21,8 @@ export interface Worker {
   created_at: string
   updated_at: string
   created_by?: string
+  position?: string
+  department?: string
 }
 
 export type NewWorker = Omit<Worker, "id" | "created_at" | "updated_at"> & {

@@ -25,7 +25,7 @@ export async function getTimesheets(
       .select(
         `
         *,
-        worker:workers(id, name, role),
+        worker:workers(id, name, role, position, department, hourly_rate),
         project:projects(id, name, location)
       `
       )
@@ -103,7 +103,7 @@ export async function getTimesheet(
       .select(
         `
         *,
-        worker:workers(id, name, role),
+        worker:workers(id, name, role, position, department, hourly_rate),
         project:projects(id, name, location)
       `
       )

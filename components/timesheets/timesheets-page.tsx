@@ -24,6 +24,7 @@ import {
   getTimesheetSummary,
   deleteTimesheet,
 } from "@/lib/data/timesheets"
+import { generatePayrollForWorkerAndPeriod } from "@/lib/data/payroll"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
 import { TimesheetDialog, BulkTimesheetDialog } from "@/components/forms/form-dialogs"
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
@@ -309,6 +310,24 @@ export default function TimesheetsPage({user}: {user: User}) {
         toast.success("Timesheets approved successfully", {
           description: "All selected timesheets have been marked as approved.",
         });
+
+        // After approving, trigger payroll calculation for affected workers/weeks
+        const affectedWorkersAndWeeks = new Map<string, { workerId: string, weekStart: string, weekEnd: string }>();
+        selectedTimesheetIds.forEach(id => {
+          const ts = timesheets.find(t => t.id === id);
+          if (ts) {
+            const weekStart = format(startOfWeek(parseISO(ts.date), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+            const weekEnd = format(endOfWeek(parseISO(ts.date), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+            const key = `${ts.worker_id}-${weekStart}`;
+            if (!affectedWorkersAndWeeks.has(key)) {
+              affectedWorkersAndWeeks.set(key, { workerId: ts.worker_id, weekStart, weekEnd });
+            }
+          }
+        });
+
+        for (const { workerId, weekStart, weekEnd } of affectedWorkersAndWeeks.values()) {
+          await generatePayrollForWorkerAndPeriod(user.id, workerId, weekStart, weekEnd);
+        }
       }
 
       setSelectedTimesheetIds(new Set());
@@ -781,6 +800,10 @@ export default function TimesheetsPage({user}: {user: User}) {
                                         updateTimesheetData({ id: ts.id, supervisor_approval: "approved" })
                                       );
                                       await Promise.all(updates);
+                                      // Trigger payroll generation for this worker and week
+                                      const weekEnd = format(endOfWeek(parseISO(weekStart), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+                                      await generatePayrollForWorkerAndPeriod(user.id, workerId, weekStart, weekEnd);
+
                                       loadTimesheets();
                                       toast.success("Week approved!", { description: `${worker?.name}'s timesheets for ${weekStart} approved.` });
                                     }}

@@ -14,13 +14,11 @@ import type { Worker } from "@/lib/types/worker"
 
 interface PayrollFiltersProps {
   workers: Worker[];
+  date: DateRange | undefined;
+  setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
 }
 
-export function PayrollFilters({ workers }: PayrollFiltersProps) {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2024, 0, 1),
-    to: new Date(2024, 0, 14),
-  })
+export function PayrollFilters({ workers, date, setDate }: PayrollFiltersProps) {
   const [payPeriod, setPayPeriod] = useState("bi-weekly")
   const [selectedWorker, setSelectedWorker] = useState("all")
   const [paymentStatus, setPaymentStatus] = useState("all")
