@@ -268,19 +268,19 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
             </SidebarMenuItem>
           </SidebarMenu>
 
-          <Button
-            variant="ghost"
-            size="icon"
+              <Button
+                variant="ghost"
+                size="icon"
             className="h-8 w-8 rounded-md hover:bg-sidebar-accent/50"
             onClick={() => setOpen(!open)}
-          >
+              >
             <ChevronRight
               className={cn(
                 "h-4 w-4 text-sidebar-foreground/60 transition-transform duration-200",
                 open ? "rotate-180" : "rotate-0"
               )}
             />
-          </Button>
+              </Button>
         </div>
       </SidebarHeader>
 
@@ -310,7 +310,7 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
               </Button>
             </SidebarGroupLabel>
             <SidebarGroupContent className="space-y-1">
-              {data.recentProjects.map((project, index) => (
+                {data.recentProjects.map((project, index) => (
                 <SidebarMenuItem key={index}>
                   <SidebarMenuButton
                     asChild
@@ -324,7 +324,7 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+                ))}
             </SidebarGroupContent>
           </SidebarGroup>
         )}

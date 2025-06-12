@@ -300,15 +300,15 @@ export function SiteHeader({
               </Link>
               <Link href="/dashboard/invites">
                 <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Team Settings</span>
-                </DropdownMenuItem>
+                <Users className="mr-2 h-4 w-4" />
+                <span>Team Settings</span>
+              </DropdownMenuItem>
               </Link>
               <Link href="/dashboard/settings">
                 <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
               </Link>
               <DropdownMenuItem 
                 onClick={() => onUserMenuAction?.("help")}

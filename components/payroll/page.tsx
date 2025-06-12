@@ -11,8 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { NibComplianceCard } from "@/components/payroll/nib-compliance-card"
 import { getPayrolls } from "@/lib/data/payroll"
 import type { PayrollRecord } from "@/lib/types"
-import { fetchWorkersForCompany } from "@/lib/data/data"
-import type { Worker } from "@/lib/types/worker"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
 import { format } from "date-fns"
@@ -25,7 +23,6 @@ import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [workers, setWorkers] = useState<Worker[]>([])
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
     to: new Date(),
@@ -37,7 +34,6 @@ export default function PayrollPage({ user }: { user: User }) {
     loading: settingsLoading,
     paymentSchedule,
     payrollSettings,
-    deductionRules,
     calculateDeductions,
     getDefaultPayPeriod,
   } = usePayrollSettings()
@@ -50,7 +46,6 @@ export default function PayrollPage({ user }: { user: User }) {
 
   useEffect(() => {
     loadPayroll()
-    loadWorkers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, dateRange, payPeriodType])
 
@@ -90,17 +85,7 @@ export default function PayrollPage({ user }: { user: User }) {
     }
   }
 
-  const loadWorkers = async () => {
-    setLoading(true)
-    try {
-      const data = await fetchWorkersForCompany(user.id)
-      setWorkers(data)
-    } catch (error) {
-      console.log("Failed to fetch Workers:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+
 
   // Calculate summary data from payrolls
   const totalGrossPay = payrolls.reduce((sum, record) => sum + record.gross_pay, 0)
@@ -153,7 +138,6 @@ export default function PayrollPage({ user }: { user: User }) {
             </CardHeader>
             <CardContent className="px-6">
               <PayrollFilters
-                workers={workers}
                 date={dateRange}
                 setDate={setDateRange}
                 setPayPeriodType={setPayPeriodType}
@@ -191,7 +175,6 @@ export default function PayrollPage({ user }: { user: User }) {
                   data={payrolls}
                   selectedPayrollIds={selectedPayrollIds}
                   setSelectedPayrollIds={setSelectedPayrollIds}
-                  deductionRules={deductionRules}
                 />
               )}
             </CardContent>
@@ -202,8 +185,6 @@ export default function PayrollPage({ user }: { user: User }) {
           <PayrollSummary data={summaryData} />
           <NibComplianceCard
             totalNibContributions={totalNibDeductions}
-            employeeCount={payrolls.length}
-            payPeriod={dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}` : "N/A"}
             nibRate={payrollSettings?.nib_rate}
           />
           <PayrollActions />

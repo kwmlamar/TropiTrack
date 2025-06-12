@@ -12,8 +12,9 @@ import {
   Trash2,
   User,
   Calculator,
+  Copy,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,6 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -63,6 +63,7 @@ import type { CreateTimesheetInput, TimesheetWithDetails } from "@/lib/types";
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
 import { cn } from "@/lib/utils";
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings";
 
 // Schema for a single timesheet entry
 const timesheetEntrySchema = z.object({
@@ -104,6 +105,41 @@ interface BulkTimesheetFormProps {
   onCancel?: () => void;
 }
 
+// Add new interface for time template
+interface TimeTemplate {
+  name: string;
+  clockIn: string;
+  clockOut: string;
+  breakDuration: number;
+}
+
+const DEFAULT_TEMPLATES: TimeTemplate[] = [
+  {
+    name: "Standard Day (7-4)",
+    clockIn: "07:00",
+    clockOut: "16:00",
+    breakDuration: 60,
+  },
+  {
+    name: "Early Shift (6-3)",
+    clockIn: "06:00",
+    clockOut: "15:00",
+    breakDuration: 60,
+  },
+  {
+    name: "Late Shift (9-6)",
+    clockIn: "09:00",
+    clockOut: "18:00",
+    breakDuration: 60,
+  },
+  {
+    name: "Half Day (7-12)",
+    clockIn: "07:00",
+    clockOut: "12:00",
+    breakDuration: 30,
+  },
+];
+
 export function BulkTimesheetForm({
   userId,
   workers,
@@ -114,6 +150,23 @@ export function BulkTimesheetForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TimeTemplate | null>(null);
+  
+  const { paymentSchedule } = usePayrollSettings();
+
+  const getWeekStartsOn = (day: number): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+    const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+      1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+    };
+    return dayMap[day] || 1;
+  };
+
+  const getPeriodStartDay = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+    if (paymentSchedule?.period_start_type === "day_of_week") {
+      return getWeekStartsOn(paymentSchedule.period_start_day);
+    }
+    return 1; // Default to Monday if no payment schedule
+  };
 
   const form = useForm<BulkTimesheetFormData>({
     resolver: zodResolver(bulkTimesheetSchema),
@@ -294,6 +347,50 @@ export function BulkTimesheetForm({
     }
   };
 
+  // Function to apply template to all entries
+  const applyTemplateToAll = (template: TimeTemplate) => {
+    const entries = form.getValues().entries;
+    entries.forEach((_, index) => {
+      form.setValue(`entries.${index}.clock_in`, template.clockIn);
+      form.setValue(`entries.${index}.clock_out`, template.clockOut);
+      form.setValue(`entries.${index}.break_duration`, template.breakDuration);
+    });
+    setSelectedTemplate(template);
+  };
+
+  // Function to apply quick date range
+  const applyQuickDateRange = (range: "today" | "thisWeek" | "nextWeek") => {
+    const today = new Date();
+    let from: Date, to: Date;
+    const weekStartsOn = getPeriodStartDay();
+
+    switch (range) {
+      case "today":
+        from = to = today;
+        break;
+      case "thisWeek":
+        from = startOfWeek(today, { weekStartsOn });
+        to = endOfWeek(today, { weekStartsOn });
+        break;
+      case "nextWeek":
+        from = addDays(startOfWeek(today, { weekStartsOn }), 7);
+        to = addDays(endOfWeek(today, { weekStartsOn }), 7);
+        break;
+    }
+
+    form.setValue("date_range", { from, to });
+  };
+
+  // Function to copy a field to all entries
+  const copyFieldToAll = (fieldName: "clock_in" | "clock_out" | "break_duration" | "task_description", sourceIndex: number) => {
+    const value = form.getValues().entries[sourceIndex][fieldName];
+    form.getValues().entries.forEach((_, index) => {
+      if (index !== sourceIndex) {
+        form.setValue(`entries.${index}.${fieldName}`, value);
+      }
+    });
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -306,6 +403,15 @@ export function BulkTimesheetForm({
             <CardDescription>
               Create multiple timesheet entries for selected workers and date
               range
+              {paymentSchedule?.period_start_type === "day_of_week" && (
+                <span className="block mt-1 text-sm">
+                  Week starts on{" "}
+                  {format(
+                    startOfWeek(new Date(), { weekStartsOn: getPeriodStartDay() }),
+                    "EEEE"
+                  )}
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pb-0">
@@ -347,59 +453,109 @@ export function BulkTimesheetForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="date_range"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date Range</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value?.from && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value?.from ? (
-                              field.value.to ? (
-                                <>
-                                  {format(field.value.from, "LLL dd, y")} -{" "}
-                                  {format(field.value.to, "LLL dd, y")}
-                                </>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="date_range"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date Range</FormLabel>
+                      <div className="flex flex-col space-y-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !field.value?.from && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {field.value?.from ? (
+                                field.value.to ? (
+                                  <>
+                                    {format(field.value.from, "LLL dd, y")} -{" "}
+                                    {format(field.value.to, "LLL dd, y")}
+                                  </>
+                                ) : (
+                                  format(field.value.from, "LLL dd, y")
+                                )
                               ) : (
-                                format(field.value.from, "LLL dd, y")
-                              )
-                            ) : (
-                              <span>Pick date range</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="range"
+                              defaultMonth={field.value?.from ?? new Date()}
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              numberOfMonths={2}
+                              weekStartsOn={getPeriodStartDay()}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => applyQuickDateRange("today")}
+                          >
+                            Today
                           </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="range"
-                          defaultMonth={field.value?.from ?? new Date()}
-                          selected={
-                            field.value ?? { from: undefined, to: undefined }
-                          }
-                          onSelect={(range) => {
-                            field.onChange(range);
-                          }}
-                          numberOfMonths={2}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => applyQuickDateRange("thisWeek")}
+                          >
+                            This Week
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => applyQuickDateRange("nextWeek")}
+                          >
+                            Next Week
+                          </Button>
+                        </div>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Time Templates */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">Quick Templates</h3>
+                <div className="flex gap-2">
+                  {DEFAULT_TEMPLATES.map((template) => (
+                    <Button
+                      key={template.name}
+                      type="button"
+                      variant={selectedTemplate?.name === template.name ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => applyTemplateToAll(template)}
+                    >
+                      {template.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <Separator />
@@ -408,227 +564,259 @@ export function BulkTimesheetForm({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Worker Entries</h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addRow}
-                  className="flex items-center gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Worker
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Add 5 empty rows at once for faster data entry
+                      Array.from({ length: 5 }).forEach(() => {
+                        append({
+                          worker_id: "",
+                          clock_in: "07:00",
+                          clock_out: "16:00",
+                          break_duration: 60,
+                          hourly_rate: 0,
+                          task_description: "",
+                          notes: "",
+                        });
+                      });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add 5 Workers
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addRow}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Worker
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-6">
-                <div className="space-y-6">
-                  {fields.map((field, index) => (
-                    <Card
-                      key={field.id}
-                      className={cn(
-                        "border-border/50",
-                        index % 2 === 0 ? "bg-card/50" : "bg-muted/30"
-                      )}
-                    >
-                      <CardHeader className="p-4 pb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="bg-primary/10 text-primary"
-                            >
-                              #{index + 1}
-                            </Badge>
-                            <FormField
-                              control={form.control}
-                              name={`entries.${index}.worker_id`}
-                              render={({ field: workerField }) => (
-                                <FormItem className="flex-1">
-                                  <Select
-                                    onValueChange={(value) => {
-                                      workerField.onChange(value);
-                                      handleWorkerChange(index, value);
-                                    }}
-                                    defaultValue={workerField.value}
+                {fields.map((field, index) => (
+                  <Card
+                    key={field.id}
+                    className={cn(
+                      "border-border/50",
+                      index % 2 === 0 ? "bg-card/50" : "bg-muted/30"
+                    )}
+                  >
+                    <CardHeader className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <FormField
+                            control={form.control}
+                            name={`entries.${index}.worker_id`}
+                            render={({ field: workerField }) => (
+                              <FormItem>
+                                <Select
+                                  onValueChange={(value) => {
+                                    workerField.onChange(value);
+                                    handleWorkerChange(index, value);
+                                  }}
+                                  defaultValue={workerField.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select a worker" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {workers.map((worker) => (
+                                      <SelectItem key={worker.id} value={worker.id}>
+                                        <div className="flex items-center gap-2">
+                                          <User className="h-4 w-4" />
+                                          <span>{worker.name}</span>
+                                          <span className="text-muted-foreground">({worker.role})</span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    copyFieldToAll("clock_in", index);
+                                    copyFieldToAll("clock_out", index);
+                                    copyFieldToAll("break_duration", index);
+                                  }}
+                                  className="h-8 w-8"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Copy time settings to all entries</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          {index > 0 && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyFromPrevious(index)}
+                                    className="h-8 w-8"
                                   >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a worker" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {workers.map((worker) => (
-                                        <SelectItem
-                                          key={worker.id}
-                                          value={worker.id}
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4" />
-                                            <span>{worker.name}</span>
-                                            <span className="text-muted-foreground">
-                                              ({worker.role})
-                                            </span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {index > 0 && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => copyFromPrevious(index)}
-                                      className="h-8 w-8"
-                                    >
-                                      <Clock className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Copy time from previous entry</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )}
-                            {fields.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => remove(index)}
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
+                                    <Clock className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Copy time from previous entry</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => remove(index)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-2">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.clock_in`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Clock In</FormLabel>
-                                <FormControl>
-                                  <Input type="time" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-2">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.clock_in`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Clock In</FormLabel>
+                              <FormControl>
+                                <Input type="time" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.clock_out`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Clock Out</FormLabel>
-                                <FormControl>
-                                  <Input type="time" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.clock_out`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Clock Out</FormLabel>
+                              <FormControl>
+                                <Input type="time" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.break_duration`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Break (minutes)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="480"
-                                    {...field}
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.break_duration`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Break (minutes)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="480"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(Number(e.target.value))
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.hourly_rate`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Hourly Rate ($)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    {...field}
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.hourly_rate`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Hourly Rate ($)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(Number(e.target.value))
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.task_description`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Task Description (Optional)</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    placeholder="Describe the work performed..."
-                                    className="resize-none h-20"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.task_description`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Task Description (Optional)</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Describe the work performed..."
+                                  className="resize-none h-20"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.notes`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Notes (Optional)</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    placeholder="Additional notes or comments..."
-                                    className="resize-none h-20"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.notes`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Notes (Optional)</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Additional notes or comments..."
+                                  className="resize-none h-20"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
               {fields.length === 0 && (
