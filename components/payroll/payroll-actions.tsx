@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
+import Link from "next/link"
 
 export function PayrollActions() {
   const [isGenerating, setIsGenerating] = useState(false)
@@ -126,9 +127,11 @@ export function PayrollActions() {
         </DropdownMenu>
 
         <div className="pt-3 border-t">
-          <Button variant="ghost" size="sm" className="w-full">
-            <Settings className="mr-2 h-4 w-4" />
-            Payroll Settings
+          <Button variant="ghost" size="sm" className="w-full" asChild>
+            <Link href="/dashboard/settings/payroll">
+              <Settings className="mr-2 h-4 w-4" />
+              Payroll Settings
+            </Link>
           </Button>
         </div>
       </CardContent>
