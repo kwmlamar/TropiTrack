@@ -3,7 +3,7 @@ export type PayPeriodType = "weekly" | "bi-weekly" | "monthly" | "custom"
 export type PaymentSchedule = {
   id: string
   company_id: string
-  pay_period_type: PayPeriodType
+  pay_period_type: "weekly" | "bi-weekly" | "monthly" | "custom"
   pay_day: number // 1-31 for monthly, 1-7 for weekly/bi-weekly (representing days of week)
   pay_day_type: "day_of_month" | "day_of_week"
   period_start_day: number // 1-31 for monthly, 1-7 for weekly/bi-weekly
@@ -15,10 +15,8 @@ export type PaymentSchedule = {
 export type PayrollSettings = {
   id: string
   company_id: string
-  default_pay_period_type: PayPeriodType
+  nib_rate: number
   overtime_rate: number
-  default_nib_rate: number
-  pay_schedule_id: string
   created_at: string
   updated_at: string
 }
@@ -54,10 +52,7 @@ export type UpdatePaymentScheduleInput = Partial<CreatePaymentScheduleInput> & {
   id: string
 }
 
-export type CreateDeductionRuleInput = Omit<
-  DeductionRule,
-  "id" | "created_at" | "updated_at"
->
+export type CreateDeductionRuleInput = Omit<DeductionRule, "id" | "created_at" | "updated_at">
 
 export type UpdateDeductionRuleInput = Partial<Omit<DeductionRule, "id" | "created_at" | "updated_at">> & {
   id: string

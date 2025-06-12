@@ -7,22 +7,20 @@ import * as z from "zod"
 import { toast } from "sonner"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { getPayrollSettings, updatePayrollSettings, createPayrollSettings } from "@/lib/data/payroll-settings"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 
 const payrollSettingsSchema = z.object({
-  default_pay_period_type: z.enum(["weekly", "bi-weekly", "monthly", "custom"]),
+  nib_rate: z.coerce
+    .number()
+    .min(0, "NIB rate cannot be negative")
+    .max(100, "NIB rate cannot exceed 100%"),
   overtime_rate: z.coerce
     .number()
     .min(1, "Overtime rate must be at least 1x")
     .max(3, "Overtime rate cannot exceed 3x"),
-  default_nib_rate: z.coerce
-    .number()
-    .min(0, "NIB rate cannot be negative")
-    .max(100, "NIB rate cannot exceed 100%"),
 })
 
 type PayrollSettingsFormData = z.infer<typeof payrollSettingsSchema>
@@ -35,9 +33,8 @@ export function PayrollSettingsForm() {
   const form = useForm<PayrollSettingsFormData>({
     resolver: zodResolver(payrollSettingsSchema),
     defaultValues: {
-      default_pay_period_type: "bi-weekly",
       overtime_rate: 1.5,
-      default_nib_rate: 4.65,
+      nib_rate: 4.65,
     },
   })
 
@@ -65,9 +62,8 @@ export function PayrollSettingsForm() {
       const result = await getPayrollSettings()
       if (result.success && result.data) {
         form.reset({
-          default_pay_period_type: result.data.default_pay_period_type,
           overtime_rate: result.data.overtime_rate,
-          default_nib_rate: result.data.default_nib_rate,
+          nib_rate: result.data.nib_rate,
         })
       }
     } catch (error) {
@@ -100,7 +96,6 @@ export function PayrollSettingsForm() {
         saveResult = await createPayrollSettings({
           ...data,
           company_id: companyId,
-          pay_schedule_id: "", // This will be updated when a payment schedule is created
         })
       }
 
@@ -132,36 +127,6 @@ export function PayrollSettingsForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="default_pay_period_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Default Pay Period Type</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a pay period type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                This will be the default pay period type for new payrolls
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="overtime_rate"
           render={({ field }) => (
             <FormItem>
@@ -184,10 +149,10 @@ export function PayrollSettingsForm() {
 
         <FormField
           control={form.control}
-          name="default_nib_rate"
+          name="nib_rate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Default NIB Rate (%)</FormLabel>
+              <FormLabel>NIB Rate (%)</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -197,7 +162,7 @@ export function PayrollSettingsForm() {
                 />
               </FormControl>
               <FormDescription>
-                The default National Insurance Board contribution rate as a percentage
+                The National Insurance Board contribution rate as a percentage
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -6,10 +6,8 @@ CREATE TYPE day_type AS ENUM ('day_of_month', 'day_of_week');
 CREATE TABLE IF NOT EXISTS payroll_settings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    default_pay_period_type pay_period_type NOT NULL DEFAULT 'bi-weekly',
+    nib_rate DECIMAL(5,2) NOT NULL DEFAULT 4.65,
     overtime_rate DECIMAL(4,2) NOT NULL DEFAULT 1.5,
-    default_nib_rate DECIMAL(5,2) NOT NULL DEFAULT 4.65,
-    pay_schedule_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     UNIQUE (company_id)
@@ -42,12 +40,6 @@ CREATE TABLE IF NOT EXISTS deduction_rules (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
-
--- Add foreign key constraint to link payroll settings with payment schedules
-ALTER TABLE payroll_settings
-ADD CONSTRAINT fk_payroll_settings_payment_schedule
-FOREIGN KEY (pay_schedule_id) REFERENCES payment_schedules(id)
-ON DELETE SET NULL;
 
 -- Create RLS policies
 ALTER TABLE payroll_settings ENABLE ROW LEVEL SECURITY;

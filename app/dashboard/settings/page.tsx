@@ -67,7 +67,7 @@ export default function SettingsPage() {
               value={tab.id}
               className={cn(
                 "flex items-center gap-2 px-3 py-2",
-                activeTab === tab.id ? "bg-primary text-primary-foreground" : ""
+                activeTab === tab.id ? "bg-primary " : ""
               )}
             >
               <tab.icon className="h-4 w-4" />

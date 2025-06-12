@@ -35,6 +35,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfileWithCompany } from "@/lib/types/userProfile";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 async function logout() {
   const res = await fetch("/auth/signout", {
@@ -122,26 +123,26 @@ export function SiteHeader({
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width,height] ease-linear">
+    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
       <div className="flex w-full items-center gap-2 px-4 lg:gap-4 lg:px-6">
         {/* Left Section - Sidebar Trigger & Title */}
         <div className="flex items-center gap-2">
-          <SidebarTrigger className="-ml-1 hover:bg-muted" />
+          <SidebarTrigger className="-ml-1 hover:bg-muted/80 transition-colors duration-200" />
           <Separator orientation="vertical" className="mx-2 h-4" />
 
           {/* Company Info */}
           <Button
             variant="ghost"
             onClick={onCompanySwitch}
-            className="hidden sm:flex items-center gap-2 px-2 py-1 h-auto hover:bg-muted/50"
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 h-auto hover:bg-muted/80 rounded-md transition-all duration-200"
           >
-            <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-3 w-3 text-primary" />
+            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+              <Building2 className="h-3.5 w-3.5 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground max-w-32 truncate">
               {user.company?.name}
             </span>
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
 
           <Separator
@@ -160,7 +161,7 @@ export function SiteHeader({
               placeholder="Search workers, projects, timesheets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 h-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
+              className="pl-10 pr-4 h-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring hover:bg-muted/80 transition-colors duration-200"
             />
           </form>
         </div>
@@ -170,7 +171,7 @@ export function SiteHeader({
           {/* Mobile Search */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
+              <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 hover:bg-muted/80 transition-colors duration-200">
                 <Search className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
@@ -191,12 +192,12 @@ export function SiteHeader({
           {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-9 w-9">
+              <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-muted/80 transition-colors duration-200">
                 <Bell className="h-4 w-4" />
                 {unreadCount > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center animate-in fade-in-0 zoom-in-75"
                   >
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
@@ -214,9 +215,10 @@ export function SiteHeader({
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-colors ${
-                      !notification.read ? "bg-muted/20" : ""
-                    }`}
+                    className={cn(
+                      "p-4 border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-all duration-200",
+                      !notification.read && "bg-muted/20"
+                    )}
                     onClick={() => onNotificationClick?.(notification.id)}
                   >
                     <div className="flex items-start gap-3">
@@ -229,7 +231,7 @@ export function SiteHeader({
                             {notification.title}
                           </p>
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-primary rounded-full" />
+                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -244,7 +246,7 @@ export function SiteHeader({
                 ))}
               </div>
               <div className="p-3 border-t">
-                <Button variant="ghost" className="w-full text-sm">
+                <Button variant="ghost" className="w-full text-sm hover:bg-muted/80 transition-colors duration-200">
                   View all notifications
                 </Button>
               </div>
@@ -257,10 +259,10 @@ export function SiteHeader({
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-muted/80 transition-colors duration-200">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
-                    src={user.avatar || "/placeholder.svg"}
+                    src="/placeholder.svg"
                     alt={user.name}
                   />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
@@ -291,31 +293,34 @@ export function SiteHeader({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <Link href="/dashboard/profile">
-                <DropdownMenuItem onClick={() => onUserMenuAction?.("profile")}>
+                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
               <Link href="/dashboard/invites">
-                <DropdownMenuItem >
-                <Users className="mr-2 h-4 w-4" />
-                <span>Team Settings</span>
-              </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Team Settings</span>
+                </DropdownMenuItem>
               </Link>
               <Link href="/dashboard/settings">
-                <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
               </Link>
-              <DropdownMenuItem onClick={() => onUserMenuAction?.("help")}>
+              <DropdownMenuItem 
+                onClick={() => onUserMenuAction?.("help")}
+                className="hover:bg-muted/80 transition-colors duration-200"
+              >
                 <HelpCircle className="mr-2 h-4 w-4" />
                 <span>Help & Support</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={logout}
-                className="text-destructive focus:text-destructive"
+                className="text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors duration-200"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>

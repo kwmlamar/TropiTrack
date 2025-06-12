@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle } from "lucide-react"
 import { updatePayrollStatus } from "@/lib/data/payroll"
 import { toast } from "sonner"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
@@ -30,40 +31,69 @@ export default function PayrollPage({ user }: { user: User }) {
     to: new Date(),
   })
   const [payPeriodType, setPayPeriodType] = useState<string>("bi-weekly")
-  const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set());
+  const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
+
+  const {
+    loading: settingsLoading,
+    paymentSchedule,
+    payrollSettings,
+    deductionRules,
+    calculateDeductions,
+    getDefaultPayPeriod,
+  } = usePayrollSettings()
 
   useEffect(() => {
-    loadPayroll();
-    loadWorkers();
+    if (!settingsLoading) {
+      setPayPeriodType(getDefaultPayPeriod())
+    }
+  }, [settingsLoading, getDefaultPayPeriod])
+
+  useEffect(() => {
+    loadPayroll()
+    loadWorkers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, dateRange, payPeriodType])
 
   const loadPayroll = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const filters: { date_from?: string; date_to?: string } = {};
+      const filters: { date_from?: string; date_to?: string } = {}
 
       if (dateRange?.from) {
-        filters.date_from = format(dateRange.from, "yyyy-MM-dd");
+        filters.date_from = format(dateRange.from, "yyyy-MM-dd")
       }
       if (dateRange?.to) {
-        filters.date_to = format(dateRange.to, "yyyy-MM-dd");
+        filters.date_to = format(dateRange.to, "yyyy-MM-dd")
       }
 
-      const response = await getPayrolls(filters);
-      setPayrolls(response.data || []);
-      console.log("Payroll:", payrolls)
-      setLoading(false);
+      const response = await getPayrolls(filters)
+      if (response.data) {
+        // Apply deductions based on settings
+        const processedPayrolls = response.data.map(payroll => {
+          const overtimePay = payroll.overtime_hours * (payroll.hourly_rate * (payrollSettings?.overtime_rate || 1.5))
+          const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay, overtimePay)
+          
+          return {
+            ...payroll,
+            nib_deduction: nibDeduction,
+            other_deductions: otherDeductions,
+            total_deductions: nibDeduction + otherDeductions,
+            net_pay: payroll.gross_pay - (nibDeduction + otherDeductions),
+          }
+        })
+        setPayrolls(processedPayrolls)
+      }
+      setLoading(false)
     } catch (error) {
-      console.error('Failed to load payroll data:', error);
-      setLoading(false);
+      console.error('Failed to load payroll data:', error)
+      setLoading(false)
     }
   }
 
   const loadWorkers = async () => {
     setLoading(true)
     try {
-      const data = await fetchWorkersForCompany(user.id);
+      const data = await fetchWorkersForCompany(user.id)
       setWorkers(data)
     } catch (error) {
       console.log("Failed to fetch Workers:", error)
@@ -94,22 +124,22 @@ export default function PayrollPage({ user }: { user: User }) {
 
   const handleMarkAsPaid = async () => {
     if (selectedPayrollIds.size === 0) {
-      return;
+      return
     }
 
-    const payrollIdsToUpdate = Array.from(selectedPayrollIds);
-    const result = await updatePayrollStatus(payrollIdsToUpdate, "paid");
+    const payrollIdsToUpdate = Array.from(selectedPayrollIds)
+    const result = await updatePayrollStatus(payrollIdsToUpdate, "paid")
 
     if (result.success) {
-      toast.success("Selected payrolls marked as paid.");
-      setSelectedPayrollIds(new Set());
-      loadPayroll(); // Refresh payroll data
+      toast.success("Selected payrolls marked as paid.")
+      setSelectedPayrollIds(new Set())
+      loadPayroll() // Refresh payroll data
     } else {
       toast.error("Failed to mark payrolls as paid.", {
         description: result.error || "An unknown error occurred.",
-      });
+      })
     }
-  };
+  }
 
   return (
     <div className="flex-1 space-y-6 p-6">
@@ -122,7 +152,14 @@ export default function PayrollPage({ user }: { user: User }) {
               <CardTitle className="text-lg">Filters</CardTitle>
             </CardHeader>
             <CardContent className="px-6">
-              <PayrollFilters workers={workers} date={dateRange} setDate={setDateRange} setPayPeriodType={setPayPeriodType} payPeriodType={payPeriodType} />
+              <PayrollFilters
+                workers={workers}
+                date={dateRange}
+                setDate={setDateRange}
+                setPayPeriodType={setPayPeriodType}
+                payPeriodType={payPeriodType}
+                paymentSchedule={paymentSchedule}
+              />
             </CardContent>
           </Card>
 
@@ -147,10 +184,15 @@ export default function PayrollPage({ user }: { user: User }) {
               </Button>
             </CardHeader>
             <CardContent className="px-6">
-              {loading ? (
+              {loading || settingsLoading ? (
                 <PayrollTableSkeleton />
               ) : (
-                <PayrollTable data={payrolls} selectedPayrollIds={selectedPayrollIds} setSelectedPayrollIds={setSelectedPayrollIds} />
+                <PayrollTable
+                  data={payrolls}
+                  selectedPayrollIds={selectedPayrollIds}
+                  setSelectedPayrollIds={setSelectedPayrollIds}
+                  deductionRules={deductionRules}
+                />
               )}
             </CardContent>
           </Card>
@@ -162,6 +204,7 @@ export default function PayrollPage({ user }: { user: User }) {
             totalNibContributions={totalNibDeductions}
             employeeCount={payrolls.length}
             payPeriod={dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}` : "N/A"}
+            nibRate={payrollSettings?.nib_rate}
           />
           <PayrollActions />
         </div>

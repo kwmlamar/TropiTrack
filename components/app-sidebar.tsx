@@ -3,28 +3,25 @@
 import type * as React from "react";
 import { useState, useEffect } from "react";
 import {
-  IconDashboard,
-  IconFileDescription,
-  IconBuilding,
-  IconHelp,
-  IconDevicesDollar,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-  IconBriefcase,
-  IconPlus,
-  IconBell,
-  IconChevronRight,
-  IconClock,
-  IconCalendar,
-} from "@tabler/icons-react";
+  LayoutDashboard,
+  Building2,
+  HelpCircle,
+  DollarSign,
+  Search,
+  Settings,
+  Users,
+  Briefcase,
+  Plus,
+  ChevronRight,
+  Clock,
+  Calendar,
+  FileText,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
-import { QuickActions } from "@/components/quick-actions";
-import { SearchCommand } from "@/components/search-command";
 import {
   Sidebar,
   SidebarContent,
@@ -39,7 +36,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import type { UserProfileWithCompany } from "@/lib/types/userProfile";
 import type { Worker } from "@/lib/types/worker";
@@ -65,70 +61,70 @@ const data = {
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: IconDashboard,
+      icon: LayoutDashboard,
       badge: null,
       description: "Overview and analytics",
     },
     {
       title: "Projects",
       url: "/dashboard/projects",
-      icon: IconBuilding,
+      icon: Building2,
       badge: null,
       description: "Manage construction projects",
     },
     {
       title: "Clients",
       url: "/dashboard/clients",
-      icon: IconBriefcase,
+      icon: Briefcase,
       badge: null,
       description: "Client relationships",
     },
     {
       title: "Workers",
       url: "/dashboard/workers",
-      icon: IconUsers,
+      icon: Users,
       badge: null,
       description: "Team management",
     },
     {
       title: "Timesheets",
       url: "/dashboard/timesheets",
-      icon: IconFileDescription,
+      icon: FileText,
       badge: null,
       description: "Track work hours",
     },
     {
       title: "Payroll",
       url: "/dashboard/payroll",
-      icon: IconDevicesDollar,
+      icon: DollarSign,
       badge: null,
       description: "Manage payments",
     },
   ],
   quickActions: [
-    { title: "New Project", icon: IconBuilding, action: "create-project" },
-    { title: "Add Worker", icon: IconUsers, action: "add-worker" },
-    { title: "Clock In", icon: IconClock, action: "clock-in" },
-    { title: "Schedule", icon: IconCalendar, action: "schedule" },
+    { title: "New Project", icon: Building2, action: "create-project" },
+    { title: "Add Worker", icon: Users, action: "add-worker" },
+    { title: "Clock In", icon: Clock, action: "clock-in" },
+    { title: "Schedule", icon: Calendar, action: "schedule" },
   ],
   navSecondary: [
     {
       title: "Search",
       url: "#",
-      icon: IconSearch,
+      icon: Search,
       shortcut: "⌘K",
       description: "Search everything",
     },
     {
       title: "Settings",
       url: "/dashboard/settings",
-      icon: IconSettings,
+      icon: Settings,
       description: "App preferences",
     },
     {
       title: "Help & Support",
       url: "#",
-      icon: IconHelp,
+      icon: HelpCircle,
       description: "Get assistance",
     },
   ],
@@ -217,27 +213,29 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
   const sidebarUser = {
     name: profile.name,
     email: profile.email ?? "no-email@tropitrack.bs",
-    avatar: profile.avatar_url ?? "/avatars/default.jpg",
+    avatar: "/avatars/default.jpg",
     role: profile.role ?? "Worker",
   };
+
+  const { open, setOpen } = useSidebar();
 
   return (
     <Sidebar
       collapsible="offcanvas"
-      className="border-r border-border/50 bg-sidebar/50 backdrop-blur-sm"
+      className="border-r border-border/50 bg-sidebar/95 backdrop-blur-xl transition-all duration-300"
       {...props}
     >
       {/* Enhanced Header with Logo and Quick Search */}
-      <SidebarHeader className="border-b border-border/50 bg-sidebar/80 backdrop-blur-sm">
+      <SidebarHeader className="border-b border-border/50 bg-sidebar/95 backdrop-blur-xl">
         <div className="flex items-center justify-between px-2 py-3">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                className="data-[slot=sidebar-menu-button]:!py-2 data-[slot=sidebar-menu-button]:!px-2 bg-transparent hover:bg-sidebar-accent/50 transition-colors duration-200"
+                className="data-[slot=sidebar-menu-button]:!py-2 data-[slot=sidebar-menu-button]:!px-2 bg-transparent hover:bg-sidebar-accent/50 transition-all duration-200 rounded-md"
               >
-                <a href="/dashboard" className="flex items-center gap-2">
-                  <div className="relative">
+                <a href="/dashboard" className="flex items-center gap-3">
+                  <div className="relative flex items-center">
                     <Image
                       src="/logo/1.png"
                       alt="TropiTrack Logo"
@@ -270,134 +268,101 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
             </SidebarMenuItem>
           </SidebarMenu>
 
-          {!isCollapsed && (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-              >
-                <IconBell className="h-4 w-4" />
-              </Button>
-              <SearchCommand />
-            </div>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-md hover:bg-sidebar-accent/50"
+            onClick={() => setOpen(!open)}
+          >
+            <ChevronRight
+              className={cn(
+                "h-4 w-4 text-sidebar-foreground/60 transition-transform duration-200",
+                open ? "rotate-180" : "rotate-0"
+              )}
+            />
+          </Button>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4 space-y-6">
-        {/* Quick Actions Section */}
-        {!isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2">
-              Quick Actions
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <QuickActions
-                items={data.quickActions}
-                onAction={handleQuickAction}
-              />
-              <WorkerSheet
-                userId={profile.id}
-                onSuccess={loadWorkers}
-                open={workerSheet}
-                onOpenChange={setWorkerSheet}
-              />
-              <ProjectDialog
-                userId={profile.id}
-                clients={clients}
-                workers={workers}
-                open={projectDialog}
-                onOpenChange={setProjectDialog}
-                onSuccess={() => {
-                  loadProjects();
-                  loadProjectAssignments();
-                }}
-              />
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
+      <SidebarContent className="flex flex-col gap-4 px-2 py-4">
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2">
+          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider px-2 mb-2">
             {isCollapsed ? "Nav" : "Navigation"}
           </SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="space-y-1">
             <NavMain items={data.navMain} />
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Recent Projects - Only show when expanded */}
+        {/* Recent Projects */}
         {!isCollapsed && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2 flex items-center justify-between">
+            <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider px-2 mb-2 flex items-center justify-between">
               Recent Projects
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-4 w-4 text-sidebar-foreground/40 hover:text-sidebar-foreground"
+                className="h-5 w-5 rounded-md hover:bg-sidebar-accent/50 transition-colors duration-200"
+                onClick={() => handleQuickAction("create-project")}
               >
-                <IconPlus className="h-3 w-3" />
+                <Plus className="h-3 w-3" />
               </Button>
             </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="space-y-1">
-                {data.recentProjects.map((project, index) => (
-                  <div
-                    key={index}
-                    className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/50 cursor-pointer transition-colors duration-150"
+            <SidebarGroupContent className="space-y-1">
+              {data.recentProjects.map((project, index) => (
+                <SidebarMenuItem key={index}>
+                  <SidebarMenuButton
+                    asChild
+                    className="w-full px-2 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50 rounded-md transition-colors duration-200"
                   >
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        project.status === "active"
-                          ? "bg-green-500"
-                          : "bg-yellow-500"
-                      )}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-sidebar-foreground truncate">
-                        {project.name}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <div className="w-12 h-1 bg-sidebar-accent rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary transition-all duration-300"
-                            style={{ width: `${project.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-sidebar-foreground/60">
-                          {project.progress}%
-                        </span>
+                    <a href={`/dashboard/projects/${project.name.replace(/\s+/g, '-').toLowerCase()}`} className="flex items-center gap-2">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
+                        <Briefcase className="h-3 w-3 text-primary" />
                       </div>
-                    </div>
-                    <IconChevronRight className="h-3 w-3 text-sidebar-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                ))}
-              </div>
+                      <span className="flex-1 truncate">{project.name}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarGroupContent>
           </SidebarGroup>
         )}
 
-        {/* Separator */}
-        <Separator className="bg-border/50" />
-
-        {/* Secondary Navigation */}
+        {/* More Options */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-2 mb-2">
+          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider px-2 mb-2">
             {isCollapsed ? "More" : "More Options"}
           </SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="space-y-1">
             <NavSecondary items={data.navSecondary} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       {/* Enhanced Footer */}
-      <SidebarFooter className="border-t border-border/50 bg-sidebar/80 backdrop-blur-sm p-2">
+      <SidebarFooter className="border-t border-border/50 bg-sidebar/95 backdrop-blur-xl p-2">
         <NavUser user={sidebarUser} />
       </SidebarFooter>
+
+      {/* Dialogs */}
+      <WorkerSheet 
+        open={workerSheet} 
+        onOpenChange={setWorkerSheet}
+        userId={profile.id}
+        onSuccess={loadWorkers}
+      />
+      <ProjectDialog 
+        open={projectDialog} 
+        onOpenChange={setProjectDialog}
+        userId={profile.id}
+        clients={clients}
+        workers={workers}
+        onSuccess={() => {
+          loadProjects();
+          loadProjectAssignments();
+        }}
+      />
     </Sidebar>
   );
 }

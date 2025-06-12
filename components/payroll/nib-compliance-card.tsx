@@ -1,16 +1,16 @@
-import { Shield, AlertCircle, CheckCircle } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CircleCheck, CircleX } from "lucide-react"
 
 interface NibComplianceProps {
   totalNibContributions: number
-  payPeriod: string
-  employeeCount: number
+  nibRate?: number
 }
 
-export function NibComplianceCard({ totalNibContributions, payPeriod }: NibComplianceProps) {
-  const EMPLOYEE_NIB_RATE = 0.0465; // 4.65%
-  const EMPLOYER_NIB_RATE = 0.0665; // 6.65%
+export function NibComplianceCard({
+  totalNibContributions,
+  nibRate,
+}: NibComplianceProps) {
+  const EMPLOYER_NIB_RATE = 6.65 // 6.65%
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-BS", {
@@ -20,65 +20,59 @@ export function NibComplianceCard({ totalNibContributions, payPeriod }: NibCompl
     }).format(amount)
   }
 
-  const employeeContributionDisplay = formatCurrency(totalNibContributions);
-  const employerContribution = (totalNibContributions / EMPLOYEE_NIB_RATE) * EMPLOYER_NIB_RATE;
-  const employerContributionDisplay = formatCurrency(employerContribution);
-  const totalNIBRemittance = totalNibContributions + employerContribution;
+  // Calculate employer contribution based on employee contribution
+  const employerContribution = nibRate
+    ? (totalNibContributions / nibRate) * EMPLOYER_NIB_RATE
+    : 0
 
-  // NIB compliance checks
-  const complianceItems = [
-    {
-      label: `Employee Contributions (${(EMPLOYEE_NIB_RATE * 100).toFixed(2)}%)`,
-      value: employeeContributionDisplay,
-      status: "compliant" as const,
-      icon: CheckCircle,
-    },
-    {
-      label: `Employer Contributions (${(EMPLOYER_NIB_RATE * 100).toFixed(2)}%)`,
-      value: employerContributionDisplay,
-      status: "pending" as const,
-      icon: AlertCircle,
-    },
-  ]
+  const totalContributions = totalNibContributions + employerContribution
+  const isCompliant = totalNibContributions > 0
 
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Shield className="h-5 w-5 text-[var(--info)]" />
+        <CardTitle className="flex items-center gap-2 text-base">
+          {isCompliant ? (
+            <CircleCheck className="h-5 w-5 text-[var(--primary)]" />
+          ) : (
+            <CircleX className="h-5 w-5 text-[var(--destructive)]" />
+          )}
           NIB Compliance
         </CardTitle>
+        <CardDescription className="sr-only">
+          {nibRate ? `Employee NIB Rate: ${nibRate}%` : "NIB rate not configured"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Pay Period</span>
-          <Badge variant="outline">{payPeriod}</Badge>
-        </div>
-
-        <div className="space-y-3">
-          {complianceItems.map((item, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <item.icon
-                  className={`h-4 w-4 ${item.status === "compliant" ? "text-[var(--primary)]" : "text-[var(--warning)]"}`}
-                />
-                <span className="text-sm">{item.label}</span>
-              </div>
-              <span className="font-sans text-sm font-medium">{item.value}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="border-t pt-3">
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Total NIB Remittance</span>
-            <span className="font-sans font-bold text-[var(--info)]">
-              {formatCurrency(totalNIBRemittance)}
-            </span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Employee Rate</span>
+            <span className="font-medium">{nibRate}%</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Due by 15th of following month</p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Employee Contributions</span>
+            <span className="font-medium">{formatCurrency(totalNibContributions)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Employer Rate</span>
+            <span className="font-medium">{EMPLOYER_NIB_RATE}%</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Employer Contributions</span>
+            <span className="font-medium">{formatCurrency(employerContribution)}</span>
+          </div>
+          <div className="border-t pt-3">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Total NIB Remittance</span>
+              <span className="font-sans font-bold text-[var(--primary)] text-lg">
+                {formatCurrency(totalContributions)}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Due by 15th of following month</p>
+          </div>
         </div>
       </CardContent>
     </Card>
   )
 }
+

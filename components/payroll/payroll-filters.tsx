@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, addWeeks, subMonths, addMonths } from "date-fns"
+import { format, startOfMonth, endOfMonth, subMonths, addMonths, differenceInDays, subDays, addDays } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -11,110 +11,171 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Worker } from "@/lib/types/worker"
+import type { PaymentSchedule } from "@/lib/types/payroll-settings"
+
+type PayPeriodType = "weekly" | "bi-weekly" | "monthly" | "custom"
 
 interface PayrollFiltersProps {
-  workers: Worker[];
-  date: DateRange | undefined;
-  setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
-  setPayPeriodType: React.Dispatch<React.SetStateAction<string>>;
-  payPeriodType: string;
+  workers: Worker[]
+  date: DateRange | undefined
+  setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>
+  setPayPeriodType: React.Dispatch<React.SetStateAction<string>>
+  payPeriodType: string
+  paymentSchedule: PaymentSchedule | null
 }
 
-export function PayrollFilters({ workers, date, setDate, setPayPeriodType, payPeriodType }: PayrollFiltersProps) {
-  const [payPeriod, setPayPeriod] = useState("bi-weekly")
+export function PayrollFilters({ workers, date, setDate, setPayPeriodType, paymentSchedule }: PayrollFiltersProps) {
+  const [payPeriod, setPayPeriod] = useState<PayPeriodType>(
+    (paymentSchedule?.pay_period_type || "bi-weekly") as PayPeriodType
+  )
   const [selectedWorker, setSelectedWorker] = useState("all")
   const [paymentStatus, setPaymentStatus] = useState("all")
 
+  // Convert period start day to 0-6 range for date-fns (0 = Sunday)
+  const getWeekStartsOn = (day: number): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+    // If day is in 1-7 range (Monday = 1, Sunday = 7), convert to 0-6 range (Sunday = 0)
+    const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+      1: 1, // Monday
+      2: 2, // Tuesday
+      3: 3, // Wednesday
+      4: 4, // Thursday
+      5: 5, // Friday
+      6: 6, // Saturday
+      7: 0, // Sunday
+    }
+    return dayMap[day] || 1 // Default to Monday if invalid
+  }
+
+  // Helper function to get the start of the period based on period_start_day
+  const getCurrentPeriodStart = (date: Date): Date => {
+    const periodStartDay = paymentSchedule?.period_start_day
+      ? getWeekStartsOn(paymentSchedule.period_start_day)
+      : 1
+    const currentDay = date.getDay()
+    const daysToSubtract = (currentDay - periodStartDay + 7) % 7
+    return subDays(date, daysToSubtract)
+  }
+
   useEffect(() => {
-    const today = new Date();
-    let newDateRange: DateRange | undefined;
+    if (paymentSchedule) {
+      setPayPeriod(paymentSchedule.pay_period_type as PayPeriodType)
+    }
+  }, [paymentSchedule])
+
+  useEffect(() => {
+    const today = new Date()
+    let newDateRange: DateRange | undefined
 
     switch (payPeriod) {
-      case "weekly":
+      case "weekly": {
+        // Get the start of the current period based on period_start_day
+        const periodStart = getCurrentPeriodStart(today)
         newDateRange = {
-          from: startOfWeek(today, { weekStartsOn: 1 }), // Monday as start of week
-          to: endOfWeek(today, { weekStartsOn: 1 }),
-        };
-        break;
-      case "bi-weekly":
-        // Assuming bi-weekly periods start on a Monday and run for two weeks
-        // This might need adjustment based on the company's specific pay period start date
-        const twoWeeksAgo = subWeeks(today, 1);
+          from: periodStart,
+          to: addDays(periodStart, 6), // Add 6 days to get a full week
+        }
+        break
+      }
+      case "bi-weekly": {
+        // Get the start of the current period based on period_start_day
+        const periodStart = getCurrentPeriodStart(today)
         newDateRange = {
-          from: startOfWeek(twoWeeksAgo, { weekStartsOn: 1 }),
-          to: endOfWeek(today, { weekStartsOn: 1 }),
-        };
-        break;
+          from: periodStart,
+          to: addDays(periodStart, 13), // Add 13 days to get two full weeks
+        }
+        break
+      }
       case "monthly":
         newDateRange = {
           from: startOfMonth(today),
           to: endOfMonth(today),
-        };
-        break;
+        }
+        break
       case "custom":
-        // Do not set date automatically for custom range
-        newDateRange = undefined; // Clear the date if selecting custom
-        break;
+        newDateRange = undefined
+        break
       default:
-        // Default to bi-weekly for initial load or unknown value
-        const defaultTwoWeeksAgo = subWeeks(today, 1);
+        // Default to bi-weekly if no period type is selected
+        const periodStart = getCurrentPeriodStart(today)
         newDateRange = {
-          from: startOfWeek(defaultTwoWeeksAgo, { weekStartsOn: 1 }),
-          to: endOfWeek(today, { weekStartsOn: 1 }),
-        };
-        break;
+          from: periodStart,
+          to: addDays(periodStart, 13),
+        }
+        break
     }
 
-    // Only update date if it's not a custom range, or if it's the initial load
-    // This prevents clearing the date picker when 'custom' is selected and dates are already set.
     if (payPeriod !== "custom" || (payPeriod === "custom" && !date?.from && !date?.to)) {
-      setDate(newDateRange);
+      setDate(newDateRange)
     }
 
-    setPayPeriodType(payPeriod);
-
-  }, [payPeriod, setDate, setPayPeriodType]); // eslint-disable-line react-hooks/exhaustive-deps
+    setPayPeriodType(payPeriod)
+  }, [payPeriod, setDate, setPayPeriodType, paymentSchedule])
 
   const navigatePeriod = (direction: 'previous' | 'next') => {
-    if (!date?.from || !date?.to) return;
+    if (!date?.from || !date?.to) return
 
-    let newFrom = date.from;
-    let newTo = date.to;
+    let newFrom: Date
+    let newTo: Date
 
-    if (payPeriodType === "weekly") {
-      if (direction === 'previous') {
-        newFrom = subWeeks(date.from, 1);
-        newTo = subWeeks(date.to, 1);
-      } else {
-        newFrom = addWeeks(date.from, 1);
-        newTo = addWeeks(date.to, 1);
+    switch (payPeriod) {
+      case "weekly": {
+        if (direction === 'previous') {
+          newFrom = subDays(date.from, 7)
+          newTo = subDays(date.to, 7)
+        } else {
+          newFrom = addDays(date.from, 7)
+          newTo = addDays(date.to, 7)
+        }
+        // Ensure we're aligned with the period start day
+        newFrom = getCurrentPeriodStart(newFrom)
+        newTo = addDays(newFrom, 6)
+        break
       }
-    } else if (payPeriodType === "bi-weekly") {
-      if (direction === 'previous') {
-        newFrom = subWeeks(date.from, 2);
-        newTo = subWeeks(date.to, 2);
-      } else {
-        newFrom = addWeeks(date.from, 2);
-        newTo = addWeeks(date.to, 2);
+      case "bi-weekly": {
+        if (direction === 'previous') {
+          newFrom = subDays(date.from, 14)
+          newTo = subDays(date.to, 14)
+        } else {
+          newFrom = addDays(date.from, 14)
+          newTo = addDays(date.to, 14)
+        }
+        // Ensure we're aligned with the period start day
+        newFrom = getCurrentPeriodStart(newFrom)
+        newTo = addDays(newFrom, 13)
+        break
       }
-    } else if (payPeriodType === "monthly") {
-      if (direction === 'previous') {
-        newFrom = subMonths(date.from, 1);
-        newTo = subMonths(date.to, 1);
-      } else {
-        newFrom = addMonths(date.from, 1);
-        newTo = addMonths(date.to, 1);
+      case "monthly": {
+        if (direction === 'previous') {
+          newFrom = startOfMonth(subMonths(date.from, 1))
+          newTo = endOfMonth(newFrom)
+        } else {
+          newFrom = startOfMonth(addMonths(date.from, 1))
+          newTo = endOfMonth(newFrom)
+        }
+        break
+      }
+      default: {
+        // For custom periods, move by the current period length
+        const periodLength = differenceInDays(date.to, date.from)
+        if (direction === 'previous') {
+          newFrom = subDays(date.from, periodLength + 1)
+          newTo = subDays(date.to, periodLength + 1)
+        } else {
+          newFrom = addDays(date.from, periodLength + 1)
+          newTo = addDays(date.to, periodLength + 1)
+        }
       }
     }
-    setDate({ from: newFrom, to: newTo });
-  };
+
+    setDate({ from: newFrom, to: newTo })
+  }
 
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       {/* Pay Period Selector */}
       <div className="space-y-2">
         <Label htmlFor="pay-period">Pay Period</Label>
-        <Select value={payPeriod} onValueChange={setPayPeriod}>
+        <Select value={payPeriod} onValueChange={(value: PayPeriodType) => setPayPeriod(value)}>
           <SelectTrigger>
             <SelectValue placeholder="Select pay period" />
           </SelectTrigger>
@@ -235,3 +296,4 @@ export function PayrollFilters({ workers, date, setDate, setPayPeriodType, payPe
     </div>
   )
 }
+
