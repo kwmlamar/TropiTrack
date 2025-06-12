@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Clock, Users, Building2, Download, Plus, Search, UsersRound, Trash2 } from "lucide-react"
+import { CalendarDays, Clock, Users, Building2, Download, Plus, UsersRound, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,7 @@ import { TimesheetDialog, BulkTimesheetDialog } from "@/components/forms/form-di
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 type AttendanceStatus = "present" | "absent" | "late"
 
@@ -51,10 +52,23 @@ export default function TimesheetsPage({user}: {user: User}) {
   const [selectedWorker, setSelectedWorker] = useState<string>("all")
   const [selectedProject, setSelectedProject] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly")
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm] = useState("")
   const [selectedTimesheetIds, setSelectedTimesheetIds] = useState<Set<string>>(new Set())
   const [isApproving, setIsApproving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
+
+  const { paymentSchedule, loading: payrollLoading } = usePayrollSettings()
+
+  // Initialize week start day from payroll settings
+  useEffect(() => {
+    if (!payrollLoading && paymentSchedule?.period_start_type === "day_of_week") {
+      const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+        1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+      }
+      setWeekStartDay(dayMap[paymentSchedule.period_start_day] || 1)
+    }
+  }, [paymentSchedule, payrollLoading])
 
   // Load timesheets effect
   useEffect(() => {
@@ -62,7 +76,7 @@ export default function TimesheetsPage({user}: {user: User}) {
     loadWorkers();
     loadProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, selectedWorker, selectedProject, viewMode])
+  }, [selectedDate, selectedWorker, selectedProject, viewMode, weekStartDay])
 
   // CRUD operations
   const loadTimesheets = async () => {
@@ -77,8 +91,8 @@ export default function TimesheetsPage({user}: {user: User}) {
         filters.date_from = format(selectedDate, "yyyy-MM-dd")
         filters.date_to = format(selectedDate, "yyyy-MM-dd")
       } else {
-        const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
-        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+        const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay })
+        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay })
         filters.date_from = format(weekStart, "yyyy-MM-dd")
         filters.date_to = format(weekEnd, "yyyy-MM-dd")
       }
@@ -212,8 +226,8 @@ export default function TimesheetsPage({user}: {user: User}) {
       if (viewMode === "daily") {
         dateMatch = format(timesheetDate, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
       } else {
-        const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
-        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+        const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay })
+        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay })
         dateMatch = isWithinInterval(timesheetDate, { start: weekStart, end: weekEnd })
       }
 
@@ -231,14 +245,14 @@ export default function TimesheetsPage({user}: {user: User}) {
 
       return dateMatch && workerMatch && projectMatch && searchMatch
     })
-  }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, searchTerm])
+  }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, searchTerm, weekStartDay])
 
   const groupedTimesheets = useMemo(() => {
     const grouped = new Map<string, Map<string, TimesheetWithDetails[]>>()
 
     filteredTimesheets.forEach(timesheet => {
       const workerId = timesheet.worker_id
-      const weekStart = format(startOfWeek(parseISO(timesheet.date), { weekStartsOn: 1 }), 'yyyy-MM-dd')
+      const weekStart = format(startOfWeek(parseISO(timesheet.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd')
 
       if (!grouped.has(workerId)) {
         grouped.set(workerId, new Map<string, TimesheetWithDetails[]>())
@@ -250,7 +264,7 @@ export default function TimesheetsPage({user}: {user: User}) {
       workerWeeks.get(weekStart)!.push(timesheet)
     })
     return grouped
-  }, [filteredTimesheets])
+  }, [filteredTimesheets, weekStartDay])
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -316,8 +330,8 @@ export default function TimesheetsPage({user}: {user: User}) {
         selectedTimesheetIds.forEach(id => {
           const ts = timesheets.find(t => t.id === id);
           if (ts) {
-            const weekStart = format(startOfWeek(parseISO(ts.date), { weekStartsOn: 1 }), 'yyyy-MM-dd');
-            const weekEnd = format(endOfWeek(parseISO(ts.date), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+            const weekStart = format(startOfWeek(parseISO(ts.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd');
+            const weekEnd = format(endOfWeek(parseISO(ts.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd');
             const key = `${ts.worker_id}-${weekStart}`;
             if (!affectedWorkersAndWeeks.has(key)) {
               affectedWorkersAndWeeks.set(key, { workerId: ts.worker_id, weekStart, weekEnd });
@@ -373,42 +387,6 @@ export default function TimesheetsPage({user}: {user: User}) {
     }
   };
 
-  // Calculate weekly summaries using TimesheetWithDetails
-  // const weeklySummaries = useMemo(() => {
-  //   const summaries = new Map()
-
-  //   filteredTimesheets.forEach((timesheet) => {
-  //     const key = timesheet.worker_id
-  //     if (!summaries.has(key)) {
-  //       summaries.set(key, {
-  //         worker: timesheet.worker || { id: timesheet.worker_id, name: "Unknown Worker" },
-  //         totalHours: 0,
-  //         overtimeHours: 0,
-  //         daysWorked: 0,
-  //         daysAbsent: 0,
-  //         daysLate: 0,
-  //       })
-  //     }
-
-  //     const summary = summaries.get(key)
-  //     summary.totalHours += timesheet.total_hours
-  //     summary.overtimeHours += timesheet.overtime_hours
-
-  //     const status = getAttendanceStatus(timesheet)
-  //     if (status === "present" || status === "late") {
-  //       summary.daysWorked += 1
-  //     }
-  //     if (status === "absent") {
-  //       summary.daysAbsent += 1
-  //     }
-  //     if (status === "late") {
-  //       summary.daysLate += 1
-  //     }
-  //   })
-
-  //   return Array.from(summaries.values())
-  // }, [filteredTimesheets])
-
   const getStatusBadge = (status: AttendanceStatus) => {
     const variants = {
       present: "default",
@@ -430,10 +408,23 @@ export default function TimesheetsPage({user}: {user: User}) {
   }
 
   const weekDays = useMemo(() => {
-    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
-    const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay })
+    const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay })
     return eachDayOfInterval({ start: weekStart, end: weekEnd })
-  }, [selectedDate])
+  }, [selectedDate, weekStartDay])
+
+  const getWeekStartDayName = (day: 0 | 1 | 2 | 3 | 4 | 5 | 6): string => {
+    const dayNames = {
+      0: "Sunday",
+      1: "Monday", 
+      2: "Tuesday",
+      3: "Wednesday",
+      4: "Thursday",
+      5: "Friday",
+      6: "Saturday"
+    }
+    return dayNames[day]
+  }
 
   // Show loading state
   if (loading) {
@@ -516,7 +507,6 @@ export default function TimesheetsPage({user}: {user: User}) {
         </div>
       </div>
 
-
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -554,19 +544,19 @@ export default function TimesheetsPage({user}: {user: User}) {
 
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Pay</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{new Set(filteredTimesheets.map((ts) => ts.project_id)).size}</div>
-            <p className="text-xs text-muted-foreground">Projects with activity</p>
+            <div className="text-2xl font-bold">${summary.totalPay}</div>
+            <p className="text-xs text-muted-foreground">Estimated pay</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-lg">Filters</CardTitle>
         </CardHeader>
         <CardContent>
@@ -595,11 +585,40 @@ export default function TimesheetsPage({user}: {user: User}) {
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
+                    weekStartsOn={weekStartDay}
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
             </div>
+
+            {viewMode === "weekly" && (
+              <div className="space-y-2">
+                <Label>Week Starts On</Label>
+                <Select 
+                  value={weekStartDay.toString()} 
+                  onValueChange={(value) => setWeekStartDay(Number(value) as 0 | 1 | 2 | 3 | 4 | 5 | 6)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select week start" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sunday</SelectItem>
+                    <SelectItem value="1">Monday</SelectItem>
+                    <SelectItem value="2">Tuesday</SelectItem>
+                    <SelectItem value="3">Wednesday</SelectItem>
+                    <SelectItem value="4">Thursday</SelectItem>
+                    <SelectItem value="5">Friday</SelectItem>
+                    <SelectItem value="6">Saturday</SelectItem>
+                  </SelectContent>
+                </Select>
+                {paymentSchedule?.period_start_type === "day_of_week" && (
+                  <p className="text-xs text-muted-foreground">
+                    Payroll period starts on {getWeekStartDayName(weekStartDay)}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Worker</Label>
@@ -634,19 +653,6 @@ export default function TimesheetsPage({user}: {user: User}) {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Search</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search workers or projects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -660,7 +666,7 @@ export default function TimesheetsPage({user}: {user: User}) {
             </CardTitle>
             <CardDescription>
               {viewMode === "weekly" &&
-                `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), "MMM d, yyyy")}`}
+                `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
             </CardDescription>
           </div>
           {selectedTimesheetIds.size > 0 && (
@@ -801,7 +807,7 @@ export default function TimesheetsPage({user}: {user: User}) {
                                       );
                                       await Promise.all(updates);
                                       // Trigger payroll generation for this worker and week
-                                      const weekEnd = format(endOfWeek(parseISO(weekStart), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+                                      const weekEnd = format(endOfWeek(parseISO(weekStart), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd');
                                       await generatePayrollForWorkerAndPeriod(user.id, workerId, weekStart, weekEnd);
 
                                       loadTimesheets();
@@ -817,7 +823,7 @@ export default function TimesheetsPage({user}: {user: User}) {
                         })}
                       </React.Fragment>
                     ))
-                  : // Daily view
+                  :
                     filteredTimesheets.map((timesheet) => (
                       <tr key={timesheet.id} className="border-b hover:bg-muted/50">
                         <td className="p-2 w-12">

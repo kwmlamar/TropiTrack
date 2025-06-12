@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarIcon, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
+import { CalendarIcon, ChevronLeft, ChevronRight, Settings2, SlidersHorizontal } from "lucide-react"
 import { format, startOfMonth, endOfMonth, addMonths, differenceInDays, subDays, addDays } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,18 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import type { PaymentSchedule } from "@/lib/types/payroll-settings"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { Table } from "@tanstack/react-table"
+import type { PayrollRecord } from "@/lib/types"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+import { updatePayrollSettings } from "@/lib/data/payroll-settings"
 
 type PayPeriodType = "weekly" | "bi-weekly" | "monthly" | "custom"
 
@@ -18,6 +30,7 @@ interface PayrollFiltersProps {
   setPayPeriodType: React.Dispatch<React.SetStateAction<string>>
   payPeriodType: string
   paymentSchedule: PaymentSchedule | null
+  table?: Table<PayrollRecord>
 }
 
 export function PayrollFilters({
@@ -25,7 +38,9 @@ export function PayrollFilters({
   setDate,
   setPayPeriodType,
   paymentSchedule,
+  table,
 }: PayrollFiltersProps) {
+  const { payrollSettings, refresh: refreshSettings } = usePayrollSettings()
   const [payPeriod, setPayPeriod] = useState<PayPeriodType>(
     (paymentSchedule?.pay_period_type || "bi-weekly") as PayPeriodType
   )
@@ -56,6 +71,11 @@ export function PayrollFilters({
     const today = new Date()
     let newDateRange: DateRange | undefined
 
+    if (payPeriod === 'custom') {
+      // For custom, we don't auto-set the date. It's set by the calendar.
+      return
+    }
+
     switch (payPeriod) {
       case "weekly":
       case "bi-weekly": {
@@ -69,50 +89,76 @@ export function PayrollFilters({
       case "monthly":
         newDateRange = { from: startOfMonth(today), to: endOfMonth(today) }
         break
-      case "custom":
-        newDateRange = date // Keep existing custom date if any
-        break
       default: {
         const periodStart = getCurrentPeriodStart(today)
         newDateRange = { from: periodStart, to: addDays(periodStart, 13) }
       }
     }
 
-    if (payPeriod !== 'custom') {
-        setDate(newDateRange)
-    }
+    setDate(newDateRange)
     setPayPeriodType(payPeriod)
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payPeriod, paymentSchedule])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payPeriod])
+
+  // Update column visibility when settings change
+  useEffect(() => {
+    if (table && payrollSettings?.column_settings) {
+      Object.entries(payrollSettings.column_settings).forEach(([columnId, isVisible]) => {
+        const column = table.getColumn(columnId)
+        if (column) {
+          column.toggleVisibility(isVisible)
+        }
+      })
+    }
+  }, [table, payrollSettings])
+
+  // Save column visibility to database
+  const saveColumnVisibility = async (columnId: string, isVisible: boolean) => {
+    if (!table || !payrollSettings?.id) return;
+
+    const updatedSettings = {
+      ...payrollSettings.column_settings,
+      [columnId]: isVisible,
+    };
+
+    try {
+      await updatePayrollSettings({
+        id: payrollSettings.id,
+        column_settings: updatedSettings,
+      });
+      await refreshSettings();
+    } catch (error) {
+      console.error('Error saving column visibility:', error);
+    }
+  };
 
   const navigatePeriod = (direction: 'previous' | 'next') => {
     if (!date?.from) return
 
+    const multiplier = direction === 'previous' ? -1 : 1
     let newFrom: Date
     let newTo: Date
 
-    const to = date.to || date.from;
-
     switch (payPeriod) {
-      case "weekly":
+      case "weekly": {
+        newFrom = addDays(date.from, 7 * multiplier)
+        newTo = addDays(newFrom, 6)
+        break
+      }
       case "bi-weekly": {
-        const days = payPeriod === "weekly" ? 7 : 14
-        const multiplier = direction === "previous" ? -1 : 1
-        newFrom = addDays(date.from, days * multiplier)
-        newFrom = getCurrentPeriodStart(newFrom)
-        newTo = addDays(newFrom, days - 1)
+        newFrom = addDays(date.from, 14 * multiplier)
+        newTo = addDays(newFrom, 13)
         break
       }
       case "monthly": {
-        const monthOffset = direction === "previous" ? -1 : 1
-        newFrom = startOfMonth(addMonths(date.from, monthOffset))
-        newTo = endOfMonth(newFrom)
+        const newMonth = addMonths(date.from, multiplier)
+        newFrom = startOfMonth(newMonth)
+        newTo = endOfMonth(newMonth)
         break
       }
-      default: {
+      default: { // Handles "custom" or other cases
+        const to = date.to || date.from;
         const periodLength = differenceInDays(to, date.from)
-        const multiplier = direction === "previous" ? -1 : 1
         newFrom = addDays(date.from, (periodLength + 1) * multiplier)
         newTo = addDays(to, (periodLength + 1) * multiplier)
       }
@@ -125,6 +171,18 @@ export function PayrollFilters({
     if (value) {
       setPayPeriod(value as PayPeriodType)
     }
+  }
+
+  const columnLabels: Record<string, string> = {
+    worker_id: "Worker",
+    gross_pay: "Gross Pay",
+    nib_deduction: "NIB Deduction",
+    other_deductions: "Other Deductions",
+    total_deductions: "Total Deductions",
+    net_pay: "Net Pay",
+    status: "Status",
+    total_hours: "Hours",
+    overtime_hours: "Overtime Hours",
   }
 
   return (
@@ -210,6 +268,38 @@ export function PayrollFilters({
       </div>
 
       <div className="flex items-center gap-2">
+        {table && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Settings2 className="h-4 w-4" />
+                View
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[200px]">
+              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => {
+                        column.toggleVisibility(!!value)
+                        saveColumnVisibility(column.id, !!value)
+                      }}
+                    >
+                      {columnLabels[column.id] || column.id.replace(/_/g, " ")}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <Button variant="outline" size="sm" className="h-9 gap-2">
           <SlidersHorizontal className="h-4 w-4" />
           More Filters

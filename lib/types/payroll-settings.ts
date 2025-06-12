@@ -17,6 +17,7 @@ export type PayrollSettings = {
   company_id: string
   nib_rate: number
   overtime_rate: number
+  column_settings: Record<string, boolean>
   created_at: string
   updated_at: string
 }

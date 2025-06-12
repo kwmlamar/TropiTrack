@@ -1,29 +1,60 @@
 "use client"
 
 import React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowUpDown } from "lucide-react"
-import { type ColumnDef, useReactTable, getCoreRowModel, getSortedRowModel, flexRender, type SortingState } from "@tanstack/react-table"
+import { type ColumnDef, useReactTable, getCoreRowModel, getSortedRowModel, flexRender, type SortingState, type VisibilityState, type Table } from "@tanstack/react-table"
 import type { PayrollRecord } from "@/lib/types"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+import { updatePayrollSettings } from "@/lib/data/payroll-settings"
 
 interface PayrollTableProps {
   data: PayrollRecord[]
   selectedPayrollIds: Set<string>
   setSelectedPayrollIds: React.Dispatch<React.SetStateAction<Set<string>>>
+  onTableInit?: (table: Table<PayrollRecord>) => void
 }
 
-export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds }: PayrollTableProps) {
-  console.log("[PayrollTable Data] received:", data);
+export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, onTableInit }: PayrollTableProps) {
+  const { payrollSettings, refresh: refreshSettings } = usePayrollSettings()
+  
   const [sorting, setSorting] = useState<SortingState>([
     { id: "worker_id", desc: false }
   ]);
+
+  // Initialize column visibility from database settings
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    payrollSettings?.column_settings || {}
+  )
+
+  // Update column visibility when settings change
+  useEffect(() => {
+    if (payrollSettings?.column_settings) {
+      setColumnVisibility(payrollSettings.column_settings)
+    }
+  }, [payrollSettings])
+
+  // Save column visibility to database
+  const saveColumnVisibility = async (updatedVisibility: Record<string, boolean>) => {
+    if (!payrollSettings?.id) return;
+    
+    try {
+      await updatePayrollSettings({
+        id: payrollSettings.id,
+        column_settings: updatedVisibility,
+      });
+      await refreshSettings();
+    } catch (error) {
+      console.error('Error saving column visibility:', error);
+    }
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -296,14 +327,30 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds }
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    onColumnVisibilityChange: (updatedVisibility) => {
+      setColumnVisibility(updatedVisibility)
+      saveColumnVisibility(updatedVisibility as Record<string, boolean>)
+    },
     state: {
       sorting,
+      columnVisibility,
+    },
+    enableHiding: true,
+    defaultColumn: {
+      enableHiding: true,
     },
   });
 
+  // Initialize table instance
+  useEffect(() => {
+    if (onTableInit) {
+      onTableInit(table);
+    }
+  }, [table, onTableInit]);
+
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-full">
+      <TableComponent className="min-w-full">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="text-sm">
@@ -331,7 +378,7 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds }
             </TableRow>
           ))}
         </TableBody>
-      </Table>
+      </TableComponent>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { PayrollActions } from "@/components/payroll/payroll-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { NibComplianceCard } from "@/components/payroll/nib-compliance-card"
-import { getPayrolls } from "@/lib/data/payroll"
+import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import type { PayrollRecord } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
@@ -19,6 +19,7 @@ import { CheckCircle } from "lucide-react"
 import { updatePayrollStatus } from "@/lib/data/payroll"
 import { toast } from "sonner"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+import type { Table } from "@tanstack/react-table"
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
@@ -29,6 +30,7 @@ export default function PayrollPage({ user }: { user: User }) {
   })
   const [payPeriodType, setPayPeriodType] = useState<string>("bi-weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
+  const [tableInstance, setTableInstance] = useState<Table<PayrollRecord> | undefined>(undefined)
 
   const {
     loading: settingsLoading,
@@ -52,7 +54,9 @@ export default function PayrollPage({ user }: { user: User }) {
   const loadPayroll = async () => {
     setLoading(true)
     try {
-      const filters: { date_from?: string; date_to?: string } = {}
+      const filters: { date_from?: string; date_to?: string; target_period_type: "weekly" | "bi-weekly" | "monthly" } = {
+        target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly"
+      }
 
       if (dateRange?.from) {
         filters.date_from = format(dateRange.from, "yyyy-MM-dd")
@@ -61,7 +65,7 @@ export default function PayrollPage({ user }: { user: User }) {
         filters.date_to = format(dateRange.to, "yyyy-MM-dd")
       }
 
-      const response = await getPayrolls(filters)
+      const response = await getAggregatedPayrolls(filters)
       if (response.data) {
         // Apply deductions based on settings
         const processedPayrolls = response.data.map(payroll => {
@@ -84,8 +88,6 @@ export default function PayrollPage({ user }: { user: User }) {
       setLoading(false)
     }
   }
-
-
 
   // Calculate summary data from payrolls
   const totalGrossPay = payrolls.reduce((sum, record) => sum + record.gross_pay, 0)
@@ -126,6 +128,10 @@ export default function PayrollPage({ user }: { user: User }) {
     }
   }
 
+  const handleTableInit = (table: Table<PayrollRecord>) => {
+    setTableInstance(table);
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6">
       <PayrollHeader />
@@ -143,6 +149,7 @@ export default function PayrollPage({ user }: { user: User }) {
                 setPayPeriodType={setPayPeriodType}
                 payPeriodType={payPeriodType}
                 paymentSchedule={paymentSchedule}
+                table={tableInstance}
               />
             </CardContent>
           </Card>
@@ -175,6 +182,7 @@ export default function PayrollPage({ user }: { user: User }) {
                   data={payrolls}
                   selectedPayrollIds={selectedPayrollIds}
                   setSelectedPayrollIds={setSelectedPayrollIds}
+                  onTableInit={handleTableInit}
                 />
               )}
             </CardContent>

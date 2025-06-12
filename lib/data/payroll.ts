@@ -49,10 +49,10 @@ export async function getPayrolls(
       .order("pay_period_start", { ascending: false });
 
     if (filters.date_from) {
-      query = query.gte("pay_period_start", filters.date_from);
+      query = query.lte("pay_period_start", filters.date_to);
     }
     if (filters.date_to) {
-      query = query.lte("pay_period_end", filters.date_to);
+      query = query.gte("pay_period_end", filters.date_from);
     }
 
     const { data, error } = await query;
@@ -306,6 +306,81 @@ export async function generatePayrollForWorkerAndPeriod(
       data: null,
       error: error instanceof Error ? error.message : "An unexpected error occurred during payroll generation.",
       success: false,
+    };
+  }
+}
+
+/**
+ * Aggregates payroll records based on the target period type.
+ * For example, when viewing monthly payroll, it will aggregate all weekly/bi-weekly
+ * payrolls that fall within that month.
+ */
+export async function getAggregatedPayrolls(
+  filters: { date_from?: string; date_to?: string; target_period_type: "weekly" | "bi-weekly" | "monthly" } = { target_period_type: "bi-weekly" }
+): Promise<ApiResponse<PayrollRecord[]>> {
+  try {
+    // First get all payroll records within the date range
+    const payrollsResponse = await getPayrolls(filters);
+    if (!payrollsResponse.success || !payrollsResponse.data) {
+      return payrollsResponse;
+    }
+
+    const payrolls = payrollsResponse.data;
+
+    // If we're not aggregating to a larger period, return as is
+    if (filters.target_period_type !== "monthly") {
+      return payrollsResponse;
+    }
+
+    // Group payrolls by worker and month
+    const aggregatedPayrolls = new Map<string, PayrollRecord>();
+    
+    payrolls.forEach(payroll => {
+      const periodStart = new Date(payroll.pay_period_start);
+      const monthKey = `${payroll.worker_id}-${periodStart.getFullYear()}-${periodStart.getMonth()}`;
+      
+      if (!aggregatedPayrolls.has(monthKey)) {
+        // Initialize monthly aggregate
+        const monthStart = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+        const monthEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0);
+        
+        aggregatedPayrolls.set(monthKey, {
+          ...payroll,
+          id: `monthly-${monthKey}`,
+          total_hours: 0,
+          overtime_hours: 0,
+          gross_pay: 0,
+          nib_deduction: 0,
+          other_deductions: 0,
+          total_deductions: 0,
+          net_pay: 0,
+          pay_period_start: monthStart.toISOString(),
+          pay_period_end: monthEnd.toISOString(),
+        });
+      }
+
+      const aggregate = aggregatedPayrolls.get(monthKey)!;
+      
+      // Add up all the numeric values
+      aggregate.total_hours += payroll.total_hours;
+      aggregate.overtime_hours += payroll.overtime_hours;
+      aggregate.gross_pay += payroll.gross_pay;
+      aggregate.nib_deduction += payroll.nib_deduction;
+      aggregate.other_deductions += payroll.other_deductions;
+      aggregate.total_deductions += payroll.total_deductions;
+      aggregate.net_pay += payroll.net_pay;
+    });
+
+    return {
+      data: Array.from(aggregatedPayrolls.values()),
+      error: null,
+      success: true
+    };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
+      success: false
     };
   }
 }
