@@ -51,7 +51,7 @@ interface WorkerFormProps {
   onCancel?: () => void;
 }
 
-const workerRoles = [
+const workerPositions = [
   "Foreman",
   "Carpenter",
   "Electrician",
@@ -83,7 +83,7 @@ export function WorkerForm({
       name: worker?.name || "",
       email: worker?.email || "",
       phone: worker?.phone || "",
-      role: worker?.role || "",
+      position: worker?.position || "",
       hourly_rate: worker?.hourly_rate || 20,
       hire_date: worker?.hire_date || format(new Date(), "yyyy-MM-dd"),
       is_active: worker?.is_active ?? true,
@@ -150,23 +150,23 @@ export function WorkerForm({
 
               <FormField
                 control={form.control}
-                name="role"
+                name="position"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role</FormLabel>
+                    <FormLabel>Position</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
+                          <SelectValue placeholder="Select a position" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {workerRoles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role}
+                        {workerPositions.map((position) => (
+                          <SelectItem key={position} value={position}>
+                            {position}
                           </SelectItem>
                         ))}
                       </SelectContent>

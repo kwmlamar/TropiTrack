@@ -515,7 +515,7 @@ export function ProjectForm({
                     <div className="flex-1">
                       <p className="text-sm font-medium">{worker.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {worker.role}
+                        {worker.position}
                       </p>
                     </div>
                     {selectedWorkers.includes(worker.id) && (

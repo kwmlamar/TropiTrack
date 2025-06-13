@@ -89,7 +89,7 @@ export default function WorkersTable({ user }: { user: User }) {
     return (
       worker.name.toLowerCase().includes(term) ||
       (worker.email && worker.email.toLowerCase().includes(term)) ||
-      (worker.role && worker.role.toLowerCase().includes(term))
+      (worker.position && worker.position.toLowerCase().includes(term))
     );
   });
 
@@ -253,7 +253,7 @@ export default function WorkersTable({ user }: { user: User }) {
                         {worker.name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {worker.role || "Construction Worker"}
+                        {worker.position || "Construction Worker"}
                       </p>
                     </div>
                   </div>

@@ -6,7 +6,7 @@ export interface Worker {
   name: string
   email?: string 
   phone?: string 
-  role: 'employee' | 'contractor' | 'subcontractor'
+  position: string
   hourly_rate: number
   overtime_rate?: number
   hire_date: string
@@ -21,7 +21,6 @@ export interface Worker {
   created_at: string
   updated_at: string
   created_by?: string
-  position?: string
   department?: string
 }
 

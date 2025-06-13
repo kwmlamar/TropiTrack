@@ -17,6 +17,9 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
@@ -228,6 +231,14 @@ export function WorkerSheet({
         side="right"
         className="w-full sm:max-w-2xl overflow-y-auto px-4 sm:px-6 border-border/50 bg-card/50 backdrop-blur-sm"
       >
+        <SheetHeader className="sr-only">
+          <SheetTitle className="text-xl font-semibold">
+            {worker ? "Edit Worker" : "New Worker"}
+          </SheetTitle>
+          <SheetDescription className="text-muted-foreground">
+            {worker ? "Update the worker details and assigned projects." : "Create a new worker and assign them to projects."}
+          </SheetDescription>
+        </SheetHeader>
         <div className="pt-8 relative">
           {isLoading && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">

@@ -19,7 +19,7 @@ export const workerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")).nullable(),
   phone: z.string().optional(),
-  role: z.string().min(1, "Role is required"),
+  position: z.string().min(1, "Position is required"),
   hourly_rate: z.number().min(0, "Hourly rate must be positive"),
   hire_date: z.string().min(1, "Hire date is required"),
   is_active: z.boolean().default(true),
