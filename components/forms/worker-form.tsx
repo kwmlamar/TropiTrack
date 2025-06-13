@@ -90,6 +90,7 @@ export function WorkerForm({
       address: worker?.address || "",
       emergency_contact: worker?.emergency_contact || "",
       emergency_phone: worker?.emergency_phone || "",
+      nib_number: worker?.nib_number || "",
     },
   });
 
@@ -142,6 +143,20 @@ export function WorkerForm({
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="nib_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>NIB #</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter NIB number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

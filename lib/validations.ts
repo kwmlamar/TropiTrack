@@ -26,6 +26,10 @@ export const workerSchema = z.object({
   address: z.string().optional(),
   emergency_contact: z.string().optional(),
   emergency_phone: z.string().optional(),
+  nib_number: z.string()
+    .regex(/^\d{8}$/, "NIB number must be exactly 8 digits")
+    .optional()
+    .or(z.literal("")),
 })
 
 // Project validation schema

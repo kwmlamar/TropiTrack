@@ -22,6 +22,7 @@ export interface Worker {
   updated_at: string
   created_by?: string
   department?: string
+  nib_number?: string
 }
 
 export type NewWorker = Omit<Worker, "id" | "created_at" | "updated_at"> & {
