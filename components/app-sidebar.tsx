@@ -43,12 +43,10 @@ import type { Client } from "@/lib/types/client";
 import type { Project } from "@/lib/types/project";
 import {
   fetchClientsForCompany,
-  fetchProjectAssignments,
-  fetchProjectsForCompany,
   fetchWorkersForCompany,
 } from "@/lib/data/data";
 import { ProjectDialog, WorkerSheet } from "./forms/form-dialogs";
-import { ProjectAssignment } from "@/lib/types";
+import { getRecentProjects } from "@/lib/data/recent-projects";
 
 const data = {
   user: {
@@ -144,36 +142,16 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
   const isCollapsed = state === "collapsed";
   const [clients, setClients] = useState<Client[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [projectAssignments, setProjectAssignments] = useState<ProjectAssignment[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [recentProjects, setRecentProjects] = useState<Partial<Project>[]>([]);
   const [workerSheet, setWorkerSheet] = useState(false);
   const [projectDialog, setProjectDialog] = useState(false);
 
   useEffect(() => {
     loadWorkers();
     loadClients();
-    loadProjects();
-    loadProjectAssignments();
+    loadRecentProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const loadProjects = async () => {
-      try {
-        const data = await fetchProjectsForCompany(profile.id);
-        setProjects(data);
-      } catch (error) {
-        console.log("Failed to load projects:", error);
-      } 
-    };
-
-    const loadProjectAssignments = async () => {
-        try {
-          const data = await fetchProjectAssignments(profile.id);
-          setProjectAssignments(data);
-        } catch (error) {
-          console.log("Failed to load project assignments:", error);
-        }
-      };
 
   const loadClients = async () => {
     try {
@@ -190,6 +168,15 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
       setWorkers(data);
     } catch (error) {
       console.log("Failed to load workers:", error);
+    }
+  };
+
+  const loadRecentProjects = async () => {
+    try {
+      const data = await getRecentProjects(profile.id);
+      setRecentProjects(data);
+    } catch (error) {
+      console.error("Failed to load recent projects:", error);
     }
   };
 
@@ -310,21 +297,27 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
               </Button>
             </SidebarGroupLabel>
             <SidebarGroupContent className="space-y-1">
-                {data.recentProjects.map((project, index) => (
-                <SidebarMenuItem key={index}>
-                  <SidebarMenuButton
-                    asChild
-                    className="w-full px-2 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50 rounded-md transition-colors duration-200"
-                  >
-                    <a href={`/dashboard/projects/${project.name.replace(/\s+/g, '-').toLowerCase()}`} className="flex items-center gap-2">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
-                        <Briefcase className="h-3 w-3 text-primary" />
-                      </div>
-                      <span className="flex-1 truncate">{project.name}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                ))}
+              {recentProjects.length === 0 ? (
+                <div className="px-2 py-1.5 text-sm text-sidebar-foreground/60">
+                  No recent projects
+                </div>
+              ) : (
+                recentProjects.map((project) => (
+                  <SidebarMenuItem key={project.id}>
+                    <SidebarMenuButton
+                      asChild
+                      className="w-full px-2 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50 rounded-md transition-colors duration-200"
+                    >
+                      <a href={`/dashboard/projects/${project.id}`} className="flex items-center gap-2">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
+                          <Briefcase className="h-3 w-3 text-primary" />
+                        </div>
+                        <span className="flex-1 truncate">{project.name}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
             </SidebarGroupContent>
           </SidebarGroup>
         )}
@@ -359,8 +352,7 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
         clients={clients}
         workers={workers}
         onSuccess={() => {
-          loadProjects();
-          loadProjectAssignments();
+          loadClients();
         }}
       />
     </Sidebar>

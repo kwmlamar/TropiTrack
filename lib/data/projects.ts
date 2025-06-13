@@ -24,7 +24,8 @@ export async function getProjects(
         `
         *,
         client:clients(id, name, company),
-        project_manager:users(id, first_name, last_name),
+        project_manager:users!projects_project_manager_id_fkey(id, first_name, last_name),
+        created_by_user:users!projects_created_by_fkey(id, first_name, last_name),
         assigned_workers:project_assignments(
           worker:workers(id, name, role)
         ),
@@ -103,11 +104,12 @@ export async function getProject(
         `
         *,
         client:clients(id, name, company),
-        project_manager:users(id, first_name, last_name),
+        project_manager:users!projects_project_manager_id_fkey(id, first_name, last_name),
+        created_by_user:users!projects_created_by_fkey(id, first_name, last_name),
         assigned_workers:project_assignments(
           worker:workers(id, name, role)
         ),
-        _count:time_entries(count)
+        _count:timesheets(count)
       `
       )
       .eq("company_id", companyId)

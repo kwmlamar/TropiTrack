@@ -52,6 +52,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { ProjectDialog } from "@/components/forms/form-dialogs";
+import Link from "next/link";
 
 const columns = [
   "Project",
@@ -443,48 +444,33 @@ export default function ProjectsTable({ user }: { user: User }) {
           ) : (
             <div className="divide-y divide-border/50">
               {filteredProjects.map((project, i) => (
-                <div
+                <Link
                   key={project.id || i}
-                  className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
+                  href={`/dashboard/projects/${project.id}`}
+                  className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group cursor-pointer"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">
-                        {project.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {project.location || "Location TBD"}
-                      </p>
+                      <p className="font-semibold text-foreground">{project.name}</p>
+                      <p className="text-sm text-muted-foreground">{project.location || "Location TBD"}</p>
                     </div>
                   </div>
-
                   <div className="text-foreground">
-                    {clients.find((c) => c.id === project.client_id)?.name ||
-                      "Unknown Client"}
+                    {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
                   </div>
-
                   <div className="flex items-center space-x-2 text-foreground">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      {format(parseISO(project.start_date), "MMM d, yyyy")}
-                    </span>
+                    <span>{format(parseISO(project.start_date), "MMM d, yyyy")}</span>
                   </div>
-
                   <div>{getStatusBadge(project.status)}</div>
-
                   <div className="flex items-center space-x-2 text-foreground">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      {assignmentCounts.get(project.id) || 0}{" "}
-                      {(assignmentCounts.get(project.id) || 0) === 1
-                        ? "worker"
-                        : "workers"}
-                    </span>
+                    <span>{assignmentCounts.get(project.id) || 0}{(assignmentCounts.get(project.id) || 0) === 1 ? " worker" : " workers"}</span>
                   </div>
-
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -531,7 +517,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
