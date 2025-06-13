@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState } from "react";
-import { Plus, Edit, Users } from "lucide-react";
+import { Plus, Edit, Users, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +17,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
@@ -27,7 +25,6 @@ import { BulkTimesheetForm } from "./bulk-timesheet-form";
 import { WorkerForm } from "./worker-form";
 import { ProjectForm } from "./project-form";
 import { ClientForm } from "./client-form";
-import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Worker } from "@/lib/types/worker";
 import type { Client } from "@/lib/types/client";
 
@@ -53,11 +50,17 @@ export function TimesheetDialog({
   trigger,
 }: TimesheetDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSuccess = (data: any) => {
-    setOpen(false);
-    onSuccess?.(data);
+  const handleSuccess = async (data: any) => {
+    setIsLoading(true);
+    try {
+      await onSuccess?.(data);
+      setOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -68,7 +71,7 @@ export function TimesheetDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button>
+          <Button className="transition-all duration-200 hover:scale-105">
             {timesheet ? (
               <Edit className="h-4 w-4 mr-2" />
             ) : (
@@ -78,25 +81,32 @@ export function TimesheetDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto border-border/50 bg-card/50 backdrop-blur-sm">
         <DialogHeader>
-          <DialogTitle className="sr-only">
+          <DialogTitle className="text-xl font-semibold">
             {timesheet ? "Edit Timesheet" : "Create Timesheet"}
           </DialogTitle>
-          <DialogDescription className="sr-only">
+          <DialogDescription className="text-muted-foreground">
             {timesheet
-              ? "Edit timesheet entry"
+              ? "Update timesheet entry details"
               : "Create a new timesheet entry"}
           </DialogDescription>
         </DialogHeader>
-        <TimesheetForm
-          userId={userId}
-          timesheet={timesheet}
-          workers={workers}
-          projects={projects}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
+        <div className="relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+          <TimesheetForm
+            userId={userId}
+            timesheet={timesheet}
+            workers={workers}
+            projects={projects}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -119,11 +129,17 @@ export function BulkTimesheetDialog({
   trigger,
 }: BulkTimesheetDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSuccess = (data: any[]) => {
-    setOpen(false);
-    onSuccess?.(data);
+  const handleSuccess = async (data: any[]) => {
+    setIsLoading(true);
+    try {
+      await onSuccess?.(data);
+      setOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -134,20 +150,25 @@ export function BulkTimesheetDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button>
+          <Button className="transition-all duration-200 hover:scale-105">
             <Users className="h-4 w-4 mr-2" />
             Bulk Timesheet Entry
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col border-border/50 bg-card/50 backdrop-blur-sm">
         <DialogHeader>
-          <DialogTitle className="sr-only">Bulk Timesheet Entry</DialogTitle>
-          <DialogDescription className="sr-only">
+          <DialogTitle className="text-xl font-semibold">Bulk Timesheet Entry</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Create multiple timesheet entries for the same project and date
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
           <BulkTimesheetForm
             userId={userId}
             workers={workers}
@@ -161,7 +182,7 @@ export function BulkTimesheetDialog({
   );
 }
 
-// Worker Sheet (using Sheet for better mobile experience)
+// Worker Sheet
 interface WorkerSheetProps {
   worker?: Worker;
   userId: string;
@@ -180,13 +201,19 @@ export function WorkerSheet({
   onOpenChange: controlledOnOpenChange,
 }: WorkerSheetProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const open = controlledOpen ?? internalOpen;
   const onOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
-  const handleSuccess = (data: Worker) => {
-    onOpenChange(false);
-    onSuccess?.(data);
+  const handleSuccess = async (data: Worker) => {
+    setIsLoading(true);
+    try {
+      await onSuccess?.(data);
+      onOpenChange(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -197,17 +224,16 @@ export function WorkerSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
 
-      <SheetTitle className="sr-only">
-        {worker ? "Edit Worker" : "Add Worker"}
-      </SheetTitle>
-      <SheetDescription className="sr-only">
-        {worker ? "Update worker details." : "Create a new worker."}
-      </SheetDescription>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-2xl overflow-y-auto px-4 sm:px-6"
+        className="w-full sm:max-w-2xl overflow-y-auto px-4 sm:px-6 border-border/50 bg-card/50 backdrop-blur-sm"
       >
-        <div className="pt-8">
+        <div className="pt-8 relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
           <WorkerForm
             worker={worker}
             userId={userId}
@@ -243,13 +269,19 @@ export function ProjectDialog({
   onOpenChange: controlledOnOpenChange,
 }: ProjectDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const open = controlledOpen ?? internalOpen;
   const onOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
-  const handleSuccess = (data: Project) => {
-    onOpenChange(false);
-    onSuccess?.(data);
+  const handleSuccess = async (data: Project) => {
+    setIsLoading(true);
+    try {
+      await onSuccess?.(data);
+      onOpenChange(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -260,26 +292,33 @@ export function ProjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 
-      <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="sr-only">
+      <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto border-border/50 bg-card/50 backdrop-blur-sm">
+        <DialogHeader className="">
+          <DialogTitle className="text-xl font-semibold">
             {project ? "Edit Project" : "New Project"}
           </DialogTitle>
-          <DialogDescription className="sr-only">
+          <DialogDescription className="text-muted-foreground">
             {project
               ? "Update the project details and assigned workers."
               : "Create a new project and assign team members."}
           </DialogDescription>
         </DialogHeader>
 
-        <ProjectForm
-          userId={userId}
-          project={project}
-          clients={clients}
-          workers={workers}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
+        <div className="relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+          <ProjectForm
+            userId={userId}
+            project={project}
+            clients={clients}
+            workers={workers}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -300,10 +339,16 @@ export function ClientDialog({
   trigger,
 }: ClientDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSuccess = (data: Client) => {
-    setOpen(false);
-    onSuccess?.(data);
+  const handleSuccess = async (data: Client) => {
+    setIsLoading(true);
+    try {
+      await onSuccess?.(data);
+      setOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -314,7 +359,7 @@ export function ClientDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button>
+          <Button className="transition-all duration-200 hover:scale-105">
             {client ? (
               <Edit className="h-4 w-4 mr-2" />
             ) : (
@@ -324,18 +369,30 @@ export function ClientDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto px-4 sm:px-6">
+      <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto border-border/50 bg-card/50 backdrop-blur-sm">
         <DialogHeader>
-          <VisuallyHidden>
-            <DialogTitle>{client ? "Edit Project" : "New Project"}</DialogTitle>
-          </VisuallyHidden>
+          <DialogTitle className="text-xl font-semibold">
+            {client ? "Edit Client" : "New Client"}
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            {client
+              ? "Update client information"
+              : "Add a new client to your company"}
+          </DialogDescription>
         </DialogHeader>
-        <ClientForm
-          client={client}
-          userId={userId}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
+        <div className="relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+          <ClientForm
+            client={client}
+            userId={userId}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

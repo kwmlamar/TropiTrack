@@ -61,7 +61,7 @@ import {
 
 interface ProjectFormProps {
   userId: string;
-  project?: Project & { assigned_worker_ids?: (string | number)[] };
+  project?: (Project & { assigned_worker_ids?: (string | number)[]; status: Project["status"]; priority: NonNullable<Project["priority"]>; });
   clients: Client[];
   workers: Worker[];
   onSuccess?: (project: Project) => void;
@@ -109,24 +109,26 @@ export function ProjectForm({
 
   const isEditing = !!project;
 
+  const defaultValues = {
+    name: project?.name ?? "",
+    client_id: project?.client_id ?? "",
+    start_date: project?.start_date ?? null,
+    status: project?.status ?? "not_started",
+    priority: project?.priority ?? "medium",
+    description: project?.description ?? "",
+    location: project?.location ?? "",
+    end_date: project?.end_date ?? null,
+    budget: typeof project?.budget === "number" ? project.budget : undefined,
+  } as ProjectFormData;
+
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
-    defaultValues: {
-      name: project?.name ?? "",
-      description: project?.description ?? "",
-      client_id: project?.client_id ?? "",
-      location: project?.location ?? "",
-      start_date: project?.start_date ?? null, // null is valid for dates
-      end_date: project?.end_date ?? null,
-      budget: project?.budget ?? undefined, // ok if you know it's optional
-      status: project?.status ?? "not_started",
-    },
+    defaultValues,
   });
 
   const onSubmit = async (data: ProjectFormData) => {
     setIsSubmitting(true);
     try {
-
       let result;
       if (isEditing) {
         const updateData: UpdateProject = {
@@ -138,10 +140,10 @@ export function ProjectForm({
           end_date: data.end_date || null,
           budget: data.budget,
           status: data.status,
+          priority: data.priority,
         };
         result = await updateProject(userId, project.id, updateData);
         if (result.data) {
-          // 1. Fetch current assigned workers (active only)
           const existingAssignments = await fetchProjectAssignments(
             userId,
             project.id
@@ -150,7 +152,6 @@ export function ProjectForm({
           const existingWorkerIds =
             existingAssignments?.map((a) => a.worker_id) || [];
 
-          // 2. Find removed and newly added workers
           const removedWorkerIds = existingWorkerIds.filter(
             (id) => !selectedWorkers.includes(id)
           );
@@ -158,12 +159,10 @@ export function ProjectForm({
             (id) => !existingWorkerIds.includes(id)
           );
 
-          // 3. Unassign removed workers
           for (const workerId of removedWorkerIds) {
             await unassignWorkerFromProject(userId, project.id, workerId);
           }
 
-          // 4. Assign new workers
           if (addedWorkerIds.length > 0) {
             await assignWorkersToProject(userId, project.id, addedWorkerIds);
           }
@@ -179,15 +178,12 @@ export function ProjectForm({
           start_date: data.start_date,
           end_date: data.end_date || null,
           budget: data.budget,
-          status: data.status || "not_started",
-          priority: data.priority || "medium",
+          status: data.status,
+          priority: data.priority,
           is_active: true,
         };
 
-        console.log("🆕 Creating project with:", newProject);
-
         result = await createProject(userId, newProject);
-        console.log("✅ Create result:", result);
 
         if (result.success && result.data) {
           await assignWorkersToProject(userId, result.data.id, selectedWorkers);
@@ -202,7 +198,6 @@ export function ProjectForm({
       }
     } catch (error) {
       console.error("Error saving project:", error);
-      // You could add toast notification here
     } finally {
       setIsSubmitting(false);
     }
@@ -219,13 +214,13 @@ export function ProjectForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="sr-only">
+            <CardTitle className="flex items-center gap-2 text-xl">
               <Building2 className="h-5 w-5" />
               {isEditing ? "Edit Project" : "New Project"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               {isEditing
                 ? "Update project information"
                 : "Create a new construction project"}
@@ -241,7 +236,11 @@ export function ProjectForm({
                   <FormItem>
                     <FormLabel>Project Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Paradise Resort Phase 1" {...field} />
+                      <Input 
+                        placeholder="Paradise Resort Phase 1" 
+                        {...field}
+                        className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -259,7 +258,7 @@ export function ProjectForm({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
                           <SelectValue placeholder="Select a client" />
                         </SelectTrigger>
                       </FormControl>
@@ -294,7 +293,7 @@ export function ProjectForm({
                   <FormControl>
                     <Textarea
                       placeholder="Describe the project scope and objectives..."
-                      className="resize-none"
+                      className="resize-none transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                       {...field}
                     />
                   </FormControl>
@@ -314,7 +313,7 @@ export function ProjectForm({
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="Nassau, Bahamas"
-                        className="pl-10"
+                        className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                         {...field}
                       />
                     </div>
@@ -324,7 +323,7 @@ export function ProjectForm({
               )}
             />
 
-            <Separator />
+            <Separator className="my-6" />
 
             {/* Timeline and Budget */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -340,7 +339,7 @@ export function ProjectForm({
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full pl-3 text-left font-normal",
+                              "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-muted/50",
                               !field.value && "text-muted-foreground"
                             )}
                           >
@@ -356,20 +355,15 @@ export function ProjectForm({
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={
-                            field.value
-                              ? typeof field.value === 'string'
-                                ? parseISO(field.value)
-                                : field.value
-                              : undefined
-                          }
+                          selected={startDate}
                           onSelect={(date) => {
-                            setStartDate(date ?? undefined);
+                            setStartDate(date);
                             field.onChange(
                               date ? date.toISOString().split("T")[0] : null
                             );
                           }}
                           disabled={(date) => date < new Date("1900-01-01")}
+                          className="rounded-md border"
                         />
                       </PopoverContent>
                     </Popover>
@@ -390,7 +384,7 @@ export function ProjectForm({
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full pl-3 text-left font-normal",
+                              "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-muted/50",
                               !field.value && "text-muted-foreground"
                             )}
                           >
@@ -419,6 +413,7 @@ export function ProjectForm({
                             }
                             return date < new Date("1900-01-01");
                           }}
+                          className="rounded-md border"
                         />
                       </PopoverContent>
                     </Popover>
@@ -441,9 +436,9 @@ export function ProjectForm({
                           min="0"
                           step="1"
                           placeholder="100000.00"
-                          className="pl-10"
+                          className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                           {...field}
-                          value={field.value ?? ""} // ✅ control it
+                          value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(
                               e.target.value
@@ -471,7 +466,7 @@ export function ProjectForm({
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
                         <SelectValue placeholder="Select project status" />
                       </SelectTrigger>
                     </FormControl>
@@ -492,7 +487,7 @@ export function ProjectForm({
               )}
             />
 
-            <Separator />
+            <Separator className="my-6" />
 
             {/* Worker Assignment */}
             <div className="space-y-4">
@@ -510,9 +505,9 @@ export function ProjectForm({
                   <div
                     key={worker.id}
                     className={cn(
-                      "flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-colors",
+                      "flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-all duration-200",
                       selectedWorkers.includes(worker.id)
-                        ? "bg-primary/10 border-primary"
+                        ? "bg-primary/10 border-primary hover:bg-primary/20"
                         : "bg-muted/50 border-border hover:bg-muted"
                     )}
                     onClick={() => toggleWorker(worker.id)}
@@ -544,10 +539,19 @@ export function ProjectForm({
 
         {/* Form Actions */}
         <div className="flex items-center justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className="transition-all duration-200 hover:bg-muted"
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="transition-all duration-200 hover:scale-105"
+          >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditing ? "Update Project" : "Create Project"}
           </Button>

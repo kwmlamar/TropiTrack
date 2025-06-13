@@ -395,7 +395,7 @@ export function BulkTimesheetForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="sr-only">
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
               Bulk Timesheet Entry
