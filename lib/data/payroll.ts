@@ -236,7 +236,7 @@ export async function generatePayrollForWorkerAndPeriod(
     approvedTimesheets.forEach(ts => {
       totalHours += ts.total_hours;
       totalOvertimeHours += ts.overtime_hours;
-      grossPay += (ts.regular_hours * hourlyRate) + (ts.overtime_hours * hourlyRate * 1.5);
+      grossPay += (ts.total_hours * hourlyRate) + (ts.overtime_hours * hourlyRate * 1.5);
     });
     console.log(`[PayrollGen] Calculated totals: TotalHours=${totalHours}, OvertimeHours=${totalOvertimeHours}, GrossPay=${grossPay}`);
 
