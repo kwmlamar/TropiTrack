@@ -519,7 +519,18 @@ export function BulkTimesheetForm({
                               mode="range"
                               defaultMonth={field.value?.from ?? new Date()}
                               selected={field.value}
-                              onSelect={field.onChange}
+                              onSelect={(range) => {
+                                if (!range) {
+                                  field.onChange(null);
+                                  return;
+                                }
+                                // If only from date is selected, use it as both from and to
+                                if (range.from && !range.to) {
+                                  field.onChange({ from: range.from, to: range.from });
+                                } else {
+                                  field.onChange(range);
+                                }
+                              }}
                               numberOfMonths={2}
                               weekStartsOn={getPeriodStartDay()}
                               disabled={(date) =>
