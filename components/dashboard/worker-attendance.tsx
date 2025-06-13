@@ -21,7 +21,7 @@ export function WorkerAttendance() {
     <Card className="border-border/50">
       <CardHeader className="pb-2">
         <CardTitle>Worker Attendance</CardTitle>
-        <CardDescription>Today's attendance summary</CardDescription>
+        <CardDescription>Today&apos;s attendance summary</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">
