@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Clock, Users, Building2, Download, Plus, UsersRound, Trash2 } from "lucide-react"
+import { CalendarDays, Clock, Users, Building2, Download, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 
@@ -26,7 +25,7 @@ import {
 } from "@/lib/data/timesheets"
 import { generatePayrollForWorkerAndPeriod } from "@/lib/data/payroll"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
-import { TimesheetDialog, BulkTimesheetDialog } from "@/components/forms/form-dialogs"
+import { BulkTimesheetDialog } from "@/components/forms/form-dialogs"
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
@@ -470,40 +469,18 @@ export default function TimesheetsPage({user}: {user: User}) {
             Export
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <BulkTimesheetDialog
+            userId={user.id}
+            workers={workers}
+            projects={projects}
+            onSuccess={loadTimesheets}
+            trigger={
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Entry
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <TimesheetDialog
-                userId={user.id}
-                workers={workers}
-                projects={projects}
-                onSuccess={loadTimesheets}
-                trigger={
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Clock className="h-4 w-4 mr-2" />
-                    Single Timesheet
-                  </DropdownMenuItem>
-                }
-              />
-              <BulkTimesheetDialog
-                userId={user.id}
-                workers={workers}
-                projects={projects}
-                onSuccess={loadTimesheets}
-                trigger={
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <UsersRound className="h-4 w-4 mr-2" />
-                    Bulk Entry
-                  </DropdownMenuItem>
-                }
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+          />
         </div>
       </div>
 
@@ -747,7 +724,7 @@ export default function TimesheetsPage({user}: {user: User}) {
                               </td>
                               <td className="p-2">
                                 <div className="font-medium">{worker?.name || "Unknown Worker"}</div>
-                                <div className="text-sm text-muted-foreground">{worker?.role || "Worker"}</div>
+                                <div className="text-sm text-muted-foreground">{worker?.position || "Worker"}</div>
                               </td>
                               <td className="p-2">
                                 <div className="text-sm">
@@ -835,7 +812,7 @@ export default function TimesheetsPage({user}: {user: User}) {
                         </td>
                         <td className="p-2">
                           <div className="font-medium">{timesheet.worker?.name || "Unknown Worker"}</div>
-                          <div className="text-sm text-muted-foreground">{timesheet.worker?.role || "Worker"}</div>
+                          <div className="text-sm text-muted-foreground">{timesheet.worker?.position || "Worker"}</div>
                         </td>
                         <td className="p-2">
                           <div className="font-medium">{timesheet.project?.name || "Unknown Project"}</div>
@@ -918,7 +895,7 @@ export default function TimesheetsPage({user}: {user: User}) {
                 <Card key={workerId} className="p-4">
                   <div className="space-y-2">
                     <div className="font-medium">{workers.find(w => w.id === workerId)?.name || "Unknown Worker"}</div>
-                    <div className="text-sm text-muted-foreground">{workers.find(w => w.id === workerId)?.role || "Worker"}</div>
+                    <div className="text-sm text-muted-foreground">{workers.find(w => w.id === workerId)?.position || "Worker"}</div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         Total Hours: <span className="font-medium">{Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.total_hours, 0)}h</span>

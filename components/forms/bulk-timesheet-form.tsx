@@ -13,6 +13,7 @@ import {
   User,
   Calculator,
   Copy,
+  Check,
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { z } from "zod";
@@ -57,6 +58,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 
 import { createTimesheet } from "@/lib/data/timesheets";
 import type { CreateTimesheetInput, TimesheetWithDetails } from "@/lib/types";
@@ -151,6 +159,8 @@ export function BulkTimesheetForm({
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TimeTemplate | null>(null);
+  const [selectedWorkers, setSelectedWorkers] = useState<Set<string>>(new Set());
+  const [workerSelectOpen, setWorkerSelectOpen] = useState(false);
   
   const { paymentSchedule } = usePayrollSettings();
 
@@ -391,11 +401,30 @@ export function BulkTimesheetForm({
     });
   };
 
+  // Add selected workers to the form
+  const addSelectedWorkers = () => {
+    selectedWorkers.forEach(workerId => {
+      const worker = workers.find(w => w.id === workerId);
+      if (worker) {
+        append({
+          worker_id: worker.id,
+          clock_in: "07:00",
+          clock_out: "16:00",
+          break_duration: 60,
+          hourly_rate: worker.hourly_rate || 0,
+          task_description: "",
+          notes: "",
+        });
+      }
+    });
+    setSelectedWorkers(new Set());
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
-          <CardHeader className="sr-only">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
               Bulk Timesheet Entry
@@ -538,6 +567,76 @@ export function BulkTimesheetForm({
 
             <Separator />
 
+            {/* Worker Selection */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Select Workers</h3>
+                <div className="flex gap-2">
+                  <Popover open={workerSelectOpen} onOpenChange={setWorkerSelectOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <User className="h-4 w-4 mr-2" />
+                        Select Workers
+                        {selectedWorkers.size > 0 && (
+                          <span className="ml-2 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs">
+                            {selectedWorkers.size}
+                          </span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="end">
+                      <Command>
+                        <CommandInput placeholder="Search workers..." />
+                        <CommandEmpty>No workers found.</CommandEmpty>
+                        <CommandGroup>
+                          {workers.map((worker) => (
+                            <CommandItem
+                              key={worker.id}
+                              onSelect={() => {
+                                setSelectedWorkers(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(worker.id)) {
+                                    next.delete(worker.id);
+                                  } else {
+                                    next.add(worker.id);
+                                  }
+                                  return next;
+                                });
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "h-4 w-4 rounded-sm border border-primary",
+                                  selectedWorkers.has(worker.id) ? "bg-primary text-primary-foreground" : "opacity-50"
+                                )}>
+                                  {selectedWorkers.has(worker.id) && (
+                                    <Check className="h-4 w-4" />
+                                  )}
+                                </div>
+                                <span>{worker.name}</span>
+                                <span className="text-muted-foreground">({worker.position})</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={addSelectedWorkers}
+                    disabled={selectedWorkers.size === 0}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Selected Workers
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Time Templates */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -564,42 +663,9 @@ export function BulkTimesheetForm({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Worker Entries</h3>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Add 5 empty rows at once for faster data entry
-                      Array.from({ length: 5 }).forEach(() => {
-                        append({
-                          worker_id: "",
-                          clock_in: "07:00",
-                          clock_out: "16:00",
-                          break_duration: 60,
-                          hourly_rate: 0,
-                          task_description: "",
-                          notes: "",
-                        });
-                      });
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add 5 Workers
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addRow}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Worker
-                  </Button>
-                </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {fields.map((field, index) => (
                   <Card
                     key={field.id}
@@ -634,7 +700,6 @@ export function BulkTimesheetForm({
                                         <div className="flex items-center gap-2">
                                           <User className="h-4 w-4" />
                                           <span>{worker.name}</span>
-                                          <span className="text-muted-foreground">({worker.role})</span>
                                         </div>
                                       </SelectItem>
                                     ))}
@@ -817,19 +882,53 @@ export function BulkTimesheetForm({
                     </CardContent>
                   </Card>
                 ))}
-              </div>
 
-              {fields.length === 0 && (
-                <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
-                  <p className="text-muted-foreground mb-4">
-                    No worker entries added yet
-                  </p>
-                  <Button type="button" variant="outline" onClick={addRow}>
-                    <Plus className="mr-2 h-4 w-4" />
+                {fields.length === 0 && (
+                  <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
+                    <p className="text-muted-foreground mb-4">
+                      No worker entries added yet
+                    </p>
+                    <Button type="button" variant="outline" onClick={addRow}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Worker
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Add 5 empty rows at once for faster data entry
+                      Array.from({ length: 5 }).forEach(() => {
+                        append({
+                          worker_id: "",
+                          clock_in: "07:00",
+                          clock_out: "16:00",
+                          break_duration: 60,
+                          hourly_rate: 0,
+                          task_description: "",
+                          notes: "",
+                        });
+                      });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add 5 Workers
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addRow}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
                     Add Worker
                   </Button>
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 border-t bg-muted/20 mt-6">
@@ -894,7 +993,7 @@ export function BulkTimesheetForm({
             )}
 
             {/* Form Actions */}
-            <div className="flex items-center justify-end space-x-2">
+            <div className="w-full flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>

@@ -226,7 +226,7 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                     <Image
                       src="/logo/1.png"
                       alt="TropiTrack Logo"
-                      width={isCollapsed ? 32 : 100}
+                      width={isCollapsed ? 32 : 85}
                       height={isCollapsed ? 32 : 50}
                       className="block dark:hidden transition-all duration-200"
                       priority
@@ -234,7 +234,7 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                     <Image
                       src="/logo/2.png"
                       alt="TropiTrack Dark Logo"
-                      width={isCollapsed ? 32 : 100}
+                      width={isCollapsed ? 32 : 85}
                       height={isCollapsed ? 32 : 50}
                       className="hidden dark:block transition-all duration-200"
                       priority

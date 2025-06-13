@@ -160,7 +160,7 @@ export function BulkTimesheetDialog({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col border-border/50 bg-card/50 backdrop-blur-sm">
-        <DialogHeader>
+        <DialogHeader className="sr-only">
           <DialogTitle className="text-xl font-semibold">Bulk Timesheet Entry</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Create multiple timesheet entries for the same project and date
