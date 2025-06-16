@@ -355,8 +355,9 @@ function calculateTimesheetTotals(
     totalHours = durationMs / (1000 * 60 * 60) - (breakDuration / 60);
   }
 
-  const overtimeHours = Math.max(0, totalHours - 8); // Assuming 8 hours is regular
-  const regularHours = Math.max(0, totalHours - overtimeHours);
+  // Calculate overtime hours (anything over 8 hours)
+  const overtimeHours = Math.max(0, totalHours - 8);
+  const regularHours = Math.min(totalHours, 8);
 
   const totalPay =
     regularHours * workerHourlyRate +
@@ -398,13 +399,18 @@ export async function getTimesheetSummary(
     }
 
     const summary = result.data.reduce(
-      (acc, timesheet) => ({
-        totalHours: acc.totalHours + timesheet.total_hours,
-        totalRegularHours: acc.totalRegularHours + timesheet.regular_hours,
-        totalOvertimeHours: acc.totalOvertimeHours + timesheet.overtime_hours,
-        totalPay: acc.totalPay + timesheet.total_pay,
-        timesheetCount: acc.timesheetCount + 1,
-      }),
+      (acc, timesheet) => {
+        const regularPay = timesheet.regular_hours * (timesheet.worker?.hourly_rate || 0);
+        const overtimePay = timesheet.overtime_hours * (timesheet.worker?.hourly_rate || 0) * 1.5;
+        
+        return {
+          totalHours: acc.totalHours + timesheet.total_hours,
+          totalRegularHours: acc.totalRegularHours + timesheet.regular_hours,
+          totalOvertimeHours: acc.totalOvertimeHours + timesheet.overtime_hours,
+          totalPay: acc.totalPay + regularPay + overtimePay,
+          timesheetCount: acc.timesheetCount + 1,
+        };
+      },
       {
         totalHours: 0,
         totalRegularHours: 0,

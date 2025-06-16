@@ -139,7 +139,7 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
                 {record.worker_name || record.worker_id}
               </div>
               <div className="text-sm text-muted-foreground">
-                {record.position || "No Role"}
+                {record.position || "Worker"}
               </div>
             </div>
           </div>

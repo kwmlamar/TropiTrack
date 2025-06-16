@@ -97,21 +97,26 @@ export function WorkerForm({
   const onSubmit = async (data: WorkerFormData) => {
     setIsSubmitting(true);
     try {
+      const workerData = {
+        ...data,
+        email: data.email || undefined,
+        nib_number: data.nib_number || undefined,
+      };
+
       let result;
       if (isEditing) {
-        result = await updateWorker(userId, worker.id, data);
+        result = await updateWorker(userId, worker.id, workerData);
       } else {
-        result = await createWorker(userId, data);
+        result = await createWorker(userId, workerData);
       }
 
-      if (result) {
-        onSuccess?.(result);
+      if (result.success && result.data) {
+        onSuccess?.(result.data);
       } else {
-        throw new Error("Failed to save worker");
+        throw new Error(result.error || "Failed to save worker");
       }
     } catch (error) {
       console.error("Error saving worker:", error);
-      // You could add toast notification here
     } finally {
       setIsSubmitting(false);
     }
@@ -322,7 +327,11 @@ export function WorkerForm({
                         step="0.01"
                         placeholder="20.00"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : Number(e.target.value);
+                          field.onChange(value);
+                        }}
+                        value={field.value || 0}
                       />
                     </FormControl>
                     <FormMessage />
