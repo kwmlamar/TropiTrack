@@ -244,7 +244,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
         </div>
       </div>
 
-      <Card>
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Timesheet Approvals</CardTitle>
         </CardHeader>
@@ -272,7 +272,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                       const isAllSelected = timesheets.every(ts => selectedTimesheetIds.has(ts.id))
 
                       return (
-                        <Card key={periodKey} className="border-muted">
+                        <Card key={periodKey} className="border-border/50 bg-card/50 backdrop-blur-sm">
                           <CardHeader className="py-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">

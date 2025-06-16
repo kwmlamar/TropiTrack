@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { WorkerSheet } from "@/components/forms/form-dialogs";
+import { useRouter } from "next/navigation";
 
 const columns = ["Name", "Pay Rate", "Status"];
 
@@ -44,6 +45,7 @@ export default function WorkersTable({ user }: { user: User }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     loadWorkers();
@@ -73,6 +75,10 @@ export default function WorkersTable({ user }: { user: User }) {
       setIsDeleteDialogOpen(false);
       loadWorkers();
     }
+  };
+
+  const handleRowClick = (workerId: string) => {
+    router.push(`/dashboard/workers/${workerId}`);
   };
 
   // Calculate statistics
@@ -236,7 +242,8 @@ export default function WorkersTable({ user }: { user: User }) {
               {filteredWorkers.map((worker, i) => (
                 <div
                   key={worker.id || i}
-                  className="grid grid-cols-[2fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
+                  className="grid grid-cols-[2fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group cursor-pointer"
+                  onClick={() => handleRowClick(worker.id)}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -276,7 +283,7 @@ export default function WorkersTable({ user }: { user: User }) {
                     </Badge>
                   </div>
 
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

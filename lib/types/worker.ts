@@ -52,12 +52,14 @@ export type WorkerWithDetails = Worker & {
     last_name?: string
   }
   current_projects?: {
-    id: string
-    name: string
+    project: {
+      id: string
+      name: string
+    }
     role_on_project?: string
   }[]
   _count?: {
-    time_entries: number
+    timesheets: number
     project_assignments: number
   }
 }

@@ -516,22 +516,22 @@ export default function TimesheetsPage({ user }: { user: User }) {
           <TabsList className="inline-flex h-12 items-center justify-start p-1 bg-transparent">
             <TabsTrigger
               value="timesheets"
-              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-200 data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px]"
+              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px]"
             >
               Timesheets
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-200 group-data-[state=active]:scale-x-100" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
             </TabsTrigger>
 
             <TabsTrigger
               value="approvals"
-              className="relative px-4 py-2.5 text-sm font-medium transition-all duration-200 data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px]"
+              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px]"
             >
               Approvals
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary scale-x-0 transition-transform duration-200 data-[state=active]:scale-x-100" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
             </TabsTrigger>
           </TabsList>
         </div>
-        <TabsContent value="timesheets" className="mt-6 space-y-6">
+        <TabsContent value="timesheets" className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">View Timesheets</h1>
@@ -957,7 +957,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
             </Card>
           )}
         </TabsContent>
-        <TabsContent value="approvals" className="mt-6 space-y-6">
+        <TabsContent value="approvals" className="container mx-auto p-6 space-y-6">
           <ApprovalsPage
             timesheets={timesheets}
             onApprove={handleApproveTimesheet}
@@ -966,16 +966,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
           />
         </TabsContent>
       </Tabs>
-
-      <BulkTimesheetDialog
-        userId={user.id}
-        workers={workers}
-        projects={projects}
-        onSuccess={loadTimesheets}
-        trigger={
-          <Button>Create Timesheets</Button>
-        }
-      />
     </div>
   )
 }

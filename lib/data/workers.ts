@@ -81,12 +81,12 @@ export async function getWorker(companyId: string, id: string): Promise<ApiRespo
       .from("workers")
       .select(`
         *,
-        user:users(id, email, first_name, last_name),
+        user:users!workers_user_id_fkey(id, email, first_name, last_name),
         current_projects:project_assignments(
           project:projects(id, name),
           role_on_project
         ),
-        _count:time_entries(count)
+        _count:timesheets(count)
       `)
       .eq("company_id", companyId)
       .eq("id", id)
