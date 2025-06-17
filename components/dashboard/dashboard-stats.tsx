@@ -158,7 +158,7 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
       color: "green",
     },
     {
-      title: "Payroll This Month",
+      title: `Payroll for this ${viewMode === "daily" ? "Day" : viewMode === "weekly" ? "Week" : "Month"}`,
       value: formatCurrency(stats.payroll.value),
       change: formatChange(stats.payroll.change),
       trend: stats.payroll.change >= 0 ? "up" : "down",
