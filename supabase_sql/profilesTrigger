@@ -2,8 +2,8 @@
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, role, created_at)
-  values (new.id, 'employee', now());
+  insert into public.profiles (id, role, created_at, name)
+  values (new.id, 'employee', now(), new.raw_user_meta_data->>'full_name');
   return new;
 end;
 $$ language plpgsql security definer;

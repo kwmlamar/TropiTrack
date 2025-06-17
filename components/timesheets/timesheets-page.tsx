@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Clock, Users, Building2, Trash2 } from "lucide-react"
+import { CalendarDays, Clock, Users, DollarSign, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -561,46 +561,78 @@ export default function TimesheetsPage({ user }: { user: User }) {
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Workers</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{groupedTimesheets.size}</div>
-                <p className="text-xs text-muted-foreground">Active this {viewMode === "daily" ? "day" : "week"}</p>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Total Workers
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {groupedTimesheets.size}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Active this {viewMode === "daily" ? "day" : "week"}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{summary.totalRegularHours}</div>
-                <p className="text-xs text-muted-foreground">Regular hours worked</p>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Total Hours
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {summary.totalRegularHours}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Regular hours worked</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Overtime Hours</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{summary.totalOvertimeHours}</div>
-                <p className="text-xs text-muted-foreground">Extra hours worked</p>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-orange-500/10 rounded-lg">
+                    <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Overtime Hours
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {summary.totalOvertimeHours}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Extra hours worked</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Pay</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${summary.totalPay}</div>
-                <p className="text-xs text-muted-foreground">Estimated pay</p>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-green-500/10 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Total Pay
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">
+                      ${summary.totalPay}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Estimated pay</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

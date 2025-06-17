@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { getUserProfile } from "@/lib/data/userProfiles"
+import { UserProfile } from "@/lib/types/userProfile"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -25,6 +27,16 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode)
   const [date, setDate] = useState<Date>(initialDate)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const profileData = await getUserProfile()
+      setProfile(profileData)
+    }
+    
+    fetchUserProfile()
+  }, [])
 
   useEffect(() => {
     onViewModeChange?.(viewMode)
@@ -83,7 +95,7 @@ export function DashboardHeader({
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here&apos;s an overview of your construction operations.</p>
+        <p className="text-muted-foreground">Welcome back {profile?.name}! Here&apos;s an overview of your construction operations.</p>
       </div>
 
       <div className="flex items-center gap-4">
