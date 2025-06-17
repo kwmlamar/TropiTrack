@@ -22,8 +22,6 @@ export function WorkerAttendanceChart({ data }: WorkerAttendanceChartProps) {
           outerRadius={80}
           paddingAngle={2}
           dataKey="value"
-          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-          labelLine={false}
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
