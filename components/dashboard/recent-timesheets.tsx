@@ -71,7 +71,7 @@ export function RecentTimesheets() {
   ]
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
           <CardTitle>Recent Timesheets</CardTitle>

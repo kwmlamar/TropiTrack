@@ -26,7 +26,7 @@ export function UpcomingDeadlines() {
   ]
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <CardTitle>Upcoming Deadlines</CardTitle>
         <CardDescription>Important dates and reminders</CardDescription>

@@ -4,7 +4,7 @@ import { ArrowRight, DollarSign } from "lucide-react"
 
 export function PayrollSummary() {
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <CardTitle>Payroll Summary</CardTitle>
         <CardDescription>Current pay period (Dec 4-10)</CardDescription>

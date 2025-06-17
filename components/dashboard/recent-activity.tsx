@@ -57,7 +57,7 @@ export function RecentActivity() {
   ]
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <CardTitle>Recent Activity</CardTitle>
         <CardDescription>Latest actions from your team</CardDescription>
