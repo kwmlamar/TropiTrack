@@ -524,12 +524,24 @@ export function BulkTimesheetForm({
                                   field.onChange(null);
                                   return;
                                 }
+<<<<<<< HEAD
                                 // If only from date is selected, use it as both from and to
                                 if (range.from && !range.to) {
                                   field.onChange({ from: range.from, to: range.from });
                                 } else {
                                   field.onChange(range);
                                 }
+=======
+                                
+                                // If the same date is selected twice, treat it as a single day selection
+                                if (range.from && range.to && 
+                                    range.from.getTime() === range.to.getTime()) {
+                                  field.onChange({ from: range.from, to: range.from });
+                                  return;
+                                }
+                                
+                                field.onChange(range);
+>>>>>>> dashboard
                               }}
                               numberOfMonths={2}
                               weekStartsOn={getPeriodStartDay()}
