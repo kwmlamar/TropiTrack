@@ -7,7 +7,6 @@ import { PayrollTable } from "@/components/payroll/payroll-table"
 import { PayrollSummary } from "@/components/payroll/payroll-summary"
 import { PayrollActions } from "@/components/payroll/payroll-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import { NibComplianceCard } from "@/components/payroll/nib-compliance-card"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import type { PayrollRecord } from "@/lib/types"
@@ -23,7 +22,6 @@ import type { Table } from "@tanstack/react-table"
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
-  const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
     to: new Date(),
@@ -52,7 +50,6 @@ export default function PayrollPage({ user }: { user: User }) {
   }, [user, dateRange, payPeriodType])
 
   const loadPayroll = async () => {
-    setLoading(true)
     try {
       const filters: { date_from?: string; date_to?: string; target_period_type: "weekly" | "bi-weekly" | "monthly" } = {
         target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly"
@@ -82,10 +79,8 @@ export default function PayrollPage({ user }: { user: User }) {
         })
         setPayrolls(processedPayrolls)
       }
-      setLoading(false)
     } catch (error) {
       console.error('Failed to load payroll data:', error)
-      setLoading(false)
     }
   }
 
@@ -175,16 +170,12 @@ export default function PayrollPage({ user }: { user: User }) {
               </Button>
             </CardHeader>
             <CardContent className="px-6">
-              {loading || settingsLoading ? (
-                <PayrollTableSkeleton />
-              ) : (
-                <PayrollTable
-                  data={payrolls}
-                  selectedPayrollIds={selectedPayrollIds}
-                  setSelectedPayrollIds={setSelectedPayrollIds}
-                  onTableInit={handleTableInit}
-                />
-              )}
+              <PayrollTable
+                data={payrolls}
+                selectedPayrollIds={selectedPayrollIds}
+                setSelectedPayrollIds={setSelectedPayrollIds}
+                onTableInit={handleTableInit}
+              />
             </CardContent>
           </Card>
         </div>
@@ -199,20 +190,5 @@ export default function PayrollPage({ user }: { user: User }) {
         </div>
       </div>
     </div>
-  )
-}
-
-function PayrollTableSkeleton() {
-  return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-        </div>
-      </CardContent>
-    </Card>
   )
 }
