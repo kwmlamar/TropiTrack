@@ -16,12 +16,12 @@ export async function getWorkers(
       .from("workers")
       .select(`
         *,
-        user:users(id, email, first_name, last_name),
+        user:users!workers_user_id_fkey(id, email, first_name, last_name),
         current_projects:project_assignments(
           project:projects(id, name),
           role_on_project
         ),
-        _count:time_entries(count)
+        _count:timesheets(count)
       `)
       .eq("company_id", companyId)
       .order("created_at", { ascending: false })

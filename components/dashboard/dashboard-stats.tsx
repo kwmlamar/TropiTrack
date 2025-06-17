@@ -29,8 +29,6 @@ export function DashboardStats() {
 
       // Get current date and previous period for comparison
       const now = new Date()
-      const currentMonth = format(now, 'yyyy-MM')
-      const previousMonth = format(new Date(now.getFullYear(), now.getMonth() - 1, 1), 'yyyy-MM')
 
       // Fetch timesheet summary
       const timesheetSummary = await getTimesheetSummary(profile.id, {
