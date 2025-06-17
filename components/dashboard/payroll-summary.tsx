@@ -5,10 +5,18 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, DollarSign } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
-import { format } from "date-fns"
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function PayrollSummary() {
-  const [loading, setLoading] = useState(true)
+type ViewMode = "daily" | "weekly" | "monthly"
+
+interface PayrollSummaryProps {
+  viewMode: ViewMode
+  selectedDate: Date
+  isLoading: boolean
+}
+
+export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) {
   const [payrollData, setPayrollData] = useState<{
     gross_pay: number
     nib_deduction: number
@@ -17,23 +25,38 @@ export function PayrollSummary() {
     pay_period_start: string
     pay_period_end: string
   } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const getDateRange = () => {
+    switch (viewMode) {
+      case "daily":
+        return {
+          start: startOfDay(selectedDate),
+          end: endOfDay(selectedDate)
+        }
+      case "weekly":
+        return {
+          start: startOfWeek(selectedDate),
+          end: endOfWeek(selectedDate)
+        }
+      case "monthly":
+        return {
+          start: startOfMonth(selectedDate),
+          end: endOfMonth(selectedDate)
+        }
+    }
+  }
 
   useEffect(() => {
     const fetchPayrollData = async () => {
       try {
-        // Get current date
-        const now = new Date()
-        // Get start of current week (Sunday)
-        const startOfWeek = new Date(now)
-        startOfWeek.setDate(now.getDate() - now.getDay())
-        // Get end of current week (Saturday)
-        const endOfWeek = new Date(startOfWeek)
-        endOfWeek.setDate(startOfWeek.getDate() + 6)
+        setLoading(true)
+        const { start, end } = getDateRange()
 
         const response = await getAggregatedPayrolls({
-          date_from: format(startOfWeek, "yyyy-MM-dd"),
-          date_to: format(endOfWeek, "yyyy-MM-dd"),
-          target_period_type: "weekly"
+          date_from: format(start, "yyyy-MM-dd"),
+          date_to: format(end, "yyyy-MM-dd"),
+          target_period_type: viewMode === "daily" ? "weekly" : viewMode
         })
 
         if (response.success && response.data && response.data.length > 0) {
@@ -55,16 +78,19 @@ export function PayrollSummary() {
           })
 
           setPayrollData(aggregated)
+        } else {
+          setPayrollData(null)
         }
       } catch (error) {
         console.error("Error fetching payroll data:", error)
+        setPayrollData(null)
       } finally {
         setLoading(false)
       }
     }
 
     fetchPayrollData()
-  }, [])
+  }, [viewMode, selectedDate])
 
   if (loading) {
     return (
@@ -73,6 +99,16 @@ export function PayrollSummary() {
           <CardTitle>Payroll Summary</CardTitle>
           <CardDescription>Loading...</CardDescription>
         </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
       </Card>
     )
   }
@@ -92,11 +128,22 @@ export function PayrollSummary() {
     return format(new Date(dateString), "MMM d")
   }
 
+  const getPeriodDescription = () => {
+    switch (viewMode) {
+      case "daily":
+        return "Today's"
+      case "weekly":
+        return "This week's"
+      case "monthly":
+        return "This month's"
+    }
+  }
+
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <CardTitle>Payroll Summary</CardTitle>
-        <CardDescription>Current pay period ({formatDate(payrollData.pay_period_start)}-{formatDate(payrollData.pay_period_end)})</CardDescription>
+        <CardDescription>{getPeriodDescription()} pay period ({formatDate(payrollData.pay_period_start)}-{formatDate(payrollData.pay_period_end)})</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">

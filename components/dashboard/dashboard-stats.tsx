@@ -6,10 +6,18 @@ import { useEffect, useState } from "react"
 import { getTimesheetSummary } from "@/lib/data/timesheets"
 import { getWorkers } from "@/lib/data/workers"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
-import { format } from "date-fns"
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 
-export function DashboardStats() {
+type ViewMode = "daily" | "weekly" | "monthly"
+
+interface DashboardStatsProps {
+  viewMode: ViewMode
+  selectedDate: Date
+  isLoading: boolean
+}
+
+export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) {
   const [stats, setStats] = useState({
     totalHours: { value: 0, change: 0 },
     activeWorkers: { value: 0, change: 0 },
@@ -20,26 +28,52 @@ export function DashboardStats() {
 
   useEffect(() => {
     loadStats()
-  }, [])
+  }, [viewMode, selectedDate])
+
+  const getDateRange = () => {
+    switch (viewMode) {
+      case "daily":
+        return {
+          start: startOfDay(selectedDate),
+          end: endOfDay(selectedDate)
+        }
+      case "weekly":
+        return {
+          start: startOfWeek(selectedDate),
+          end: endOfWeek(selectedDate)
+        }
+      case "monthly":
+        return {
+          start: startOfMonth(selectedDate),
+          end: endOfMonth(selectedDate)
+        }
+    }
+  }
 
   const loadStats = async () => {
     try {
+      setLoading(true)
       const profile = await getUserProfileWithCompany()
       if (!profile) return
 
-      // Get current date and previous period for comparison
-      const now = new Date()
+      const { start, end } = getDateRange()
 
       // Fetch timesheet summary
       const timesheetSummary = await getTimesheetSummary(profile.id, {
-        date_from: format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'),
-        date_to: format(now, 'yyyy-MM-dd')
+        date_from: format(start, 'yyyy-MM-dd'),
+        date_to: format(end, 'yyyy-MM-dd')
       })
 
-      // Fetch previous month's timesheet summary for comparison
+      // Fetch previous period's timesheet summary for comparison
+      const previousStart = new Date(start)
+      const previousEnd = new Date(end)
+      const periodLength = end.getTime() - start.getTime()
+      previousStart.setTime(previousStart.getTime() - periodLength)
+      previousEnd.setTime(previousEnd.getTime() - periodLength)
+
       const previousTimesheetSummary = await getTimesheetSummary(profile.id, {
-        date_from: format(new Date(now.getFullYear(), now.getMonth() - 1, 1), 'yyyy-MM-dd'),
-        date_to: format(new Date(now.getFullYear(), now.getMonth(), 0), 'yyyy-MM-dd')
+        date_from: format(previousStart, 'yyyy-MM-dd'),
+        date_to: format(previousEnd, 'yyyy-MM-dd')
       })
 
       // Fetch workers
@@ -50,9 +84,9 @@ export function DashboardStats() {
 
       // Fetch payroll data
       const payrollResponse = await getAggregatedPayrolls({
-        date_from: format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'),
-        date_to: format(now, 'yyyy-MM-dd'),
-        target_period_type: "monthly"
+        date_from: format(start, 'yyyy-MM-dd'),
+        date_to: format(end, 'yyyy-MM-dd'),
+        target_period_type: viewMode === "daily" ? "weekly" : viewMode
       })
 
       // Calculate stats
@@ -65,7 +99,7 @@ export function DashboardStats() {
       const workersChange = previousWorkers ? ((currentWorkers - previousWorkers) / previousWorkers) * 100 : 0
 
       const currentPayroll = payrollResponse.data?.reduce((sum, p) => sum + p.gross_pay, 0) || 0
-      const previousPayroll = 0 // TODO: Implement previous month payroll comparison
+      const previousPayroll = 0 // TODO: Implement previous period payroll comparison
       const payrollChange = previousPayroll ? ((currentPayroll - previousPayroll) / previousPayroll) * 100 : 0
 
       setStats({

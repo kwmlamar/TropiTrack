@@ -2,8 +2,60 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Briefcase } from "lucide-react"
+import { useEffect } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function ProjectProgress() {
+type ViewMode = "daily" | "weekly" | "monthly"
+
+interface ProjectProgressProps {
+  viewMode: ViewMode
+  selectedDate: Date
+  isLoading: boolean
+}
+
+export function ProjectProgress({ viewMode, selectedDate, isLoading }: ProjectProgressProps) {
+  
+
+  const loadProjectData = async () => {
+    try {
+      // TODO: Replace with actual API call
+      // This is mock data for now
+      
+    } catch (error) {
+      console.error("Error loading project data:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (!isLoading) {
+      loadProjectData()
+    }
+  }, [viewMode, selectedDate, isLoading])
+
+  if (isLoading) {
+    return (
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardHeader className="pb-2">
+          <CardTitle>Project Progress</CardTitle>
+          <CardDescription>Loading...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <Skeleton className="h-2 w-full" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">

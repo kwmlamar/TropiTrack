@@ -8,14 +8,42 @@ import { Input } from "@/components/ui/input"
 import { useEffect, useState, useCallback } from "react"
 import { getTimesheets } from "@/lib/data/timesheets"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
-import { format } from "date-fns"
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import type { TimesheetWithDetails } from "@/lib/types"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function RecentTimesheets() {
+type ViewMode = "daily" | "weekly" | "monthly"
+
+interface RecentTimesheetsProps {
+  viewMode: ViewMode
+  selectedDate: Date
+  isLoading: boolean
+}
+
+export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTimesheetsProps) {
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [error, setError] = useState<string | null>(null)
+
+  const getDateRange = () => {
+    switch (viewMode) {
+      case "daily":
+        return {
+          start: startOfDay(selectedDate),
+          end: endOfDay(selectedDate)
+        }
+      case "weekly":
+        return {
+          start: startOfWeek(selectedDate),
+          end: endOfWeek(selectedDate)
+        }
+      case "monthly":
+        return {
+          start: startOfMonth(selectedDate),
+          end: endOfMonth(selectedDate)
+        }
+    }
+  }
 
   const loadRecentTimesheets = useCallback(async () => {
     try {
@@ -23,14 +51,15 @@ export function RecentTimesheets() {
       const profile = await getUserProfileWithCompany()
       if (!profile) {
         setError("No profile found")
-        setLoading(false)
         return
       }
 
+      const { start, end } = getDateRange()
+
       const result = await getTimesheets(profile.id, {
         limit: 5,
-        date_from: format(new Date(new Date().setDate(new Date().getDate() - 7)), 'yyyy-MM-dd'),
-        date_to: format(new Date(), 'yyyy-MM-dd')
+        date_from: format(start, 'yyyy-MM-dd'),
+        date_to: format(end, 'yyyy-MM-dd')
       })
 
       if (result.success && result.data) {
@@ -41,14 +70,14 @@ export function RecentTimesheets() {
     } catch (error) {
       console.error('Failed to load recent timesheets:', error)
       setError("Failed to load timesheets")
-    } finally {
-      setLoading(false)
     }
-  }, [])
+  }, [viewMode, selectedDate])
 
   useEffect(() => {
-    loadRecentTimesheets()
-  }, [loadRecentTimesheets])
+    if (!isLoading) {
+      loadRecentTimesheets()
+    }
+  }, [loadRecentTimesheets, isLoading])
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
@@ -62,50 +91,21 @@ export function RecentTimesheets() {
     )
   })
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div>
-            <CardTitle>Recent Timesheets</CardTitle>
-            <CardDescription>Latest time entries from your team</CardDescription>
-          </div>
-          <Button variant="outline" size="sm" disabled>
-            View All
-          </Button>
+        <CardHeader className="pb-2">
+          <CardTitle>Recent Timesheets</CardTitle>
+          <CardDescription>Loading...</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="search" 
-                placeholder="Search timesheets..." 
-                className="w-full bg-background pl-8" 
-                disabled 
-                value=""
-              />
-            </div>
-            <Button variant="outline" size="icon" className="shrink-0" disabled>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border p-3 shadow-sm animate-pulse">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-muted" />
-                  <div className="space-y-2">
-                    <div className="h-4 w-32 bg-muted rounded" />
-                    <div className="h-3 w-24 bg-muted rounded" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="space-y-2">
-                    <div className="h-4 w-16 bg-muted rounded" />
-                    <div className="h-3 w-24 bg-muted rounded" />
-                  </div>
-                  <div className="h-6 w-20 bg-muted rounded" />
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[200px]" />
+                  <Skeleton className="h-4 w-[150px]" />
                 </div>
               </div>
             ))}
