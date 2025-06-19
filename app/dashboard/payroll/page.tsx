@@ -12,7 +12,9 @@ export default async function Page() {
 
   return (
     <DashboardLayout title="Payroll">
-      <PayrollPage user={user} />
+      <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
+        <PayrollPage user={user} />
+      </div>
     </DashboardLayout>
   );
 }

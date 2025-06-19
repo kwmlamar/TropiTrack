@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Clock, Users, DollarSign, Trash2 } from "lucide-react"
+import { CalendarDays, Clock, Users, DollarSign, Trash2, SlidersHorizontal, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu"
+import { Separator } from "@/components/ui/separator"
 
 import {
   getTimesheets,
@@ -33,6 +42,8 @@ import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 import { ApprovalsPage } from "./approvals-page"
 
 type AttendanceStatus = "present" | "absent" | "late"
+
+const ITEMS_PER_PAGE = 10;
 
 export default function TimesheetsPage({ user }: { user: User }) {
   // Updated state to use TimesheetWithDetails
@@ -52,11 +63,12 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [selectedWorker, setSelectedWorker] = useState<string>("all")
   const [selectedProject, setSelectedProject] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly")
-  const [searchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
   const [selectedTimesheetIds, setSelectedTimesheetIds] = useState<Set<string>>(new Set())
   const [isApproving, setIsApproving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
+  const [currentPage, setCurrentPage] = useState(1)
 
   const { paymentSchedule, loading: payrollLoading } = usePayrollSettings()
 
@@ -177,69 +189,73 @@ export default function TimesheetsPage({ user }: { user: User }) {
         return
       }
 
-      // If total_hours is being updated, calculate regular and overtime hours
-      let updateData = { id, [field]: value }
-      if (field === "total_hours") {
-        const totalHours = parseFloat(value)
-        const regularHours = Math.min(totalHours, 8)
-        const overtimeHours = Math.max(0, totalHours - 8)
-        updateData = {
-          id,
-          total_hours: totalHours,
-          regular_hours: regularHours,
-          overtime_hours: overtimeHours,
-        }
-
-        // Update local state immediately for smooth editing
-        setTimesheets((prev) =>
-          prev.map((ts) => {
-            if (ts.id === id) {
+      // Update local state immediately for smooth editing
+      setTimesheets((prev) =>
+        prev.map((ts) => {
+          if (ts.id === id) {
+            let updatedTimesheet = { ...ts, [field]: value }
+            
+            // If total_hours is being updated, calculate regular and overtime hours
+            if (field === "total_hours") {
+              const totalHours = parseFloat(value)
+              const regularHours = Math.min(totalHours, 8)
+              const overtimeHours = Math.max(0, totalHours - 8)
               const hourlyRate = ts.worker?.hourly_rate || 0
-              const updatedTimesheet = {
-                ...ts,
+              
+              updatedTimesheet = {
+                ...updatedTimesheet,
                 total_hours: totalHours,
                 regular_hours: regularHours,
                 overtime_hours: overtimeHours,
                 // Recalculate total pay based on new hours
                 total_pay: (regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5)
               }
-              return updatedTimesheet
+            }
+            
+            // Preserve nested worker and project data
+            return {
+              ...updatedTimesheet,
+              worker: ts.worker,
+              project: ts.project,
+            }
+          }
+          return ts
+        })
+      )
+
+      // Send update to server in background
+      const result = await updateTimesheetData({ id, [field]: value })
+
+      if (!result.success) {
+        // If server update failed, revert the local state change
+        setTimesheets((prev) =>
+          prev.map((ts) => {
+            if (ts.id === id) {
+              return {
+                ...ts,
+                worker: ts.worker,
+                project: ts.project,
+              }
             }
             return ts
           })
         )
-      }
-
-      const result = await updateTimesheetData(updateData)
-
-      if (result.success && result.data) {
-        // Only update state if it wasn't already updated for total_hours
-        if (field !== "total_hours") {
-          setTimesheets((prev) =>
-            prev.map((ts) => {
-              if (ts.id === id) {
-                return {
-                  ...ts,
-                  ...result.data,
-                  // Preserve nested worker and project data
-                  worker: ts.worker,
-                  project: ts.project,
-                }
-              }
-              return ts
-            })
-          )
-        }
-
-        // Reload summary if it's a field that affects calculations
-        const calculationFields = ["clock_in", "clock_out", "break_duration", "hourly_rate", "total_hours"]
-        if (calculationFields.includes(field)) {
-          loadTimesheets() // Reload to get updated calculations
-        }
-      } else {
         setError(result.error || "Failed to update timesheet")
       }
     } catch (err) {
+      // If there's an error, revert the local state change
+      setTimesheets((prev) =>
+        prev.map((ts) => {
+          if (ts.id === id) {
+            return {
+              ...ts,
+              worker: ts.worker,
+              project: ts.project,
+            }
+          }
+          return ts
+        })
+      )
       setError(err instanceof Error ? err.message : "Failed to update timesheet")
     }
   }
@@ -254,57 +270,141 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // Filter timesheets based on selected filters
   const filteredTimesheets = useMemo(() => {
     return timesheets.filter((timesheet) => {
-      const timesheetDate = parseISO(timesheet.date)
+      const timesheetDate = parseISO(timesheet.date);
 
       // Date filter
-      let dateMatch = false
+      let dateMatch = false;
       if (viewMode === "daily") {
-        dateMatch = format(timesheetDate, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+        dateMatch = format(timesheetDate, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
       } else {
-        const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay })
-        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay })
-        dateMatch = isWithinInterval(timesheetDate, { start: weekStart, end: weekEnd })
+        const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay });
+        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay });
+        dateMatch = isWithinInterval(timesheetDate, { start: weekStart, end: weekEnd });
       }
 
       // Worker filter
-      const workerMatch = selectedWorker === "all" || timesheet.worker_id === selectedWorker
+      const workerMatch = selectedWorker === "all" || timesheet.worker_id === selectedWorker;
 
       // Project filter
-      const projectMatch = selectedProject === "all" || timesheet.project_id === selectedProject
+      const projectMatch = selectedProject === "all" || timesheet.project_id === selectedProject;
 
       // Search filter
-      const searchMatch =
-        searchTerm === "" ||
-        timesheet.worker?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        timesheet.project?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const searchMatch = searchTerm.trim() === "" ||
+        timesheet.worker?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        timesheet.project?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        timesheet.task_description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      return dateMatch && workerMatch && projectMatch && searchMatch
-    })
-  }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, searchTerm, weekStartDay])
+      return dateMatch && workerMatch && projectMatch && searchMatch;
+    });
+  }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, searchTerm, weekStartDay]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredTimesheets.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTimesheets = filteredTimesheets.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate, selectedWorker, selectedProject, viewMode, searchTerm, weekStartDay]);
 
   const groupedTimesheets = useMemo(() => {
-    const grouped = new Map<string, Map<string, TimesheetWithDetails[]>>()
+    if (viewMode === "weekly") {
+      // For weekly view, group by worker only - all timesheets for the current week
+      // Include all workers, even if they don't have timesheets
+      const grouped = new Map<string, TimesheetWithDetails[]>();
+      
+      // Initialize all workers with empty arrays
+      workers.forEach(worker => {
+        grouped.set(worker.id, []);
+      });
+      
+      // Add timesheets to their respective workers (use filteredTimesheets to get all timesheets for the week)
+      filteredTimesheets.forEach((timesheet) => {
+        const workerId = timesheet.worker_id;
+        
+        if (!grouped.has(workerId)) {
+          grouped.set(workerId, []);
+        }
+        
+        grouped.get(workerId)!.push(timesheet);
+      });
+      
+      return grouped;
+    } else {
+      // For daily view, keep the original grouping by worker and week
+      const grouped = new Map<string, Map<string, TimesheetWithDetails[]>>();
 
-    filteredTimesheets.forEach(timesheet => {
-      const workerId = timesheet.worker_id
-      const weekStart = format(startOfWeek(parseISO(timesheet.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd')
+      paginatedTimesheets.forEach((timesheet) => {
+        const workerId = timesheet.worker_id;
+        const timesheetDate = parseISO(timesheet.date);
+        const weekStart = startOfWeek(timesheetDate, { weekStartsOn: weekStartDay });
+        const weekKey = format(weekStart, "yyyy-MM-dd");
 
-      if (!grouped.has(workerId)) {
-        grouped.set(workerId, new Map<string, TimesheetWithDetails[]>())
-      }
-      const workerWeeks = grouped.get(workerId)!
-      if (!workerWeeks.has(weekStart)) {
-        workerWeeks.set(weekStart, [])
-      }
-      workerWeeks.get(weekStart)!.push(timesheet)
-    })
-    return grouped
-  }, [filteredTimesheets, weekStartDay])
+        if (!grouped.has(workerId)) {
+          grouped.set(workerId, new Map());
+        }
+
+        const workerWeeks = grouped.get(workerId)!;
+        if (!workerWeeks.has(weekKey)) {
+          workerWeeks.set(weekKey, []);
+        }
+
+        workerWeeks.get(weekKey)!.push(timesheet);
+      });
+
+      return grouped;
+    }
+  }, [filteredTimesheets, paginatedTimesheets, weekStartDay, viewMode, workers]);
+
+  // For weekly view, we need to paginate workers instead of timesheets
+  const weeklyWorkerEntries = viewMode === "weekly" 
+    ? Array.from((groupedTimesheets as Map<string, TimesheetWithDetails[]>).entries())
+    : [];
+  const weeklyTotalPages = Math.ceil(weeklyWorkerEntries.length / ITEMS_PER_PAGE);
+  const weeklyStartIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const weeklyEndIndex = weeklyStartIndex + ITEMS_PER_PAGE;
+  const paginatedWorkerEntries = weeklyWorkerEntries.slice(weeklyStartIndex, weeklyEndIndex);
+
+  // Helper functions for checkbox logic
+  const getAllSelectableTimesheetIds = useMemo(() => {
+    if (viewMode === "weekly") {
+      const allIds = new Set<string>();
+      paginatedWorkerEntries.forEach(([workerId, timesheetsInWeek]) => {
+        timesheetsInWeek.forEach(ts => allIds.add(ts.id));
+      });
+      return allIds;
+    } else {
+      return new Set(paginatedTimesheets.map(ts => ts.id));
+    }
+  }, [viewMode, paginatedWorkerEntries, paginatedTimesheets]);
+
+  const isAllSelected = useMemo(() => {
+    const allIds = getAllSelectableTimesheetIds;
+    const result = allIds.size > 0 && Array.from(allIds).every(id => selectedTimesheetIds.has(id));
+    console.log('isAllSelected calculation:', {
+      allIdsSize: allIds.size,
+      selectedIdsSize: selectedTimesheetIds.size,
+      allIds: Array.from(allIds),
+      selectedIds: Array.from(selectedTimesheetIds),
+      result
+    });
+    return result;
+  }, [getAllSelectableTimesheetIds, selectedTimesheetIds]);
 
   const handleSelectAll = (checked: boolean) => {
+    console.log('handleSelectAll called with:', checked);
+    console.log('viewMode:', viewMode);
+    console.log('getAllSelectableTimesheetIds:', getAllSelectableTimesheetIds);
+    console.log('current selectedTimesheetIds:', selectedTimesheetIds);
+    
     if (checked) {
-      const allIds = new Set(filteredTimesheets.map(ts => ts.id));
-      setSelectedTimesheetIds(allIds);
+      setSelectedTimesheetIds(getAllSelectableTimesheetIds);
     } else {
       setSelectedTimesheetIds(new Set());
     }
@@ -323,12 +423,28 @@ export default function TimesheetsPage({ user }: { user: User }) {
   };
 
   const handleSelectAllInWeek = (workerId: string, weekStart: string, checked: boolean) => {
+    console.log('handleSelectAllInWeek called with:', { workerId, weekStart, checked });
+    console.log('viewMode:', viewMode);
+    
     setSelectedTimesheetIds(prev => {
       const newSet = new Set(prev);
-      const workerWeeks = groupedTimesheets.get(workerId);
-      if (workerWeeks) {
-        const timesheetsInWeek = workerWeeks.get(weekStart);
-        if (timesheetsInWeek) {
+      
+      if (viewMode === "weekly") {
+        // For weekly view, get timesheets for this worker from the grouped data
+        const timesheetsInWeek = (groupedTimesheets as Map<string, TimesheetWithDetails[]>).get(workerId) || [];
+        console.log('timesheetsInWeek for worker:', timesheetsInWeek);
+        timesheetsInWeek.forEach(ts => {
+          if (checked) {
+            newSet.add(ts.id);
+          } else {
+            newSet.delete(ts.id);
+          }
+        });
+      } else {
+        // For daily view, get timesheets for this worker and week
+        const workerWeeks = (groupedTimesheets as Map<string, Map<string, TimesheetWithDetails[]>>).get(workerId);
+        if (workerWeeks) {
+          const timesheetsInWeek = workerWeeks.get(weekStart) || [];
           timesheetsInWeek.forEach(ts => {
             if (checked) {
               newSet.add(ts.id);
@@ -338,6 +454,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
           });
         }
       }
+      
+      console.log('new selectedTimesheetIds:', newSet);
       return newSet;
     });
   };
@@ -435,18 +553,34 @@ export default function TimesheetsPage({ user }: { user: User }) {
       late: "Late",
     }
 
+    const getBadgeClassName = (status: AttendanceStatus) => {
+      switch (status) {
+        case "present":
+          return "bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs";
+        case "absent":
+          return "text-xs";
+        case "late":
+          return "text-xs";
+        default:
+          return "text-xs";
+      }
+    }
+
     return (
-      <Badge variant={variants[status]} className="text-xs">
+      <Badge variant={variants[status]} className={getBadgeClassName(status)}>
         {labels[status]}
       </Badge>
     )
   }
 
   const weekDays = useMemo(() => {
-    const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay })
-    const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay })
-    return eachDayOfInterval({ start: weekStart, end: weekEnd })
-  }, [selectedDate, weekStartDay])
+    if (viewMode === "daily") {
+      return [selectedDate];
+    }
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay });
+    const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay });
+    return eachDayOfInterval({ start: weekStart, end: weekEnd });
+  }, [selectedDate, viewMode, weekStartDay]);
 
   const getWeekStartDayName = (day: 0 | 1 | 2 | 3 | 4 | 5 | 6): string => {
     const dayNames = {
@@ -472,12 +606,47 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
   const handleRejectTimesheet = async (id: string) => {
     try {
-      await handleUpdateTimesheet(id, "supervisor_approval", "rejected")
-      loadTimesheets()
+      const result = await updateTimesheetData({ id, supervisor_approval: "rejected" });
+      if (result.success) {
+        toast.success("Timesheet rejected successfully");
+        loadTimesheets();
+      } else {
+        toast.error("Failed to reject timesheet");
+      }
     } catch (error) {
-      console.error("Failed to reject timesheet:", error)
+      console.error("Error rejecting timesheet:", error);
+      toast.error("Error rejecting timesheet");
     }
-  }
+  };
+
+  // Navigation functions
+  const handlePreviousPeriod = () => {
+    if (viewMode === "weekly") {
+      // Move to previous week
+      const newDate = new Date(selectedDate);
+      newDate.setDate(selectedDate.getDate() - 7);
+      setSelectedDate(newDate);
+    } else {
+      // Move to previous day
+      const newDate = new Date(selectedDate);
+      newDate.setDate(selectedDate.getDate() - 1);
+      setSelectedDate(newDate);
+    }
+  };
+
+  const handleNextPeriod = () => {
+    if (viewMode === "weekly") {
+      // Move to next week
+      const newDate = new Date(selectedDate);
+      newDate.setDate(selectedDate.getDate() + 7);
+      setSelectedDate(newDate);
+    } else {
+      // Move to next day
+      const newDate = new Date(selectedDate);
+      newDate.setDate(selectedDate.getDate() + 1);
+      setSelectedDate(newDate);
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -510,494 +679,535 @@ export default function TimesheetsPage({ user }: { user: User }) {
   }
 
   return (
-    <div className="container mx-auto space-y-6">
-      <Tabs defaultValue="timesheets" className="w-full">
-        <div className="border-b border-muted">
-          <TabsList className="inline-flex h-12 items-center justify-start p-1 bg-transparent border-none">
-            <TabsTrigger
-              value="timesheets"
-              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-            >
-              Timesheets
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-            </TabsTrigger>
+    <div className="container mx-auto space-y-6 p-6">
+      {/* Header Section */}
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Timesheets
+        </h1>
+        <p className="text-muted-foreground">
+          Manage and approve employee timesheets.
+        </p>
+      </div>
 
-            <TabsTrigger
-              value="approvals"
-              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-            >
-              Approvals
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-            </TabsTrigger>
-          </TabsList>
-        </div>
-        <TabsContent value="timesheets" className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">View Timesheets</h1>
-          <p className="text-muted-foreground">Track worker hours and manage attendance for construction projects</p>
-          </div>
-        <div className="flex gap-2">
-            {selectedTimesheetIds.size > 0 && (
-              <Button
-                variant="default"
-                onClick={handleApproveSelected}
-                disabled={isApproving}
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        <Tabs defaultValue="timesheets" className="w-full">
+          <div className="border-b border-muted">
+            <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
+              <TabsTrigger
+                value="timesheets"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
               >
-                {isApproving ? "Approving..." : "Approve Selected"}
-              </Button>
-            )}
-            <BulkTimesheetDialog
-              userId={user.id}
-              workers={workers}
-              projects={projects}
-              onSuccess={loadTimesheets}
-              trigger={
-                <Button>Create Timesheets</Button>
-              }
-            />
+                Timesheets
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="approvals"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+              >
+                Approvals
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+              </TabsTrigger>
+            </TabsList>
           </div>
-          </div>
-          {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Total Workers
-                    </p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {groupedTimesheets.size}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Active this {viewMode === "daily" ? "day" : "week"}</p>
-                  </div>
+          <TabsContent value="timesheets" className="container mx-auto py-4 space-y-6">
+            {/* Search, Filters, and Actions Row */}
+            <div className="flex items-center gap-4">
+              {/* Search Bar */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search timesheets..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-blue-500/10 rounded-lg">
-                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              {/* Filters Button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                    {(selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly") && (
+                      <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                        {(selectedWorker !== "all" ? 1 : 0) + (selectedProject !== "all" ? 1 : 0) + (viewMode !== "weekly" ? 1 : 0)}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 p-4">
+                  <DropdownMenuLabel className="text-base font-semibold">
+                    Filter Timesheets
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  {/* View Mode Filter */}
+                  <div className="space-y-3 py-2">
+                    <Label className="text-sm font-medium">View Mode</Label>
+                    <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "daily" | "weekly")}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="daily">Daily</TabsTrigger>
+                        <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Total Hours
-                    </p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {summary.totalRegularHours}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Regular hours worked</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-orange-500/10 rounded-lg">
-                    <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Overtime Hours
-                    </p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {summary.totalOvertimeHours}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Extra hours worked</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <Separator />
 
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  {/* Date Filter */}
+                  <div className="space-y-3 py-2">
+                    <Label className="text-sm font-medium">Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                          <CalendarDays className="mr-2 h-4 w-4" />
+                          {format(selectedDate, "PPP")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => date && setSelectedDate(date)}
+                          weekStartsOn={weekStartDay}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Total Pay
-                    </p>
-                    <p className="text-2xl font-bold text-foreground">
-                      ${summary.totalPay}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Estimated pay</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
-          {/* Filters */}
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg">Filters</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                <div className="space-y-2">
-                  <Label>View Mode</Label>
-                  <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "daily" | "weekly")}>
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="daily">Daily</TabsTrigger>
-                      <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
+                  {viewMode === "weekly" && (
+                    <>
+                      <Separator />
+                      <div className="space-y-3 py-2">
+                        <Label className="text-sm font-medium">Week Starts On</Label>
+                        <Select
+                          value={weekStartDay.toString()}
+                          onValueChange={(value) => setWeekStartDay(Number(value) as 0 | 1 | 2 | 3 | 4 | 5 | 6)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select week start" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">Sunday</SelectItem>
+                            <SelectItem value="1">Monday</SelectItem>
+                            <SelectItem value="2">Tuesday</SelectItem>
+                            <SelectItem value="3">Wednesday</SelectItem>
+                            <SelectItem value="4">Thursday</SelectItem>
+                            <SelectItem value="5">Friday</SelectItem>
+                            <SelectItem value="6">Saturday</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {paymentSchedule?.period_start_type === "day_of_week" && (
+                          <p className="text-xs text-muted-foreground">
+                            Payroll period starts on {getWeekStartDayName(weekStartDay)}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
 
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarDays className="mr-2 h-4 w-4" />
-                        {format(selectedDate, "PPP")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => date && setSelectedDate(date)}
-                        weekStartsOn={weekStartDay}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                  <Separator />
 
-                {viewMode === "weekly" && (
-                  <div className="space-y-2">
-                    <Label>Week Starts On</Label>
-                    <Select
-                      value={weekStartDay.toString()}
-                      onValueChange={(value) => setWeekStartDay(Number(value) as 0 | 1 | 2 | 3 | 4 | 5 | 6)}
-                    >
+                  {/* Worker Filter */}
+                  <div className="space-y-3 py-2">
+                    <Label className="text-sm font-medium">Worker</Label>
+                    <Select value={selectedWorker} onValueChange={setSelectedWorker}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select week start" />
+                        <SelectValue placeholder="Select worker" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0">Sunday</SelectItem>
-                        <SelectItem value="1">Monday</SelectItem>
-                        <SelectItem value="2">Tuesday</SelectItem>
-                        <SelectItem value="3">Wednesday</SelectItem>
-                        <SelectItem value="4">Thursday</SelectItem>
-                        <SelectItem value="5">Friday</SelectItem>
-                        <SelectItem value="6">Saturday</SelectItem>
+                        <SelectItem value="all">All Workers</SelectItem>
+                        {workers.map((worker) => (
+                          <SelectItem key={worker.id} value={worker.id}>
+                            {worker.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                    {paymentSchedule?.period_start_type === "day_of_week" && (
-                      <p className="text-xs text-muted-foreground">
-                        Payroll period starts on {getWeekStartDayName(weekStartDay)}
-                      </p>
-                    )}
                   </div>
-                )}
 
-                <div className="space-y-2">
-                  <Label>Worker</Label>
-                  <Select value={selectedWorker} onValueChange={setSelectedWorker}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select worker" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Workers</SelectItem>
-                      {workers.map((worker) => (
-                        <SelectItem key={worker.id} value={worker.id}>
-                          {worker.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <Separator />
 
-                <div className="space-y-2">
-                  <Label>Project</Label>
-                  <Select value={selectedProject} onValueChange={setSelectedProject}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Projects</SelectItem>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  {/* Project Filter */}
+                  <div className="space-y-3 py-2">
+                    <Label className="text-sm font-medium">Project</Label>
+                    <Select value={selectedProject} onValueChange={setSelectedProject}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Projects</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-          {/* Timesheet Table */}
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-              <div>
-                <CardTitle className="text-lg">
-                  {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
-                </CardTitle>
-                <CardDescription>
-                  {viewMode === "weekly" &&
-                    `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
-                </CardDescription>
-              </div>
-              {selectedTimesheetIds.size > 0 && (
-                <div className="flex space-x-2">
+                  <Separator />
+
+                  {/* Clear Filters */}
+                  {(selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly") && (
+                    <div className="pt-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedWorker("all");
+                          setSelectedProject("all");
+                          setViewMode("weekly");
+                        }}
+                        className="w-full justify-start text-muted-foreground hover:text-foreground"
+                      >
+                        Clear all filters
+                      </Button>
+                    </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Create Timesheets Button */}
+              <BulkTimesheetDialog
+                userId={user.id}
+                workers={workers}
+                projects={projects}
+                onSuccess={loadTimesheets}
+                trigger={
+                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
+                    Create Timesheets
+                  </Button>
+                }
+              />
+            </div>
+
+            {/* Timesheet Table */}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                <div className="flex items-center space-x-2">
+                  <div>
+                    <CardTitle className="text-lg mb-2">
+                      {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
+                    </CardTitle>
+                    <CardDescription>
+                      {viewMode === "weekly" &&
+                        `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
+                    </CardDescription>
+                  </div>
                   <Button
-                    onClick={handleDeleteSelected}
-                    disabled={isDeleting || isApproving}
                     variant="outline"
-                    size="sm"
+                    size="default"
+                    onClick={handlePreviousPeriod}
+                    className="h-10 w-10 p-0"
                   >
-                    {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={handleNextPeriod}
+                    className="h-10 w-10 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2 font-medium w-12">
-                        <Checkbox
-                          checked={selectedTimesheetIds.size === filteredTimesheets.length && filteredTimesheets.length > 0}
-                          onCheckedChange={handleSelectAll}
-                          aria-label="Select all timesheets"
-                        />
-                      </th>
-                      <th className="text-left p-2 font-medium">Worker</th>
-                      <th className="text-left p-2 font-medium">Project</th>
-                      {viewMode === "weekly" ? (
-                        weekDays.map((day) => (
-                          <th key={day.toISOString()} className="text-center p-2 font-medium min-w-[100px]">
-                            <div className="text-xs text-muted-foreground">{format(day, "EEE")}</div>
-                            <div>{format(day, "MMM d")}</div>
-                          </th>
-                        ))
-                      ) : (
-                        <>
-                          <th className="text-center p-2 font-medium">Hours</th>
-                          <th className="text-center p-2 font-medium">Overtime</th>
-                          <th className="text-center p-2 font-medium">Status</th>
-                          <th className="text-left p-2 font-medium">Notes</th>
-                        </>
-                      )}
-                      {viewMode === "weekly" && <th className="text-center p-2 font-medium">Total</th>}
-                      {viewMode === "weekly" && <th className="text-center p-2 font-medium"></th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {viewMode === "weekly"
-                      ? // Weekly view - group by worker and week
-                      Array.from(groupedTimesheets.entries()).map(([workerId, workerWeeks]) => (
-                        <React.Fragment key={workerId}>
-                          {Array.from(workerWeeks.entries()).map(([weekStart, timesheetsInWeek]) => {
-                            const worker = workers.find(w => w.id === workerId);
-                            const isAllInWeekSelected = timesheetsInWeek.length > 0 && timesheetsInWeek.every(ts => selectedTimesheetIds.has(ts.id));
-                            const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
-                            const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
-
-                            // Determine if all timesheets in the week are approved
-                            const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
-
-                            return (
-                              <tr key={`${workerId}-${weekStart}`} className="border-b hover:bg-muted/50">
-                                <td className="p-2 w-12">
-                                  <Checkbox
-                                    checked={isAllInWeekSelected}
-                                    onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, weekStart, checked)}
-                                    aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week ${weekStart}`}
-                                  />
-                                </td>
-                                <td className="p-2">
-                                  <div className="font-medium">{worker?.name || "Unknown Worker"}</div>
-                                  <div className="text-sm text-muted-foreground">{worker?.position || "Worker"}</div>
-                                </td>
-                                <td className="p-2">
-                                  <div className="text-sm">
-                                    {Array.from(
-                                      new Set(
-                                        timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
-                                      ),
-                                    ).join(", ")}
-                                  </div>
-                                </td>
-                                {weekDays.map((day) => {
-                                  const dayTimesheet = timesheetsInWeek.find(
-                                    (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
-                                  )
-                                  return (
-                                    <td key={day.toISOString()} className="p-2 text-center">
-                                      {dayTimesheet ? (
-                                        <div className="space-y-1">
-                                          <Input
-                                            type="number"
-                                            value={dayTimesheet.total_hours}
-                                            onChange={(e) =>
-                                              handleUpdateTimesheet(
-                                                dayTimesheet.id,
-                                                "total_hours",
-                                                Number.parseFloat(e.target.value) || 0,
-                                              )
-                                            }
-                                            className="w-16 h-8 text-center text-sm"
-                                            step="0.5"
-                                            min="0"
-                                            max="24"
-                                          />
-                                          {getStatusBadge(getAttendanceStatus(dayTimesheet))}
-                                        </div>
-                                      ) : (
-                                        <span className="text-muted-foreground">-</span>
-                                      )}
-                                    </td>
-                                  )
-                                })}
-                                <td className="p-2 text-center font-medium">
-                                  {weekTotalHours}h
-                                  {weekOvertimeHours > 0 && (
-                                    <div className="text-xs text-orange-600">+{weekOvertimeHours}h OT</div>
-                                  )}
-                                </td>
-                                <td className="p-2 text-center">
-                                  {isWeekApproved ? (
-                                    <Badge className="bg-green-500/10 text-green-700">Approved</Badge>
-                                  ) : (
-                                    <Badge variant="secondary">Pending</Badge>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </React.Fragment>
-                      ))
-                      :
-                      filteredTimesheets.map((timesheet) => (
-                        <tr key={timesheet.id} className="border-b hover:bg-muted/50">
-                          <td className="p-2 w-12">
-                            <Checkbox
-                              checked={selectedTimesheetIds.has(timesheet.id)}
-                              onCheckedChange={(checked: boolean) => handleSelectTimesheet(timesheet.id, checked)}
-                              aria-label={`Select timesheet for ${timesheet.worker?.name}`}
-                            />
-                          </td>
-                          <td className="p-2">
-                            <div className="font-medium">{timesheet.worker?.name || "Unknown Worker"}</div>
-                            <div className="text-sm text-muted-foreground">{timesheet.worker?.position || "Worker"}</div>
-                          </td>
-                          <td className="p-2">
-                            <div className="font-medium">{timesheet.project?.name || "Unknown Project"}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {timesheet.project?.location || "Location TBD"}
-                            </div>
-                          </td>
-                          <td className="p-2 text-center">
-                            <Input
-                              type="number"
-                              value={timesheet.total_hours}
-                              onChange={(e) =>
-                                handleUpdateTimesheet(timesheet.id, "total_hours", Number.parseFloat(e.target.value) || 0)
-                              }
-                              className="w-20 h-8 text-center"
-                              step="0.5"
-                              min="0"
-                              max="24"
-                            />
-                          </td>
-                          <td className="p-2 text-center">
-                            <Input
-                              type="number"
-                              value={timesheet.overtime_hours}
-                              onChange={(e) =>
-                                handleUpdateTimesheet(
-                                  timesheet.id,
-                                  "overtime_hours",
-                                  Number.parseFloat(e.target.value) || 0,
-                                )
-                              }
-                              className="w-20 h-8 text-center"
-                              step="0.5"
-                              min="0"
-                              max="12"
-                            />
-                          </td>
-                          <td className="p-2 text-center">{getStatusBadge(getAttendanceStatus(timesheet))}</td>
-                          <td className="p-2">
-                            <Input
-                              value={timesheet.notes || ""}
-                              onChange={(e) => handleUpdateTimesheet(timesheet.id, "notes", e.target.value)}
-                              placeholder="Add notes..."
-                              className="h-8 text-sm"
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Weekly Summary */}
-          {viewMode === "weekly" && (
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg">Weekly Summary</CardTitle>
+                {selectedTimesheetIds.size > 0 && (
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={handleDeleteSelected}
+                      disabled={isDeleting || isApproving}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {Array.from(groupedTimesheets.entries()).map(([workerId, workerWeeks]) => (
-                    <Card key={workerId} className="p-4">
-                      <div className="space-y-2">
-                        <div className="font-medium">{workers.find(w => w.id === workerId)?.name || "Unknown Worker"}</div>
-                        <div className="text-sm text-muted-foreground">{workers.find(w => w.id === workerId)?.position || "Worker"}</div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            Total Hours: <span className="font-medium">{Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.total_hours, 0)}h</span>
-                          </div>
-                          <div>
-                            Overtime: <span className="font-medium">{Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.overtime_hours, 0)}h</span>
-                          </div>
-                        </div>
-                        <div className="text-sm">
-                          Estimated Pay:{" "}
-                          <span className="font-medium text-green-600">
-                            $
-                            {(
-                              Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.total_hours, 0) * (workers.find(w => w.id === workerId)?.hourly_rate || 20) +
-                              Array.from(workerWeeks.values()).flat().reduce((sum, ts) => sum + ts.overtime_hours, 0) * (workers.find(w => w.id === workerId)?.hourly_rate || 20) * 1.5
-                            ).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2 font-medium w-12">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAll}
+                            aria-label="Select all timesheets"
+                          />
+                        </th>
+                        <th className="text-left p-2 font-medium">Worker</th>
+                        <th className="text-left p-2 font-medium">Project</th>
+                        {viewMode === "weekly" ? (
+                          weekDays.map((day) => (
+                            <th key={day.toISOString()} className="text-center p-2 font-medium min-w-[100px]">
+                              <div className="text-xs text-muted-foreground">{format(day, "EEE")}</div>
+                              <div>{format(day, "MMM d")}</div>
+                            </th>
+                          ))
+                        ) : (
+                          <>
+                            <th className="text-center p-2 font-medium">Hours</th>
+                            <th className="text-center p-2 font-medium">Overtime</th>
+                            <th className="text-center p-2 font-medium">Status</th>
+                            <th className="text-left p-2 font-medium">Notes</th>
+                          </>
+                        )}
+                        {viewMode === "weekly" && <th className="text-center p-2 font-medium">Total</th>}
+                        {viewMode === "weekly" && <th className="text-center p-2 font-medium"></th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewMode === "weekly"
+                        ? // Weekly view - one row per worker
+                        paginatedWorkerEntries.map(([workerId, timesheetsInWeek]) => {
+                          const worker = workers.find(w => w.id === workerId);
+                          const isAllInWeekSelected = timesheetsInWeek.length > 0 && timesheetsInWeek.every(ts => selectedTimesheetIds.has(ts.id));
+                          const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
+                          const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
+
+                          // Determine if all timesheets in the week are approved
+                          const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
+
+                          return (
+                            <tr key={workerId} className="border-b hover:bg-muted/50">
+                              <td className="p-2 w-12">
+                                <Checkbox
+                                  checked={isAllInWeekSelected}
+                                  onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, "", checked)}
+                                  aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week`}
+                                />
+                              </td>
+                              <td className="p-2">
+                                <div className="font-medium">{worker?.name || "Unknown Worker"}</div>
+                                <div className="text-sm text-muted-foreground">{worker?.position || "Worker"}</div>
+                              </td>
+                              <td className="p-2">
+                                <div className="text-sm">
+                                  {Array.from(
+                                    new Set(
+                                      timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
+                                    ),
+                                  ).join(", ")}
+                                </div>
+                              </td>
+                              {weekDays.map((day) => {
+                                const dayTimesheet = timesheetsInWeek.find(
+                                  (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
+                                )
+                                return (
+                                  <td key={day.toISOString()} className="p-2 text-center">
+                                    {dayTimesheet ? (
+                                      <div className="space-y-1">
+                                        <Input
+                                          type="number"
+                                          value={dayTimesheet.total_hours}
+                                          onChange={(e) =>
+                                            handleUpdateTimesheet(
+                                              dayTimesheet.id,
+                                              "total_hours",
+                                              Number.parseFloat(e.target.value) || 0,
+                                            )
+                                          }
+                                          className="w-16 h-8 text-center text-sm"
+                                          step="0.5"
+                                          min="0"
+                                          max="24"
+                                        />
+                                        {getStatusBadge(getAttendanceStatus(dayTimesheet))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )}
+                                  </td>
+                                )
+                              })}
+                              <td className="p-2 text-center font-medium">
+                                {weekTotalHours}h
+                                {weekOvertimeHours > 0 && (
+                                  <div className="text-xs text-orange-600">+{weekOvertimeHours}h OT</div>
+                                )}
+                              </td>
+                              <td className="p-2 text-center">
+                                {timesheetsInWeek.length > 0 && (
+                                  isWeekApproved ? (
+                                    <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                      Approved
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                      Pending
+                                    </Badge>
+                                  )
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                        :
+                        // Daily view - keep original logic
+                        Array.from((groupedTimesheets as Map<string, Map<string, TimesheetWithDetails[]>>).entries()).map(([workerId, workerWeeks]) => (
+                          <React.Fragment key={workerId}>
+                            {Array.from(workerWeeks.entries()).map(([weekStart, timesheetsInWeek]) => {
+                              const worker = workers.find(w => w.id === workerId);
+                              const isAllInWeekSelected = timesheetsInWeek.length > 0 && timesheetsInWeek.every(ts => selectedTimesheetIds.has(ts.id));
+                              const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
+                              const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
+
+                              // Determine if all timesheets in the week are approved
+                              const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
+
+                              return (
+                                <tr key={`${workerId}-${weekStart}`} className="border-b hover:bg-muted/50">
+                                  <td className="p-2 w-12">
+                                    <Checkbox
+                                      checked={isAllInWeekSelected}
+                                      onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, weekStart, checked)}
+                                      aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week ${weekStart}`}
+                                    />
+                                  </td>
+                                  <td className="p-2">
+                                    <div className="font-medium">{worker?.name || "Unknown Worker"}</div>
+                                    <div className="text-sm text-muted-foreground">{worker?.position || "Worker"}</div>
+                                  </td>
+                                  <td className="p-2">
+                                    <div className="text-sm">
+                                      {Array.from(
+                                        new Set(
+                                          timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
+                                        ),
+                                      ).join(", ")}
+                                    </div>
+                                  </td>
+                                  {weekDays.map((day) => {
+                                    const dayTimesheet = timesheetsInWeek.find(
+                                      (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
+                                    )
+                                    return (
+                                      <td key={day.toISOString()} className="p-2 text-center">
+                                        {dayTimesheet ? (
+                                          <div className="space-y-1">
+                                            <Input
+                                              type="number"
+                                              value={dayTimesheet.total_hours}
+                                              onChange={(e) =>
+                                                handleUpdateTimesheet(
+                                                  dayTimesheet.id,
+                                                  "total_hours",
+                                                  Number.parseFloat(e.target.value) || 0,
+                                                )
+                                              }
+                                              className="w-16 h-8 text-center text-sm"
+                                              step="0.5"
+                                              min="0"
+                                              max="24"
+                                            />
+                                            {getStatusBadge(getAttendanceStatus(dayTimesheet))}
+                                          </div>
+                                        ) : (
+                                          <span className="text-muted-foreground">-</span>
+                                        )}
+                                      </td>
+                                    )
+                                  })}
+                                  <td className="p-2 text-center font-medium">
+                                    {weekTotalHours}h
+                                    {weekOvertimeHours > 0 && (
+                                      <div className="text-xs text-orange-600">+{weekOvertimeHours}h OT</div>
+                                    )}
+                                  </td>
+                                  <td className="p-2 text-center">
+                                    {timesheetsInWeek.length > 0 && (
+                                      isWeekApproved ? (
+                                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                          Approved
+                                        </Badge>
+                                      ) : (
+                                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                          Pending
+                                        </Badge>
+                                      )
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </React.Fragment>
+                        ))}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-        <TabsContent value="approvals" className="container mx-auto p-6 space-y-6">
-          <ApprovalsPage
-            timesheets={timesheets}
-            onApprove={handleApproveTimesheet}
-            onReject={handleRejectTimesheet}
-            user={user}
-          />
-        </TabsContent>
-      </Tabs>
+
+            {/* Pagination Controls */}
+            {((viewMode === "weekly" && weeklyWorkerEntries.length > ITEMS_PER_PAGE) || 
+              (viewMode === "daily" && filteredTimesheets.length > ITEMS_PER_PAGE)) && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
+                <div className="text-sm text-muted-foreground">
+                  {viewMode === "weekly" 
+                    ? `Showing ${weeklyStartIndex + 1} to ${Math.min(weeklyEndIndex, weeklyWorkerEntries.length)} of ${weeklyWorkerEntries.length} workers`
+                    : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTimesheets.length)} of ${filteredTimesheets.length} timesheets`
+                  }
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: viewMode === "weekly" ? weeklyTotalPages : totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                        className={`h-8 w-8 p-0 ${
+                          currentPage === page 
+                            ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
+                            : "hover:bg-[#E8EDF5]/70"
+                        }`}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === (viewMode === "weekly" ? weeklyTotalPages : totalPages)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="approvals" className="container mx-auto py-6 space-y-6">
+            <ApprovalsPage
+              timesheets={timesheets}
+              onApprove={handleApproveTimesheet}
+              onReject={handleRejectTimesheet}
+              user={user}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }

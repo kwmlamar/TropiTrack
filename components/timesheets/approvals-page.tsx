@@ -200,31 +200,33 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Pending Approvals</h2>
-          <p className="text-muted-foreground">
-            Review and approve timesheet entries
-          </p>
+        <div className="flex items-center space-x-1 rounded-lg bg-muted p-1">
+          <Button
+            variant={viewMode === "daily" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("daily")}
+            className={`rounded-md transition-all duration-200 ${
+              viewMode === "daily" 
+                ? "bg-[#E8EDF5] text-primary shadow-sm" 
+                : "hover:bg-muted-foreground/10"
+            }`}
+          >
+            Daily View
+          </Button>
+          <Button
+            variant={viewMode === "weekly" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("weekly")}
+            className={`rounded-md transition-all duration-200 ${
+              viewMode === "weekly" 
+                ? "bg-[#E8EDF5] text-primary shadow-sm" 
+                : "hover:bg-muted-foreground/10"
+            }`}
+          >
+            Weekly View
+          </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center space-x-1 rounded-lg bg-muted p-1">
-            <Button
-              variant={viewMode === "daily" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("daily")}
-              className="rounded-md"
-            >
-              Daily View
-            </Button>
-            <Button
-              variant={viewMode === "weekly" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("weekly")}
-              className="rounded-md"
-            >
-              Weekly View
-            </Button>
-          </div>
+        <div className="flex items-center space-x-2">
           {pendingTimesheets.length > 0 && (
             <Button
               variant="outline"
@@ -237,6 +239,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
           <Button
             onClick={() => handleBatchApprove(Array.from(selectedTimesheetIds))}
             disabled={isProcessing || selectedTimesheetIds.size === 0}
+            className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
           >
             <Check className="h-4 w-4 mr-2" />
             Approve Selected {selectedTimesheetIds.size > 0 && `(${selectedTimesheetIds.size})`}
@@ -343,6 +346,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                                           size="sm"
                                           onClick={() => handleReject(timesheet.id)}
                                           disabled={isProcessing}
+                                          className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
                                         >
                                           <X className="h-4 w-4 mr-2" />
                                           Reject
@@ -351,6 +355,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                                           size="sm"
                                           onClick={() => handleApprove(timesheet.id)}
                                           disabled={isProcessing}
+                                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
                                         >
                                           <Check className="h-4 w-4 mr-2" />
                                           Approve
@@ -424,7 +429,9 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">Pending</Badge>
+                      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                        Pending
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -433,6 +440,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                           size="sm"
                           onClick={() => handleReject(timesheet.id)}
                           disabled={isProcessing}
+                          className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
                         >
                           <X className="h-4 w-4 mr-2" />
                           Reject
@@ -441,6 +449,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                           size="sm"
                           onClick={() => handleApprove(timesheet.id)}
                           disabled={isProcessing}
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
                         >
                           <Check className="h-4 w-4 mr-2" />
                           Approve

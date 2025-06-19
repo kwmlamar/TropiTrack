@@ -91,7 +91,7 @@ export default function ClientTable({ user }: { user: User }) {
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="space-y-2">
+        <div className="space-y-4 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Management</h1>
           <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
         </div>

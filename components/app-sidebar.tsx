@@ -64,6 +64,20 @@ const data = {
       description: "Overview and analytics",
     },
     {
+      title: "Timesheets",
+      url: "/dashboard/timesheets",
+      icon: FileText,
+      badge: null,
+      description: "Track work hours",
+    },
+    {
+      title: "Payroll",
+      url: "/dashboard/payroll",
+      icon: DollarSign,
+      badge: null,
+      description: "Manage payments",
+    },
+    {
       title: "Projects",
       url: "/dashboard/projects",
       icon: Building2,
@@ -83,20 +97,6 @@ const data = {
       icon: Users,
       badge: null,
       description: "Team management",
-    },
-    {
-      title: "Timesheets",
-      url: "/dashboard/timesheets",
-      icon: FileText,
-      badge: null,
-      description: "Track work hours",
-    },
-    {
-      title: "Payroll",
-      url: "/dashboard/payroll",
-      icon: DollarSign,
-      badge: null,
-      description: "Manage payments",
     },
   ],
   navSecondary: [
@@ -229,8 +229,12 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
         <NavMain
           items={data.navMain}
           className="flex flex-col gap-1"
-          itemClassName="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent/20 data-[active=true]:text-sidebar-foreground"
-          iconClassName="h-4 w-4 text-sidebar-foreground/60 group-hover:text-sidebar-foreground group-data-[active=true]:text-sidebar-foreground"
+          itemClassName="group flex items-center gap-3 rounded-full px-5 py-2 text-base font-medium transition-all duration-200 cursor-pointer
+            text-sidebar-foreground/80
+            hover:bg-[#E8EDF5]/80 hover:text-primary
+            data-[active=true]:bg-[#E8EDF5] data-[active=true]:text-primary data-[active=true]:shadow-md
+            focus:outline-none focus:ring-2 focus:ring-primary/30"
+          iconClassName="h-5 w-5 text-sidebar-foreground/60 group-hover:text-primary group-data-[active=true]:text-primary"
         />
       </SidebarContent>
 
@@ -238,8 +242,12 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
         <NavSecondary
           items={data.navSecondary}
           className="flex flex-col gap-1"
-          itemClassName="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/60 transition-all duration-200 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"
-          iconClassName="h-4 w-4 text-sidebar-foreground/50 group-hover:text-sidebar-foreground"
+          itemClassName="group flex items-center gap-3 rounded-full px-5 py-2 text-base font-medium transition-all duration-200 cursor-pointer
+            text-sidebar-foreground/60
+            hover:bg-[#E8EDF5]/80 hover:text-primary
+            data-[active=true]:bg-[#E8EDF5] data-[active=true]:text-primary data-[active=true]:shadow-md
+            focus:outline-none focus:ring-2 focus:ring-primary/30"
+          iconClassName="h-5 w-5 text-sidebar-foreground/50 group-hover:text-primary group-data-[active=true]:text-primary"
         />
       </SidebarFooter>
 
