@@ -99,31 +99,12 @@ const data = {
       description: "Manage payments",
     },
   ],
-  quickActions: [
-    { title: "New Project", icon: Building2, action: "create-project" },
-    { title: "Add Worker", icon: Users, action: "add-worker" },
-    { title: "Clock In", icon: Clock, action: "clock-in" },
-    { title: "Schedule", icon: Calendar, action: "schedule" },
-  ],
   navSecondary: [
-    {
-      title: "Search",
-      url: "#",
-      icon: Search,
-      shortcut: "⌘K",
-      description: "Search everything",
-    },
     {
       title: "Settings",
       url: "/dashboard/settings",
       icon: Settings,
       description: "App preferences",
-    },
-    {
-      title: "Help & Support",
-      url: "#",
-      icon: HelpCircle,
-      description: "Get assistance",
     },
   ],
   recentProjects: [
@@ -209,36 +190,23 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
   return (
     <Sidebar
       collapsible="offcanvas"
-      className="border-r border-border/50 bg-sidebar/95 backdrop-blur-xl transition-all duration-300"
+      className="border-r border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl transition-all duration-300"
       {...props}
     >
       {/* Enhanced Header with Logo and Quick Search */}
-      <SidebarHeader className="border-b border-border/50 bg-sidebar/95 backdrop-blur-xl">
+      <SidebarHeader className="border-b border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl">
         <div className="flex items-center justify-between px-2 py-3">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                className="data-[slot=sidebar-menu-button]:!py-2 data-[slot=sidebar-menu-button]:!px-2 bg-transparent hover:bg-sidebar-accent/50 transition-all duration-200 rounded-md"
+                className="data-[slot=sidebar-menu-button]:!py-2 data-[slot=sidebar-menu-button]:!px-2 bg-transparent hover:bg-sidebar-accent/10 transition-all duration-200 rounded-md"
               >
                 <a href="/dashboard" className="flex items-center gap-3">
                   <div className="relative flex items-center">
-                    <Image
-                      src="/logo/1.png"
-                      alt="TropiTrack Logo"
-                      width={isCollapsed ? 32 : 85}
-                      height={isCollapsed ? 32 : 50}
-                      className="block dark:hidden transition-all duration-200"
-                      priority
-                    />
-                    <Image
-                      src="/logo/2.png"
-                      alt="TropiTrack Dark Logo"
-                      width={isCollapsed ? 32 : 85}
-                      height={isCollapsed ? 32 : 50}
-                      className="hidden dark:block transition-all duration-200"
-                      priority
-                    />
+                    <span className="text-xl font-bold text-sidebar-foreground">
+                      TropiTrack
+                    </span>
                   </div>
                   {isCollapsed && (
                     <div className="flex flex-col">
@@ -254,88 +222,25 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-
-              <Button
-                variant="ghost"
-                size="icon"
-            className="h-8 w-8 rounded-md hover:bg-sidebar-accent/50"
-            onClick={() => setOpen(!open)}
-              >
-            <ChevronRight
-              className={cn(
-                "h-4 w-4 text-sidebar-foreground/60 transition-transform duration-200",
-                open ? "rotate-180" : "rotate-0"
-              )}
-            />
-              </Button>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col gap-4 px-2 py-4">
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider px-2 mb-2">
-            {isCollapsed ? "Nav" : "Navigation"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="space-y-1">
-            <NavMain items={data.navMain} />
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Recent Projects */}
-        {!isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider px-2 mb-2 flex items-center justify-between">
-              Recent Projects
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 rounded-md hover:bg-sidebar-accent/50 transition-colors duration-200"
-                onClick={() => handleQuickAction("create-project")}
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="space-y-1">
-              {recentProjects.length === 0 ? (
-                <div className="px-2 py-1.5 text-sm text-sidebar-foreground/60">
-                  No recent projects
-                </div>
-              ) : (
-                recentProjects.map((project) => (
-                  <SidebarMenuItem key={project.id}>
-                    <SidebarMenuButton
-                      asChild
-                      className="w-full px-2 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50 rounded-md transition-colors duration-200"
-                    >
-                      <a href={`/dashboard/projects/${project.id}`} className="flex items-center gap-2">
-                        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10">
-                          <Briefcase className="h-3 w-3 text-primary" />
-                        </div>
-                        <span className="flex-1 truncate">{project.name}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
-              )}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* More Options */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wider px-2 mb-2">
-            {isCollapsed ? "More" : "More Options"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="space-y-1">
-            <NavSecondary items={data.navSecondary} />
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="flex flex-col gap-4 p-4">
+        <NavMain
+          items={data.navMain}
+          className="flex flex-col gap-1"
+          itemClassName="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent/20 data-[active=true]:text-sidebar-foreground"
+          iconClassName="h-4 w-4 text-sidebar-foreground/60 group-hover:text-sidebar-foreground group-data-[active=true]:text-sidebar-foreground"
+        />
       </SidebarContent>
 
-      {/* Enhanced Footer */}
-      <SidebarFooter className="border-t border-border/50 bg-sidebar/95 backdrop-blur-xl p-2">
-        <NavUser user={sidebarUser} />
+      <SidebarFooter className="border-t border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl p-4">
+        <NavSecondary
+          items={data.navSecondary}
+          className="flex flex-col gap-1"
+          itemClassName="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/60 transition-all duration-200 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"
+          iconClassName="h-4 w-4 text-sidebar-foreground/50 group-hover:text-sidebar-foreground"
+        />
       </SidebarFooter>
 
       {/* Dialogs */}

@@ -96,17 +96,20 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-2">
-          <CardTitle>Payroll Summary</CardTitle>
-          <CardDescription>Loading...</CardDescription>
+          <div className="space-y-1">
+            <Skeleton className="h-7 w-40" />
+            <Skeleton className="h-4 w-60" />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center justify-between">
-                <Skeleton className="h-4 w-24" />
+              <div key={i} className="flex items-center justify-between rounded-lg border p-3">
                 <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-24" />
               </div>
             ))}
+            <Skeleton className="h-10 w-full" />
           </div>
         </CardContent>
       </Card>
@@ -117,9 +120,18 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-2">
-          <CardTitle>Payroll Summary</CardTitle>
-          <CardDescription>No data available</CardDescription>
+          <div className="space-y-1">
+            <CardTitle>Payroll Summary</CardTitle>
+            <CardDescription>No data available</CardDescription>
+          </div>
         </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <DollarSign className="h-8 w-8 mb-2 opacity-50" />
+            <p className="font-medium">No Payroll Data</p>
+            <p className="text-sm mt-1">No payroll data available for the selected period</p>
+          </div>
+        </CardContent>
       </Card>
     )
   }
@@ -142,31 +154,45 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
-        <CardTitle>Payroll Summary</CardTitle>
-        <CardDescription>{getPeriodDescription()} pay period ({formatDate(payrollData.pay_period_start)}-{formatDate(payrollData.pay_period_end)})</CardDescription>
+        <div className="space-y-1">
+          <CardTitle>Payroll Summary</CardTitle>
+          <CardDescription>
+            {getPeriodDescription()} pay period ({formatDate(payrollData.pay_period_start)}-{formatDate(payrollData.pay_period_end)})
+          </CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Gross Pay</span>
-            <span className="font-medium">${payrollData.gross_pay.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">NIB Contributions</span>
-            <span className="font-medium text-blue-600 dark:text-blue-400">${payrollData.nib_deduction.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Other Deductions</span>
-            <span className="font-medium text-red-600 dark:text-red-400">${payrollData.other_deductions.toFixed(2)}</span>
-          </div>
-          <div className="border-t pt-2">
-            <div className="flex items-center justify-between font-medium">
-              <span>Net Pay</span>
-              <span className="text-green-600 dark:text-green-400">${payrollData.net_pay.toFixed(2)}</span>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+            <div className="space-y-0.5">
+              <span className="text-sm font-medium text-muted-foreground">Gross Pay</span>
+              <p className="text-sm text-muted-foreground">Total earnings before deductions</p>
             </div>
+            <span className="text-lg font-semibold">${payrollData.gross_pay.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+            <div className="space-y-0.5">
+              <span className="text-sm font-medium text-muted-foreground">NIB Contributions</span>
+              <p className="text-sm text-muted-foreground">National Insurance Board deductions</p>
+            </div>
+            <span className="text-lg font-semibold">${payrollData.nib_deduction.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+            <div className="space-y-0.5">
+              <span className="text-sm font-medium text-muted-foreground">Other Deductions</span>
+              <p className="text-sm text-muted-foreground">Additional deductions and withholdings</p>
+            </div>
+            <span className="text-lg font-semibold">${payrollData.other_deductions.toFixed(2)}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+            <div className="space-y-0.5">
+              <span className="text-sm font-medium">Net Pay</span>
+              <p className="text-sm text-muted-foreground">Final amount after all deductions</p>
+            </div>
+            <span className="text-lg font-semibold">${payrollData.net_pay.toFixed(2)}</span>
           </div>
         </div>
-        <Button className="w-full gap-2">
+        <Button className="w-full gap-2 transition-colors hover:bg-primary/90">
           <DollarSign className="h-4 w-4" />
           <span>Process Payroll</span>
           <ArrowRight className="h-4 w-4" />

@@ -113,7 +113,7 @@ export function WorkerAttendance({ viewMode, selectedDate, isLoading }: WorkerAt
   }, [viewMode, selectedDate, isLoading])
 
   const chartData = [
-    { name: "Present", value: attendanceData.present, color: "#22c55e" },
+    { name: "Present", value: attendanceData.present, color: "#10b981" },
     { name: "Late", value: attendanceData.late, color: "#f59e0b" },
     { name: "Absent", value: attendanceData.absent, color: "#ef4444" },
   ]
@@ -122,15 +122,17 @@ export function WorkerAttendance({ viewMode, selectedDate, isLoading }: WorkerAt
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-2">
-          <CardTitle>Worker Attendance</CardTitle>
-          <CardDescription>Loading...</CardDescription>
+          <div className="space-y-1">
+            <Skeleton className="h-7 w-40" />
+            <Skeleton className="h-4 w-60" />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[200px] animate-pulse bg-muted/50 rounded" />
-          <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+          <div className="h-[200px] animate-pulse rounded-lg bg-muted/50" />
+          <div className="mt-4 grid grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i}>
-                <Skeleton className="h-4 w-16 mx-auto mb-1" />
+              <div key={i} className="rounded-lg border p-3">
+                <Skeleton className="h-4 w-16 mx-auto mb-2" />
                 <Skeleton className="h-6 w-12 mx-auto" />
               </div>
             ))}
@@ -143,27 +145,29 @@ export function WorkerAttendance({ viewMode, selectedDate, isLoading }: WorkerAt
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
-        <CardTitle>Worker Attendance</CardTitle>
-        <CardDescription>
-          {viewMode === "daily" ? "Today's" : viewMode === "weekly" ? "This week's" : "This month's"} attendance summary
-        </CardDescription>
+        <div className="space-y-1">
+          <CardTitle>Worker Attendance</CardTitle>
+          <CardDescription>
+            {viewMode === "daily" ? "Today's" : viewMode === "weekly" ? "This week's" : "This month's"} attendance summary
+          </CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">
           <RechartsComponents data={chartData} />
         </div>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-          <div>
-            <p className="text-xs text-muted-foreground">Total</p>
-            <p className="text-lg font-bold">{attendanceData.total}</p>
+        <div className="mt-4 grid grid-cols-3 gap-4">
+          <div className="rounded-lg border p-3 text-center transition-colors hover:bg-muted/50">
+            <p className="text-sm font-medium text-muted-foreground">Total Workers</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{attendanceData.total}</p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">On Site</p>
-            <p className="text-lg font-bold">{attendanceData.onSite}</p>
+          <div className="rounded-lg border p-3 text-center transition-colors hover:bg-muted/50">
+            <p className="text-sm font-medium text-muted-foreground">On Site</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{attendanceData.onSite}</p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Utilization</p>
-            <p className="text-lg font-bold">{attendanceData.utilization}%</p>
+          <div className="rounded-lg border p-3 text-center transition-colors hover:bg-muted/50">
+            <p className="text-sm font-medium text-muted-foreground">Utilization</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{attendanceData.utilization}%</p>
           </div>
         </div>
       </CardContent>

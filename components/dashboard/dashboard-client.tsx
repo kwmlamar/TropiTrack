@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 type ViewMode = "daily" | "weekly" | "monthly"
 
 export function DashboardClient() {
-  const [viewMode, setViewMode] = useState<ViewMode>("weekly")
+  const [viewMode, setViewMode] = useState<ViewMode>("monthly")
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [isLoading] = useState(false)
 
@@ -37,43 +37,45 @@ export function DashboardClient() {
         initialDate={selectedDate}
       />
 
-      <Suspense fallback={<Skeleton className="h-28 w-full" />}>
-        <DashboardStats viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
-      </Suspense>
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        <Suspense fallback={<Skeleton className="h-28 w-full" />}>
+          <DashboardStats viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+        </Suspense>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <RecentTimesheets viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
-          </Suspense>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
+          <div className="space-y-6 lg:col-span-2">
+            <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+              <RecentTimesheets viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+            </Suspense>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <ProjectProgress viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+            <div className="grid gap-6 md:grid-cols-2">
+              <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                <ProjectProgress viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+              </Suspense>
+
+              <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                <WorkerAttendance viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+              </Suspense>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
+              <QuickActions />
+            </Suspense>
+
+            <Suspense fallback={<Skeleton className="h-[250px] w-full" />}>
+              <PayrollSummary viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+            </Suspense>
+
+            <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
+              <UpcomingDeadlines viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
             </Suspense>
 
             <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <WorkerAttendance viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+              <RecentActivity viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
             </Suspense>
           </div>
-        </div>
-
-        <div className="space-y-6">
-          <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
-            <QuickActions />
-          </Suspense>
-
-          <Suspense fallback={<Skeleton className="h-[250px] w-full" />}>
-            <PayrollSummary viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
-          </Suspense>
-
-          <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
-            <UpcomingDeadlines viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
-          </Suspense>
-
-          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            <RecentActivity viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
-          </Suspense>
         </div>
       </div>
     </div>

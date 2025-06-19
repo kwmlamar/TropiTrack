@@ -10,6 +10,7 @@ import { createClient } from "@/utils/supabase/client"
 import { fetchWorkersForCompany, fetchProjectsForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
+import { cn } from "@/lib/utils"
 
 export function QuickActions() {
   const [userId, setUserId] = useState<string>("")
@@ -49,47 +50,74 @@ export function QuickActions() {
   }, [])
 
   return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 backdrop-blur-sm shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle>Quick Actions</CardTitle>
-        <CardDescription>Common tasks and shortcuts</CardDescription>
+        <div className="space-y-1">
+          <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">Common tasks and shortcuts</CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           <BulkTimesheetDialog
             userId={userId}
             workers={workers}
             projects={projects}
             trigger={
-              <Button variant="outline" className="h-auto flex-col gap-2 p-4">
-                <Clock className="h-5 w-5" />
-                <span className="text-xs font-medium">Add Timesheet</span>
+              <Button 
+                variant="outline" 
+                className="group h-auto flex-col gap-2 p-4 transition-all duration-200 hover:bg-muted/30 text-foreground"
+              >
+                <div className="p-2.5 transition-all duration-200 group-hover:scale-105">
+                  <Clock className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-xs font-medium text-foreground">Add Timesheet</span>
               </Button>
             }
           />
           <WorkerSheet
             userId={userId}
             trigger={
-              <Button variant="outline" className="h-auto flex-col gap-2 p-4">
-                <UserPlus className="h-5 w-5" />
-                <span className="text-xs font-medium">Add Worker</span>
+              <Button 
+                variant="outline" 
+                className="group h-auto flex-col gap-2 p-4 transition-all duration-200 hover:bg-muted/30 text-foreground"
+              >
+                <div className="p-2.5 transition-all duration-200 group-hover:scale-105">
+                  <UserPlus className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-xs font-medium text-foreground">Add Worker</span>
               </Button>
             }
           />
-          <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+          <Button 
+            variant="outline" 
+            className="group h-auto flex-col gap-2 p-4 transition-all duration-200 hover:bg-muted/30 text-foreground" 
+            asChild
+          >
             <a href="#">
-              <FileText className="h-5 w-5" />
-              <span className="text-xs font-medium">New Report</span>
+              <div className="p-2.5 transition-all duration-200 group-hover:scale-105">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-xs font-medium text-foreground">New Report</span>
             </a>
           </Button>
-          <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+          <Button 
+            variant="outline" 
+            className="group h-auto flex-col gap-2 p-4 transition-all duration-200 hover:bg-muted/30 text-foreground" 
+            asChild
+          >
             <a href="#">
-              <DollarSign className="h-5 w-5" />
-              <span className="text-xs font-medium">Process Payroll</span>
+              <div className="p-2.5 transition-all duration-200 group-hover:scale-105">
+                <DollarSign className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-xs font-medium text-foreground">Process Payroll</span>
             </a>
           </Button>
         </div>
-        <Button variant="ghost" className="mt-4 w-full justify-start text-muted-foreground">
+        <Button 
+          variant="ghost" 
+          className="mt-4 w-full justify-start text-muted-foreground transition-all duration-200 hover:text-foreground hover:shadow-sm"
+        >
           <Plus className="mr-2 h-4 w-4" />
           <span>More Actions</span>
         </Button>

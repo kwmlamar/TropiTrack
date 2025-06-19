@@ -513,10 +513,10 @@ export default function TimesheetsPage({ user }: { user: User }) {
     <div className="container mx-auto space-y-6">
       <Tabs defaultValue="timesheets" className="w-full">
         <div className="border-b border-muted">
-          <TabsList className="inline-flex h-12 items-center justify-start p-1 bg-transparent">
+          <TabsList className="inline-flex h-12 items-center justify-start p-1 bg-transparent border-none">
             <TabsTrigger
               value="timesheets"
-              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px]"
+              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
             >
               Timesheets
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -524,7 +524,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
             <TabsTrigger
               value="approvals"
-              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px]"
+              className="group relative px-4 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
             >
               Approvals
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />

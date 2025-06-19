@@ -64,9 +64,6 @@ export function RecentActivity({ viewMode, selectedDate, isLoading }: RecentActi
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="rounded-full bg-purple-100 p-3 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-            <Activity className="h-6 w-6" />
-          </div>
           <p className="mt-4 text-lg font-medium">Coming Soon</p>
           <p className="mt-2 text-sm text-muted-foreground">
             We&apos;re working on bringing you real-time activity updates.

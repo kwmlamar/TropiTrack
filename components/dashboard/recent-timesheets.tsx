@@ -11,6 +11,7 @@ import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import type { TimesheetWithDetails } from "@/lib/types"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -95,17 +96,35 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
     return (
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-2">
-          <CardTitle>Recent Timesheets</CardTitle>
-          <CardDescription>Loading...</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Skeleton className="h-7 w-40" />
+              <Skeleton className="h-4 w-60" />
+            </div>
+            <Skeleton className="h-9 w-24" />
+          </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex items-center gap-2">
+            <Skeleton className="h-9 flex-1" />
+            <Skeleton className="h-9 w-9" />
+          </div>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-4 w-[150px]" />
+              <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2 text-right">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-6 w-20" />
                 </div>
               </div>
             ))}
@@ -118,11 +137,11 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
+        <div className="space-y-1">
           <CardTitle>Recent Timesheets</CardTitle>
           <CardDescription>Latest time entries from your team</CardDescription>
         </div>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="h-9">
           View All
         </Button>
       </CardHeader>
@@ -133,45 +152,41 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
             <Input 
               type="search" 
               placeholder="Search timesheets..." 
-              className="w-full bg-background pl-8"
+              className="w-full bg-background pl-8 h-9"
               value={searchTerm}
               onChange={handleSearchChange}
             />
           </div>
-          <Button variant="outline" size="icon" className="shrink-0">
+          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {error ? (
-            <div className="text-center py-8 text-destructive">
-              {error}
+            <div className="flex flex-col items-center justify-center py-8 text-destructive">
+              <p className="font-medium">Failed to load timesheets</p>
+              <p className="text-sm text-muted-foreground mt-1">{error}</p>
             </div>
           ) : filteredTimesheets.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No timesheets found
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <p className="font-medium">No timesheets found</p>
+              <p className="text-sm mt-1">Try adjusting your search or filters</p>
             </div>
           ) : (
             filteredTimesheets.map((timesheet) => (
-              <div key={timesheet.id} className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div 
+                key={timesheet.id} 
+                className="group flex items-center justify-between rounded-lg border p-3 transition-all hover:border-border/80 hover:shadow-sm"
+              >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">
-                      {timesheet.worker?.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()}
-                    </span>
-                  </div>
                   <div>
-                    <p className="font-medium">{timesheet.worker?.name || "Unknown Worker"}</p>
+                    <p className="font-medium text-foreground">{timesheet.worker?.name || "Unknown Worker"}</p>
                     <p className="text-sm text-muted-foreground">{timesheet.project?.name || "Unknown Project"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="font-medium">{timesheet.total_hours} hrs</p>
+                    <p className="font-medium text-foreground">{timesheet.total_hours} hrs</p>
                     <p className="text-xs text-muted-foreground">{format(new Date(timesheet.date), "MMM d, h:mm a")}</p>
                   </div>
                   <Badge
@@ -182,13 +197,14 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
                           ? "outline"
                           : "destructive"
                     }
-                    className={
+                    className={cn(
+                      "transition-colors",
                       timesheet.supervisor_approval === "approved"
-                        ? "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400"
+                        ? "bg-[#E8EDF5] text-primary hover:bg-[#E8EDF5]/80"
                         : timesheet.supervisor_approval === "pending"
-                          ? "border-orange-200 text-orange-800 hover:bg-orange-100 dark:border-orange-800/30 dark:text-orange-400"
+                          ? "border-[#E8EDF5] text-primary hover:bg-[#E8EDF5]/80"
                           : ""
-                    }
+                    )}
                   >
                     {timesheet.supervisor_approval.charAt(0).toUpperCase() + timesheet.supervisor_approval.slice(1)}
                   </Badge>

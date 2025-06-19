@@ -92,94 +92,17 @@ export function DashboardHeader({
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back {profile?.name}! Here&apos;s an overview of your construction operations.</p>
-      </div>
-
-      <div className="flex items-center gap-4">
-        {/* Date Navigation */}
+    <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-4 mb-4">
+        <h1 className="text-4xl font-bold text-foreground">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handlePreviousPeriod}
-            className="h-8 w-8"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-[200px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                {date ? getDateDisplay() : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={date}
-                onSelect={(date) => date && setDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleNextPeriod}
-            className="h-8 w-8"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* View Mode Switcher */}
-        <div className="flex items-center rounded-lg border border-border/50 bg-card/50 p-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              viewMode === "daily" && "bg-primary text-primary-foreground hover:bg-primary/90"
-            )}
-            onClick={() => handleViewModeChange("daily")}
-          >
-            Daily
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              viewMode === "weekly" && "bg-primary text-primary-foreground hover:bg-primary/90"
-            )}
-            onClick={() => handleViewModeChange("weekly")}
-          >
-            Weekly
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              viewMode === "monthly" && "bg-primary text-primary-foreground hover:bg-primary/90"
-            )}
-            onClick={() => handleViewModeChange("monthly")}
-          >
-            Monthly
-          </Button>
+          <p className="text-muted-foreground">
+            Welcome back, <span className="font-medium text-foreground">{profile?.name || 'User'}</span>
+          </p>
         </div>
       </div>
+
+      
     </div>
   )
 }

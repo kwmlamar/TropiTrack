@@ -136,9 +136,6 @@ export function SiteHeader({
             onClick={onCompanySwitch}
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 h-auto hover:bg-muted/80 rounded-md transition-all duration-200"
           >
-            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-3.5 w-3.5 text-primary" />
-            </div>
             <span className="text-sm font-medium text-foreground max-w-32 truncate">
               {user.company?.name}
             </span>
@@ -254,7 +251,7 @@ export function SiteHeader({
           </Popover>
 
           {/* Custom Right Slot */}
-          {rightSlot}
+          
 
           {/* User Menu */}
           <DropdownMenu>

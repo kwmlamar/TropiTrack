@@ -21,8 +21,7 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
   const [stats, setStats] = useState({
     totalHours: { value: 0, change: 0 },
     activeWorkers: { value: 0, change: 0 },
-    payroll: { value: 0, change: 0 },
-    projectCompletion: { value: 0, change: 0 }
+    payroll: { value: 0, change: 0 }
   })
   const [loading, setLoading] = useState(true)
 
@@ -114,10 +113,6 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
         payroll: {
           value: currentPayroll,
           change: payrollChange
-        },
-        projectCompletion: {
-          value: 0, // TODO: Implement project completion tracking
-          change: 0
         }
       })
     } catch (error) {
@@ -142,8 +137,8 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
 
   const statsData = [
     {
-      title: "Total Hours",
-      value: stats.totalHours.value.toFixed(1),
+      title: "Total Hours Tracked",
+      value: Number.isInteger(stats.totalHours.value) ? stats.totalHours.value.toString() : stats.totalHours.value.toFixed(1),
       change: formatChange(stats.totalHours.change),
       trend: stats.totalHours.change >= 0 ? "up" : "down",
       icon: Clock,
@@ -164,24 +159,19 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
       trend: stats.payroll.change >= 0 ? "up" : "down",
       icon: DollarSign,
       color: "orange",
-    },
-    {
-      title: "Project Completion",
-      value: `${stats.projectCompletion.value}%`,
-      change: formatChange(stats.projectCompletion.change),
-      trend: stats.projectCompletion.change >= 0 ? "up" : "down",
-      icon: TrendingUp,
-      color: "purple",
-    },
+    }
   ]
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {statsData.map((_, index) => (
-          <Card key={index} className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <Card key={index} className="border-border/50 bg-muted/50 backdrop-blur-sm transition-all duration-200 hover:shadow-md">
             <CardContent className="p-6">
-              <div className="h-20 animate-pulse bg-muted/50 rounded" />
+              <div className="space-y-3">
+                <div className="h-4 w-24 animate-pulse rounded bg-muted/50" />
+                <div className="h-8 w-32 animate-pulse rounded bg-muted/50" />
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -190,31 +180,16 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {statsData.map((stat, index) => (
-        <Card key={index} className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className={`p-2 ${
-                stat.color === "blue"
-                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                  : stat.color === "green"
-                    ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                    : stat.color === "orange"
-                      ? "bg-orange-500/10 text-orange-600 dark:text-orange-400"
-                      : "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-              } rounded-lg`}>
-                <stat.icon className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-bold text-foreground truncate">{stat.value}</p>
-                  <span className={`text-xs font-medium whitespace-nowrap ${stat.trend === "up" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                    {stat.change}
-                  </span>
-                </div>
-              </div>
+        <Card 
+          key={index} 
+          className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80"
+        >
+          <CardContent className="px-6 py-4">
+            <div className="space-y-2">
+              <p className="text-base font-medium text-primary">{stat.title}</p>
+              <p className="text-3xl font-bold tracking-tight text-primary">{stat.value}</p>
             </div>
           </CardContent>
         </Card>
