@@ -158,7 +158,9 @@ export async function createTimesheet(
         success: false,
       };
     }
-    const workerHourlyRate = workerData.hourly_rate;
+    
+    // Use the worker's hourly rate or default to 0 if null
+    const workerHourlyRate = workerData.hourly_rate || 0;
 
     // Calculate totals before inserting
     const calculatedTimesheet = calculateTimesheetTotals(timesheet, workerHourlyRate);
@@ -167,6 +169,7 @@ export async function createTimesheet(
       .from("timesheets")
       .insert({
         ...calculatedTimesheet,
+        hourly_rate: workerHourlyRate,
         company_id: profile.company_id,
         supervisor_approval: "pending",
       })

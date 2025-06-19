@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Clock, FileText, Plus, UserPlus, DollarSign } from "lucide-react"
 import { useState, useEffect } from "react"
-import { BulkTimesheetDialog } from "@/components/forms/form-dialogs"
 import { WorkerSheet } from "@/components/forms/form-dialogs"
 import { createClient } from "@/utils/supabase/client"
 import { fetchWorkersForCompany, fetchProjectsForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
+import Link from "next/link"
 
 export function QuickActions() {
   const [userId, setUserId] = useState<string>("")
@@ -58,22 +58,17 @@ export function QuickActions() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-3">
-          <BulkTimesheetDialog
-            userId={userId}
-            workers={workers}
-            projects={projects}
-            trigger={
-              <Button 
-                variant="outline" 
-                className="group h-auto flex-col gap-2 p-4 transition-all duration-200 hover:bg-muted/30 text-foreground"
-              >
-                <div className="p-2.5 transition-all duration-200 group-hover:scale-105">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-xs font-medium text-foreground">Add Timesheet</span>
-              </Button>
-            }
-          />
+          <Link href="/dashboard/timesheets/bulk">
+            <Button 
+              variant="outline" 
+              className="group h-auto flex-col gap-2 p-4 transition-all duration-200 hover:bg-muted/30 text-foreground w-full"
+            >
+              <div className="p-2.5 transition-all duration-200 group-hover:scale-105">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-xs font-medium text-foreground">Add Timesheet</span>
+            </Button>
+          </Link>
           <WorkerSheet
             userId={userId}
             trigger={

@@ -11,14 +11,12 @@ import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Search, SlidersHorizontal, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
+import { CheckCircle, Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
 import { updatePayrollStatus } from "@/lib/data/payroll"
 import { toast } from "sonner"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -51,15 +49,19 @@ export default function PayrollPage({ user }: { user: User }) {
       const newWeekStartDay = dayMap[paymentSchedule.period_start_day] || 1
       setWeekStartDay(newWeekStartDay)
       
-      // Update date range to use the new week start day
-      if (!dateRange) {
-        setDateRange({
-          from: startOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
-          to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
-        })
-      }
+      // Always set date range to current week
+      setDateRange({
+        from: startOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
+        to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
+      })
+    } else if (!settingsLoading) {
+      // If no payment schedule, use default Monday start
+      setDateRange({
+        from: startOfWeek(new Date(), { weekStartsOn: 1 }),
+        to: endOfWeek(new Date(), { weekStartsOn: 1 }),
+      })
     }
-  }, [paymentSchedule, settingsLoading, dateRange])
+  }, [paymentSchedule, settingsLoading])
 
   useEffect(() => {
     if (!settingsLoading) {
@@ -338,54 +340,18 @@ export default function PayrollPage({ user }: { user: User }) {
 
                       <Separator />
 
-                      {/* Date Range Filter */}
-                      <div className="space-y-3 py-2">
-                        <Label className="text-sm font-medium">Date Range</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-left font-normal">
-                              <CalendarDays className="mr-2 h-4 w-4" />
-                              {dateRange?.from ? (
-                                dateRange.to ? (
-                                  <>
-                                    {format(dateRange.from, "LLL dd, y")} -{" "}
-                                    {format(dateRange.to, "LLL dd, y")}
-                                  </>
-                                ) : (
-                                  format(dateRange.from, "LLL dd, y")
-                                )
-                              ) : (
-                                <span>Pick a date range</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="range"
-                              defaultMonth={dateRange?.from}
-                              selected={dateRange}
-                              onSelect={setDateRange}
-                              numberOfMonths={2}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-
-                      <Separator />
-
                       {/* Clear Filters */}
-                      {(dateRange?.from || dateRange?.to || payPeriodType !== "bi-weekly") && (
+                      {payPeriodType !== "weekly" && (
                         <div className="pt-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              setDateRange(undefined);
-                              setPayPeriodType("bi-weekly");
+                              setPayPeriodType("weekly");
                             }}
                             className="w-full justify-start text-muted-foreground hover:text-foreground"
                           >
-                            Clear all filters
+                            Clear filters
                           </Button>
                         </div>
                       )}

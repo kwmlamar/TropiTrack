@@ -24,6 +24,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import Link from "next/link"
 
 import {
   getTimesheets,
@@ -31,7 +32,6 @@ import {
   deleteTimesheet,
 } from "@/lib/data/timesheets"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
-import { BulkTimesheetDialog } from "@/components/forms/form-dialogs"
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
@@ -799,17 +799,11 @@ export default function TimesheetsPage({ user }: { user: User }) {
               </DropdownMenu>
 
               {/* Create Timesheets Button */}
-              <BulkTimesheetDialog
-                userId={user.id}
-                workers={workers}
-                projects={projects}
-                onSuccess={loadTimesheets}
-                trigger={
-                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
-                    Create Timesheets
-                  </Button>
-                }
-              />
+              <Link href="/dashboard/timesheets/bulk">
+                <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
+                  Create Timesheets
+                </Button>
+              </Link>
             </div>
 
             {/* Timesheet Table */}
