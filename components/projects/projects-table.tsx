@@ -28,6 +28,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -39,6 +41,10 @@ import {
   TrendingUp,
   Clock,
   X,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -54,6 +60,8 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { ProjectDialog } from "@/components/forms/form-dialogs";
 import Link from "next/link";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 const columns = [
   "Project",
@@ -76,6 +84,8 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
 
   useEffect(() => {
     loadProjects();
@@ -163,15 +173,28 @@ export default function ProjectsTable({ user }: { user: User }) {
     });
   }, [projects, selectedClient, statusFilter, searchTerm]);
 
-  // Calculate statistics
-  const totalProjects = projects.length;
-  const activeProjects = projects.filter(
-    (p) => p.status === "in_progress"
-  ).length;
-  const completedProjects = projects.filter(
-    (p) => p.status === "completed"
-  ).length;
-  const totalWorkerAssignments = projectAssignments.length;
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProjects.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToPreviousPage = () => {
+    goToPage(currentPage - 1);
+  };
+
+  const goToNextPage = () => {
+    goToPage(currentPage + 1);
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedClient, statusFilter, searchTerm]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -179,30 +202,30 @@ export default function ProjectsTable({ user }: { user: User }) {
         label: "Not Started",
         variant: "secondary" as const,
         className:
-          "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
       },
       in_progress: {
         label: "In Progress",
         variant: "default" as const,
         className:
-          "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
       },
       paused: {
         label: "Paused",
         variant: "secondary" as const,
         className:
-          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
       },
       completed: {
         label: "Completed",
         variant: "default" as const,
         className:
-          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
       },
       cancelled: {
         label: "Cancelled",
         variant: "destructive" as const,
-        className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+        className: "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
       },
     };
 
@@ -220,102 +243,71 @@ export default function ProjectsTable({ user }: { user: User }) {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Project Management
-        </h1>
-        <p className="text-muted-foreground">
-          Manage construction projects and track progress across your portfolio
-        </p>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Projects
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {totalProjects}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Active Projects
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {activeProjects}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Completed
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {completedProjects}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-purple-500/10 rounded-lg">
-                <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Worker Assignments
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {totalWorkerAssignments}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Project Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage construction projects and track progress across your portfolio
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+        <ProjectDialog
+          userId={user.id}
+          clients={clients}
+          workers={workers}
+          onSuccess={() => {
+            loadProjects();
+            loadProjectAssignments();
+          }}
+          trigger={
+            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary shadow-lg">
+              Add Project
+            </Button>
+          }
+        />
+        </div>
       </div>
 
       {/* Filters and Controls */}
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Status
-                </label>
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Search Bar */}
+        <div className="space-y-2 flex-1">
+
+          <SearchForm
+            placeholder="Search projects..."
+            className="w-full"
+            value={searchTerm}
+            onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
+          />
+        </div>
+
+        {/* Filter Button */}
+        <div className="flex items-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+                {(statusFilter !== "all" || selectedClient) && (
+                  <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                    {(statusFilter !== "all" ? 1 : 0) + (selectedClient ? 1 : 0)}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 p-4">
+              <DropdownMenuLabel className="text-base font-semibold">
+                Filter Projects
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              
+              {/* Status Filter */}
+              <div className="space-y-3 py-2">
+                <Label className="text-sm font-medium">Status</Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -329,11 +321,12 @@ export default function ProjectsTable({ user }: { user: User }) {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Client
-                </label>
-                <div className="flex items-center gap-2">
+              <Separator />
+
+              {/* Client Filter */}
+              <div className="space-y-3 py-2">
+                <Label className="text-sm font-medium">Client</Label>
+                <div className="space-y-2">
                   <SearchableCombobox
                     items={clients}
                     selectedItem={selectedClient}
@@ -342,52 +335,44 @@ export default function ProjectsTable({ user }: { user: User }) {
                     placeholder="Select a client"
                   />
                   {selectedClient && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setSelectedClient(null)}
-                      className="h-10 w-10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                      <span className="text-sm font-medium">{selectedClient.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedClient(null)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-2 flex-1">
-                <label className="text-sm font-medium text-foreground">
-                  Search
-                </label>
-                <SearchForm
-                  placeholder="Search projects..."
-                  className="w-full"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
+              <Separator />
 
-            {/* Add Project Button */}
-            <div className="flex items-end">
-              <ProjectDialog
-                userId={user.id}
-                clients={clients}
-                workers={workers}
-                onSuccess={() => {
-                  loadProjects();
-                  loadProjectAssignments();
-                }}
-                trigger={
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Project
+              {/* Clear Filters */}
+              {(statusFilter !== "all" || selectedClient) && (
+                <div className="pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setStatusFilter("all");
+                      setSelectedClient(null);
+                    }}
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="mr-2 h-3 w-3" />
+                    Clear all filters
                   </Button>
-                }
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
       {/* Projects Table */}
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -413,7 +398,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                 <span className="text-sm">Loading projects...</span>
               </div>
             </div>
-          ) : filteredProjects.length === 0 ? (
+          ) : paginatedProjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
                 <Building2 className="h-8 w-8 text-muted-foreground" />
@@ -435,7 +420,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                   loadProjectAssignments();
                 }}
                 trigger={
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary">
                     <Building2 className="mr-2 h-4 w-4" />
                     Add Your First Project
                   </Button>
@@ -443,89 +428,132 @@ export default function ProjectsTable({ user }: { user: User }) {
               />
             </div>
           ) : (
-            <div className="divide-y divide-border/50">
-              {filteredProjects.map((project, i) => (
-                <div
-                  key={project.id || i}
-                  className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center group"
-                >
-                  <Link
-                    href={`/dashboard/projects/${project.id}`}
-                    className="contents"
-                    style={{ textDecoration: 'none', color: 'inherit' }}
+            <>
+              <div className="divide-y divide-border/50">
+                {paginatedProjects.map((project, i) => (
+                  <div
+                    key={project.id || i}
+                    className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center group"
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-primary" />
-                      </div>
+                    <Link
+                      href={`/dashboard/projects/${project.id}`}
+                      className="contents"
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
                       <div>
                         <p className="font-semibold text-foreground">{project.name}</p>
                         <p className="text-sm text-muted-foreground">{project.location || "Location TBD"}</p>
                       </div>
+                      <div className="text-foreground">
+                        {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
+                      </div>
+                      <div className="text-foreground">
+                        {project.start_date ? format(parseISO(project.start_date), "MMM d, yyyy") : "Not started"}
+                      </div>
+                      <div>{getStatusBadge(project.status)}</div>
+                      <div className="text-foreground">
+                        {assignmentCounts.get(project.id) || 0}{(assignmentCounts.get(project.id) || 0) === 1 ? " worker" : " workers"}
+                      </div>
+                    </Link>
+                    
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-muted"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <ProjectDialog
+                            userId={user.id}
+                            project={{
+                              ...project,
+                              assigned_worker_ids: projectAssignments
+                                .filter((pa) => pa.project_id === project.id)
+                                .map((pa) => pa.worker_id),
+                            }}
+                            clients={clients}
+                            workers={workers}
+                            onSuccess={() => {
+                              loadProjects();
+                              loadProjectAssignments();
+                            }}
+                            trigger={
+                              <DropdownMenuItem
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                Edit Project
+                              </DropdownMenuItem>
+                            }
+                          />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedProject(project);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            className="cursor-pointer text-destructive focus:text-destructive"
+                          >
+                            Delete Project
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <div className="text-foreground">
-                      {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
-                    </div>
-                    <div className="flex items-center space-x-2 text-foreground">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>{project.start_date ? format(parseISO(project.start_date), "MMM d, yyyy") : "Not started"}</span>
-                    </div>
-                    <div>{getStatusBadge(project.status)}</div>
-                    <div className="flex items-center space-x-2 text-foreground">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{assignmentCounts.get(project.id) || 0}{(assignmentCounts.get(project.id) || 0) === 1 ? " worker" : " workers"}</span>
-                    </div>
-                  </Link>
-                  
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-border/50">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1} to {Math.min(endIndex, filteredProjects.length)} of {filteredProjects.length} projects
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 hover:bg-muted"
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => goToPage(page)}
+                          className={`h-8 w-8 p-0 ${
+                            currentPage === page 
+                              ? "bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary border-[#E8EDF5]" 
+                              : ""
+                          }`}
                         >
-                          <MoreVertical className="w-4 h-4" />
+                          {page}
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <ProjectDialog
-                          userId={user.id}
-                          project={{
-                            ...project,
-                            assigned_worker_ids: projectAssignments
-                              .filter((pa) => pa.project_id === project.id)
-                              .map((pa) => pa.worker_id),
-                          }}
-                          clients={clients}
-                          workers={workers}
-                          onSuccess={() => {
-                            loadProjects();
-                            loadProjectAssignments();
-                          }}
-                          trigger={
-                            <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              Edit Project
-                            </DropdownMenuItem>
-                          }
-                        />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedProject(project);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                          className="cursor-pointer text-destructive focus:text-destructive"
-                        >
-                          Delete Project
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
