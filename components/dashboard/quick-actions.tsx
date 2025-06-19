@@ -10,7 +10,6 @@ import { createClient } from "@/utils/supabase/client"
 import { fetchWorkersForCompany, fetchProjectsForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
-import { cn } from "@/lib/utils"
 
 export function QuickActions() {
   const [userId, setUserId] = useState<string>("")

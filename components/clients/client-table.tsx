@@ -8,7 +8,7 @@ import type { User } from "@supabase/supabase-js"
 import type { Client } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
-import { MoreVertical, Plus, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react"
+import { MoreVertical, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,

@@ -10,7 +10,6 @@ import {
   Settings,
   User,
   LogOut,
-  Building2,
   Users,
   HelpCircle,
 } from "lucide-react";
@@ -68,7 +67,6 @@ type SiteHeaderProps = {
 
 export function SiteHeader({
   title = "Dashboard",
-  rightSlot,
   user,
   notifications = [
     {
@@ -256,13 +254,13 @@ export function SiteHeader({
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-muted/80 transition-colors duration-200">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
                     src="/placeholder.svg"
                     alt={user.name}
                   />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  <AvatarFallback className="bg-[#E8EDF5] text-primary text-xs font-medium">
                     {user.name
                       .split(" ")
                       .map((n) => n[0])
@@ -290,26 +288,26 @@ export function SiteHeader({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <Link href="/dashboard/profile">
-                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
+                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
               <Link href="/dashboard/invites">
-                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
+                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
                 <Users className="mr-2 h-4 w-4" />
                 <span>Team Settings</span>
               </DropdownMenuItem>
               </Link>
               <Link href="/dashboard/settings">
-                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200">
+                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
               </Link>
               <DropdownMenuItem 
                 onClick={() => onUserMenuAction?.("help")}
-                className="hover:bg-muted/80 transition-colors duration-200"
+                className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0"
               >
                 <HelpCircle className="mr-2 h-4 w-4" />
                 <span>Help & Support</span>
@@ -317,7 +315,7 @@ export function SiteHeader({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={logout}
-                className="text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors duration-200"
+                className="text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>

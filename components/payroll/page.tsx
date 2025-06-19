@@ -2,12 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { PayrollHeader } from "@/components/payroll/payroll-header"
-import { PayrollFilters } from "@/components/payroll/payroll-filters"
 import { PayrollTable } from "@/components/payroll/payroll-table"
-import { PayrollSummary } from "@/components/payroll/payroll-summary"
-import { PayrollActions } from "@/components/payroll/payroll-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { NibComplianceCard } from "@/components/payroll/nib-compliance-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import type { PayrollRecord } from "@/lib/types"
@@ -19,10 +15,8 @@ import { CheckCircle, Search, SlidersHorizontal, CalendarDays, ChevronLeft, Chev
 import { updatePayrollStatus } from "@/lib/data/payroll"
 import { toast } from "sonner"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
-import type { Table } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
@@ -37,14 +31,11 @@ export default function PayrollPage({ user }: { user: User }) {
   })
   const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
-  const [tableInstance, setTableInstance] = useState<Table<PayrollRecord> | undefined>(undefined)
 
   const {
     loading: settingsLoading,
-    paymentSchedule,
     payrollSettings,
     calculateDeductions,
-    getDefaultPayPeriod,
   } = usePayrollSettings()
 
   useEffect(() => {
@@ -115,23 +106,7 @@ export default function PayrollPage({ user }: { user: User }) {
 
   // Calculate summary data from payrolls
   const totalGrossPay = payrolls.reduce((sum, record) => sum + record.gross_pay, 0)
-  const totalDeductions = payrolls.reduce((sum, record) => sum + record.total_deductions, 0)
-  const totalNetPay = payrolls.reduce((sum, record) => sum + record.net_pay, 0)
-  const totalHours = payrolls.reduce((sum, record) => sum + record.total_hours, 0)
-  const totalOvertimeHours = payrolls.reduce((sum, record) => sum + record.overtime_hours, 0)
   const totalNibDeductions = payrolls.reduce((sum, record) => sum + record.nib_deduction, 0)
-  const totalOtherDeductions = payrolls.reduce((sum, record) => sum + record.other_deductions, 0)
-
-  const summaryData = {
-    totalEmployees: payrolls.length,
-    totalHours,
-    totalOvertimeHours,
-    totalGrossPay,
-    totalNibDeductions,
-    totalOtherDeductions,
-    totalDeductions,
-    totalNetPay,
-  }
 
   const handleMarkAsPaid = async () => {
     if (selectedPayrollIds.size === 0) {
@@ -151,10 +126,6 @@ export default function PayrollPage({ user }: { user: User }) {
       })
     }
   }
-
-  const handleTableInit = (table: Table<PayrollRecord>) => {
-    setTableInstance(table);
-  };
 
   return (
     <div className="flex-1 space-y-6 p-6">
@@ -386,7 +357,6 @@ export default function PayrollPage({ user }: { user: User }) {
                       data={payrolls}
                       selectedPayrollIds={selectedPayrollIds}
                       setSelectedPayrollIds={setSelectedPayrollIds}
-                      onTableInit={handleTableInit}
                     />
                   </CardContent>
                 </Card>

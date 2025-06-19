@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, DollarSign, HardHat, TrendingUp } from "lucide-react"
+import { Clock, DollarSign, HardHat } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { getTimesheetSummary } from "@/lib/data/timesheets"

@@ -1,7 +1,6 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CalendarClock } from "lucide-react"
 import { useEffect } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 

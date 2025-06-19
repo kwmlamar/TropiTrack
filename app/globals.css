@@ -515,3 +515,26 @@ select {
     @apply min-h-[44px] min-w-[44px];
   }
 }
+
+/* Remove focus rings from all elements except search inputs */
+*:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Preserve focus ring only for search inputs */
+input[type="search"]:focus-visible,
+input[placeholder*="search"]:focus-visible,
+input[placeholder*="Search"]:focus-visible {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 2px !important;
+}
+
+/* Ensure keyboard navigation still works */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid transparent !important;
+  outline-offset: 2px !important;
+}

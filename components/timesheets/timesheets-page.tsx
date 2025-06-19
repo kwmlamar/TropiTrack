@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Clock, Users, DollarSign, Trash2, SlidersHorizontal, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { CalendarDays, Trash2, SlidersHorizontal, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -19,7 +19,6 @@ import { toast } from "sonner"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
@@ -29,10 +28,8 @@ import { Separator } from "@/components/ui/separator"
 import {
   getTimesheets,
   updateTimesheet as updateTimesheetData,
-  getTimesheetSummary,
   deleteTimesheet,
 } from "@/lib/data/timesheets"
-import { generatePayrollForWorkerAndPeriod } from "@/lib/data/payroll"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
 import { BulkTimesheetDialog } from "@/components/forms/form-dialogs"
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
@@ -52,20 +49,13 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [summary, setSummary] = useState({
-    totalHours: 0,
-    totalRegularHours: 0,
-    totalOvertimeHours: 0,
-    totalPay: 0,
-    timesheetCount: 0,
-  })
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedWorker, setSelectedWorker] = useState<string>("all")
   const [selectedProject, setSelectedProject] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedTimesheetIds, setSelectedTimesheetIds] = useState<Set<string>>(new Set())
-  const [isApproving, setIsApproving] = useState(false)
+  const [isApproving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
   const [currentPage, setCurrentPage] = useState(1)
@@ -117,9 +107,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
       if (selectedProject !== "all") {
         filters.project_id = selectedProject
       }
-      const [timesheetsResult, summaryResult] = await Promise.all([
+      const [timesheetsResult] = await Promise.all([
         getTimesheets(user.id, filters),
-        getTimesheetSummary(user.id, filters),
       ])
 
       if (timesheetsResult.success && timesheetsResult.data) {
@@ -128,9 +117,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
         setError(timesheetsResult.error || "Failed to load timesheets")
       }
 
-      if (summaryResult.success && summaryResult.data) {
-        setSummary(summaryResult.data)
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
     } finally {
@@ -375,12 +361,12 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const getAllSelectableTimesheetIds = useMemo(() => {
     if (viewMode === "weekly") {
       const allIds = new Set<string>();
-      paginatedWorkerEntries.forEach(([workerId, timesheetsInWeek]) => {
-        timesheetsInWeek.forEach(ts => allIds.add(ts.id));
+      paginatedWorkerEntries.forEach(([, timesheetsInWeek]) => {
+        timesheetsInWeek.forEach((ts: TimesheetWithDetails) => allIds.add(ts.id));
       });
       return allIds;
     } else {
-      return new Set(paginatedTimesheets.map(ts => ts.id));
+      return new Set(paginatedTimesheets.map((ts: TimesheetWithDetails) => ts.id));
     }
   }, [viewMode, paginatedWorkerEntries, paginatedTimesheets]);
 
@@ -408,18 +394,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
     } else {
       setSelectedTimesheetIds(new Set());
     }
-  };
-
-  const handleSelectTimesheet = (id: string, checked: boolean) => {
-    setSelectedTimesheetIds(prev => {
-      const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(id);
-      } else {
-        newSet.delete(id);
-      }
-      return newSet;
-    });
   };
 
   const handleSelectAllInWeek = (workerId: string, weekStart: string, checked: boolean) => {
@@ -458,55 +432,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
       console.log('new selectedTimesheetIds:', newSet);
       return newSet;
     });
-  };
-
-  const handleApproveSelected = async () => {
-    setIsApproving(true);
-    try {
-      const updates = Array.from(selectedTimesheetIds).map(id =>
-        updateTimesheetData({ id, supervisor_approval: "approved" })
-      );
-      const results = await Promise.all(updates);
-
-      const failedApprovals = results.filter(result => !result.success);
-      if (failedApprovals.length > 0) {
-        toast.error("Failed to approve some timesheets", {
-          description: `${failedApprovals.length} timesheets could not be approved.`,
-        });
-      } else {
-        toast.success("Timesheets approved successfully", {
-          description: "All selected timesheets have been marked as approved.",
-        });
-
-        // After approving, trigger payroll calculation for affected workers/weeks
-        const affectedWorkersAndWeeks = new Map<string, { workerId: string, weekStart: string, weekEnd: string }>();
-        selectedTimesheetIds.forEach(id => {
-          const ts = timesheets.find(t => t.id === id);
-          if (ts) {
-            const weekStart = format(startOfWeek(parseISO(ts.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd');
-            const weekEnd = format(endOfWeek(parseISO(ts.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd');
-            const key = `${ts.worker_id}-${weekStart}`;
-            if (!affectedWorkersAndWeeks.has(key)) {
-              affectedWorkersAndWeeks.set(key, { workerId: ts.worker_id, weekStart, weekEnd });
-            }
-          }
-        });
-
-        for (const { workerId, weekStart, weekEnd } of affectedWorkersAndWeeks.values()) {
-          await generatePayrollForWorkerAndPeriod(user.id, workerId, weekStart, weekEnd);
-        }
-      }
-
-      setSelectedTimesheetIds(new Set());
-      loadTimesheets();
-    } catch (error) {
-      console.error("Error approving timesheets:", error);
-      toast.error("Error approving timesheets", {
-        description: "An unexpected error occurred while approving timesheets.",
-      });
-    } finally {
-      setIsApproving(false);
-    }
   };
 
   const handleDeleteSelected = async () => {

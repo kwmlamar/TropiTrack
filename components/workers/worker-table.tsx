@@ -15,12 +15,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import {
   MoreVertical,
-  Plus,
   UserCheck,
   UserX,
-  Users,
-  DollarSign,
-  Activity,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -84,14 +80,6 @@ export default function WorkersTable({ user }: { user: User }) {
   const handleRowClick = (workerId: string) => {
     router.push(`/dashboard/workers/${workerId}`);
   };
-
-  // Calculate statistics
-  const activeWorkers = workers.filter((w) => w.is_active).length;
-  const totalWorkers = workers.length;
-  const averageRate =
-    workers.length > 0
-      ? workers.reduce((sum, w) => sum + w.hourly_rate, 0) / workers.length
-      : 0;
 
   const filteredWorkers = workers.filter((worker) => {
     const term = searchTerm.trim().toLowerCase();

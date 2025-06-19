@@ -5,23 +5,15 @@ import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Building2,
-  HelpCircle,
   DollarSign,
-  Search,
   Settings,
   Users,
   Briefcase,
-  Plus,
-  ChevronRight,
-  Clock,
-  Calendar,
   FileText,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -30,23 +22,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import type { UserProfileWithCompany } from "@/lib/types/userProfile";
 import type { Worker } from "@/lib/types/worker";
 import type { Client } from "@/lib/types/client";
-import type { Project } from "@/lib/types/project";
 import {
   fetchClientsForCompany,
   fetchWorkersForCompany,
 } from "@/lib/data/data";
 import { ProjectDialog, WorkerSheet } from "./forms/form-dialogs";
-import { getRecentProjects } from "@/lib/data/recent-projects";
 
 const data = {
   user: {
@@ -123,14 +108,12 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
   const isCollapsed = state === "collapsed";
   const [clients, setClients] = useState<Client[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [recentProjects, setRecentProjects] = useState<Partial<Project>[]>([]);
   const [workerSheet, setWorkerSheet] = useState(false);
   const [projectDialog, setProjectDialog] = useState(false);
 
   useEffect(() => {
     loadWorkers();
     loadClients();
-    loadRecentProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -151,41 +134,6 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
       console.log("Failed to load workers:", error);
     }
   };
-
-  const loadRecentProjects = async () => {
-    try {
-      const data = await getRecentProjects(profile.id);
-      setRecentProjects(data);
-    } catch (error) {
-      console.error("Failed to load recent projects:", error);
-    }
-  };
-
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case "add-worker":
-        // Trigger add worker sheet/modal
-        setWorkerSheet(true);
-        console.log("Open Add Worker");
-        break;
-      case "create-project":
-        // Trigger project form
-        setProjectDialog(true);
-        console.log("Open New Project Form");
-        break;
-      default:
-        console.log(`Unhandled action: ${action}`);
-    }
-  };
-
-  const sidebarUser = {
-    name: profile.name,
-    email: profile.email ?? "no-email@tropitrack.bs",
-    avatar: "/avatars/default.jpg",
-    role: profile.role ?? "Worker",
-  };
-
-  const { open, setOpen } = useSidebar();
 
   return (
     <Sidebar

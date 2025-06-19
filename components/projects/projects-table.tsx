@@ -34,16 +34,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import {
   MoreVertical,
-  Plus,
   Building2,
-  Users,
-  Calendar,
-  TrendingUp,
-  Clock,
   X,
   ChevronLeft,
   ChevronRight,
-  Filter,
   SlidersHorizontal,
 } from "lucide-react";
 import {
@@ -243,7 +237,7 @@ export default function ProjectsTable({ user }: { user: User }) {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="space-y-4 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Project Management
@@ -252,7 +246,6 @@ export default function ProjectsTable({ user }: { user: User }) {
             Manage construction projects and track progress across your portfolio
           </p>
         </div>
-        <div className="flex items-center gap-2">
         <ProjectDialog
           userId={user.id}
           clients={clients}
@@ -262,12 +255,11 @@ export default function ProjectsTable({ user }: { user: User }) {
             loadProjectAssignments();
           }}
           trigger={
-            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary shadow-lg">
+            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
               Add Project
             </Button>
           }
         />
-        </div>
       </div>
 
       {/* Filters and Controls */}

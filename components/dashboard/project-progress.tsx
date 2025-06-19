@@ -1,7 +1,6 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Briefcase } from "lucide-react"
 import { useEffect } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 

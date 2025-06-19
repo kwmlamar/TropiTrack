@@ -16,17 +16,6 @@ import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
 import type { WorkerWithDetails } from "@/lib/types/worker";
 import type { TimesheetWithDetails } from "@/lib/types";
 import {
-  User as UserIcon,
-  Briefcase,
-  Clock,
-  DollarSign,
-  Phone,
-  Mail,
-  MapPin,
-  Shield,
-  Award,
-  FileText,
-  Calendar,
   Building2,
 } from "lucide-react";
 
