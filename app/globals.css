@@ -27,8 +27,8 @@
   --muted-foreground: #4A739C;
 
   /* Accent - Energetic blue */
-  --accent: #4A739C;
-  --accent-foreground: oklch(1.0 0 0);
+  --accent: #E8EDF5;
+  --accent-foreground: #0D141C;
 
   /* Status Colors - Clear and accessible */
   --destructive: #DC2626;
@@ -137,8 +137,8 @@
   --muted-foreground: #4A739C;
 
   /* Accent - Glowing blue */
-  --accent: #4A739C;
-  --accent-foreground: oklch(1.0 0 0);
+  --accent: var(--primary);
+  --accent-foreground: var(--primary-foreground);
 
   /* Status Colors - Vibrant but not harsh */
   --destructive: #EF4444;

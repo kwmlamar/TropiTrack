@@ -21,6 +21,8 @@ import {
   Users,
   DollarSign,
   Activity,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { Worker } from "@/lib/types/worker";
 import {
@@ -37,6 +39,7 @@ import { WorkerSheet } from "@/components/forms/form-dialogs";
 import { useRouter } from "next/navigation";
 
 const columns = ["Name", "Pay Rate", "Status"];
+const ITEMS_PER_PAGE = 10;
 
 export default function WorkersTable({ user }: { user: User }) {
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -45,6 +48,7 @@ export default function WorkersTable({ user }: { user: User }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
@@ -99,94 +103,53 @@ export default function WorkersTable({ user }: { user: User }) {
     );
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredWorkers.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedWorkers = filteredWorkers.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Team Management
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your construction team and track worker information
-        </p>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Workers
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {totalWorkers}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <Activity className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Active Workers
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {activeWorkers}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Avg. Hourly Rate
-                </p>
-                <p className="text-2xl font-bold text-foreground">
-                  ${averageRate.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Controls Section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <SearchForm
-          placeholder="Search workers..."
-          className="w-full sm:w-80"
-          value={searchTerm}
-          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
-        />
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Team Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage your construction team and track worker information
+          </p>
+        </div>
         <WorkerSheet
           userId={user.id}
           onSuccess={loadWorkers}
           open={sheetOpen}
           onOpenChange={setSheetOpen}
           trigger={
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
               Add Worker
             </Button>
           }
+        />
+      </div>
+
+      {/* Search Section */}
+      <div className="w-full">
+        <SearchForm
+          placeholder="Search workers..."
+          className="w-full"
+          value={searchTerm}
+          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
         />
       </div>
 
@@ -230,7 +193,7 @@ export default function WorkersTable({ user }: { user: User }) {
                 userId={user.id}
                 onSuccess={loadWorkers}
                 trigger={
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary">
                     <UserCheck className="mr-2 h-4 w-4" />
                     Add Your First Worker
                   </Button>
@@ -239,22 +202,13 @@ export default function WorkersTable({ user }: { user: User }) {
             </div>
           ) : (
             <div className="divide-y divide-border/50">
-              {filteredWorkers.map((worker, i) => (
+              {paginatedWorkers.map((worker, i) => (
                 <div
                   key={worker.id || i}
                   className="grid grid-cols-[2fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group cursor-pointer"
                   onClick={() => handleRowClick(worker.id)}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-primary">
-                        {worker.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
-                      </span>
-                    </div>
                     <div>
                       <p className="font-semibold text-foreground">
                         {worker.name}
@@ -275,8 +229,8 @@ export default function WorkersTable({ user }: { user: User }) {
                       variant={worker.is_active ? "default" : "secondary"}
                       className={
                         worker.is_active
-                          ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
-                          : "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20"
+                          ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm"
+                          : "bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm"
                       }
                     >
                       {worker.is_active ? "Active" : "Inactive"}
@@ -325,6 +279,54 @@ export default function WorkersTable({ user }: { user: User }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      {filteredWorkers.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredWorkers.length)} of {filteredWorkers.length} workers
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className={`h-8 w-8 p-0 ${
+                    currentPage === page 
+                      ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
+                      : "hover:bg-[#E8EDF5]/70"
+                  }`}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

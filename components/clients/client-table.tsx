@@ -8,7 +8,7 @@ import type { User } from "@supabase/supabase-js"
 import type { Client } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
-import { MoreVertical, Plus, UserCheck, UserX, Users, Building2, Mail, Phone } from "lucide-react"
+import { MoreVertical, Plus, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +22,7 @@ import {
 import { ClientDialog } from "@/components/forms/form-dialogs"
 
 const columns = ["Name", "Email"]
+const ITEMS_PER_PAGE = 10;
 
 export default function ClientTable({ user }: { user: User }) {
   const [clients, setClients] = useState<Client[]>([])
@@ -29,6 +30,7 @@ export default function ClientTable({ user }: { user: User }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     loadClients()
@@ -60,15 +62,6 @@ export default function ClientTable({ user }: { user: User }) {
     }
   }
 
-  // Calculate statistics
-  const totalClients = clients.length
-  const clientsWithProjects = clients.filter((c) => c.projects && c.projects.length > 0).length
-  const recentClients = clients.filter((c) => {
-    const createdAt = new Date(c.created_at || Date.now())
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    return createdAt > thirtyDaysAgo
-  }).length
-
   const filteredClients = clients.filter((client) => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
@@ -79,76 +72,47 @@ export default function ClientTable({ user }: { user: User }) {
     );
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedClients = filteredClients.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Management</h1>
-        <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Clients</p>
-                <p className="text-2xl font-bold text-foreground">{totalClients}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
-                <p className="text-2xl font-bold text-foreground">{clientsWithProjects}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <UserCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">New This Month</p>
-                <p className="text-2xl font-bold text-foreground">{recentClients}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Controls Section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <SearchForm
-          placeholder="Search clients..."
-          className="w-full sm:w-80"
-          value={searchTerm}
-          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
-        />
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Management</h1>
+          <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
+        </div>
         <ClientDialog
-        userId={user.id}
+          userId={user.id}
           onSuccess={loadClients}
           trigger={
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
               Add Client
             </Button>
           }
+        />
+      </div>
+
+      {/* Search Section */}
+      <div className="w-full">
+        <SearchForm
+          placeholder="Search clients..."
+          className="w-full"
+          value={searchTerm}
+          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
         />
       </div>
 
@@ -183,10 +147,10 @@ export default function ClientTable({ user }: { user: User }) {
                 You haven&apos;t added any clients yet. Add your first client to start building your project portfolio.
               </p>
               <ClientDialog
-              userId={user.id}
+                userId={user.id}
                 onSuccess={loadClients}
                 trigger={
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary">
                     <UserCheck className="mr-2 h-4 w-4" />
                     Add Your First Client
                   </Button>
@@ -195,33 +159,22 @@ export default function ClientTable({ user }: { user: User }) {
             </div>
           ) : (
             <div className="divide-y divide-border/50">
-              {filteredClients.map((client, i) => (
+              {paginatedClients.map((client, i) => (
                 <div
                   key={client.id || i}
                   className="grid grid-cols-[2fr_2fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-primary">
-                        {client.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
-                      </span>
-                    </div>
                     <div>
                       <p className="font-semibold text-foreground">{client.name}</p>
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         {client.phone && (
                           <div className="flex items-center space-x-1">
-                            <Phone className="h-3 w-3" />
                             <span>{client.phone}</span>
                           </div>
                         )}
                         {client.address && (
                           <div className="flex items-center space-x-1">
-                            <Building2 className="h-3 w-3" />
                             <span className="truncate max-w-32">{client.address}</span>
                           </div>
                         )}
@@ -230,7 +183,6 @@ export default function ClientTable({ user }: { user: User }) {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="text-foreground">{client.email}</span>
                   </div>
 
@@ -268,6 +220,54 @@ export default function ClientTable({ user }: { user: User }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      {filteredClients.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredClients.length)} of {filteredClients.length} clients
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className={`h-8 w-8 p-0 ${
+                    currentPage === page 
+                      ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
+                      : "hover:bg-[#E8EDF5]/70"
+                  }`}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

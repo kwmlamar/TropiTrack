@@ -132,36 +132,31 @@ export default function WorkerDetails() {
           {/* Personal Information */}
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserIcon className="h-5 w-5" />
+              <CardTitle>
                 Personal Information
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Email</span>
                 </div>
                 <p>{worker.email || "Not provided"}</p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Phone</span>
                 </div>
                 <p>{worker.phone || "Not provided"}</p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Address</span>
                 </div>
                 <p>{worker.address || "Not provided"}</p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Shield className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>NIB Number</span>
                 </div>
                 <p>{worker.nib_number || "Not provided"}</p>
@@ -172,35 +167,31 @@ export default function WorkerDetails() {
           {/* Employment Details */}
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
+              <CardTitle>
                 Employment Details
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Hourly Rate</span>
                 </div>
                 <p>${worker.hourly_rate}/hr</p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Hire Date</span>
                 </div>
                 <p>{format(parseISO(worker.hire_date), "PPP")}</p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Building2 className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Department</span>
                 </div>
                 <p>{worker.department || "Not specified"}</p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="text-muted-foreground">
                   <Badge
                     variant={worker.is_active ? "default" : "secondary"}
                     className={
@@ -219,8 +210,7 @@ export default function WorkerDetails() {
           {/* Skills & Certifications */}
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
+              <CardTitle>
                 Skills & Certifications
               </CardTitle>
             </CardHeader>
@@ -259,22 +249,19 @@ export default function WorkerDetails() {
           {/* Emergency Contact */}
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
+              <CardTitle>
                 Emergency Contact
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <UserIcon className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Contact Name</span>
                 </div>
                 <p>{worker.emergency_contact || "Not provided"}</p>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="h-4 w-4" />
+                <div className="text-muted-foreground">
                   <span>Contact Phone</span>
                 </div>
                 <p>{worker.emergency_phone || "Not provided"}</p>
@@ -286,8 +273,7 @@ export default function WorkerDetails() {
           {worker.notes && (
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
+                <CardTitle>
                   Notes
                 </CardTitle>
               </CardHeader>
@@ -301,8 +287,7 @@ export default function WorkerDetails() {
         <TabsContent value="timesheets" className="space-y-6">
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+              <CardTitle>
                 Recent Timesheets
               </CardTitle>
             </CardHeader>
