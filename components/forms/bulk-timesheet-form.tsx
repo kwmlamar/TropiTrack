@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CalendarIcon,
@@ -45,10 +45,7 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -205,20 +202,21 @@ export function BulkTimesheetForm({
     name: "entries",
   });
 
-  // Debug form state
-  const formState = form.formState;
-  console.log("Form state:", {
-    isValid: formState.isValid,
-    errors: formState.errors,
-    isSubmitting: formState.isSubmitting,
-    isDirty: formState.isDirty,
+  // Watch form fields for reactive calculations
+  const watchedEntries = useWatch({
+    control: form.control,
+    name: "entries",
+  });
+  
+  const watchedDateRange = useWatch({
+    control: form.control,
+    name: "date_range",
   });
 
-  // Calculate total hours and cost
+  // Calculate totals reactively based on watched form values
   const calculateTotals = () => {
-    const formData = form.getValues();
-    const entries = formData.entries;
-    const dateRange = formData.date_range;
+    const entries = watchedEntries || [];
+    const dateRange = watchedDateRange;
 
     // Calculate number of days
     let numberOfDays = 1;
@@ -233,7 +231,7 @@ export function BulkTimesheetForm({
     let totalCost = 0;
 
     entries.forEach((entry) => {
-      if (entry.clock_in && entry.clock_out) {
+      if (entry && entry.clock_in && entry.clock_out) {
         const clockIn = new Date(`2000-01-01T${entry.clock_in}:00`);
         const clockOut = new Date(`2000-01-01T${entry.clock_out}:00`);
 
@@ -261,7 +259,6 @@ export function BulkTimesheetForm({
   const totals = calculateTotals();
 
   const onSubmit = async (data: BulkTimesheetFormData) => {
-    console.log("Form submission started", data);
     setIsSubmitting(true);
     setSubmissionError(null);
     setSubmissionSuccess(false);
@@ -279,9 +276,6 @@ export function BulkTimesheetForm({
         dates.push(format(currentDate, "yyyy-MM-dd"));
         currentDate.setDate(currentDate.getDate() + 1);
       }
-
-      console.log("Generated dates:", dates);
-      console.log("Form entries:", data.entries);
 
       // Create timesheet entries for each worker × each date combination
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -305,17 +299,14 @@ export function BulkTimesheetForm({
             notes: entry.notes || "",
           };
 
-          console.log("Creating timesheet:", timesheetData);
           timesheetPromises.push(createTimesheet(userId, timesheetData));
         });
       });
 
       const results = await Promise.all(timesheetPromises);
-      console.log("Timesheet creation results:", results);
 
       const failures = results.filter((result) => !result.success);
       if (failures.length > 0) {
-        console.error("Timesheet creation failures:", failures);
         setSubmissionError(
           `${failures.length} out of ${results.length} entries failed to submit.`
         );
@@ -1050,11 +1041,6 @@ export function BulkTimesheetForm({
           <Button 
             type="submit" 
             disabled={isSubmitting}
-            onClick={() => {
-              console.log("Submit button clicked");
-              console.log("Form values:", form.getValues());
-              console.log("Form errors:", form.formState.errors);
-            }}
             className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
           >
             {isSubmitting && (

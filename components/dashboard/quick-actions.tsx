@@ -6,15 +6,10 @@ import { Clock, FileText, Plus, UserPlus, DollarSign } from "lucide-react"
 import { useState, useEffect } from "react"
 import { WorkerSheet } from "@/components/forms/form-dialogs"
 import { createClient } from "@/utils/supabase/client"
-import { fetchWorkersForCompany, fetchProjectsForCompany } from "@/lib/data/data"
-import type { Worker } from "@/lib/types/worker"
-import type { Project } from "@/lib/types/project"
 import Link from "next/link"
 
 export function QuickActions() {
   const [userId, setUserId] = useState<string>("")
-  const [workers, setWorkers] = useState<Worker[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
 
   useEffect(() => {
     const loadData = async () => {
@@ -24,22 +19,6 @@ export function QuickActions() {
         
         if (!user) return
         setUserId(user.id)
-
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .single()
-
-        if (!profile) return
-
-        const [workersData, projectsData] = await Promise.all([
-          fetchWorkersForCompany(profile.company_id),
-          fetchProjectsForCompany(profile.company_id)
-        ])
-
-        setWorkers(workersData)
-        setProjects(projectsData)
       } catch (error) {
         console.error("Error loading data:", error)
       }

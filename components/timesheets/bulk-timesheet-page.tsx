@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { User } from "@supabase/supabase-js"
-import { ArrowLeft, Clock, Users, CheckCircle } from "lucide-react"
+import { ArrowLeft, Clock, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
