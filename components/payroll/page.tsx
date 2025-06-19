@@ -8,25 +8,34 @@ import { PayrollSummary } from "@/components/payroll/payroll-summary"
 import { PayrollActions } from "@/components/payroll/payroll-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { NibComplianceCard } from "@/components/payroll/nib-compliance-card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import type { PayrollRecord } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
-import { format } from "date-fns"
+import { format, startOfWeek, endOfWeek } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, Search, SlidersHorizontal, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { updatePayrollStatus } from "@/lib/data/payroll"
 import { toast } from "sonner"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 import type { Table } from "@tanstack/react-table"
+import { Input } from "@/components/ui/input"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: new Date(),
+    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
+    to: endOfWeek(new Date(), { weekStartsOn: 1 }),
   })
-  const [payPeriodType, setPayPeriodType] = useState<string>("bi-weekly")
+  const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
   const [tableInstance, setTableInstance] = useState<Table<PayrollRecord> | undefined>(undefined)
 
@@ -40,9 +49,9 @@ export default function PayrollPage({ user }: { user: User }) {
 
   useEffect(() => {
     if (!settingsLoading) {
-      setPayPeriodType(getDefaultPayPeriod())
+      setPayPeriodType("weekly")
     }
-  }, [settingsLoading, getDefaultPayPeriod])
+  }, [settingsLoading])
 
   useEffect(() => {
     loadPayroll()
@@ -81,6 +90,26 @@ export default function PayrollPage({ user }: { user: User }) {
       }
     } catch (error) {
       console.error('Failed to load payroll data:', error)
+    }
+  }
+
+  const handlePreviousWeek = () => {
+    if (dateRange?.from) {
+      const newFrom = new Date(dateRange.from)
+      newFrom.setDate(newFrom.getDate() - 7)
+      const newTo = new Date(dateRange.to || dateRange.from)
+      newTo.setDate(newTo.getDate() - 7)
+      setDateRange({ from: newFrom, to: newTo })
+    }
+  }
+
+  const handleNextWeek = () => {
+    if (dateRange?.from) {
+      const newFrom = new Date(dateRange.from)
+      newFrom.setDate(newFrom.getDate() + 7)
+      const newTo = new Date(dateRange.to || dateRange.from)
+      newTo.setDate(newTo.getDate() + 7)
+      setDateRange({ from: newFrom, to: newTo })
     }
   }
 
@@ -131,63 +160,276 @@ export default function PayrollPage({ user }: { user: User }) {
     <div className="flex-1 space-y-6 p-6">
       <PayrollHeader />
 
-      <div className="grid gap-6 lg:grid-cols-4">
-        <div className="lg:col-span-3 space-y-6 overflow-x-auto">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg">Filters</CardTitle>
-            </CardHeader>
-            <CardContent className="px-6">
-              <PayrollFilters
-                date={dateRange}
-                setDate={setDateRange}
-                setPayPeriodType={setPayPeriodType}
-                payPeriodType={payPeriodType}
-                paymentSchedule={paymentSchedule}
-                table={tableInstance}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <CardTitle className="text-lg">Payroll Overview</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Payroll:
-                  {dateRange?.from && dateRange?.to
-                    ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
-                    : " Select a date range"}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                onClick={handleMarkAsPaid}
-                disabled={selectedPayrollIds.size === 0}
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        <Tabs defaultValue="overview" className="w-full">
+          <div className="border-b border-muted">
+            <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
+              <TabsTrigger
+                value="overview"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
               >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Paid
-              </Button>
-            </CardHeader>
-            <CardContent className="px-6">
-              <PayrollTable
-                data={payrolls}
-                selectedPayrollIds={selectedPayrollIds}
-                setSelectedPayrollIds={setSelectedPayrollIds}
-                onTableInit={handleTableInit}
-              />
-            </CardContent>
-          </Card>
-        </div>
+                Overview
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+              </TabsTrigger>
 
-        <div className="space-y-6">
-          <PayrollSummary data={summaryData} />
-          <NibComplianceCard
-            totalNibContributions={totalNibDeductions}
-            nibRate={payrollSettings?.nib_rate}
-          />
-          <PayrollActions />
-        </div>
+              <TabsTrigger
+                value="payments"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+              >
+                Payments
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="reports"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+              >
+                Reports
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Payroll Overview Header */}
+            <div className="space-y-4 mt-4">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                Payroll Overview
+              </h2>
+              <p className="text-muted-foreground">
+                {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Payroll Summary:
+                {dateRange?.from && dateRange?.to
+                  ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
+                  : " Select a date range"}
+              </p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                <CardContent className="px-6 py-4">
+                  <div className="space-y-2">
+                    <p className="text-base font-medium text-primary">Total Payroll</p>
+                    <p className="text-3xl font-bold tracking-tight text-primary">
+                      {new Intl.NumberFormat("en-BS", {
+                        style: "currency",
+                        currency: "BSD",
+                        minimumFractionDigits: 2,
+                      }).format(totalGrossPay)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                <CardContent className="px-6 py-4">
+                  <div className="space-y-2">
+                    <p className="text-base font-medium text-primary">Total Workers</p>
+                    <p className="text-3xl font-bold tracking-tight text-primary">
+                      {payrolls.length}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                <CardContent className="px-6 py-4">
+                  <div className="space-y-2">
+                    <p className="text-base font-medium text-primary">NIB Remittance</p>
+                    <p className="text-3xl font-bold tracking-tight text-primary">
+                      {new Intl.NumberFormat("en-BS", {
+                        style: "currency",
+                        currency: "BSD",
+                        minimumFractionDigits: 2,
+                      }).format(totalNibDeductions)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-6 overflow-x-auto">
+                {/* Search, Filters, and Actions Row */}
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-card/50 backdrop-blur-sm">
+                  {/* Navigation Buttons */}
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={handlePreviousWeek}
+                      className="h-10 w-10 p-0"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={handleNextWeek}
+                      className="h-10 w-10 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search payroll records..."
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Filters Button */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <SlidersHorizontal className="h-4 w-4" />
+                        Filters
+
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80 p-4">
+                      <DropdownMenuLabel className="text-base font-semibold">
+                        Filter Payroll
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      
+                      {/* Pay Period Type Filter */}
+                      <div className="space-y-3 py-2">
+                        <Label className="text-sm font-medium">Pay Period Type</Label>
+                        <Select value={payPeriodType} onValueChange={setPayPeriodType}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select pay period" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Separator />
+
+                      {/* Date Range Filter */}
+                      <div className="space-y-3 py-2">
+                        <Label className="text-sm font-medium">Date Range</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                              <CalendarDays className="mr-2 h-4 w-4" />
+                              {dateRange?.from ? (
+                                dateRange.to ? (
+                                  <>
+                                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                                    {format(dateRange.to, "LLL dd, y")}
+                                  </>
+                                ) : (
+                                  format(dateRange.from, "LLL dd, y")
+                                )
+                              ) : (
+                                <span>Pick a date range</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="range"
+                              defaultMonth={dateRange?.from}
+                              selected={dateRange}
+                              onSelect={setDateRange}
+                              numberOfMonths={2}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      <Separator />
+
+                      {/* Clear Filters */}
+                      {(dateRange?.from || dateRange?.to || payPeriodType !== "bi-weekly") && (
+                        <div className="pt-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setDateRange(undefined);
+                              setPayPeriodType("bi-weekly");
+                            }}
+                            className="w-full justify-start text-muted-foreground hover:text-foreground"
+                          >
+                            Clear all filters
+                          </Button>
+                        </div>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Mark as Paid Button */}
+                  <Button
+                    onClick={handleMarkAsPaid}
+                    disabled={selectedPayrollIds.size === 0}
+                    className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Paid
+                  </Button>
+                </div>
+
+                <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                  <CardContent className="px-6">
+                    <PayrollTable
+                      data={payrolls}
+                      selectedPayrollIds={selectedPayrollIds}
+                      setSelectedPayrollIds={setSelectedPayrollIds}
+                      onTableInit={handleTableInit}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="payments" className="space-y-6">
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Payment Management</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Manage payroll payments and payment schedules.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center">
+                    <p className="text-muted-foreground">Payment management features coming soon...</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-6">
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Payroll Reports</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Generate and view detailed payroll reports and analytics.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center">
+                    <p className="text-muted-foreground">Reporting features coming soon...</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

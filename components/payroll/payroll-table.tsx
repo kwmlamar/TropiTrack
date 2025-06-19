@@ -78,12 +78,6 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
   };
 
   const getStatusBadge = (status: PayrollRecord['status']) => {
-    const variants = {
-      paid: "default",
-      pending: "secondary",
-      void: "destructive",
-    } as const;
-
     const labels = {
       paid: "Paid",
       pending: "Pending",
@@ -91,7 +85,7 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
     };
 
     return (
-      <Badge variant={variants[status]} className="text-xs">
+      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
         {labels[status]}
       </Badge>
     );
