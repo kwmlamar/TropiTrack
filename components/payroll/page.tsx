@@ -23,20 +23,43 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 
+const ITEMS_PER_PAGE = 10;
+
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfWeek(new Date(), { weekStartsOn: 1 }),
-    to: endOfWeek(new Date(), { weekStartsOn: 1 }),
-  })
+  const [filteredPayrolls, setFilteredPayrolls] = useState<PayrollRecord[]>([])
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
 
   const {
     loading: settingsLoading,
     payrollSettings,
+    paymentSchedule,
     calculateDeductions,
   } = usePayrollSettings()
+
+  // Initialize week start day from payroll settings
+  useEffect(() => {
+    if (!settingsLoading && paymentSchedule?.period_start_type === "day_of_week") {
+      const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+        1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+      }
+      const newWeekStartDay = dayMap[paymentSchedule.period_start_day] || 1
+      setWeekStartDay(newWeekStartDay)
+      
+      // Update date range to use the new week start day
+      if (!dateRange) {
+        setDateRange({
+          from: startOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
+          to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
+        })
+      }
+    }
+  }, [paymentSchedule, settingsLoading, dateRange])
 
   useEffect(() => {
     if (!settingsLoading) {
@@ -48,6 +71,23 @@ export default function PayrollPage({ user }: { user: User }) {
     loadPayroll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, dateRange, payPeriodType])
+
+  // Filter payrolls based on search term
+  useEffect(() => {
+    const filtered = payrolls.filter(payroll => {
+      if (!searchTerm) return true;
+      
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        payroll.worker_name?.toLowerCase().includes(searchLower) ||
+        payroll.position?.toLowerCase().includes(searchLower) ||
+        payroll.status?.toLowerCase().includes(searchLower)
+      );
+    });
+    
+    setFilteredPayrolls(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [payrolls, searchTerm]);
 
   const loadPayroll = async () => {
     try {
@@ -86,9 +126,9 @@ export default function PayrollPage({ user }: { user: User }) {
 
   const handlePreviousWeek = () => {
     if (dateRange?.from) {
-      const newFrom = new Date(dateRange.from)
+      const newFrom = startOfWeek(new Date(dateRange.from), { weekStartsOn: weekStartDay })
       newFrom.setDate(newFrom.getDate() - 7)
-      const newTo = new Date(dateRange.to || dateRange.from)
+      const newTo = endOfWeek(new Date(dateRange.from), { weekStartsOn: weekStartDay })
       newTo.setDate(newTo.getDate() - 7)
       setDateRange({ from: newFrom, to: newTo })
     }
@@ -96,13 +136,23 @@ export default function PayrollPage({ user }: { user: User }) {
 
   const handleNextWeek = () => {
     if (dateRange?.from) {
-      const newFrom = new Date(dateRange.from)
+      const newFrom = startOfWeek(new Date(dateRange.from), { weekStartsOn: weekStartDay })
       newFrom.setDate(newFrom.getDate() + 7)
-      const newTo = new Date(dateRange.to || dateRange.from)
+      const newTo = endOfWeek(new Date(dateRange.from), { weekStartsOn: weekStartDay })
       newTo.setDate(newTo.getDate() + 7)
       setDateRange({ from: newFrom, to: newTo })
     }
   }
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPayrolls.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedPayrolls = filteredPayrolls.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Calculate summary data from payrolls
   const totalGrossPay = payrolls.reduce((sum, record) => sum + record.gross_pay, 0)
@@ -250,6 +300,8 @@ export default function PayrollPage({ user }: { user: User }) {
                       <Input
                         placeholder="Search payroll records..."
                         className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
                   </div>
@@ -354,12 +406,60 @@ export default function PayrollPage({ user }: { user: User }) {
                 <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                   <CardContent className="px-6">
                     <PayrollTable
-                      data={payrolls}
+                      data={paginatedPayrolls}
                       selectedPayrollIds={selectedPayrollIds}
                       setSelectedPayrollIds={setSelectedPayrollIds}
                     />
                   </CardContent>
                 </Card>
+
+                {/* Pagination Controls */}
+                {filteredPayrolls.length > ITEMS_PER_PAGE && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {startIndex + 1} to {Math.min(endIndex, filteredPayrolls.length)} of {filteredPayrolls.length} payroll records
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(page)}
+                            className={`h-8 w-8 p-0 ${
+                              currentPage === page 
+                                ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
+                                : "hover:bg-[#E8EDF5]/70"
+                            }`}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

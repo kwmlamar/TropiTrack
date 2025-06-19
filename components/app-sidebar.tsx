@@ -3,7 +3,7 @@
 import type * as React from "react";
 import { useState, useEffect } from "react";
 import {
-  LayoutDashboard,
+  House,
   Building2,
   DollarSign,
   Settings,
@@ -44,7 +44,7 @@ const data = {
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: LayoutDashboard,
+      icon: House,
       badge: null,
       description: "Overview and analytics",
     },
@@ -174,29 +174,11 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col gap-4 p-4">
-        <NavMain
-          items={data.navMain}
-          className="flex flex-col gap-1"
-          itemClassName="group flex items-center gap-3 rounded-full px-5 py-2 text-base font-medium transition-all duration-200 cursor-pointer
-            text-sidebar-foreground/80
-            hover:bg-[#E8EDF5]/80 hover:text-primary
-            data-[active=true]:bg-[#E8EDF5] data-[active=true]:text-primary data-[active=true]:shadow-md
-            focus:outline-none focus:ring-2 focus:ring-primary/30"
-          iconClassName="h-5 w-5 text-sidebar-foreground/60 group-hover:text-primary group-data-[active=true]:text-primary"
-        />
+        <NavMain items={data.navMain} />
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl p-4">
-        <NavSecondary
-          items={data.navSecondary}
-          className="flex flex-col gap-1"
-          itemClassName="group flex items-center gap-3 rounded-full px-5 py-2 text-base font-medium transition-all duration-200 cursor-pointer
-            text-sidebar-foreground/60
-            hover:bg-[#E8EDF5]/80 hover:text-primary
-            data-[active=true]:bg-[#E8EDF5] data-[active=true]:text-primary data-[active=true]:shadow-md
-            focus:outline-none focus:ring-2 focus:ring-primary/30"
-          iconClassName="h-5 w-5 text-sidebar-foreground/50 group-hover:text-primary group-data-[active=true]:text-primary"
-        />
+        <NavSecondary items={data.navSecondary} />
       </SidebarFooter>
 
       {/* Dialogs */}
