@@ -14,6 +14,7 @@ import {
   Calculator,
   Copy,
   Check,
+  UserPlus,
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { z } from "zod";
@@ -59,7 +60,6 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
 } from "@/components/ui/command";
 
@@ -110,41 +110,6 @@ interface BulkTimesheetFormProps {
   onCancel?: () => void;
 }
 
-// Add new interface for time template
-interface TimeTemplate {
-  name: string;
-  clockIn: string;
-  clockOut: string;
-  breakDuration: number;
-}
-
-const DEFAULT_TEMPLATES: TimeTemplate[] = [
-  {
-    name: "Standard Day (7-4)",
-    clockIn: "07:00",
-    clockOut: "16:00",
-    breakDuration: 60,
-  },
-  {
-    name: "Early Shift (6-3)",
-    clockIn: "06:00",
-    clockOut: "15:00",
-    breakDuration: 60,
-  },
-  {
-    name: "Late Shift (9-6)",
-    clockIn: "09:00",
-    clockOut: "18:00",
-    breakDuration: 60,
-  },
-  {
-    name: "Half Day (7-12)",
-    clockIn: "07:00",
-    clockOut: "12:00",
-    breakDuration: 30,
-  },
-];
-
 export function BulkTimesheetForm({
   userId,
   workers,
@@ -155,7 +120,6 @@ export function BulkTimesheetForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<TimeTemplate | null>(null);
   const [selectedWorkers, setSelectedWorkers] = useState<Set<string>>(new Set());
   const [workerSelectOpen, setWorkerSelectOpen] = useState(false);
   
@@ -363,17 +327,6 @@ export function BulkTimesheetForm({
     }
   };
 
-  // Function to apply template to all entries
-  const applyTemplateToAll = (template: TimeTemplate) => {
-    const entries = form.getValues().entries;
-    entries.forEach((_, index) => {
-      form.setValue(`entries.${index}.clock_in`, template.clockIn);
-      form.setValue(`entries.${index}.clock_out`, template.clockOut);
-      form.setValue(`entries.${index}.break_duration`, template.breakDuration);
-    });
-    setSelectedTemplate(template);
-  };
-
   // Function to apply quick date range
   const applyQuickDateRange = (range: "today" | "thisWeek" | "nextWeek") => {
     const today = new Date();
@@ -410,34 +363,27 @@ export function BulkTimesheetForm({
   // Add selected workers to the form
   const addSelectedWorkers = () => {
     const selectedWorkersArray = Array.from(selectedWorkers);
-    let workerIndex = 0;
-
-    // First, fill any existing empty cards with selected workers
+    
+    // Get all existing worker IDs from the form
+    const existingWorkerIds = new Set<string>();
     fields.forEach((field, index) => {
       const currentWorkerId = form.getValues(`entries.${index}.worker_id`);
-      
-      // If this card has no worker selected and we have workers to assign
-      if (!currentWorkerId && workerIndex < selectedWorkersArray.length) {
-        const workerId = selectedWorkersArray[workerIndex];
-        const worker = workers.find(w => w.id === workerId);
-        
-        if (worker) {
-          // Update the existing card with the worker and ensure all required fields are set
-          form.setValue(`entries.${index}.worker_id`, worker.id);
-          form.setValue(`entries.${index}.hourly_rate`, Number(worker.hourly_rate) || 0);
-          form.setValue(`entries.${index}.clock_in`, "07:00");
-          form.setValue(`entries.${index}.clock_out`, "16:00");
-          form.setValue(`entries.${index}.break_duration`, 60);
-          form.setValue(`entries.${index}.task_description`, "");
-          form.setValue(`entries.${index}.notes`, "");
-          workerIndex++;
-        }
+      if (currentWorkerId) {
+        existingWorkerIds.add(currentWorkerId);
       }
     });
 
-    // Then add new cards for any remaining selected workers
-    for (let i = workerIndex; i < selectedWorkersArray.length; i++) {
-      const workerId = selectedWorkersArray[i];
+    // Filter out workers that already have cards
+    const workersToAdd = selectedWorkersArray.filter(workerId => !existingWorkerIds.has(workerId));
+    
+    if (workersToAdd.length === 0) {
+      // All selected workers already have cards
+      setSelectedWorkers(new Set());
+      return;
+    }
+
+    // Add new cards for the filtered workers
+    workersToAdd.forEach((workerId) => {
       const worker = workers.find(w => w.id === workerId);
       
       if (worker) {
@@ -451,7 +397,7 @@ export function BulkTimesheetForm({
           notes: "",
         });
       }
-    }
+    });
     
     setSelectedWorkers(new Set());
   };
@@ -466,35 +412,37 @@ export function BulkTimesheetForm({
               control={form.control}
               name="project_id"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Project</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a project" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4" />
-                            <span>{project.name}</span>
-                            {project.location && (
-                              <span className="text-muted-foreground">
-                                ({project.location})
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+                <div className="space-y-0">
+                  <FormItem className="space-y-0" style={{ margin: 0, padding: 0 }}>
+                    <FormLabel className="mb-0" style={{ marginBottom: '2px' }}>Project</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a project" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4" />
+                              <span>{project.name}</span>
+                              {project.location && (
+                                <span className="text-muted-foreground">
+                                  ({project.location})
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                </div>
               )}
             />
 
@@ -616,10 +564,6 @@ export function BulkTimesheetForm({
                   </PopoverTrigger>
                   <PopoverContent className="w-[320px] p-0" align="end">
                     <Command className="rounded-lg">
-                      <CommandInput 
-                        placeholder="Search workers..." 
-                        className="border-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none focus-visible:ring-offset-0"
-                      />
                       <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">
                         No workers found.
                       </CommandEmpty>
@@ -638,23 +582,39 @@ export function BulkTimesheetForm({
                                 return next;
                               });
                             }}
-                            className="cursor-pointer hover:bg-accent/50 transition-colors"
+                            className="cursor-pointer hover:bg-accent/50 transition-all duration-200 group"
                           >
-                            <div className="flex items-center gap-3 w-full">
+                            <div className="flex items-center gap-3 w-full py-1">
                               <div className={cn(
-                                "h-4 w-4 rounded-sm border-2 flex items-center justify-center transition-all",
+                                "relative h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 shadow-sm",
+                                "group-hover:border-secondary/60 group-hover:shadow-md",
                                 selectedWorkers.has(worker.id) 
-                                  ? "bg-primary border-primary text-primary-foreground" 
-                                  : "border-muted-foreground/30"
+                                  ? "bg-[#E8EDF5] border-secondary text-secondary-foreground shadow-md scale-105" 
+                                  : "border-muted-foreground/40 bg-background hover:border-secondary/40"
                               )}>
                                 {selectedWorkers.has(worker.id) && (
-                                  <Check className="h-3 w-3" />
+                                  <Check className="h-3 w-3 animate-in zoom-in-50 duration-200 text-secondary" />
                                 )}
+                                <div className={cn(
+                                  "absolute inset-0 rounded-md transition-opacity duration-200",
+                                  selectedWorkers.has(worker.id) 
+                                    ? "bg-[#E8EDF5]/20 opacity-0" 
+                                    : "bg-[#E8EDF5]/10 opacity-0 group-hover:opacity-100"
+                                )} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate">{worker.name}</div>
-                                <div className="text-xs text-muted-foreground truncate">{worker.position}</div>
+                                <div className="font-medium text-sm truncate group-hover:text-secondary transition-colors">
+                                  {worker.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {worker.position}
+                                </div>
                               </div>
+                              {selectedWorkers.has(worker.id) && (
+                                <div className="flex-shrink-0">
+                                  <div className="h-2 w-2 rounded-full bg-[#E8EDF5] animate-pulse" />
+                                </div>
+                              )}
                             </div>
                           </CommandItem>
                         ))}
@@ -666,32 +626,21 @@ export function BulkTimesheetForm({
                   type="button"
                   onClick={addSelectedWorkers}
                   disabled={selectedWorkers.size === 0}
-                  className="bg-sidebar-accent hover:bg-sidebar-accent/70 text-sidebar-accent-foreground font-medium transition-all duration-200"
+                  className={cn(
+                    "font-medium transition-all duration-200 shadow-sm",
+                    "bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-secondary font-medium",
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                    selectedWorkers.size > 0 && "shadow-md hover:shadow-lg scale-105"
+                  )}
                 >
-                  Add Selected Workers ({selectedWorkers.size})
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Selected Workers
+                  {selectedWorkers.size > 0 && (
+                    <span className="ml-2 rounded-full bg-secondary/20 text-secondary-foreground px-2 py-0.5 text-xs font-bold animate-in zoom-in-50 duration-200">
+                      {selectedWorkers.size}
+                    </span>
+                  )}
                 </Button>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Time Templates */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium">Quick Templates</h3>
-              <div className="flex gap-2">
-                {DEFAULT_TEMPLATES.map((template) => (
-                  <Button
-                    key={template.name}
-                    type="button"
-                    variant={selectedTemplate?.name === template.name ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => applyTemplateToAll(template)}
-                  >
-                    {template.name}
-                  </Button>
-                ))}
               </div>
             </div>
           </div>
@@ -935,28 +884,6 @@ export function BulkTimesheetForm({
               )}
 
               <div className="flex gap-2 justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Add 5 empty rows at once for faster data entry
-                    Array.from({ length: 5 }).forEach(() => {
-                      append({
-                        worker_id: "",
-                        clock_in: "07:00",
-                        clock_out: "16:00",
-                        break_duration: 60,
-                        hourly_rate: 0,
-                        task_description: "",
-                        notes: "",
-                      });
-                    });
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add 5 Workers
-                </Button>
                 <Button
                   type="button"
                   variant="outline"

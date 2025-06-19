@@ -132,7 +132,7 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
 
       {/* Main Form */}
       <div className="space-y-6">
-        <div className="space-y-4">
+        <div className="space-y-4 mb-8">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Create Timesheet Entries

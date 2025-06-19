@@ -5,7 +5,7 @@ import React from "react"
 import { User } from "@supabase/supabase-js"
 import { CalendarDays, Trash2, SlidersHorizontal, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -806,49 +806,52 @@ export default function TimesheetsPage({ user }: { user: User }) {
               </Link>
             </div>
 
-            {/* Timesheet Table */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                <div className="flex items-center space-x-2">
-                  <div>
-                    <CardTitle className="text-lg mb-2">
-                      {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
-                    </CardTitle>
-                    <CardDescription>
-                      {viewMode === "weekly" &&
-                        `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
-                    </CardDescription>
-                  </div>
+            {/* Timesheet Table Header */}
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+              <div className="flex items-center space-x-2">
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">
+                    {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {viewMode === "weekly" &&
+                      `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handlePreviousPeriod}
+                  className="h-10 w-10 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handleNextPeriod}
+                  className="h-10 w-10 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              {selectedTimesheetIds.size > 0 && (
+                <div className="flex space-x-2">
                   <Button
+                    onClick={handleDeleteSelected}
+                    disabled={isDeleting || isApproving}
                     variant="outline"
-                    size="default"
-                    onClick={handlePreviousPeriod}
-                    className="h-10 w-10 p-0"
+                    size="sm"
+                    className="text-destructive hover:text-destructive border-destructive/20 hover:border-destructive/40"
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={handleNextPeriod}
-                    className="h-10 w-10 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
+                    {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
                   </Button>
                 </div>
-                {selectedTimesheetIds.size > 0 && (
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={handleDeleteSelected}
-                      disabled={isDeleting || isApproving}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
-                    </Button>
-                  </div>
-                )}
-              </CardHeader>
+              )}
+            </div>
+
+            {/* Timesheet Table */}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
