@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfileWithCompany } from "@/lib/types/userProfile";
+import { ModeToggle } from "@/components/mode-toggle";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -247,6 +248,9 @@ export function SiteHeader({
               </div>
             </PopoverContent>
           </Popover>
+
+          {/* Mode Toggle */}
+          <ModeToggle />
 
           {/* Custom Right Slot */}
           
