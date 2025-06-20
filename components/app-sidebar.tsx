@@ -10,6 +10,7 @@ import {
   Users,
   Briefcase,
   FileText,
+  Book,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -61,6 +62,13 @@ const data = {
       icon: DollarSign,
       badge: null,
       description: "Manage payments",
+    },
+    {
+      title: "Accounting",
+      url: "/dashboard/accounting",
+      icon: Book,
+      badge: null,
+      description: "Financial records and transactions",
     },
     {
       title: "Projects",
