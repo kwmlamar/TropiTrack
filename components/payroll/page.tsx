@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { PayrollHeader } from "@/components/payroll/payroll-header"
 import { PayrollTable } from "@/components/payroll/payroll-table"
+import { PayrollPreviewDialog } from "@/components/payroll/payroll-preview-modal"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
@@ -25,13 +26,13 @@ const ITEMS_PER_PAGE = 10;
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
-  const [filteredPayrolls, setFilteredPayrolls] = useState<PayrollRecord[]>([])
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
 
   const {
     loading: settingsLoading,
@@ -74,9 +75,14 @@ export default function PayrollPage({ user }: { user: User }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, dateRange, payPeriodType])
 
-  // Filter payrolls based on search term
-  useEffect(() => {
-    const filtered = payrolls.filter(payroll => {
+  // Filter payrolls based on search term using useMemo
+  const filteredPayrolls = useMemo(() => {
+    // Temporarily disable filtering to test if that's causing the scroll issue
+    return payrolls;
+    
+    // Original filtering logic (commented out for testing)
+    /*
+    return payrolls.filter(payroll => {
       if (!searchTerm) return true;
       
       const searchLower = searchTerm.toLowerCase();
@@ -86,10 +92,13 @@ export default function PayrollPage({ user }: { user: User }) {
         payroll.status?.toLowerCase().includes(searchLower)
       );
     });
-    
-    setFilteredPayrolls(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
+    */
   }, [payrolls, searchTerm]);
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const loadPayroll = async () => {
     try {
@@ -160,8 +169,41 @@ export default function PayrollPage({ user }: { user: User }) {
   const totalGrossPay = payrolls.reduce((sum, record) => sum + record.gross_pay, 0)
   const totalNibDeductions = payrolls.reduce((sum, record) => sum + record.nib_deduction, 0)
 
+  const handlePreviewAndConfirm = () => {
+    if (selectedPayrollIds.size === 0) {
+      toast.error("Please select payroll entries to confirm.")
+      return
+    }
+
+    // Check if all selected payrolls are in pending status
+    const selectedPayrolls = payrolls.filter(payroll => selectedPayrollIds.has(payroll.id))
+    const nonPendingPayrolls = selectedPayrolls.filter(payroll => payroll.status !== "pending")
+    
+    if (nonPendingPayrolls.length > 0) {
+      toast.error("Only payroll entries with 'pending' status can be confirmed.")
+      return
+    }
+
+    // Open the preview modal
+    setIsPreviewModalOpen(true)
+  }
+
+  const handlePreviewSuccess = () => {
+    setSelectedPayrollIds(new Set())
+    loadPayroll() // Refresh payroll data
+  }
+
   const handleMarkAsPaid = async () => {
     if (selectedPayrollIds.size === 0) {
+      return
+    }
+
+    // Check if all selected payrolls are in confirmed status
+    const selectedPayrolls = payrolls.filter(payroll => selectedPayrollIds.has(payroll.id))
+    const nonConfirmedPayrolls = selectedPayrolls.filter(payroll => payroll.status !== "confirmed")
+    
+    if (nonConfirmedPayrolls.length > 0) {
+      toast.error("Only payroll entries with 'confirmed' status can be marked as paid.")
       return
     }
 
@@ -179,11 +221,32 @@ export default function PayrollPage({ user }: { user: User }) {
     }
   }
 
-  return (
-    <div className="flex-1 space-y-6 p-6">
-      <PayrollHeader />
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allPayrollIds = new Set(payrolls.map(payroll => payroll.id));
+      setSelectedPayrollIds(allPayrollIds);
+    } else {
+      setSelectedPayrollIds(new Set());
+    }
+  };
 
+  const handleSelectPayroll = (id: string, checked: boolean) => {
+    setSelectedPayrollIds(prev => {
+      const newSelection = new Set(prev);
+      if (checked) {
+        newSelection.add(id);
+      } else {
+        newSelection.delete(id);
+      }
+      return newSelection;
+    });
+  };
+
+  return (
+    <div className="flex-1 space-y-6 p-6" style={{ scrollBehavior: 'auto' }}>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        <PayrollHeader />
+
         <Tabs defaultValue="overview" className="w-full">
           <div className="border-b border-muted">
             <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
@@ -358,11 +421,29 @@ export default function PayrollPage({ user }: { user: User }) {
                     </DropdownMenuContent>
                   </DropdownMenu>
 
+                  {/* Preview and Confirm Button */}
+                  <Button
+                    variant="outline"
+                    className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary border-[#E8EDF5] shadow-lg"
+                    onClick={handlePreviewAndConfirm}
+                    disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
+                      payrolls.find(payroll => payroll.id === id)?.status === "pending"
+                    )}
+                  >
+                    <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Preview & Confirm
+                  </Button>
+
                   {/* Mark as Paid Button */}
                   <Button
                     onClick={handleMarkAsPaid}
-                    disabled={selectedPayrollIds.size === 0}
-                    className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
+                    disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
+                      payrolls.find(payroll => payroll.id === id)?.status === "confirmed"
+                    )}
+                    className="bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground shadow-lg transition-colors"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Mark as Paid
@@ -375,6 +456,8 @@ export default function PayrollPage({ user }: { user: User }) {
                       data={paginatedPayrolls}
                       selectedPayrollIds={selectedPayrollIds}
                       setSelectedPayrollIds={setSelectedPayrollIds}
+                      onSelectAll={handleSelectAll}
+                      onSelectPayroll={handleSelectPayroll}
                     />
                   </CardContent>
                 </Card>
@@ -467,6 +550,16 @@ export default function PayrollPage({ user }: { user: User }) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {isPreviewModalOpen && (
+        <PayrollPreviewDialog
+          isOpen={isPreviewModalOpen}
+          onClose={() => setIsPreviewModalOpen(false)}
+          selectedPayrolls={payrolls.filter(payroll => selectedPayrollIds.has(payroll.id))}
+          user={user}
+          onSuccess={handlePreviewSuccess}
+        />
+      )}
     </div>
   )
 }

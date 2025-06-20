@@ -20,9 +20,11 @@ interface PayrollTableProps {
   selectedPayrollIds: Set<string>
   setSelectedPayrollIds: React.Dispatch<React.SetStateAction<Set<string>>>
   onTableInit?: (table: Table<PayrollRecord>) => void
+  onSelectAll?: (checked: boolean) => void
+  onSelectPayroll?: (id: string, checked: boolean) => void
 }
 
-export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, onTableInit }: PayrollTableProps) {
+export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, onTableInit, onSelectAll, onSelectPayroll }: PayrollTableProps) {
   const { payrollSettings, refresh: refreshSettings } = usePayrollSettings()
   
   const [sorting, setSorting] = useState<SortingState>([
@@ -57,30 +59,39 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allPayrollIds = new Set(data.map(payroll => payroll.id));
-      setSelectedPayrollIds(allPayrollIds);
+    if (onSelectAll) {
+      onSelectAll(checked);
     } else {
-      setSelectedPayrollIds(new Set());
+      if (checked) {
+        const allPayrollIds = new Set(data.map(payroll => payroll.id));
+        setSelectedPayrollIds(allPayrollIds);
+      } else {
+        setSelectedPayrollIds(new Set());
+      }
     }
   };
 
   const handleSelectPayroll = (id: string, checked: boolean) => {
-    setSelectedPayrollIds(prev => {
-      const newSelection = new Set(prev);
-      if (checked) {
-        newSelection.add(id);
-      } else {
-        newSelection.delete(id);
-      }
-      return newSelection;
-    });
+    if (onSelectPayroll) {
+      onSelectPayroll(id, checked);
+    } else {
+      setSelectedPayrollIds(prev => {
+        const newSelection = new Set(prev);
+        if (checked) {
+          newSelection.add(id);
+        } else {
+          newSelection.delete(id);
+        }
+        return newSelection;
+      });
+    }
   };
 
   const getStatusBadge = (status: PayrollRecord['status']) => {
     const labels = {
       paid: "Paid",
       pending: "Pending",
+      confirmed: "Confirmed",
       void: "Void",
     };
 
@@ -343,15 +354,15 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
   }, [table, onTableInit]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" style={{ scrollBehavior: 'auto' }}>
       <TableComponent className="min-w-full">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="text-sm">
+            <TableRow key={headerGroup.id} className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className={`py-2.5 px-4 text-xs font-medium text-muted-foreground text-left pl-3`}
+                  className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left"
                 >
                   {header.isPlaceholder
                     ? null
@@ -363,9 +374,15 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} className="text-xs md:text-sm">
+            <TableRow 
+              key={row.id} 
+              className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
+            >
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id} className="py-2.5 px-4 whitespace-nowrap text-sm text-left pl-3">
+                <TableCell 
+                  key={cell.id} 
+                  className="py-4 px-6 whitespace-nowrap text-sm text-left"
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}
@@ -373,6 +390,21 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
           ))}
         </TableBody>
       </TableComponent>
+      
+      {/* Empty State */}
+      {table.getRowModel().rows.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 px-6">
+          <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+            <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-muted-foreground mb-2">No payroll records found</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            No payroll records match your current filters. Try adjusting your search or date range.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

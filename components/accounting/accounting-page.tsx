@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { User } from "@supabase/supabase-js"
 import AccountingOverview from "./accounting-overview"
+import AccountingTransactions from "./accounting-transactions"
 
 interface AccountingPageProps {
   user: User
@@ -70,14 +71,7 @@ export default function AccountingPage({ user }: AccountingPageProps) {
             </TabsContent>
 
             <TabsContent value="transactions" className="container mx-auto py-4 space-y-6">
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Transactions</h2>
-                  <p className="text-muted-foreground">
-                    This is the transactions tab. Transaction history and management will be displayed here.
-                  </p>
-                </CardContent>
-              </Card>
+              <AccountingTransactions />
             </TabsContent>
 
             <TabsContent value="reconcile" className="container mx-auto py-4 space-y-6">

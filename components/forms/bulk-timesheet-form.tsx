@@ -364,26 +364,29 @@ export function BulkTimesheetForm({
   const addSelectedWorkers = () => {
     const selectedWorkersArray = Array.from(selectedWorkers);
     
-    // Get all existing worker IDs from the form
-    const existingWorkerIds = new Set<string>();
-    fields.forEach((field, index) => {
-      const currentWorkerId = form.getValues(`entries.${index}.worker_id`);
-      if (currentWorkerId) {
-        existingWorkerIds.add(currentWorkerId);
-      }
-    });
-
-    // Filter out workers that already have cards
-    const workersToAdd = selectedWorkersArray.filter(workerId => !existingWorkerIds.has(workerId));
-    
-    if (workersToAdd.length === 0) {
-      // All selected workers already have cards
-      setSelectedWorkers(new Set());
+    if (selectedWorkersArray.length === 0) {
       return;
     }
 
-    // Add new cards for the filtered workers
-    workersToAdd.forEach((workerId) => {
+    // First, fill empty worker cards with selected workers
+    let remainingWorkers = [...selectedWorkersArray];
+    
+    fields.forEach((field, index) => {
+      const currentWorkerId = form.getValues(`entries.${index}.worker_id`);
+      if (!currentWorkerId && remainingWorkers.length > 0) {
+        // Fill empty card with next available worker
+        const workerId = remainingWorkers.shift()!;
+        const worker = workers.find(w => w.id === workerId);
+        
+        if (worker) {
+          form.setValue(`entries.${index}.worker_id`, worker.id);
+          form.setValue(`entries.${index}.hourly_rate`, Number(worker.hourly_rate) || 0);
+        }
+      }
+    });
+
+    // Then add new cards for any remaining selected workers
+    remainingWorkers.forEach((workerId) => {
       const worker = workers.find(w => w.id === workerId);
       
       if (worker) {
@@ -430,11 +433,6 @@ export function BulkTimesheetForm({
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4" />
                               <span>{project.name}</span>
-                              {project.location && (
-                                <span className="text-muted-foreground">
-                                  ({project.location})
-                                </span>
-                              )}
                             </div>
                           </SelectItem>
                         ))}

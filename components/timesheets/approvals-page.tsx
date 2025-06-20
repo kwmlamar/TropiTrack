@@ -305,34 +305,37 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                           <CardContent className="py-2">
                             <Table>
                               <TableHeader>
-                                <TableRow>
-                                  <TableHead>Date</TableHead>
-                                  <TableHead>Project</TableHead>
-                                  <TableHead>Hours</TableHead>
-                                  <TableHead className="text-right">Actions</TableHead>
+                                <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Date</TableHead>
+                                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Project</TableHead>
+                                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Hours</TableHead>
+                                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground text-right">Actions</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {timesheets.map((timesheet) => (
-                                  <TableRow key={timesheet.id}>
-                                    <TableCell>
-                                      {format(parseISO(timesheet.date), "EEE, MMM d")}
+                                  <TableRow key={timesheet.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                                    <TableCell className="py-4 px-6">
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                                        {format(parseISO(timesheet.date), "EEE, MMM d")}
+                                      </div>
                                     </TableCell>
-                                    <TableCell>
-                                      <div className="font-medium">{timesheet.project?.name}</div>
-                                      <div className="text-sm text-muted-foreground">
+                                    <TableCell className="py-4 px-6">
+                                      <div className="font-medium text-sm">{timesheet.project?.name}</div>
+                                      <div className="text-xs text-muted-foreground">
                                         {timesheet.project?.location}
                                       </div>
                                     </TableCell>
-                                    <TableCell>
-                                      <div className="font-medium">{timesheet.total_hours}h</div>
+                                    <TableCell className="py-4 px-6">
+                                      <div className="font-medium text-sm">{timesheet.total_hours}h</div>
                                       {timesheet.overtime_hours > 0 && (
-                                        <div className="text-sm text-orange-600">
+                                        <div className="text-xs text-orange-600 font-medium">
                                           +{timesheet.overtime_hours}h OT
                                         </div>
                                       )}
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="py-4 px-6 text-right">
                                       <div className="flex justify-end gap-2">
                                         <Checkbox
                                           checked={selectedTimesheetIds.has(timesheet.id)}
@@ -377,26 +380,26 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
+                <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                  <TableHead className="w-12 py-4 px-6">
                     <Checkbox
                       checked={selectedTimesheetIds.size === pendingTimesheets.length}
                       onCheckedChange={handleSelectAll}
                       aria-label="Select all timesheets"
                     />
                   </TableHead>
-                  <TableHead>Worker</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Project</TableHead>
-                  <TableHead>Hours</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Worker</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Date</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Project</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Hours</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Status</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pendingTimesheets.map((timesheet) => (
-                  <TableRow key={timesheet.id}>
-                    <TableCell>
+                  <TableRow key={timesheet.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                    <TableCell className="py-4 px-6">
                       <Checkbox
                         checked={selectedTimesheetIds.has(timesheet.id)}
                         onCheckedChange={(checked) => 
@@ -405,35 +408,38 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                         aria-label="Select timesheet"
                       />
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{timesheet.worker?.name}</div>
-                      <div className="text-sm text-muted-foreground">
+                    <TableCell className="py-4 px-6">
+                      <div className="font-medium text-sm">{timesheet.worker?.name}</div>
+                      <div className="text-xs text-muted-foreground">
                         {timesheet.worker?.position}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {format(new Date(timesheet.date), "MMM d, yyyy")}
+                    <TableCell className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {format(new Date(timesheet.date), "MMM d, yyyy")}
+                      </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{timesheet.project?.name}</div>
-                      <div className="text-sm text-muted-foreground">
+                    <TableCell className="py-4 px-6">
+                      <div className="font-medium text-sm">{timesheet.project?.name}</div>
+                      <div className="text-xs text-muted-foreground">
                         {timesheet.project?.location}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{timesheet.total_hours}h</div>
+                    <TableCell className="py-4 px-6">
+                      <div className="font-medium text-sm">{timesheet.total_hours}h</div>
                       {timesheet.overtime_hours > 0 && (
-                        <div className="text-sm text-orange-600">
+                        <div className="text-xs text-orange-600 font-medium">
                           +{timesheet.overtime_hours}h OT
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                    <TableCell className="py-4 px-6">
+                      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
                         Pending
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-4 px-6 text-right">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="outline"

@@ -108,7 +108,7 @@ export type PayrollRecord = {
   net_pay: number;
   position?: string;
   department?: string;
-  status: "pending" | "paid" | "void";
+  status: "pending" | "confirmed" | "paid" | "void";
   company_id: string;
   created_at: string;
   updated_at?: string;

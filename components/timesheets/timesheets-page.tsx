@@ -851,38 +851,38 @@ export default function TimesheetsPage({ user }: { user: User }) {
             </div>
 
             {/* Timesheet Table */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardContent>
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
+              <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2 font-medium w-12">
+                      <tr className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground w-12">
                           <Checkbox
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAll}
                             aria-label="Select all timesheets"
                           />
                         </th>
-                        <th className="text-left p-2 font-medium">Worker</th>
-                        <th className="text-left p-2 font-medium">Project</th>
+                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Worker</th>
+                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Project</th>
                         {viewMode === "weekly" ? (
                           weekDays.map((day) => (
-                            <th key={day.toISOString()} className="text-center p-2 font-medium min-w-[100px]">
-                              <div className="text-xs text-muted-foreground">{format(day, "EEE")}</div>
-                              <div>{format(day, "MMM d")}</div>
+                            <th key={day.toISOString()} className="text-center p-4 font-semibold text-sm text-muted-foreground min-w-[100px]">
+                              <div className="text-xs text-muted-foreground mb-1">{format(day, "EEE")}</div>
+                              <div className="font-medium">{format(day, "MMM d")}</div>
                             </th>
                           ))
                         ) : (
                           <>
-                            <th className="text-center p-2 font-medium">Hours</th>
-                            <th className="text-center p-2 font-medium">Overtime</th>
-                            <th className="text-center p-2 font-medium">Status</th>
-                            <th className="text-left p-2 font-medium">Notes</th>
+                            <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Hours</th>
+                            <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Overtime</th>
+                            <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Status</th>
+                            <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Notes</th>
                           </>
                         )}
-                        {viewMode === "weekly" && <th className="text-center p-2 font-medium">Total</th>}
-                        {viewMode === "weekly" && <th className="text-center p-2 font-medium"></th>}
+                        {viewMode === "weekly" && <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Total</th>}
+                        {viewMode === "weekly" && <th className="text-center p-4 font-semibold text-sm text-muted-foreground"></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -898,19 +898,19 @@ export default function TimesheetsPage({ user }: { user: User }) {
                           const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
 
                           return (
-                            <tr key={workerId} className="border-b hover:bg-muted/50">
-                              <td className="p-2 w-12">
+                            <tr key={workerId} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                              <td className="p-4 w-12">
                                 <Checkbox
                                   checked={isAllInWeekSelected}
                                   onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, "", checked)}
                                   aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week`}
                                 />
                               </td>
-                              <td className="p-2">
-                                <div className="font-medium">{worker?.name || "Unknown Worker"}</div>
-                                <div className="text-sm text-muted-foreground">{worker?.position || "Worker"}</div>
+                              <td className="p-4">
+                                <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
+                                <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
                               </td>
-                              <td className="p-2">
+                              <td className="p-4">
                                 <div className="text-sm">
                                   {Array.from(
                                     new Set(
@@ -924,9 +924,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
                                 )
                                 return (
-                                  <td key={day.toISOString()} className="p-2 text-center">
+                                  <td key={day.toISOString()} className="p-4 text-center">
                                     {dayTimesheet ? (
-                                      <div className="space-y-1">
+                                      <div className="space-y-2">
                                         <Input
                                           type="number"
                                           value={dayTimesheet.total_hours}
@@ -937,7 +937,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                               Number.parseFloat(e.target.value) || 0,
                                             )
                                           }
-                                          className="w-16 h-8 text-center text-sm"
+                                          className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
                                           step="0.5"
                                           min="0"
                                           max="24"
@@ -945,25 +945,25 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                         {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                       </div>
                                     ) : (
-                                      <span className="text-muted-foreground">-</span>
+                                      <span className="text-muted-foreground text-sm">-</span>
                                     )}
                                   </td>
                                 )
                               })}
-                              <td className="p-2 text-center font-medium">
-                                {weekTotalHours}h
+                              <td className="p-4 text-center">
+                                <div className="font-medium text-sm">{weekTotalHours}h</div>
                                 {weekOvertimeHours > 0 && (
-                                  <div className="text-xs text-orange-600">+{weekOvertimeHours}h OT</div>
+                                  <div className="text-xs text-orange-600 font-medium">+{weekOvertimeHours}h OT</div>
                                 )}
                               </td>
-                              <td className="p-2 text-center">
+                              <td className="p-4 text-center">
                                 {timesheetsInWeek.length > 0 && (
                                   isWeekApproved ? (
-                                    <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs font-medium">
                                       Approved
                                     </Badge>
                                   ) : (
-                                    <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                    <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
                                       Pending
                                     </Badge>
                                   )
@@ -986,19 +986,19 @@ export default function TimesheetsPage({ user }: { user: User }) {
                               const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
 
                               return (
-                                <tr key={`${workerId}-${weekStart}`} className="border-b hover:bg-muted/50">
-                                  <td className="p-2 w-12">
+                                <tr key={`${workerId}-${weekStart}`} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                                  <td className="p-4 w-12">
                                     <Checkbox
                                       checked={isAllInWeekSelected}
                                       onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, weekStart, checked)}
                                       aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week ${weekStart}`}
                                     />
                                   </td>
-                                  <td className="p-2">
-                                    <div className="font-medium">{worker?.name || "Unknown Worker"}</div>
-                                    <div className="text-sm text-muted-foreground">{worker?.position || "Worker"}</div>
+                                  <td className="p-4">
+                                    <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
+                                    <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
                                   </td>
-                                  <td className="p-2">
+                                  <td className="p-4">
                                     <div className="text-sm">
                                       {Array.from(
                                         new Set(
@@ -1012,9 +1012,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                       (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
                                     )
                                     return (
-                                      <td key={day.toISOString()} className="p-2 text-center">
+                                      <td key={day.toISOString()} className="p-4 text-center">
                                         {dayTimesheet ? (
-                                          <div className="space-y-1">
+                                          <div className="space-y-2">
                                             <Input
                                               type="number"
                                               value={dayTimesheet.total_hours}
@@ -1025,7 +1025,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                                   Number.parseFloat(e.target.value) || 0,
                                                 )
                                               }
-                                              className="w-16 h-8 text-center text-sm"
+                                              className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
                                               step="0.5"
                                               min="0"
                                               max="24"
@@ -1033,25 +1033,25 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                             {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                           </div>
                                         ) : (
-                                          <span className="text-muted-foreground">-</span>
+                                          <span className="text-muted-foreground text-sm">-</span>
                                         )}
                                       </td>
                                     )
                                   })}
-                                  <td className="p-2 text-center font-medium">
-                                    {weekTotalHours}h
+                                  <td className="p-4 text-center">
+                                    <div className="font-medium text-sm">{weekTotalHours}h</div>
                                     {weekOvertimeHours > 0 && (
-                                      <div className="text-xs text-orange-600">+{weekOvertimeHours}h OT</div>
+                                      <div className="text-xs text-orange-600 font-medium">+{weekOvertimeHours}h OT</div>
                                     )}
                                   </td>
-                                  <td className="p-2 text-center">
+                                  <td className="p-4 text-center">
                                     {timesheetsInWeek.length > 0 && (
                                       isWeekApproved ? (
-                                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs font-medium">
                                           Approved
                                         </Badge>
                                       ) : (
-                                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+                                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
                                           Pending
                                         </Badge>
                                       )
@@ -1065,6 +1065,22 @@ export default function TimesheetsPage({ user }: { user: User }) {
                     </tbody>
                   </table>
                 </div>
+                
+                {/* Empty State */}
+                {paginatedWorkerEntries.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 px-6">
+                    <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                      <CalendarDays className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-muted-foreground mb-2">No timesheets found</h3>
+                    <p className="text-sm text-muted-foreground text-center max-w-sm">
+                      {searchTerm || selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly"
+                        ? "Try adjusting your filters or search terms"
+                        : "Get started by creating your first timesheet"
+                      }
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
