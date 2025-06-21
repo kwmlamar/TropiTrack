@@ -328,10 +328,49 @@ export default function PayrollPage({ user }: { user: User }) {
               </Card>
             </div>
 
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Advanced Analytics</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Comprehensive payroll analytics and insights dashboard.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">Coming Soon</h3>
+                      <p className="text-muted-foreground">Advanced payroll analytics and insights are being developed.</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payments" className="space-y-6">
+            {/* Payments Header */}
+            <div className="space-y-4 mt-4">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                Payments
+              </h2>
+              <p className="text-muted-foreground">
+                {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Pay Period:
+                {dateRange?.from && dateRange?.to
+                  ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
+                  : " Select a date range"}
+              </p>
+            </div>
+
             <div className="space-y-6">
               <div className="space-y-6 overflow-x-auto">
                 {/* Search, Filters, and Actions Row */}
-                <div className="flex items-center gap-4 p-4 rounded-lg bg-card/50 backdrop-blur-sm">
+                <div className="flex items-center gap-4 p-4">
                   {/* Navigation Buttons */}
                   <div className="flex items-center space-x-2">
                     <Button
@@ -505,24 +544,6 @@ export default function PayrollPage({ user }: { user: User }) {
                 )}
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="payments" className="space-y-6">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg">Payment Management</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Manage payroll payments and payment schedules.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-center">
-                    <p className="text-muted-foreground">Payment management features coming soon...</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6">

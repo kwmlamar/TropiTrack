@@ -252,7 +252,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
         </div>
       </div>
 
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardContent>
           {pendingTimesheets.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
@@ -360,7 +360,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                                           size="sm"
                                           onClick={() => handleApprove(timesheet.id)}
                                           disabled={isProcessing}
-                                          className="bg-primary hover:bg-primary/90 hover:text-primary-foreground text-primary-foreground shadow-sm transition-all duration-200 font-medium"
+                                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
                                         >
                                           <Check className="h-4 w-4 mr-2" />
                                           Approve
@@ -457,7 +457,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                           size="sm"
                           onClick={() => handleApprove(timesheet.id)}
                           disabled={isProcessing}
-                          className="bg-primary hover:bg-primary/90 hover:text-primary-foreground text-primary-foreground shadow-sm transition-all duration-200 font-medium"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
                         >
                           <Check className="h-4 w-4 mr-2" />
                           Approve
