@@ -21,6 +21,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSepar
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 
 const ITEMS_PER_PAGE = 10;
 
@@ -547,19 +548,336 @@ export default function PayrollPage({ user }: { user: User }) {
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6">
+            {/* Reports Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Payroll Reports</h2>
+                <p className="text-muted-foreground">
+                  Analyze payroll trends, costs, and performance metrics.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm">
+                  <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export PDF
+                </Button>
+                <Button variant="outline" size="sm">
+                  <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV
+                </Button>
+              </div>
+            </div>
+
+            {/* Date Range Filter for Reports */}
+            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm font-medium">Report Period:</Label>
+                    <Select defaultValue="last-30-days">
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="last-7-days">Last 7 Days</SelectItem>
+                        <SelectItem value="last-30-days">Last 30 Days</SelectItem>
+                        <SelectItem value="last-90-days">Last 90 Days</SelectItem>
+                        <SelectItem value="last-6-months">Last 6 Months</SelectItem>
+                        <SelectItem value="last-year">Last Year</SelectItem>
+                        <SelectItem value="custom">Custom Range</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm font-medium">Group By:</Label>
+                    <Select defaultValue="weekly">
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Key Metrics Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Gross Pay</p>
+                      <p className="text-2xl font-bold">${payrolls.reduce((sum, record) => sum + record.gross_pay, 0).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Active Workers</p>
+                      <p className="text-2xl font-bold">{new Set(payrolls.map(p => p.worker_id)).size}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Hours</p>
+                      <p className="text-2xl font-bold">{payrolls.reduce((sum, record) => sum + record.total_hours, 0).toFixed(1)}h</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <svg className="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Avg. Hourly Rate</p>
+                      <p className="text-2xl font-bold">${(payrolls.reduce((sum, record) => sum + record.hourly_rate, 0) / Math.max(payrolls.length, 1)).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Payroll Trend Chart */}
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Payroll Trend</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Gross pay over time
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 flex items-center justify-center">
+                    <div className="text-center">
+                      <svg className="mx-auto h-12 w-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      <p className="mt-2 text-sm text-muted-foreground">Chart component coming soon</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payroll Distribution Chart */}
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Payroll Distribution</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Payroll by worker
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 flex items-center justify-center">
+                    <div className="text-center">
+                      <svg className="mx-auto h-12 w-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                      </svg>
+                      <p className="mt-2 text-sm text-muted-foreground">Chart component coming soon</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Overtime Analysis */}
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Overtime Analysis</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Regular vs overtime hours
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Regular Hours</span>
+                      <span className="text-sm text-muted-foreground">
+                        {payrolls.reduce((sum, record) => sum + (record.total_hours - record.overtime_hours), 0).toFixed(1)}h
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full" 
+                        style={{ 
+                          width: `${Math.min(100, (payrolls.reduce((sum, record) => sum + (record.total_hours - record.overtime_hours), 0) / Math.max(payrolls.reduce((sum, record) => sum + record.total_hours, 0), 1)) * 100)}%` 
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Overtime Hours</span>
+                      <span className="text-sm text-muted-foreground">
+                        {payrolls.reduce((sum, record) => sum + record.overtime_hours, 0).toFixed(1)}h
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-orange-500 h-2 rounded-full" 
+                        style={{ 
+                          width: `${Math.min(100, (payrolls.reduce((sum, record) => sum + record.overtime_hours, 0) / Math.max(payrolls.reduce((sum, record) => sum + record.total_hours, 0), 1)) * 100)}%` 
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Deductions Breakdown */}
+              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Deductions Breakdown</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    NIB and other deductions
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">NIB Deductions</span>
+                      <span className="text-sm text-muted-foreground">
+                        ${totalNibDeductions.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full" 
+                        style={{ 
+                          width: `${Math.min(100, (totalNibDeductions / Math.max(payrolls.reduce((sum, record) => sum + record.gross_pay, 0), 1)) * 100)}%` 
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Other Deductions</span>
+                      <span className="text-sm text-muted-foreground">
+                        ${payrolls.reduce((sum, record) => sum + record.other_deductions, 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-red-500 h-2 rounded-full" 
+                        style={{ 
+                          width: `${Math.min(100, (payrolls.reduce((sum, record) => sum + record.other_deductions, 0) / Math.max(payrolls.reduce((sum, record) => sum + record.gross_pay, 0), 1)) * 100)}%` 
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Detailed Reports Table */}
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Payroll Reports</CardTitle>
+                <CardTitle className="text-lg">Detailed Payroll Summary</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Generate and view detailed payroll reports and analytics.
+                  Breakdown by worker and period
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-center">
-                    <p className="text-muted-foreground">Reporting features coming soon...</p>
-                  </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-muted/30">
+                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Worker</th>
+                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Position</th>
+                        <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Total Hours</th>
+                        <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Overtime</th>
+                        <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Gross Pay</th>
+                        <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Deductions</th>
+                        <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Net Pay</th>
+                        <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payrolls.slice(0, 10).map((payroll) => (
+                        <tr key={payroll.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40">
+                          <td className="p-4">
+                            <div className="font-medium text-sm">{payroll.worker_name}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="text-sm text-muted-foreground">{payroll.position || "N/A"}</div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="text-sm">{payroll.total_hours.toFixed(1)}h</div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="text-sm">{payroll.overtime_hours.toFixed(1)}h</div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="text-sm font-medium">${payroll.gross_pay.toLocaleString()}</div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="text-sm text-muted-foreground">${payroll.total_deductions.toLocaleString()}</div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="text-sm font-medium">${payroll.net_pay.toLocaleString()}</div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <Badge 
+                              variant={payroll.status === "paid" ? "default" : payroll.status === "confirmed" ? "secondary" : "outline"}
+                              className="text-xs"
+                            >
+                              {payroll.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+                {payrolls.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                      <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-muted-foreground mb-2">No payroll data</h3>
+                    <p className="text-sm text-muted-foreground text-center max-w-sm">
+                      Generate payroll records to see detailed reports and analytics.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

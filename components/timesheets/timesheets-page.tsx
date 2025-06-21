@@ -637,7 +637,57 @@ export default function TimesheetsPage({ user }: { user: User }) {
             </TabsList>
           </div>
           <TabsContent value="timesheets" className="container mx-auto py-4 space-y-6">
-            {/* Search, Filters, and Actions Row */}
+            {/* Timesheet Table Header */}
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+              <div className="flex items-center space-x-2">
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">
+                    {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {viewMode === "weekly" &&
+                      `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handlePreviousPeriod}
+                  className="h-10 w-10 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handleNextPeriod}
+                  className="h-10 w-10 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex items-center space-x-2">
+                {/* Create Timesheets Button */}
+                <Link href="/dashboard/timesheets/bulk">
+                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
+                    Create Timesheets
+                  </Button>
+                </Link>
+                {selectedTimesheetIds.size > 0 && (
+                  <Button
+                    onClick={handleDeleteSelected}
+                    disabled={isDeleting || isApproving}
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive border-destructive/20 hover:border-destructive/40"
+                  >
+                    {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Search and Filters Row */}
             <div className="flex items-center gap-4">
               {/* Search Bar */}
               <div className="flex-1">
@@ -797,57 +847,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              {/* Create Timesheets Button */}
-              <Link href="/dashboard/timesheets/bulk">
-                <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
-                  Create Timesheets
-                </Button>
-              </Link>
-            </div>
-
-            {/* Timesheet Table Header */}
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-              <div className="flex items-center space-x-2">
-                <div>
-                  <h2 className="text-lg font-semibold mb-2">
-                    {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {viewMode === "weekly" &&
-                      `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handlePreviousPeriod}
-                  className="h-10 w-10 p-0"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handleNextPeriod}
-                  className="h-10 w-10 p-0"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              {selectedTimesheetIds.size > 0 && (
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={handleDeleteSelected}
-                    disabled={isDeleting || isApproving}
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive border-destructive/20 hover:border-destructive/40"
-                  >
-                    {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
-                  </Button>
-                </div>
-              )}
             </div>
 
             {/* Timesheet Table */}

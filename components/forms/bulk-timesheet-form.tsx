@@ -624,17 +624,11 @@ export function BulkTimesheetForm({
                   type="button"
                   onClick={addSelectedWorkers}
                   disabled={selectedWorkers.size === 0}
-                  className={cn(
-                    "font-medium transition-all duration-200 shadow-sm",
-                    "bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-secondary font-medium",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                    selectedWorkers.size > 0 && "shadow-md hover:shadow-lg scale-105"
-                  )}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add Selected Workers
                   {selectedWorkers.size > 0 && (
-                    <span className="ml-2 rounded-full bg-secondary/20 text-secondary-foreground px-2 py-0.5 text-xs font-bold animate-in zoom-in-50 duration-200">
+                    <span className="ml-2 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs font-medium">
                       {selectedWorkers.size}
                     </span>
                   )}
