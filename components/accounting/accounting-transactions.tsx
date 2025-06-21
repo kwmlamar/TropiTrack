@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,100 +40,24 @@ import {
   Calendar,
   DollarSign,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
-
-// Sample transaction data
-const transactions = [
-  {
-    id: "TXN-001",
-    date: "2024-01-15",
-    description: "Office Supplies Purchase",
-    category: "Expenses",
-    type: "expense",
-    amount: 1250.00,
-    status: "completed",
-    account: "Business Account",
-    reference: "INV-2024-001"
-  },
-  {
-    id: "TXN-002",
-    date: "2024-01-14",
-    description: "Client Payment - Project Alpha",
-    category: "Income",
-    type: "income",
-    amount: 15000.00,
-    status: "completed",
-    account: "Business Account",
-    reference: "PAY-2024-001"
-  },
-  {
-    id: "TXN-003",
-    date: "2024-01-13",
-    description: "Equipment Rental",
-    category: "Expenses",
-    type: "expense",
-    amount: 850.00,
-    status: "pending",
-    account: "Business Account",
-    reference: "INV-2024-002"
-  },
-  {
-    id: "TXN-004",
-    date: "2024-01-12",
-    description: "Subcontractor Payment",
-    category: "Expenses",
-    type: "expense",
-    amount: 3200.00,
-    status: "completed",
-    account: "Business Account",
-    reference: "PAY-2024-002"
-  },
-  {
-    id: "TXN-005",
-    date: "2024-01-11",
-    description: "Client Payment - Project Beta",
-    category: "Income",
-    type: "income",
-    amount: 8500.00,
-    status: "completed",
-    account: "Business Account",
-    reference: "PAY-2024-003"
-  },
-  {
-    id: "TXN-006",
-    date: "2024-01-10",
-    description: "Insurance Premium",
-    category: "Expenses",
-    type: "expense",
-    amount: 1200.00,
-    status: "completed",
-    account: "Business Account",
-    reference: "INV-2024-003"
-  },
-  {
-    id: "TXN-007",
-    date: "2024-01-09",
-    description: "Client Payment - Project Gamma",
-    category: "Income",
-    type: "income",
-    amount: 22000.00,
-    status: "pending",
-    account: "Business Account",
-    reference: "PAY-2024-004"
-  },
-  {
-    id: "TXN-008",
-    date: "2024-01-08",
-    description: "Utility Bills",
-    category: "Expenses",
-    type: "expense",
-    amount: 450.00,
-    status: "completed",
-    account: "Business Account",
-    reference: "INV-2024-004"
-  }
-]
+import { getTransactions, getTransactionStats, deleteTransaction } from "@/lib/data/transactions"
+import type { Transaction } from "@/lib/types"
+import { toast } from "sonner"
+import { NewTransactionButton } from "@/components/forms/transaction-sheet"
+import { format, parseISO } from "date-fns"
+import { 
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle
+} from "@/components/ui/sheet"
+import { TransactionForm } from "@/components/forms/transaction-form"
 
 const categories = [
   "All Categories",
@@ -143,7 +67,8 @@ const categories = [
   "Materials",
   "Labor",
   "Insurance",
-  "Utilities"
+  "Utilities",
+  "Wages Payable"
 ]
 
 const statuses = [
@@ -154,26 +79,105 @@ const statuses = [
   "cancelled"
 ]
 
+const ITEMS_PER_PAGE = 20;
+
 export default function AccountingTransactions() {
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [selectedStatus, setSelectedStatus] = useState("All Statuses")
   const [selectedType, setSelectedType] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [stats, setStats] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    totalLiabilities: 0,
+    netAmount: 0,
+    transactionCount: 0
+  })
+
+  // Load transactions on component mount
+  useEffect(() => {
+    loadTransactions()
+    loadStats()
+  }, [])
+
+  const loadTransactions = async () => {
+    try {
+      setLoading(true)
+      const response = await getTransactions()
+      if (response.success && response.data) {
+        setTransactions(response.data)
+      } else {
+        console.error("Failed to load transactions:", response.error)
+        toast.error("Failed to load transactions")
+      }
+    } catch (error) {
+      console.error("Error loading transactions:", error)
+      toast.error("Error loading transactions")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadStats = async () => {
+    try {
+      const response = await getTransactionStats()
+      if (response.success && response.data) {
+        setStats(response.data)
+      }
+    } catch (error) {
+      console.error("Error loading transaction stats:", error)
+    }
+  }
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    try {
+      const response = await deleteTransaction(transactionId)
+      if (response.success) {
+        toast.success("Transaction deleted successfully")
+        loadTransactions() // Reload the list
+        loadStats() // Reload stats
+      } else {
+        toast.error("Failed to delete transaction")
+      }
+    } catch (error) {
+      console.error("Error deleting transaction:", error)
+      toast.error("Error deleting transaction")
+    }
+  }
 
   // Filter transactions based on search and filters
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.reference.toLowerCase().includes(searchTerm.toLowerCase())
+                         transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (transaction.reference && transaction.reference.toLowerCase().includes(searchTerm.toLowerCase()))
     
     const matchesCategory = selectedCategory === "All Categories" || transaction.category === selectedCategory
     const matchesStatus = selectedStatus === "All Statuses" || transaction.status === selectedStatus
     const matchesType = selectedType === "all" || transaction.type === selectedType
 
     return matchesSearch && matchesCategory && matchesStatus && matchesType
-  })
+  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date descending
 
-  // Calculate totals
+  // Pagination logic
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, selectedStatus, selectedType]);
+
+  // Calculate totals from filtered transactions
   const totalIncome = filteredTransactions
     .filter(t => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0)
@@ -221,11 +225,19 @@ export default function AccountingTransactions() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+    const date = parseISO(dateString)
+    return format(date, 'MMM dd, yyyy')
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading transactions...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -234,14 +246,18 @@ export default function AccountingTransactions() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Transactions</h2>
+          <p className="text-sm text-muted-foreground">
+            {transactions.length} total transactions
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4" />
           </Button>
-          <Button size="sm">
-            New Transaction
-          </Button>
+          <NewTransactionButton onSuccess={() => {
+            loadTransactions()
+            loadStats()
+          }} />
         </div>
       </div>
 
@@ -269,6 +285,7 @@ export default function AccountingTransactions() {
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="income">Income</SelectItem>
               <SelectItem value="expense">Expense</SelectItem>
+              <SelectItem value="liability">Liability</SelectItem>
             </SelectContent>
           </Select>
 
@@ -319,14 +336,14 @@ export default function AccountingTransactions() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((transaction, index) => (
+                {paginatedTransactions.map((transaction, index) => (
                   <TableRow 
                     key={transaction.id} 
                     className="hover:bg-muted/40 transition-all duration-200 border-b border-muted/20 last:border-b-0 group"
                   >
                     <TableCell className="font-medium text-sm py-4 px-6">
                       <span className="font-mono text-xs bg-muted/50 px-2 py-1 rounded-md">
-                        {transaction.id}
+                        {transaction.transaction_id}
                       </span>
                     </TableCell>
                     <TableCell className="text-sm py-4 px-6">
@@ -362,9 +379,11 @@ export default function AccountingTransactions() {
                       <span className="text-muted-foreground">{transaction.account}</span>
                     </TableCell>
                     <TableCell className="py-4 px-6">
-                      <span className="font-mono text-xs bg-muted/30 px-2 py-1 rounded text-muted-foreground">
-                        {transaction.reference}
-                      </span>
+                      {transaction.reference && (
+                        <span className="font-mono text-xs bg-muted/30 px-2 py-1 rounded text-muted-foreground">
+                          {transaction.reference}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="py-4 px-6">
                       <DropdownMenu>
@@ -379,16 +398,18 @@ export default function AccountingTransactions() {
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuLabel className="text-xs font-medium">Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-sm">
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-sm">
+                          <DropdownMenuItem 
+                            className="text-sm"
+                            onClick={() => setEditingTransaction(transaction)}
+                          >
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Transaction
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-sm text-red-600 focus:text-red-600">
+                          <DropdownMenuItem 
+                            className="text-sm text-red-600 focus:text-red-600"
+                            onClick={() => handleDeleteTransaction(transaction.id)}
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete Transaction
                           </DropdownMenuItem>
@@ -400,6 +421,54 @@ export default function AccountingTransactions() {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Pagination */}
+          {filteredTransactions.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredTransactions.length)} of {filteredTransactions.length} transactions
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className={`h-8 w-8 p-0 ${
+                        currentPage === page 
+                          ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
+                          : "hover:bg-[#E8EDF5]/70"
+                      }`}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
           
           {/* Empty State */}
           {filteredTransactions.length === 0 && (
@@ -418,6 +487,31 @@ export default function AccountingTransactions() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Transaction Sheet */}
+      {editingTransaction && (
+        <Sheet open={!!editingTransaction} onOpenChange={(open) => !open && setEditingTransaction(null)}>
+          <SheetContent side="right" className="w-[50%]">
+            <SheetHeader>
+              <SheetTitle>Edit Transaction</SheetTitle>
+              <SheetDescription>
+                Update the transaction details.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-0">
+              <TransactionForm
+                transaction={editingTransaction}
+                onSuccess={(updatedTransaction: Transaction) => {
+                  setEditingTransaction(null)
+                  loadTransactions()
+                  loadStats()
+                }}
+                onCancel={() => setEditingTransaction(null)}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   )
 } 

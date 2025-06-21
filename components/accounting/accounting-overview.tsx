@@ -1,34 +1,10 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, DollarSign, Receipt } from "lucide-react"
+import { TrendingUp, DollarSign, Receipt, Loader2 } from "lucide-react"
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
-
-// Sample data for charts
-const cashFlowData = [
-  { month: 'Jan', income: 45000, expenses: 32000, net: 13000 },
-  { month: 'Feb', income: 52000, expenses: 38000, net: 14000 },
-  { month: 'Mar', income: 48000, expenses: 35000, net: 13000 },
-  { month: 'Apr', income: 61000, expenses: 42000, net: 19000 },
-  { month: 'May', income: 55000, expenses: 39000, net: 16000 },
-  { month: 'Jun', income: 67000, expenses: 45000, net: 22000 },
-]
-
-const expensesData = [
-  { category: 'Materials', amount: 25000 },
-  { category: 'Labor', amount: 35000 },
-  { category: 'Equipment', amount: 15000 },
-  { category: 'Subcontractors', amount: 20000 },
-  { category: 'Overhead', amount: 12000 },
-  { category: 'Insurance', amount: 8000 },
-]
-
-const invoicesData = [
-  { status: 'Paid', amount: 85000 },
-  { status: 'Pending', amount: 45000 },
-  { status: 'Overdue', amount: 15000 },
-  { status: 'Draft', amount: 25000 },
-]
+import { getTransactionStats, getCashFlowData, getExpensesByCategory, getTransactionStatusBreakdown } from "@/lib/data/transactions"
 
 // Neutral color palette that complements the app
 const colors = {
@@ -42,6 +18,85 @@ const colors = {
 }
 
 export default function AccountingOverview() {
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    totalLiabilities: 0,
+    netAmount: 0,
+    transactionCount: 0
+  })
+  const [cashFlowData, setCashFlowData] = useState<Array<{
+    month: string;
+    income: number;
+    expenses: number;
+    net: number;
+  }>>([])
+  const [expensesData, setExpensesData] = useState<Array<{
+    category: string;
+    amount: number;
+  }>>([])
+  const [statusData, setStatusData] = useState<Array<{
+    status: string;
+    amount: number;
+  }>>([])
+
+  useEffect(() => {
+    loadAllData()
+  }, [])
+
+  const loadAllData = async () => {
+    try {
+      setLoading(true)
+      
+      // Load all data in parallel
+      const [statsResponse, cashFlowResponse, expensesResponse, statusResponse] = await Promise.all([
+        getTransactionStats(),
+        getCashFlowData(),
+        getExpensesByCategory(),
+        getTransactionStatusBreakdown()
+      ])
+
+      if (statsResponse.success && statsResponse.data) {
+        setStats(statsResponse.data)
+      }
+
+      if (cashFlowResponse.success && cashFlowResponse.data) {
+        setCashFlowData(cashFlowResponse.data)
+      }
+
+      if (expensesResponse.success && expensesResponse.data) {
+        setExpensesData(expensesResponse.data)
+      }
+
+      if (statusResponse.success && statusResponse.data) {
+        setStatusData(statusResponse.data)
+      }
+    } catch (error) {
+      console.error("Error loading accounting data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount)
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading accounting data...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       
@@ -52,10 +107,12 @@ export default function AccountingOverview() {
             <CardTitle className="flex items-center justify-between">
               <div>
                 <div className="text-xl font-semibold">Cash Flow</div>
-                <div className="text-2xl font-bold text-primary mt-1">$170,000</div>
+                <div className="text-2xl font-bold text-primary mt-1">{formatCurrency(stats.netAmount)}</div>
                 <div className="text-sm font-normal mt-1">
                   <span className="text-muted-foreground">This year </span>
-                  <span className="text-green-600">+23.5%</span>
+                  <span className={stats.netAmount >= 0 ? "text-green-600" : "text-red-600"}>
+                    {stats.netAmount >= 0 ? "+" : ""}{((stats.netAmount / (stats.totalIncome || 1)) * 100).toFixed(1)}%
+                  </span>
                 </div>
               </div>
             </CardTitle>
@@ -146,11 +203,11 @@ export default function AccountingOverview() {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between">
               <div>
-                <div className="text-lg font-semibold">Expenses</div>
-                <div className="text-2xl font-bold text-primary mt-1">$115,000</div>
+                <div className="text-lg font-semibold">Expenses by Category</div>
+                <div className="text-2xl font-bold text-primary mt-1">{formatCurrency(stats.totalExpenses)}</div>
                 <div className="text-sm font-normal mt-1">
                   <span className="text-muted-foreground">This year </span>
-                  <span className="text-red-600">-12.3%</span>
+                  <span className="text-red-600">-{((stats.totalExpenses / (stats.totalIncome || 1)) * 100).toFixed(1)}%</span>
                 </div>
               </div>
             </CardTitle>
@@ -158,15 +215,15 @@ export default function AccountingOverview() {
           <CardContent className="pt-0">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={expensesData} margin={{ top: 20, right: 20, left: 20, bottom: 60 }}>
+                <BarChart data={expensesData} margin={{ top: 20, right: 20, left: 20, bottom: 80 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                   <XAxis 
                     dataKey="category" 
                     className="text-sm text-muted-foreground"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                     angle={-45}
                     textAnchor="end"
-                    height={80}
+                    height={100}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                     tickLine={{ stroke: 'hsl(var(--border))' }}
                   />
@@ -205,10 +262,10 @@ export default function AccountingOverview() {
             <CardTitle className="flex items-center justify-between">
               <div>
                 <div className="text-lg font-semibold">Invoices</div>
-                <div className="text-2xl font-bold text-primary mt-1">$170,000</div>
+                <div className="text-2xl font-bold text-primary mt-1">{formatCurrency(stats.totalIncome)}</div>
                 <div className="text-sm font-normal mt-1">
                   <span className="text-muted-foreground">This year </span>
-                  <span className="text-green-600">+15.8%</span>
+                  <span className="text-green-600">+{((stats.totalIncome / (stats.totalIncome + stats.totalExpenses || 1)) * 100).toFixed(1)}%</span>
                 </div>
               </div>
             </CardTitle>
@@ -216,7 +273,7 @@ export default function AccountingOverview() {
           <CardContent className="pt-0">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={invoicesData} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
+                <BarChart data={statusData} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                   <XAxis 
                     dataKey="status" 

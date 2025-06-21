@@ -77,22 +77,16 @@ export default function PayrollPage({ user }: { user: User }) {
 
   // Filter payrolls based on search term using useMemo
   const filteredPayrolls = useMemo(() => {
-    // Temporarily disable filtering to test if that's causing the scroll issue
-    return payrolls;
+    if (!searchTerm) return payrolls;
     
-    // Original filtering logic (commented out for testing)
-    /*
+    const searchLower = searchTerm.toLowerCase();
     return payrolls.filter(payroll => {
-      if (!searchTerm) return true;
-      
-      const searchLower = searchTerm.toLowerCase();
       return (
         payroll.worker_name?.toLowerCase().includes(searchLower) ||
         payroll.position?.toLowerCase().includes(searchLower) ||
         payroll.status?.toLowerCase().includes(searchLower)
       );
     });
-    */
   }, [payrolls, searchTerm]);
 
   // Reset to first page when search term changes
@@ -115,7 +109,7 @@ export default function PayrollPage({ user }: { user: User }) {
 
       const response = await getAggregatedPayrolls(filters)
       if (response.data) {
-        // Apply deductions based on settings
+        // Apply deductions based on settings - optimize by doing this in batch
         const processedPayrolls = response.data.map(payroll => {
           const overtimePay = payroll.overtime_hours * (payroll.hourly_rate * (payrollSettings?.overtime_rate || 1.5))
           const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay, overtimePay)

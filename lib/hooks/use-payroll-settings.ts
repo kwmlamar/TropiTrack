@@ -1,9 +1,19 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { getPaymentSchedule } from "@/lib/data/payroll-settings"
 import { getPayrollSettings } from "@/lib/data/payroll-settings"
 import { getDeductionRules } from "@/lib/data/payroll-settings"
 import type { PaymentSchedule, PayrollSettings, DeductionRule } from "@/lib/types/payroll-settings"
 import { toast } from "sonner"
+
+// Cache for settings to avoid redundant API calls
+let settingsCache: {
+  paymentSchedule: PaymentSchedule | null
+  payrollSettings: PayrollSettings | null
+  deductionRules: DeductionRule[]
+  lastUpdated: number
+} | null = null
+
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export function usePayrollSettings() {
   const [loading, setLoading] = useState(true)
@@ -11,11 +21,16 @@ export function usePayrollSettings() {
   const [payrollSettings, setPayrollSettings] = useState<PayrollSettings | null>(null)
   const [deductionRules, setDeductionRules] = useState<DeductionRule[]>([])
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
+  const loadSettings = useCallback(async (forceRefresh = false) => {
+    // Check cache first
+    if (!forceRefresh && settingsCache && (Date.now() - settingsCache.lastUpdated) < CACHE_DURATION) {
+      setPaymentSchedule(settingsCache.paymentSchedule)
+      setPayrollSettings(settingsCache.payrollSettings)
+      setDeductionRules(settingsCache.deductionRules)
+      setLoading(false)
+      return
+    }
 
-  const loadSettings = async () => {
     setLoading(true)
     try {
       // Load all settings in parallel
@@ -25,16 +40,21 @@ export function usePayrollSettings() {
         getDeductionRules(),
       ])
 
-      if (scheduleResult.success && scheduleResult.data) {
-        setPaymentSchedule(scheduleResult.data)
-      }
+      const newPaymentSchedule = scheduleResult.success ? scheduleResult.data : null
+      const newPayrollSettings = settingsResult.success ? settingsResult.data : null
+      const newDeductionRules = deductionsResult.success && deductionsResult.data ? deductionsResult.data.filter(rule => rule.is_active) : []
 
-      if (settingsResult.success && settingsResult.data) {
-        setPayrollSettings(settingsResult.data)
-      }
+      // Update state
+      setPaymentSchedule(newPaymentSchedule)
+      setPayrollSettings(newPayrollSettings)
+      setDeductionRules(newDeductionRules)
 
-      if (deductionsResult.success && deductionsResult.data) {
-        setDeductionRules(deductionsResult.data.filter(rule => rule.is_active))
+      // Update cache
+      settingsCache = {
+        paymentSchedule: newPaymentSchedule,
+        payrollSettings: newPayrollSettings,
+        deductionRules: newDeductionRules,
+        lastUpdated: Date.now()
       }
     } catch (error) {
       console.error("Error loading payroll settings:", error)
@@ -42,9 +62,13 @@ export function usePayrollSettings() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const calculateDeductions = (grossPay: number, overtimePay: number = 0) => {
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
+
+  const calculateDeductions = useCallback((grossPay: number, overtimePay: number = 0) => {
     if (!payrollSettings) return { nibDeduction: 0, otherDeductions: 0 }
 
     // Calculate NIB deduction
@@ -64,12 +88,16 @@ export function usePayrollSettings() {
       nibDeduction,
       otherDeductions,
     }
-  }
+  }, [payrollSettings, deductionRules])
 
-  const getDefaultPayPeriod = () => {
+  const getDefaultPayPeriod = useCallback(() => {
     if (!paymentSchedule) return "bi-weekly"
     return paymentSchedule.pay_period_type
-  }
+  }, [paymentSchedule])
+
+  const refresh = useCallback(() => {
+    loadSettings(true) // Force refresh
+  }, [loadSettings])
 
   return {
     loading,
@@ -78,6 +106,6 @@ export function usePayrollSettings() {
     deductionRules,
     calculateDeductions,
     getDefaultPayPeriod,
-    refresh: loadSettings,
+    refresh,
   }
 } 

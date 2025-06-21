@@ -42,17 +42,43 @@ export async function getPayrolls(
       return { data: null, error: "User profile or company ID not found", success: false };
     }
 
+    // Build query with optimized select and filtering
     let query = supabase
       .from("payroll")
-      .select("id, worker_id, worker_name, total_hours, overtime_hours, hourly_rate, gross_pay, nib_deduction, other_deductions, total_deductions, net_pay, position, department, status, company_id, created_at, updated_at, pay_period_start, pay_period_end, worker:worker_id(id, name, hourly_rate, position, department)")
+      .select(`
+        id, 
+        worker_id, 
+        worker_name, 
+        total_hours, 
+        overtime_hours, 
+        hourly_rate, 
+        gross_pay, 
+        nib_deduction, 
+        other_deductions, 
+        total_deductions, 
+        net_pay, 
+        position, 
+        department, 
+        status, 
+        company_id, 
+        created_at, 
+        updated_at, 
+        pay_period_start, 
+        pay_period_end,
+        worker:worker_id(id, name, hourly_rate, position, department)
+      `)
       .eq("company_id", profile.company_id)
       .order("pay_period_start", { ascending: false });
 
-    if (filters.date_from) {
-      query = query.lte("pay_period_start", filters.date_to);
-    }
-    if (filters.date_to) {
-      query = query.gte("pay_period_end", filters.date_from);
+    // Optimize date filtering - use proper date range logic
+    if (filters.date_from && filters.date_to) {
+      query = query
+        .gte("pay_period_start", filters.date_from)
+        .lte("pay_period_end", filters.date_to);
+    } else if (filters.date_from) {
+      query = query.gte("pay_period_start", filters.date_from);
+    } else if (filters.date_to) {
+      query = query.lte("pay_period_end", filters.date_to);
     }
 
     const { data, error } = await query;
@@ -61,7 +87,8 @@ export async function getPayrolls(
       console.error("Error fetching payrolls:", error);
       return { data: null, error: error.message, success: false };
     }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+    // Optimize data mapping
     const payrolls = data ? (data as any[]).map(mapPayrollRecord) : [];
 
     return { data: payrolls, error: null, success: true };
@@ -283,9 +310,113 @@ export async function generatePayrollForWorkerAndPeriod(
     if (existingPayroll) {
       console.log(`[PayrollGen] Updating existing payroll record with ID: ${existingPayroll.id}`);
       result = await updatePayroll({ id: existingPayroll.id, ...payrollData });
+      
+      // Update existing liability transaction for updated payroll records
+      if (result.success && result.data) {
+        console.log(`[PayrollGen] Updating liability transaction for existing payroll ${result.data.id}`)
+        try {
+          // Find existing liability transaction
+          const { data: existingLiability, error: fetchError } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('reference', `LIABILITY-${result.data.id}`)
+            .eq('type', 'liability')
+            .eq('status', 'pending')
+            .single()
+          
+          if (fetchError && fetchError.code !== 'PGRST116') {
+            console.error(`[PayrollGen] Failed to fetch existing liability transaction: ${fetchError.message}`)
+          } else if (existingLiability) {
+            // Update existing liability transaction with new amount
+            const { error: updateError } = await supabase
+              .from('transactions')
+              .update({
+                amount: grossPay,
+                notes: `Wages payable for ${workerName} - Period: ${dateFrom} to ${dateTo} (Updated)`,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingLiability.id)
+            
+            if (updateError) {
+              console.error(`[PayrollGen] Failed to update liability transaction: ${updateError.message}`)
+            } else {
+              console.log(`[PayrollGen] Successfully updated liability transaction for payroll ${result.data.id}`)
+            }
+          } else {
+            // Create new liability transaction if none exists (fallback)
+            console.log(`[PayrollGen] No existing liability found, creating new one for updated payroll ${result.data.id}`)
+            const liabilityTransaction = {
+              company_id: profile.company_id,
+              transaction_id: `TXN-LIABILITY-${result.data.id}`,
+              date: new Date().toISOString().split('T')[0],
+              description: `Wages Payable - ${workerName}`,
+              category: "Wages Payable",
+              type: "liability" as const,
+              amount: grossPay,
+              status: "pending" as const,
+              account: "Business Account",
+              reference: `LIABILITY-${result.data.id}`,
+              notes: `Wages payable for ${workerName} - Period: ${dateFrom} to ${dateTo}`,
+              created_by: userId
+            };
+            
+            const { error: createError } = await supabase
+              .from('transactions')
+              .insert([liabilityTransaction])
+              .select();
+            
+            if (createError) {
+              console.error(`[PayrollGen] Failed to create liability transaction for updated payroll: ${createError.message}`)
+            } else {
+              console.log(`[PayrollGen] Successfully created liability transaction for updated payroll ${result.data.id}`)
+            }
+          }
+        } catch (error) {
+          console.error(`[PayrollGen] Exception updating liability transaction:`, error)
+        }
+      }
     } else {
       console.log("[PayrollGen] Creating new payroll record.");
       result = await createPayroll(payrollData);
+      
+      // Create liability transaction for new payroll records
+      if (result.success && result.data) {
+        console.log(`[PayrollGen] Creating liability transaction for new payroll ${result.data.id}`)
+        try {
+          const liabilityTransaction = {
+            company_id: profile.company_id,
+            transaction_id: `TXN-LIABILITY-${result.data.id}`,
+            date: new Date().toISOString().split('T')[0],
+            description: `Wages Payable - ${workerName}`,
+            category: "Wages Payable",
+            type: "liability" as const,
+            amount: grossPay,
+            status: "pending" as const,
+            account: "Business Account",
+            reference: `LIABILITY-${result.data.id}`,
+            notes: `Wages payable for ${workerName} - Period: ${dateFrom} to ${dateTo}`,
+            created_by: userId
+          };
+          
+          console.log(`[PayrollGen] Liability transaction data:`, liabilityTransaction)
+          
+          const { error: liabilityError } = await supabase
+            .from('transactions')
+            .insert([liabilityTransaction])
+            .select();
+          
+          if (liabilityError) {
+            console.error(`[PayrollGen] Failed to create liability transaction: ${liabilityError.message}`)
+            console.error(`[PayrollGen] Liability error details:`, liabilityError)
+          } else {
+            console.log(`[PayrollGen] Successfully created liability transaction for payroll ${result.data.id}`)
+          }
+        } catch (error) {
+          console.error(`[PayrollGen] Exception creating liability transaction:`, error)
+        }
+      } else {
+        console.log(`[PayrollGen] Skipping liability transaction creation - payroll result not successful`)
+      }
     }
 
     if (!result.success) {

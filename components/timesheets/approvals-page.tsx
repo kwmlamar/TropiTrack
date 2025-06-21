@@ -141,7 +141,12 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
 
       // Generate payroll for each unique worker-week combination
       for (const { workerId, weekStart, weekEnd } of affectedWorkersAndWeeks.values()) {
-        await generatePayrollForWorkerAndPeriod(user.id, workerId, weekStart, weekEnd)
+        console.log(`[Approvals] Generating payroll for worker ${workerId}, period ${weekStart} to ${weekEnd}`)
+        const result = await generatePayrollForWorkerAndPeriod(user.id, workerId, weekStart, weekEnd)
+        console.log(`[Approvals] Payroll generation result:`, result)
+        if (!result.success) {
+          console.error(`[Approvals] Failed to generate payroll for worker ${workerId}:`, result.error)
+        }
       }
       
       // Update local state
@@ -247,10 +252,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
         </div>
       </div>
 
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Timesheet Approvals</CardTitle>
-        </CardHeader>
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
         <CardContent>
           {pendingTimesheets.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
@@ -358,7 +360,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                                           size="sm"
                                           onClick={() => handleApprove(timesheet.id)}
                                           disabled={isProcessing}
-                                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
+                                          className="bg-primary hover:bg-primary/90 hover:text-primary-foreground text-primary-foreground shadow-sm transition-all duration-200 font-medium"
                                         >
                                           <Check className="h-4 w-4 mr-2" />
                                           Approve
@@ -455,7 +457,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                           size="sm"
                           onClick={() => handleApprove(timesheet.id)}
                           disabled={isProcessing}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
+                          className="bg-primary hover:bg-primary/90 hover:text-primary-foreground text-primary-foreground shadow-sm transition-all duration-200 font-medium"
                         >
                           <Check className="h-4 w-4 mr-2" />
                           Approve

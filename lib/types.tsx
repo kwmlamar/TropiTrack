@@ -118,3 +118,37 @@ export type PayrollRecord = {
 
 export type CreatePayrollInput = Omit<PayrollRecord, "id" | "created_at" | "updated_at" | "total_deductions" | "net_pay">;
 export type UpdatePayrollInput = Partial<Omit<PayrollRecord, "id" | "created_at" | "updated_at" | "total_deductions" | "net_pay">> & { id: string };
+
+// Transaction types
+export type Transaction = {
+  id: string;
+  company_id: string;
+  transaction_id: string;
+  date: string;
+  description: string;
+  category: string;
+  type: "income" | "expense" | "liability";
+  amount: number;
+  status: "completed" | "pending" | "failed" | "cancelled";
+  account: string;
+  reference?: string;
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at?: string;
+};
+
+export type CreateTransactionInput = Omit<Transaction, "id" | "created_at" | "updated_at">;
+export type UpdateTransactionInput = Partial<Omit<Transaction, "id" | "created_at" | "updated_at">> & { id: string };
+
+// Transaction filters
+export type TransactionFilters = {
+  date_from?: string;
+  date_to?: string;
+  type?: "income" | "expense" | "liability";
+  status?: "completed" | "pending" | "failed" | "cancelled";
+  category?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+};

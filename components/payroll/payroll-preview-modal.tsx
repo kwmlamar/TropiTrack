@@ -92,7 +92,7 @@ export function PayrollPreviewDialog({
 
     setIsProcessing(true)
     try {
-      // Step 1: Create Accounting Transactions for each payroll entry
+      // Step 1: Update existing liability transactions to expense transactions
       const transactionPromises = selectedPayrolls.map(async (payroll) => {
         // Validate required fields
         if (!payroll.company_id) {
@@ -101,61 +101,76 @@ export function PayrollPreviewDialog({
         if (!user.id) {
           throw new Error('User ID is missing')
         }
+        
         // Get adjustments for this payroll
         const adjustment = adjustments[payroll.id] || { bonus: 0, deduction: 0 }
         const adjustedGrossPay = payroll.gross_pay + adjustment.bonus - adjustment.deduction
-        // Create expense transaction for payroll cost
-        const expenseTransaction = {
-          company_id: payroll.company_id,
-          transaction_id: `TXN-PAYROLL-${payroll.id}`,
-          date: new Date().toISOString().split('T')[0],
-          description: `Payroll - ${payroll.worker_name}`,
-          category: "Payroll",
-          type: "expense" as const,
-          amount: adjustedGrossPay,
-          status: "pending" as const,
-          account: "Business Account",
-          reference: `PAYROLL-${payroll.id}`,
-          notes: `Payroll expense for ${payroll.worker_name} - Period: ${payroll.pay_period_start} to ${payroll.pay_period_end}`,
-          created_by: user.id
-        }
-        // Create liability transaction for wages payable
-        const liabilityTransaction = {
-          company_id: payroll.company_id,
-          transaction_id: `TXN-LIABILITY-${payroll.id}`,
-          date: new Date().toISOString().split('T')[0],
-          description: `Wages Payable - ${payroll.worker_name}`,
-          category: "Wages Payable",
-          type: "liability" as const,
-          amount: adjustedGrossPay,
-          status: "pending" as const,
-          account: "Business Account",
-          reference: `LIABILITY-${payroll.id}`,
-          notes: `Wages payable for ${payroll.worker_name} - Period: ${payroll.pay_period_start} to ${payroll.pay_period_end}`,
-          created_by: user.id
-        }
-        // Insert both transactions into the database
-        const { error: expenseError } = await supabase
+        
+        // First, try to find existing liability transaction for this payroll
+        const { data: existingTransaction, error: fetchError } = await supabase
           .from('transactions')
-          .insert([expenseTransaction])
-          .select()
-        if (expenseError) {
-          throw new Error(`Failed to create expense transaction for ${payroll.worker_name}: ${expenseError.message}`)
+          .select('*')
+          .eq('reference', `LIABILITY-${payroll.id}`)
+          .eq('type', 'liability')
+          .eq('status', 'pending')
+          .single()
+        
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          throw new Error(`Failed to fetch existing liability transaction: ${fetchError.message}`)
         }
-        const { error: liabilityError } = await supabase
-          .from('transactions')
-          .insert([liabilityTransaction])
-          .select()
-        if (liabilityError) {
-          throw new Error(`Failed to create liability transaction for ${payroll.worker_name}: ${liabilityError.message}`)
+        
+        if (existingTransaction) {
+          // Update existing liability transaction to expense
+          const { error: updateError } = await supabase
+            .from('transactions')
+            .update({
+              transaction_id: `TXN-PAYROLL-${payroll.id}`,
+              type: 'expense',
+              status: 'completed',
+              category: 'Payroll',
+              description: `Payroll - ${payroll.worker_name}`,
+              reference: `PAYROLL-${payroll.id}`,
+              notes: `Payroll expense for ${payroll.worker_name} - Period: ${payroll.pay_period_start} to ${payroll.pay_period_end}. Net pay: ${formatCurrency(getAdjustedNetPay(payroll))}`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingTransaction.id)
+          
+          if (updateError) {
+            throw new Error(`Failed to update liability transaction for ${payroll.worker_name}: ${updateError.message}`)
+          }
+        } else {
+          // Create new expense transaction if no liability exists (fallback)
+          const payrollTransaction = {
+            company_id: payroll.company_id,
+            transaction_id: `TXN-PAYROLL-${payroll.id}`,
+            date: new Date().toISOString().split('T')[0],
+            description: `Payroll - ${payroll.worker_name}`,
+            category: "Payroll",
+            type: "expense" as const,
+            amount: adjustedGrossPay,
+            status: "completed" as const,
+            account: "Business Account",
+            reference: `PAYROLL-${payroll.id}`,
+            notes: `Payroll expense for ${payroll.worker_name} - Period: ${payroll.pay_period_start} to ${payroll.pay_period_end}. Net pay: ${formatCurrency(getAdjustedNetPay(payroll))}`,
+            created_by: user.id
+          }
+          
+          const { error: createError } = await supabase
+            .from('transactions')
+            .insert([payrollTransaction])
+            .select()
+          if (createError) {
+            throw new Error(`Failed to create payroll transaction for ${payroll.worker_name}: ${createError.message}`)
+          }
         }
       })
       await Promise.all(transactionPromises)
+      
       // Step 2: Update payroll status to "confirmed"
       const payrollIdsToUpdate = selectedPayrolls.map(p => p.id)
       const updateResult = await updatePayrollStatus(payrollIdsToUpdate, "confirmed")
       if (updateResult.success) {
-        toast.success(`Successfully confirmed ${selectedPayrolls.length} payroll entries and created accounting transactions.`)
+        toast.success(`Successfully confirmed ${selectedPayrolls.length} payroll entries and updated accounting transactions.`)
         onSuccess()
         onClose()
       } else {
