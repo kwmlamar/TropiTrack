@@ -157,8 +157,13 @@ export default function AccountingOverview() {
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
-                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                    formatter={(value: number) => [
+                      <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                        ${value.toLocaleString()}
+                      </span>, 
+                      ''
+                    ]}
+                    labelStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
                   />
                   <Legend 
                     wrapperStyle={{ paddingTop: '20px' }}
@@ -215,7 +220,7 @@ export default function AccountingOverview() {
           <CardContent className="pt-0">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={expensesData} margin={{ top: 20, right: 20, left: 20, bottom: 80 }}>
+                <BarChart data={expensesData} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                   <XAxis 
                     dataKey="category" 
@@ -241,8 +246,14 @@ export default function AccountingOverview() {
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
-                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                    formatter={(value: number) => [
+                      <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                        ${value.toLocaleString()}
+                      </span>, 
+                      ''
+                    ]}
+                    labelStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                    itemStyle={{ color: 'hsl(var(--primary))' }}
                   />
                   <Bar 
                     dataKey="amount" 
@@ -296,8 +307,14 @@ export default function AccountingOverview() {
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
-                    labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                    formatter={(value: number) => [
+                      <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                        ${value.toLocaleString()}
+                      </span>, 
+                      ''
+                    ]}
+                    labelStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                    itemStyle={{ color: 'hsl(var(--primary))' }}
                   />
                   <Bar 
                     dataKey="amount" 
