@@ -25,7 +25,7 @@ import { CalendarIcon, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { createTransaction, updateTransaction } from "@/lib/data/transactions"
-import type { Transaction, CreateTransactionInput, UpdateTransactionInput } from "@/lib/types"
+import type { Transaction, UpdateTransactionInput, CreateTransactionInput } from "@/lib/types"
 import { toast } from "sonner"
 
 const transactionSchema = z.object({
@@ -120,7 +120,7 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
         response = await updateTransaction(updateData)
       } else {
         // Create new transaction - backend handles company_id and transaction_id
-        response = await createTransaction(transactionData as any)
+        response = await createTransaction(transactionData as CreateTransactionInput)
       }
 
       if (response.success && response.data) {

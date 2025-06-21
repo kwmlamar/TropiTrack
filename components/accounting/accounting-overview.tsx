@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, DollarSign, Receipt, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { getTransactionStats, getCashFlowData, getExpensesByCategory, getTransactionStatusBreakdown } from "@/lib/data/transactions"
 

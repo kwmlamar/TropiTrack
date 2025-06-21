@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { toast } from "sonner"
 import type { TimesheetWithDetails } from "@/lib/types"
 import { Checkbox } from "@/components/ui/checkbox"

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, parseISO } from "date-fns"
-import { X, ChevronDown, ChevronRight, DollarSign, Users, Calendar, CheckCircle } from "lucide-react"
+import { ChevronDown, ChevronRight, Users, Calendar, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose
 } from "@/components/ui/dialog"
 
 interface PayrollPreviewModalProps {

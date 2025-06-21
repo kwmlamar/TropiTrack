@@ -89,7 +89,7 @@ export async function getPayrolls(
     }
 
     // Optimize data mapping
-    const payrolls = data ? (data as any[]).map(mapPayrollRecord) : [];
+    const payrolls = data ? data.map(mapPayrollRecord) : [];
 
     return { data: payrolls, error: null, success: true };
   } catch (error) {

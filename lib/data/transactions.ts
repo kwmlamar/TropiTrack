@@ -10,7 +10,23 @@ function generateTransactionId(): string {
 }
 
 // Map database record to Transaction type
-function mapTransactionRecord(data: any): Transaction {
+function mapTransactionRecord(data: {
+  id: string;
+  company_id: string;
+  transaction_id: string;
+  date: string;
+  description: string;
+  category: string;
+  type: string;
+  amount: number;
+  status: string;
+  account: string;
+  reference: string | null;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}): Transaction {
   return {
     id: data.id,
     company_id: data.company_id,
@@ -18,12 +34,12 @@ function mapTransactionRecord(data: any): Transaction {
     date: data.date,
     description: data.description,
     category: data.category,
-    type: data.type,
+    type: data.type as "income" | "expense" | "liability",
     amount: data.amount,
-    status: data.status,
+    status: data.status as "completed" | "pending" | "failed" | "cancelled",
     account: data.account,
-    reference: data.reference,
-    notes: data.notes,
+    reference: data.reference || undefined,
+    notes: data.notes || undefined,
     created_by: data.created_by,
     created_at: data.created_at,
     updated_at: data.updated_at,

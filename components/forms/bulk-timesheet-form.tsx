@@ -369,7 +369,7 @@ export function BulkTimesheetForm({
     }
 
     // First, fill empty worker cards with selected workers
-    let remainingWorkers = [...selectedWorkersArray];
+    const remainingWorkers = [...selectedWorkersArray];
     
     fields.forEach((field, index) => {
       const currentWorkerId = form.getValues(`entries.${index}.worker_id`);

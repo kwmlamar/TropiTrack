@@ -3,15 +3,10 @@
 import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { User } from "@supabase/supabase-js"
 import AccountingOverview from "./accounting-overview"
 import AccountingTransactions from "./accounting-transactions"
 
-interface AccountingPageProps {
-  user: User
-}
-
-export default function AccountingPage({ user }: AccountingPageProps) {
+export default function AccountingPage() {
   const [activeTab, setActiveTab] = useState("overview")
 
   return (

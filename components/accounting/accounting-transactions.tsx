@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -29,12 +29,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { 
-  Search, 
-  Filter, 
-  Plus, 
+  Search,
   MoreHorizontal, 
   Download,
-  Eye,
   Edit,
   Trash2,
   Calendar,
@@ -45,7 +42,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
-import { getTransactions, getTransactionStats, deleteTransaction } from "@/lib/data/transactions"
+import { getTransactions, deleteTransaction } from "@/lib/data/transactions"
 import type { Transaction } from "@/lib/types"
 import { toast } from "sonner"
 import { NewTransactionButton } from "@/components/forms/transaction-sheet"
@@ -90,18 +87,10 @@ export default function AccountingTransactions() {
   const [selectedType, setSelectedType] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
-  const [stats, setStats] = useState({
-    totalIncome: 0,
-    totalExpenses: 0,
-    totalLiabilities: 0,
-    netAmount: 0,
-    transactionCount: 0
-  })
 
   // Load transactions on component mount
   useEffect(() => {
     loadTransactions()
-    loadStats()
   }, [])
 
   const loadTransactions = async () => {
@@ -122,24 +111,12 @@ export default function AccountingTransactions() {
     }
   }
 
-  const loadStats = async () => {
-    try {
-      const response = await getTransactionStats()
-      if (response.success && response.data) {
-        setStats(response.data)
-      }
-    } catch (error) {
-      console.error("Error loading transaction stats:", error)
-    }
-  }
-
   const handleDeleteTransaction = async (transactionId: string) => {
     try {
       const response = await deleteTransaction(transactionId)
       if (response.success) {
         toast.success("Transaction deleted successfully")
-        loadTransactions() // Reload the list
-        loadStats() // Reload stats
+        loadTransactions() // Reload stats
       } else {
         toast.error("Failed to delete transaction")
       }
@@ -176,17 +153,6 @@ export default function AccountingTransactions() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedStatus, selectedType]);
-
-  // Calculate totals from filtered transactions
-  const totalIncome = filteredTransactions
-    .filter(t => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const totalExpenses = filteredTransactions
-    .filter(t => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const netAmount = totalIncome - totalExpenses
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -256,7 +222,6 @@ export default function AccountingTransactions() {
           </Button>
           <NewTransactionButton onSuccess={() => {
             loadTransactions()
-            loadStats()
           }} />
         </div>
       </div>
@@ -336,7 +301,7 @@ export default function AccountingTransactions() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedTransactions.map((transaction, index) => (
+                {paginatedTransactions.map((transaction) => (
                   <TableRow 
                     key={transaction.id} 
                     className="hover:bg-muted/40 transition-all duration-200 border-b border-muted/20 last:border-b-0 group"
@@ -501,10 +466,9 @@ export default function AccountingTransactions() {
             <div className="mt-0">
               <TransactionForm
                 transaction={editingTransaction}
-                onSuccess={(updatedTransaction: Transaction) => {
+                onSuccess={() => {
                   setEditingTransaction(null)
                   loadTransactions()
-                  loadStats()
                 }}
                 onCancel={() => setEditingTransaction(null)}
               />
