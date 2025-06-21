@@ -158,7 +158,7 @@ export default function AccountingOverview() {
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                     formatter={(value: number) => [
-                      <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                      <span key="value" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
                         ${value.toLocaleString()}
                       </span>, 
                       ''
@@ -247,7 +247,7 @@ export default function AccountingOverview() {
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                     formatter={(value: number) => [
-                      <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                      <span key="value" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
                         ${value.toLocaleString()}
                       </span>, 
                       ''
@@ -308,7 +308,7 @@ export default function AccountingOverview() {
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                     formatter={(value: number) => [
-                      <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                      <span key="value" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
                         ${value.toLocaleString()}
                       </span>, 
                       ''
