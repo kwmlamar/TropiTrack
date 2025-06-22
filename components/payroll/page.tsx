@@ -238,7 +238,7 @@ export default function PayrollPage({ user }: { user: User }) {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6" style={{ scrollBehavior: 'auto' }}>
+    <div className="flex-1 space-y-6 p-6">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
         <PayrollHeader />
 

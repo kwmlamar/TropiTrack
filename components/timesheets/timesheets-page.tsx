@@ -37,6 +37,7 @@ import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 import { ApprovalsPage } from "./approvals-page"
+import { AddTimesheetDialog } from "./add-timesheet-dialog"
 
 type AttendanceStatus = "present" | "absent" | "late"
 
@@ -59,6 +60,11 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
   const [currentPage, setCurrentPage] = useState(1)
+  
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedCellDate, setSelectedCellDate] = useState<Date | null>(null)
+  const [selectedCellWorker, setSelectedCellWorker] = useState<Worker | undefined>(undefined)
 
   const { paymentSchedule, loading: payrollLoading } = usePayrollSettings()
 
@@ -586,18 +592,25 @@ export default function TimesheetsPage({ user }: { user: User }) {
   };
 
   const handleNextPeriod = () => {
-    if (viewMode === "weekly") {
-      // Move to next week
-      const newDate = new Date(selectedDate);
-      newDate.setDate(selectedDate.getDate() + 7);
-      setSelectedDate(newDate);
+    const newDate = new Date(selectedDate)
+    if (viewMode === "daily") {
+      newDate.setDate(newDate.getDate() + 1)
     } else {
-      // Move to next day
-      const newDate = new Date(selectedDate);
-      newDate.setDate(selectedDate.getDate() + 1);
-      setSelectedDate(newDate);
+      newDate.setDate(newDate.getDate() + 7)
     }
-  };
+    setSelectedDate(newDate)
+  }
+
+  const handleCellClick = (date: Date, workerId: string) => {
+    setSelectedCellDate(date)
+    const worker = workers.find(w => w.id === workerId)
+    setSelectedCellWorker(worker || undefined)
+    setDialogOpen(true)
+  }
+
+  const handleDialogSuccess = () => {
+    loadTimesheets()
+  }
 
   // Show loading state
   if (loading) {
@@ -975,7 +988,16 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                         {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                       </div>
                                     ) : (
-                                      <span className="text-muted-foreground text-sm">-</span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handleCellClick(day, workerId);
+                                        }}
+                                        className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                        title="Click to add timesheet entry"
+                                      >
+                                        +
+                                      </button>
                                     )}
                                   </td>
                                 )
@@ -1068,7 +1090,16 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                             {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                           </div>
                                         ) : (
-                                          <span className="text-muted-foreground text-sm">-</span>
+                                          <button
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              handleCellClick(day, workerId);
+                                            }}
+                                            className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                            title="Click to add timesheet entry"
+                                          >
+                                            +
+                                          </button>
                                         )}
                                       </td>
                                     )
@@ -1181,6 +1212,20 @@ export default function TimesheetsPage({ user }: { user: User }) {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add Timesheet Dialog */}
+      {selectedCellDate && (
+        <AddTimesheetDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          date={selectedCellDate}
+          workers={workers}
+          projects={projects}
+          userId={user.id}
+          selectedWorker={selectedCellWorker}
+          onSuccess={handleDialogSuccess}
+        />
+      )}
     </div>
   )
 }
