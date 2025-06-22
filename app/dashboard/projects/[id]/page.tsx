@@ -10,10 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ChevronRight, Users } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getProjectAssignments } from "@/lib/data/project-assignments";
+import { fetchClientsForCompany } from "@/lib/data/data";
+import { ProjectDetailsSection } from "@/components/projects/project-details-section";
+import { TeamMembersClient } from "@/components/projects/team-members-client";
+import { getWorkers } from "@/lib/data/workers";
 
 // Helper function to get color based on percentage
 function getProgressColor(percentage: number): string {
@@ -63,8 +66,18 @@ export default async function ProjectPage({
 
   const project = projectResponse.data;
 
+  // Fetch clients for the edit dialog
+  const clients = await fetchClientsForCompany(user.id);
+
+  // Fetch workers for the add team members functionality
+  const workersResponse = await getWorkers(profile.company_id);
+  const workers = workersResponse.data || [];
+
   // Fetch project assignments for this project with worker details
-  const projectAssignmentsResponse = await getProjectAssignments(profile.company_id, { project_id: id });
+  const projectAssignmentsResponse = await getProjectAssignments(profile.company_id, { 
+    project_id: id,
+    is_active: true 
+  });
   const projectAssignments = projectAssignmentsResponse.data || [];
 
   // Fetch transactions for this project (using project name as reference)
@@ -199,36 +212,15 @@ export default async function ProjectPage({
                         {totalBudgetPercentage.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div 
-                        className={`h-3 rounded-full transition-all duration-300 ${getProgressColor(totalBudgetPercentage)}`}
-                        style={{ width: `${Math.min(100, totalBudgetPercentage)}%` }}
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(totalBudgetPercentage)}`}
+                        style={{ width: `${Math.min(totalBudgetPercentage, 100)}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Actual: ${actualTotalCost.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        Budget: ${totalBudget.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                      <div>
-                        <span>Payroll: ${actualPayrollCost.toLocaleString()}</span>
-                      </div>
-                      <div>
-                        <span>Other: ${actualOtherCosts.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Status</span>
-                      <Badge 
-                        variant={totalBudgetPercentage <= 70 ? "default" : totalBudgetPercentage <= 90 ? "secondary" : "destructive"}
-                        className="text-xs"
-                      >
-                        {getProgressStatus(totalBudgetPercentage)}
-                      </Badge>
+                      <span className="text-muted-foreground">Actual: ${actualTotalCost.toFixed(2)}</span>
+                      <span className="text-muted-foreground">Budget: ${totalBudget.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -237,10 +229,10 @@ export default async function ProjectPage({
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-lg font-semibold">
-                      Payroll Budget vs Actual Payroll
+                      Payroll Budget vs Actual
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Monitor labor costs against payroll budget
+                      Track labor costs against payroll budget
                     </p>
                   </div>
                   <div className="space-y-4">
@@ -250,19 +242,15 @@ export default async function ProjectPage({
                         {payrollBudgetPercentage.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div 
-                        className={`h-3 rounded-full transition-all duration-300 ${getProgressColor(payrollBudgetPercentage)}`}
-                        style={{ width: `${Math.min(100, payrollBudgetPercentage)}%` }}
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(payrollBudgetPercentage)}`}
+                        style={{ width: `${Math.min(payrollBudgetPercentage, 100)}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Actual: ${actualPayrollCost.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        Budget: ${payrollBudget.toLocaleString()}
-                      </span>
+                      <span className="text-muted-foreground">Actual: ${actualPayrollCost.toFixed(2)}</span>
+                      <span className="text-muted-foreground">Budget: ${payrollBudget.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Status</span>
@@ -277,133 +265,20 @@ export default async function ProjectPage({
                 </div>
               </div>
 
-              {/* Project Details */}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Project Details</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Key information and details about this project.
-                  </p>
-                </div>
-                <Separator />
-                <div className="space-y-4">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Project Name</h4>
-                      <p className="text-sm mt-1">{project.name}</p>
-                    </div>
-                    {project.client && (
-                      <div>
-                        <h4 className="font-medium text-sm text-muted-foreground">Client</h4>
-                        <p className="text-sm mt-1">{project.client.name}</p>
-                        {project.client.company && (
-                          <p className="text-sm text-muted-foreground">{project.client.company}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <Separator />
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Status</h4>
-                      <p className="text-sm mt-1">{project.status}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Start Date</h4>
-                      <p className="text-sm mt-1">
-                        {project.start_date ? format(new Date(project.start_date), "MMM d, yyyy") : "Not started"}
-                      </p>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">End Date</h4>
-                      <p className="text-sm mt-1">
-                        {project.end_date ? format(new Date(project.end_date), "MMM d, yyyy") : "No end date"}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground">Location</h4>
-                      <p className="text-sm mt-1">{project.location || "No location specified"}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Project Details Section */}
+              <ProjectDetailsSection
+                project={project}
+                clients={clients}
+                userId={user.id}
+              />
 
-              {/* Team Members */}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Team Members</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Workers assigned to this project and their performance metrics.
-                  </p>
-                </div>
-                <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
-                  <CardContent className="p-0">
-                    {teamMembers.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-12">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                          <Users className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          No team members assigned
-                        </h3>
-                        <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
-                          No workers have been assigned to this project yet.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-0">
-                        {/* Column Headers */}
-                        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
-                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                            Name
-                          </div>
-                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                            Position
-                          </div>
-                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                            Hourly Rate
-                          </div>
-                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                            Total Hours
-                          </div>
-                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                            Total Pay
-                          </div>
-                        </div>
-
-                        {/* Data Rows */}
-                        <div className="divide-y divide-border/50">
-                          {teamMembers.map((member, i) => (
-                            <div
-                              key={member.id || i}
-                              className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors"
-                            >
-                              <div>
-                                <p className="font-semibold text-foreground">{member.name}</p>
-                              </div>
-                              <div className="text-foreground">
-                                {member.position}
-                              </div>
-                              <div className="text-foreground">
-                                ${member.hourlyRate.toFixed(2)}
-                              </div>
-                              <div className="text-foreground">
-                                {member.totalHours % 1 === 0 ? member.totalHours.toFixed(0) : member.totalHours.toFixed(1)}h
-                              </div>
-                              <div className="text-foreground">
-                                ${member.totalPay.toFixed(2)}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+              {/* Team Members Section */}
+              <TeamMembersClient
+                project={project}
+                teamMembers={teamMembers}
+                workers={workers}
+                userId={user.id}
+              />
             </TabsContent>
 
             <TabsContent value="budget" className="container mx-auto py-4 space-y-6">

@@ -33,18 +33,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { WorkerSheet } from "@/components/forms/form-dialogs";
 import { useRouter } from "next/navigation";
+import { AddWorkerDialog } from "./add-worker-dialog";
 
 const columns = ["Name", "Pay Rate", "Status"];
 const ITEMS_PER_PAGE = 10;
 
 export default function WorkersTable({ user }: { user: User }) {
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [addWorkerDialogOpen, setAddWorkerDialogOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -118,16 +119,20 @@ export default function WorkersTable({ user }: { user: User }) {
             Manage your construction team and track worker information
           </p>
         </div>
-        <WorkerSheet
+        <div className="flex items-center justify-between">
+          
+          <Button 
+            className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
+            onClick={() => setAddWorkerDialogOpen(true)}
+          >
+            Add Worker
+          </Button>
+        </div>
+        <AddWorkerDialog
           userId={user.id}
           onSuccess={loadWorkers}
-          open={sheetOpen}
-          onOpenChange={setSheetOpen}
-          trigger={
-            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
-              Add Worker
-            </Button>
-          }
+          open={addWorkerDialogOpen}
+          onOpenChange={setAddWorkerDialogOpen}
         />
       </div>
 
@@ -177,16 +182,13 @@ export default function WorkersTable({ user }: { user: User }) {
                 You haven&apos;t added any workers yet. Add your first worker to
                 get started with team management.
               </p>
-              <WorkerSheet
-                userId={user.id}
-                onSuccess={loadWorkers}
-                trigger={
-                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary">
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    Add Your First Worker
-                  </Button>
-                }
-              />
+              <Button 
+                className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
+                onClick={() => setAddWorkerDialogOpen(true)}
+              >
+                <UserCheck className="mr-2 h-4 w-4" />
+                Add Your First Worker
+              </Button>
             </div>
           ) : (
             <div className="divide-y divide-border/50">

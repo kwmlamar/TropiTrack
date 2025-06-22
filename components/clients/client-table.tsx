@@ -20,17 +20,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { ClientDialog } from "@/components/forms/form-dialogs"
+import { AddClientDialog } from "./add-client-dialog"
 
 const columns = ["Name", "Email"]
 const ITEMS_PER_PAGE = 10;
 
 export default function ClientTable({ user }: { user: User }) {
   const [clients, setClients] = useState<Client[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [addClientDialogOpen, setAddClientDialogOpen] = useState(false)
 
   useEffect(() => {
     loadClients()
@@ -95,16 +97,19 @@ export default function ClientTable({ user }: { user: User }) {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Management</h1>
           <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
         </div>
-        <ClientDialog
-          userId={user.id}
-          onSuccess={loadClients}
-          trigger={
-            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
-              Add Client
-            </Button>
-          }
-        />
+        <Button 
+          className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
+          onClick={() => setAddClientDialogOpen(true)}
+        >
+          Add Client
+        </Button>
       </div>
+      <AddClientDialog
+        userId={user.id}
+        onSuccess={loadClients}
+        open={addClientDialogOpen}
+        onOpenChange={setAddClientDialogOpen}
+      />
 
       {/* Search Section */}
       <div className="w-full">
@@ -146,16 +151,13 @@ export default function ClientTable({ user }: { user: User }) {
               <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
                 You haven&apos;t added any clients yet. Add your first client to start building your project portfolio.
               </p>
-              <ClientDialog
-                userId={user.id}
-                onSuccess={loadClients}
-                trigger={
-                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary">
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    Add Your First Client
-                  </Button>
-                }
-              />
+              <Button 
+                className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
+                onClick={() => setAddClientDialogOpen(true)}
+              >
+                <UserCheck className="mr-2 h-4 w-4" />
+                Add Your First Client
+              </Button>
             </div>
           ) : (
             <div className="divide-y divide-border/50">

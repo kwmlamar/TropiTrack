@@ -1,0 +1,111 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Edit } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { format } from "date-fns"
+import { EditProjectDialog } from "./edit-project-dialog"
+import type { ProjectWithDetails } from "@/lib/types/project"
+import type { Client } from "@/lib/types/client"
+
+interface ProjectDetailsSectionProps {
+  project: ProjectWithDetails
+  clients: Client[]
+  userId: string
+}
+
+export function ProjectDetailsSection({
+  project,
+  clients,
+  userId,
+}: ProjectDetailsSectionProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  const handleEditClick = () => {
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditSuccess = () => {
+    // Refresh the page to show updated data
+    window.location.reload()
+  }
+
+  return (
+    <>
+      {/* Project Details */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Project Details</h3>
+            <p className="text-sm text-muted-foreground">
+              Key information and details about this project.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEditClick}
+            className="flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Edit
+          </Button>
+        </div>
+        <Separator />
+        <div className="space-y-4">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Project Name</h4>
+              <p className="text-sm mt-1">{project.name}</p>
+            </div>
+            {project.client && (
+              <div>
+                <h4 className="font-medium text-sm text-muted-foreground">Client</h4>
+                <p className="text-sm mt-1">{project.client.name}</p>
+                {project.client.company && (
+                  <p className="text-sm text-muted-foreground">{project.client.company}</p>
+                )}
+              </div>
+            )}
+          </div>
+          <Separator />
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Status</h4>
+              <p className="text-sm mt-1">{project.status}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Start Date</h4>
+              <p className="text-sm mt-1">
+                {project.start_date ? format(new Date(project.start_date), "MMM d, yyyy") : "Not started"}
+              </p>
+            </div>
+          </div>
+          <Separator />
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">End Date</h4>
+              <p className="text-sm mt-1">
+                {project.end_date ? format(new Date(project.end_date), "MMM d, yyyy") : "No end date"}
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Location</h4>
+              <p className="text-sm mt-1">{project.location || "No location specified"}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <EditProjectDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        userId={userId}
+        project={project}
+        clients={clients}
+        onSuccess={handleEditSuccess}
+      />
+    </>
+  )
+} 

@@ -15,11 +15,9 @@ import { Button } from "@/components/ui/button";
 import type { Project } from "@/lib/types/project";
 import type { ProjectAssignment } from "@/lib/types/project-assignment";
 import type { Client } from "@/lib/types/client";
-import type { Worker } from "@/lib/types/worker";
 import {
   fetchProjectsForCompany,
   fetchClientsForCompany,
-  fetchWorkersForCompany,
   deleteProject,
 } from "@/lib/data/data";
 import { fetchProjectAssignments } from "@/lib/data/project-assignments";
@@ -52,7 +50,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
-import { ProjectDialog } from "@/components/forms/form-dialogs";
+import { AddProjectDialog } from "@/components/projects/add-project-dialog";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -68,7 +66,6 @@ const columns = [
 export default function ProjectsTable({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [workers, setWorkers] = useState<Worker[]>([]);
   const [projectAssignments, setProjectAssignments] = useState<
     ProjectAssignment[]
   >([]);
@@ -79,12 +76,12 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
   const rowsPerPage = 10;
 
   useEffect(() => {
     loadProjects();
     loadClients();
-    loadWorkers();
     loadProjectAssignments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -107,15 +104,6 @@ export default function ProjectsTable({ user }: { user: User }) {
       setClients(data);
     } catch (error) {
       console.log("Failed to load clients:", error);
-    }
-  };
-
-  const loadWorkers = async () => {
-    try {
-      const data = await fetchWorkersForCompany(user.id);
-      setWorkers(data);
-    } catch (error) {
-      console.log("Failed to load workers:", error);
     }
   };
 
@@ -234,6 +222,11 @@ export default function ProjectsTable({ user }: { user: User }) {
     );
   };
 
+  const handleAddProjectSuccess = () => {
+    loadProjects();
+    loadProjectAssignments();
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header Section */}
@@ -246,21 +239,21 @@ export default function ProjectsTable({ user }: { user: User }) {
             Manage construction projects and track progress across your portfolio
           </p>
         </div>
-        <ProjectDialog
-          userId={user.id}
-          clients={clients}
-          workers={workers}
-          onSuccess={() => {
-            loadProjects();
-            loadProjectAssignments();
-          }}
-          trigger={
-            <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg">
-              Add Project
-            </Button>
-          }
-        />
+        <Button 
+          className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
+          onClick={() => setIsAddProjectDialogOpen(true)}
+        >
+          Add Project
+        </Button>
       </div>
+
+      <AddProjectDialog
+        open={isAddProjectDialogOpen}
+        onOpenChange={setIsAddProjectDialogOpen}
+        userId={user.id}
+        clients={clients}
+        onSuccess={handleAddProjectSuccess}
+      />
 
       {/* Filters and Controls */}
       <div className="flex flex-col lg:flex-row gap-4">
@@ -403,21 +396,13 @@ export default function ProjectsTable({ user }: { user: User }) {
                   ? "No projects match your current filters. Try adjusting your search criteria."
                   : "You haven't added any projects yet. Add your first project to start building your portfolio."}
               </p>
-              <ProjectDialog
-                userId={user.id}
-                clients={clients}
-                workers={workers}
-                onSuccess={() => {
-                  loadProjects();
-                  loadProjectAssignments();
-                }}
-                trigger={
-                  <Button className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Add Your First Project
-                  </Button>
-                }
-              />
+              <Button 
+                className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary"
+                onClick={() => setIsAddProjectDialogOpen(true)}
+              >
+                <Building2 className="mr-2 h-4 w-4" />
+                Add Your First Project
+              </Button>
             </div>
           ) : (
             <>
@@ -460,28 +445,16 @@ export default function ProjectsTable({ user }: { user: User }) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <ProjectDialog
-                            userId={user.id}
-                            project={{
-                              ...project,
-                              assigned_worker_ids: projectAssignments
-                                .filter((pa) => pa.project_id === project.id)
-                                .map((pa) => pa.worker_id),
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            onClick={() => {
+                              // For now, we'll just open the add dialog
+                              // In the future, we could create an edit dialog
+                              setIsAddProjectDialogOpen(true)
                             }}
-                            clients={clients}
-                            workers={workers}
-                            onSuccess={() => {
-                              loadProjects();
-                              loadProjectAssignments();
-                            }}
-                            trigger={
-                              <DropdownMenuItem
-                                onSelect={(e) => e.preventDefault()}
-                              >
-                                Edit Project
-                              </DropdownMenuItem>
-                            }
-                          />
+                          >
+                            Edit Project
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedProject(project);
