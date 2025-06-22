@@ -119,7 +119,8 @@ export function ProjectForm({
     location: project?.location ?? "",
     end_date: project?.end_date ?? null,
     budget: typeof project?.budget === "number" ? project.budget : undefined,
-  } as ProjectFormData;
+    payroll_budget: typeof project?.payroll_budget === "number" ? project.payroll_budget : undefined,
+  };
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -139,6 +140,7 @@ export function ProjectForm({
           start_date: data.start_date,
           end_date: data.end_date || null,
           budget: data.budget,
+          payroll_budget: data.payroll_budget,
           status: data.status,
           priority: data.priority,
         };
@@ -178,6 +180,7 @@ export function ProjectForm({
           start_date: data.start_date,
           end_date: data.end_date || null,
           budget: data.budget,
+          payroll_budget: data.payroll_budget,
           status: data.status,
           priority: data.priority,
           is_active: true,
@@ -436,6 +439,38 @@ export function ProjectForm({
                           min="0"
                           step="1"
                           placeholder="100000.00"
+                          className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? Number(e.target.value)
+                                : undefined
+                            )
+                          }
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="payroll_budget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payroll Budget (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="60000.00"
                           className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                           {...field}
                           value={field.value ?? ""}

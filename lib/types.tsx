@@ -110,6 +110,7 @@ export type PayrollRecord = {
   department?: string;
   status: "pending" | "confirmed" | "paid" | "void";
   company_id: string;
+  project_id?: string;
   created_at: string;
   updated_at?: string;
   pay_period_start: string;

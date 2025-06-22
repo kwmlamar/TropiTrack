@@ -40,6 +40,6 @@ export type ProjectAssignmentWithDetails = ProjectAssignment & {
   worker?: {
     id: string
     name: string
-    role: string
+    position: string
   }
 }

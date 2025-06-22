@@ -3,7 +3,8 @@ import DashboardLayout from "@/components/layouts/dashboard-layout";
 import { updateRecentProject } from "@/lib/data/recent-projects";
 import { getProject } from "@/lib/data/projects";
 import { getProfile } from "@/lib/data/data";
-import { getTimesheets } from "@/lib/data/timesheets";
+import { getTransactions } from "@/lib/data/transactions";
+import { getPayrollsByProject } from "@/lib/data/payroll";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,7 @@ import Link from "next/link";
 import { ChevronRight, Users } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { notFound } from "next/navigation";
-import { fetchProjectAssignments } from "@/lib/data/project-assignments";
+import { getProjectAssignments } from "@/lib/data/project-assignments";
 
 // Helper function to get color based on percentage
 function getProgressColor(percentage: number): string {
@@ -54,29 +55,49 @@ export default async function ProjectPage({
   await updateRecentProject(user.id, id);
 
   // Get project details using company_id
-  const { data: project, error: projectError } = await getProject(
-    profile.company_id,
-    id
-  );
+  const projectResponse = await getProject(profile.company_id, id);
 
-  if (projectError || !project) {
+  if (!projectResponse.data) {
     notFound();
   }
 
-  // Fetch project assignments for this project
-  const projectAssignments = await fetchProjectAssignments(user.id, id);
-  
-  // Fetch timesheets for this project to calculate totals
-  const timesheetsResponse = await getTimesheets(user.id, { project_id: id });
-  const timesheets = timesheetsResponse.data || [];
+  const project = projectResponse.data;
 
-  // Calculate totals for each worker
+  // Fetch project assignments for this project with worker details
+  const projectAssignmentsResponse = await getProjectAssignments(profile.company_id, { project_id: id });
+  const projectAssignments = projectAssignmentsResponse.data || [];
+
+  // Fetch transactions for this project (using project name as reference)
+  const transactionsResponse = await getTransactions({ 
+    search: project.name,
+    type: "expense"
+  });
+  const projectTransactions = transactionsResponse.data || [];
+
+  // Fetch payrolls for this project
+  const payrollsResponse = await getPayrollsByProject(id);
+  const payrolls = payrollsResponse.data || [];
+
+  // Calculate actual costs from confirmed payroll
+  const actualPayrollCost = payrolls.reduce((total, payroll) => total + (payroll.gross_pay || 0), 0);
+  const actualOtherCosts = projectTransactions.reduce((total, transaction) => total + transaction.amount, 0);
+  const actualTotalCost = actualPayrollCost + actualOtherCosts;
+
+  // Calculate budgets
+  const totalBudget = project.budget || 0;
+  const payrollBudget = project.payroll_budget || (totalBudget * 0.6); // Use specific payroll budget or fallback to 60% of total budget
+
+  // Calculate percentages
+  const totalBudgetPercentage = totalBudget > 0 ? (actualTotalCost / totalBudget) * 100 : 0;
+  const payrollBudgetPercentage = payrollBudget > 0 ? (actualPayrollCost / payrollBudget) * 100 : 0;
+
+  // Calculate totals for each worker from payroll data
   const workerTotals = new Map();
-  timesheets.forEach(timesheet => {
-    const workerId = timesheet.worker_id;
+  payrolls.forEach(payroll => {
+    const workerId = payroll.worker_id;
     const current = workerTotals.get(workerId) || { hours: 0, pay: 0 };
-    current.hours += timesheet.total_hours || 0;
-    current.pay += timesheet.total_pay || 0;
+    current.hours += payroll.total_hours || 0;
+    current.pay += payroll.gross_pay || 0;
     workerTotals.set(workerId, current);
   });
 
@@ -87,40 +108,12 @@ export default async function ProjectPage({
     return {
       id: assignment.worker_id,
       name: worker?.name || "Unknown Worker",
-      role: assignment.role_on_project || worker?.role || "Worker",
-      hourlyRate: assignment.hourly_rate || worker?.hourly_rate || 0,
+      position: assignment.role_on_project || worker?.position || "Worker",
+      hourlyRate: assignment.hourly_rate || 0,
       totalHours: totals.hours,
       totalPay: totals.pay,
     };
   });
-
-  // Calculate actual payroll costs from timesheets
-  let actualPayrollCost = 0;
-  const totalBudget = project.budget || 0;
-  const payrollBudget = totalBudget * 0.6; // Assume 60% of total budget is for payroll
-
-  try {
-    // Get all timesheets for this project
-    const timesheetsResult = await getTimesheets(user.id, {
-      project_id: id,
-      supervisor_approval: "approved"
-    });
-
-    if (timesheetsResult.success && timesheetsResult.data) {
-      // Calculate total payroll cost from approved timesheets
-      actualPayrollCost = timesheetsResult.data.reduce((total, timesheet) => {
-        const regularPay = timesheet.regular_hours * (timesheet.worker?.hourly_rate || 0);
-        const overtimePay = timesheet.overtime_hours * (timesheet.worker?.hourly_rate || 0) * 1.5;
-        return total + regularPay + overtimePay;
-      }, 0);
-    }
-  } catch (error) {
-    console.error("Error calculating payroll costs:", error);
-  }
-
-  // Calculate percentages
-  const totalBudgetPercentage = totalBudget > 0 ? (actualPayrollCost / totalBudget) * 100 : 0;
-  const payrollBudgetPercentage = payrollBudget > 0 ? (actualPayrollCost / payrollBudget) * 100 : 0;
 
   return (
     <DashboardLayout title={project.name}>
@@ -214,11 +207,19 @@ export default async function ProjectPage({
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Actual: ${actualPayrollCost.toLocaleString()}
+                        Actual: ${actualTotalCost.toLocaleString()}
                       </span>
                       <span className="text-muted-foreground">
                         Budget: ${totalBudget.toLocaleString()}
                       </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                      <div>
+                        <span>Payroll: ${actualPayrollCost.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span>Other: ${actualOtherCosts.toLocaleString()}</span>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Status</span>
@@ -338,67 +339,70 @@ export default async function ProjectPage({
                     Workers assigned to this project and their performance metrics.
                   </p>
                 </div>
-                <Separator />
-                {teamMembers.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                      <Users className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      No team members assigned
-                    </h3>
-                    <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
-                      No workers have been assigned to this project yet.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    {/* Column Headers */}
-                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
-                      <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        Name
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
+                  <CardContent className="p-0">
+                    {teamMembers.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                          <Users className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
+                          No team members assigned
+                        </h3>
+                        <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
+                          No workers have been assigned to this project yet.
+                        </p>
                       </div>
-                      <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        Role
-                      </div>
-                      <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        Hourly Rate
-                      </div>
-                      <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        Total Hours
-                      </div>
-                      <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        Total Pay
-                      </div>
-                    </div>
-
-                    {/* Data Rows */}
-                    <div className="divide-y divide-border/50">
-                      {teamMembers.map((member, i) => (
-                        <div
-                          key={member.id || i}
-                          className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors"
-                        >
-                          <div>
-                            <p className="font-semibold text-foreground">{member.name}</p>
+                    ) : (
+                      <div className="space-y-0">
+                        {/* Column Headers */}
+                        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
+                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Name
                           </div>
-                          <div className="text-foreground">
-                            {member.role}
+                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Position
                           </div>
-                          <div className="text-foreground">
-                            ${member.hourlyRate.toFixed(2)}
+                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Hourly Rate
                           </div>
-                          <div className="text-foreground">
-                            {member.totalHours.toFixed(1)}h
+                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Total Hours
                           </div>
-                          <div className="text-foreground">
-                            ${member.totalPay.toFixed(2)}
+                          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Total Pay
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
+                        {/* Data Rows */}
+                        <div className="divide-y divide-border/50">
+                          {teamMembers.map((member, i) => (
+                            <div
+                              key={member.id || i}
+                              className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors"
+                            >
+                              <div>
+                                <p className="font-semibold text-foreground">{member.name}</p>
+                              </div>
+                              <div className="text-foreground">
+                                {member.position}
+                              </div>
+                              <div className="text-foreground">
+                                ${member.hourlyRate.toFixed(2)}
+                              </div>
+                              <div className="text-foreground">
+                                {member.totalHours % 1 === 0 ? member.totalHours.toFixed(0) : member.totalHours.toFixed(1)}h
+                              </div>
+                              <div className="text-foreground">
+                                ${member.totalPay.toFixed(2)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
 

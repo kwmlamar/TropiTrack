@@ -61,7 +61,7 @@ export async function getProjectAssignments(
       .select(`
         *,
         project:projects(id, name, status),
-        worker:workers(id, name, role)
+        worker:workers(id, name, position)
       `)
       .eq("company_id", companyId)
       .order("created_at", { ascending: false })

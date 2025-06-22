@@ -13,6 +13,7 @@ function mapPayrollRecord(data: any): PayrollRecord {
     id: data.id,
     company_id: data.company_id,
     worker_id: data.worker_id,
+    project_id: data.project_id,
     pay_period_start: data.pay_period_start,
     pay_period_end: data.pay_period_end,
     total_hours: data.total_hours,
@@ -49,6 +50,7 @@ export async function getPayrolls(
         id, 
         worker_id, 
         worker_name, 
+        project_id,
         total_hours, 
         overtime_hours, 
         hourly_rate, 
@@ -105,7 +107,7 @@ export async function getPayroll(id: string): Promise<ApiResponse<PayrollRecord>
   try {
     const { data, error } = await supabase
       .from("payroll")
-      .select("id, worker_id, worker_name, total_hours, overtime_hours, hourly_rate, gross_pay, nib_deduction, other_deductions, total_deductions, net_pay, position, department, status, company_id, created_at, updated_at, pay_period_start, pay_period_end, worker:worker_id(id, name, hourly_rate, position, department)")
+      .select("id, worker_id, worker_name, project_id, total_hours, overtime_hours, hourly_rate, gross_pay, nib_deduction, other_deductions, total_deductions, net_pay, position, department, status, company_id, created_at, updated_at, pay_period_start, pay_period_end, worker:worker_id(id, name, hourly_rate, position, department)")
       .eq("id", id)
       .single();
 
@@ -251,6 +253,23 @@ export async function generatePayrollForWorkerAndPeriod(
     let hourlyRate = 0;
     let workerPosition = "";
     let workerDepartment = "";
+    
+    // Determine the primary project for this payroll period
+    // Count timesheets by project to find the most common one
+    const projectCounts = new Map<string, number>();
+    approvedTimesheets.forEach(ts => {
+      if (ts.project_id) {
+        projectCounts.set(ts.project_id, (projectCounts.get(ts.project_id) || 0) + 1);
+      }
+    });
+    
+    // Get the project with the most timesheets, or the first one if tied
+    let primaryProjectId: string | undefined;
+    if (projectCounts.size > 0) {
+      const sortedProjects = Array.from(projectCounts.entries())
+        .sort((a, b) => b[1] - a[1]); // Sort by count descending
+      primaryProjectId = sortedProjects[0][0];
+    }
 
     if (approvedTimesheets[0].worker?.hourly_rate) {
       hourlyRate = approvedTimesheets[0].worker.hourly_rate;
@@ -259,6 +278,7 @@ export async function generatePayrollForWorkerAndPeriod(
       workerDepartment = approvedTimesheets[0].worker.department || "";
     }
     console.log(`[PayrollGen] Worker details: Name=${workerName}, HourlyRate=${hourlyRate}, Position=${workerPosition}, Department=${workerDepartment}`);
+    console.log(`[PayrollGen] Primary project for this period: ${primaryProjectId || 'None'}`);
 
     approvedTimesheets.forEach(ts => {
       totalHours += ts.total_hours;
@@ -290,6 +310,7 @@ export async function generatePayrollForWorkerAndPeriod(
     const payrollData: CreatePayrollInput = {
       worker_id: workerId,
       worker_name: workerName,
+      project_id: primaryProjectId,
       total_hours: totalHours,
       overtime_hours: totalOvertimeHours,
       hourly_rate: hourlyRate,
@@ -512,6 +533,78 @@ export async function getAggregatedPayrolls(
       data: null,
       error: error instanceof Error ? error.message : "An unexpected error occurred",
       success: false
+    };
+  }
+}
+
+export async function getPayrollsByProject(
+  projectId: string,
+  filters: { date_from?: string; date_to?: string } = {}
+): Promise<ApiResponse<PayrollRecord[]>> {
+  try {
+    const profile = await getUserProfileWithCompany();
+    if (!profile || !profile.company_id) {
+      return { data: null, error: "User profile or company ID not found", success: false };
+    }
+
+    // Build query with optimized select and filtering
+    let query = supabase
+      .from("payroll")
+      .select(`
+        id, 
+        worker_id, 
+        worker_name, 
+        project_id,
+        total_hours, 
+        overtime_hours, 
+        hourly_rate, 
+        gross_pay, 
+        nib_deduction, 
+        other_deductions, 
+        total_deductions, 
+        net_pay, 
+        position, 
+        department, 
+        status, 
+        company_id, 
+        created_at, 
+        updated_at, 
+        pay_period_start, 
+        pay_period_end,
+        worker:worker_id(id, name, hourly_rate, position, department)
+      `)
+      .eq("company_id", profile.company_id)
+      .eq("project_id", projectId)
+      .in("status", ["confirmed", "paid"]) // Include both confirmed and paid payroll records
+      .order("pay_period_start", { ascending: false });
+
+    // Optimize date filtering - use proper date range logic
+    if (filters.date_from && filters.date_to) {
+      query = query
+        .gte("pay_period_start", filters.date_from)
+        .lte("pay_period_end", filters.date_to);
+    } else if (filters.date_from) {
+      query = query.gte("pay_period_start", filters.date_from);
+    } else if (filters.date_to) {
+      query = query.lte("pay_period_end", filters.date_to);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching payrolls by project:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    // Optimize data mapping
+    const payrolls = data ? data.map(mapPayrollRecord) : [];
+
+    return { data: payrolls, error: null, success: true };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
     };
   }
 }

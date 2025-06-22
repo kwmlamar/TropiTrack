@@ -41,6 +41,7 @@ export const projectSchema = z.object({
   start_date: z.string().min(1, "Start date is required").nullable(),
   end_date: z.string().optional().nullable(),
   budget: z.number().min(0, "Budget must be positive").optional(),
+  payroll_budget: z.number().min(0, "Payroll budget must be positive").optional(),
   status: z.enum(["not_started", "in_progress", "paused", "completed", "cancelled"]).default("not_started"),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
 })

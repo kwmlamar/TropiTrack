@@ -152,6 +152,13 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdateTimesheet = async (id: string, field: keyof TimesheetWithDetails, value: any) => {
     try {
+      // Find the timesheet to check if it's approved
+      const timesheet = timesheets.find(ts => ts.id === id);
+      if (timesheet?.supervisor_approval === "approved") {
+        console.warn("Cannot update approved timesheet");
+        return;
+      }
+
       // Only update fields that exist on the base Timesheet type
       const validFields = [
         "date",
@@ -173,6 +180,25 @@ export default function TimesheetsPage({ user }: { user: User }) {
       if (!validFields.includes(field)) {
         console.warn(`Field ${field} is not updatable`)
         return
+      }
+
+      // Calculate updated values for server update
+      let serverUpdateData: { id: string; [key: string]: string | number } = { id, [field]: value }
+      
+      // If total_hours is being updated, calculate all related fields
+      if (field === "total_hours") {
+        const totalHours = parseFloat(value)
+        const regularHours = Math.min(totalHours, 8)
+        const overtimeHours = Math.max(0, totalHours - 8)
+        const hourlyRate = timesheets.find(ts => ts.id === id)?.worker?.hourly_rate || 0
+        
+        serverUpdateData = {
+          id,
+          total_hours: totalHours,
+          regular_hours: regularHours,
+          overtime_hours: overtimeHours,
+          total_pay: (regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5)
+        }
       }
 
       // Update local state immediately for smooth editing
@@ -210,7 +236,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
       )
 
       // Send update to server in background
-      const result = await updateTimesheetData({ id, [field]: value })
+      const result = await updateTimesheetData(serverUpdateData)
 
       if (!result.success) {
         // If server update failed, revert the local state change
@@ -936,7 +962,12 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                               Number.parseFloat(e.target.value) || 0,
                                             )
                                           }
-                                          className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
+                                          disabled={dayTimesheet.supervisor_approval === "approved"}
+                                          className={`w-16 h-8 text-center text-sm border-muted/50 focus:border-primary ${
+                                            dayTimesheet.supervisor_approval === "approved" 
+                                              ? "bg-muted/30 cursor-not-allowed opacity-60" 
+                                              : ""
+                                          }`}
                                           step="0.5"
                                           min="0"
                                           max="24"
@@ -1024,7 +1055,12 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                                   Number.parseFloat(e.target.value) || 0,
                                                 )
                                               }
-                                              className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
+                                              disabled={dayTimesheet.supervisor_approval === "approved"}
+                                              className={`w-16 h-8 text-center text-sm border-muted/50 focus:border-primary ${
+                                                dayTimesheet.supervisor_approval === "approved" 
+                                                  ? "bg-muted/30 cursor-not-allowed opacity-60" 
+                                                  : ""
+                                              }`}
                                               step="0.5"
                                               min="0"
                                               max="24"

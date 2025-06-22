@@ -10,6 +10,7 @@ export interface Project {
   end_date?: string | null
   estimated_end_date?: string
   budget?: number
+  payroll_budget?: number
   status: "not_started" | "in_progress" | "paused" | "completed" | "cancelled"
   priority?: "low" | "medium" | "high" | "urgent"
   project_manager_id?: string
