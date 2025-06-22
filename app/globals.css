@@ -63,7 +63,7 @@
   --sidebar-ring: #4A739C;
 
   /* Typography */
-  --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+  --font-sans: "Work Sans Variable", "Work Sans", system-ui, sans-serif;
   --font-serif: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", "Fira Code", monospace;
 
@@ -297,6 +297,7 @@
     @apply bg-background text-foreground antialiased;
     letter-spacing: var(--tracking-normal);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: var(--font-sans);
   }
 
   /* Improved focus styles */
@@ -384,6 +385,7 @@ html {
 
 body {
   @apply bg-background text-foreground;
+  font-family: var(--font-sans);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   font-variation-settings: normal;
 }
