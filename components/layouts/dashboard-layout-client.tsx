@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { ModeToggle } from "../mode-toggle"
+import { CompanySetupDialog } from "@/components/company-setup-dialog"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 
 type DashboardLayoutClientProps = {
@@ -35,6 +36,9 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
           </div>
         </div>
       </SidebarInset>
+      
+      {/* Company Setup Dialog */}
+      <CompanySetupDialog />
     </SidebarProvider>
   )
 } 

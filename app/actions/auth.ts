@@ -33,7 +33,7 @@ export async function signup(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("name") as string;
-  const companyName = formData.get("company_name") as string;
+  const companyName = formData.get("company_name") as string || "My Company"; // Default company name
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
@@ -52,8 +52,6 @@ export async function signup(formData: FormData) {
     console.error("Signup failed:", authError);
     return redirect("/error");
   }
-
-  // needs to be fixed
 
   // Insert company data
   const { data: companyData, error: companyError } = await supabase
@@ -109,6 +107,7 @@ export async function signup(formData: FormData) {
     console.log("Updated user metadata:", updatedUser?.user?.user_metadata);
   }
 
+  // Redirect to verify email page
   return redirect("/verify-email");
 }
 
