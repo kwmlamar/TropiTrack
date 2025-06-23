@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signup } from "@/app/actions/auth"; // adjust path if needed
 import { Button } from "@/components/ui/button";
@@ -21,18 +22,30 @@ export function SignupForm({
 }: React.ComponentProps<"div">) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
     try {
       setIsLoading(true);
       setErrors({});
       
-      await signup(formData);
-      
-      // If we reach here, signup was successful
-      toast.success("Account created!", {
-        description: "Welcome to TropiTrack. You can now start tracking time.",
-      });
+      const result = await signup(formData);
+
+      if ('error' in result) {
+        if (result.field) {
+          setErrors({ [result.field]: result.error });
+        } else {
+          toast.error("Sign up failed", {
+            description: result.error,
+          });
+        }
+      } else {
+        toast.success("Account created!", {
+          description: "Please check your email to verify your account.",
+        });
+        // Redirect to the verify email page
+        router.push(result.redirectTo);
+      }
     } catch {
       toast.error("Something went wrong", {
         description: "Please try again later.",

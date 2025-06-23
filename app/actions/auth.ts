@@ -1,7 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/utils/supabase/server-admin";
 
@@ -9,7 +7,9 @@ type LoginResult =
   | { success: true }
   | { error: string; field?: string } // <-- allow field optionally with error
 
-
+type SignupResult =
+  | { success: true; redirectTo: string }
+  | { error: string; field?: string }
 
 export async function login(formData: FormData): Promise<LoginResult> {
   const supabase = await createClient();
@@ -27,7 +27,7 @@ export async function login(formData: FormData): Promise<LoginResult> {
   return { success: true };
 }
 
-export async function signup(formData: FormData) {
+export async function signup(formData: FormData): Promise<SignupResult> {
   const supabase = await createClient();
 
   const email = formData.get("email") as string;
@@ -45,12 +45,12 @@ export async function signup(formData: FormData) {
 
   if (!authData.user) {
     console.error("No user returned from signUp - likely due to email confirmation requried.")
-    return redirect("/verify-email")
+    return { success: true, redirectTo: "/verify-email" };
   }
 
   if (authError) {
     console.error("Signup failed:", authError);
-    return redirect("/error");
+    return { error: "Signup failed. Please try again." };
   }
 
   // Insert company data
@@ -67,7 +67,7 @@ export async function signup(formData: FormData) {
 
   if (companyError || !companyData) {
     console.error("Failed to create company.", companyError);
-    return redirect("/error");
+    return { error: "Failed to create company. Please try again." };
   }
 
   // Manually insert profile directly
@@ -86,7 +86,7 @@ export async function signup(formData: FormData) {
 
   if (profileError || !profileData) {
     console.error("Failed to create profile.", profileError);
-    return redirect("/error");
+    return { error: "Failed to create profile. Please try again." };
   }
 
   // Update user metadata
@@ -102,12 +102,12 @@ export async function signup(formData: FormData) {
 
   if (updateError) {
     console.error("Failed to update user metadata", updateError);
-    return redirect("/error");
+    return { error: "Failed to update user metadata. Please try again." };
   } else {
     console.log("Updated user metadata:", updatedUser?.user?.user_metadata);
   }
 
-  // Redirect to verify email page
-  return redirect("/verify-email");
+  // Return success with redirect path
+  return { success: true, redirectTo: "/verify-email" };
 }
 
