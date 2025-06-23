@@ -10,14 +10,11 @@ import {
   Settings,
   User,
   LogOut,
-  Users,
-  HelpCircle,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,9 +30,8 @@ import {
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfileWithCompany } from "@/lib/types/userProfile";
-import { ModeToggle } from "@/components/mode-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 async function logout() {
   const res = await fetch("/auth/signout", {
@@ -52,16 +48,7 @@ type SiteHeaderProps = {
   title?: string;
   rightSlot?: React.ReactNode;
   user: UserProfileWithCompany;
-  notifications?: Array<{
-    id: string;
-    title: string;
-    message: string;
-    time: string;
-    read: boolean;
-    type: "info" | "warning" | "success" | "error";
-  }>;
   onSearch?: (query: string) => void;
-  onNotificationClick?: (notificationId: string) => void;
   onUserMenuAction?: (action: string) => void;
   onCompanySwitch?: () => void;
 };
@@ -69,52 +56,10 @@ type SiteHeaderProps = {
 export function SiteHeader({
   title = "Dashboard",
   user,
-  notifications = [
-    {
-      id: "1",
-      title: "Timesheet Approval",
-      message: "3 timesheets pending approval",
-      time: "5 min ago",
-      read: false,
-      type: "warning",
-    },
-    {
-      id: "2",
-      title: "New Worker Added",
-      message: "Marcus Johnson joined Paradise Resort project",
-      time: "1 hour ago",
-      read: false,
-      type: "info",
-    },
-    {
-      id: "3",
-      title: "Payroll Generated",
-      message: "Weekly payroll for 12 workers completed",
-      time: "2 hours ago",
-      read: true,
-      type: "success",
-    },
-  ],
   onSearch,
-  onNotificationClick,
-  onUserMenuAction,
   onCompanySwitch,
 }: SiteHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "warning":
-        return "🟡";
-      case "error":
-        return "🔴";
-      case "success":
-        return "🟢";
-      default:
-        return "🔵";
-    }
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,85 +131,21 @@ export function SiteHeader({
           </Popover>
 
           {/* Notifications */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-muted/80 transition-colors duration-200">
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center animate-in fade-in-0 zoom-in-75"
-                  >
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-              <div className="p-4 border-b">
-                <h4 className="font-semibold text-foreground">Notifications</h4>
-                <p className="text-sm text-muted-foreground">
-                  You have {unreadCount} unread notifications
-                </p>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={cn(
-                      "p-4 border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-all duration-200",
-                      !notification.read && "bg-muted/20"
-                    )}
-                    onClick={() => onNotificationClick?.(notification.id)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-lg">
-                        {getNotificationIcon(notification.type)}
-                      </span>
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-foreground">
-                            {notification.title}
-                          </p>
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {notification.time}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="p-3 border-t">
-                <Button variant="ghost" className="w-full text-sm hover:bg-muted/80 transition-colors duration-200">
-                  View all notifications
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Mode Toggle */}
-          <ModeToggle />
-
-          {/* Custom Right Slot */}
-          
+          <NotificationBell />
 
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
+              <Button
+                variant="ghost"
+                className="relative h-9 w-9 rounded-full hover:bg-muted/80 transition-colors duration-200"
+              >
                 <Avatar className="h-8 w-8">
                   <AvatarImage
                     src="/placeholder.svg"
                     alt={user.name}
                   />
-                  <AvatarFallback className="bg-[#E8EDF5] text-primary text-xs font-medium">
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                     {user.name
                       .split(" ")
                       .map((n) => n[0])
@@ -277,52 +158,40 @@ export function SiteHeader({
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none text-foreground">
+                  <p className="text-sm font-medium leading-none">
                     {user.name}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>
-                  {user.role && (
-                    <Badge variant="secondary" className="w-fit text-xs mt-1">
-                      {user.role}
-                    </Badge>
-                  )}
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <Link href="/dashboard/profile">
-                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                <DropdownMenuItem className="gap-2 cursor-pointer">
+                  <User className="h-4 w-4" />
+                  Profile
                 </DropdownMenuItem>
               </Link>
-              <Link href="/dashboard/invites">
-                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
-                <Users className="mr-2 h-4 w-4" />
-                <span>Team Settings</span>
-              </DropdownMenuItem>
+              <Link href="/dashboard/notifications">
+                <DropdownMenuItem className="gap-2 cursor-pointer">
+                  <Bell className="h-4 w-4" />
+                  Notifications
+                </DropdownMenuItem>
               </Link>
               <Link href="/dashboard/settings">
-                <DropdownMenuItem className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 cursor-pointer">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
               </Link>
-              <DropdownMenuItem 
-                onClick={() => onUserMenuAction?.("help")}
-                className="hover:bg-muted/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0"
-              >
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>Help & Support</span>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={logout}
-                className="text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-0"
+                className="gap-2 cursor-pointer text-destructive focus:text-destructive"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <LogOut className="h-4 w-4" />
+                Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
