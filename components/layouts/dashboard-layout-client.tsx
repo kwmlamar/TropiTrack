@@ -5,6 +5,8 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { ModeToggle } from "../mode-toggle"
 import { CompanySetupDialog } from "@/components/company-setup-dialog"
+import { PWAInstaller } from "@/components/pwa-installer"
+import { SafariInstallGuide } from "@/components/safari-install-guide"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 
 type DashboardLayoutClientProps = {
@@ -39,6 +41,12 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
       
       {/* Company Setup Dialog */}
       <CompanySetupDialog />
+      
+      {/* PWA Installer (Chrome/Edge/Firefox) */}
+      <PWAInstaller />
+      
+      {/* Safari Install Guide */}
+      <SafariInstallGuide />
     </SidebarProvider>
   )
 } 
