@@ -22,8 +22,11 @@ export function SafariInstallGuide() {
       return;
     }
 
-    // Show guide for Safari users after a delay
-    if (isSafariBrowser && !isInstalled) {
+    // Check if user has already dismissed the guide in this session
+    const hasDismissed = sessionStorage.getItem('safari-install-guide-dismissed');
+    
+    // Show guide for Safari users after a delay (only if not dismissed)
+    if (isSafariBrowser && !isInstalled && !hasDismissed) {
       const timer = setTimeout(() => {
         setShowGuide(true);
       }, 3000); // Show after 3 seconds
@@ -34,6 +37,8 @@ export function SafariInstallGuide() {
 
   const handleDismiss = () => {
     setShowGuide(false);
+    // Mark as dismissed in session storage
+    sessionStorage.setItem('safari-install-guide-dismissed', 'true');
   };
 
   if (!showGuide || !isSafari || isInstalled) {

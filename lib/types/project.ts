@@ -47,11 +47,6 @@ export type ProjectWithDetails = Project & {
     name: string
     company?: string
   }
-  project_manager?: {
-    id: string
-    first_name?: string
-    last_name?: string
-  }
   assigned_workers?: {
     id: string
     name: string

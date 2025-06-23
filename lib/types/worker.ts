@@ -45,12 +45,6 @@ export type WorkerFilters = {
 }
 
 export type WorkerWithDetails = Worker & {
-  user?: {
-    id: string
-    email: string
-    first_name?: string
-    last_name?: string
-  }
   current_projects?: {
     project: {
       id: string

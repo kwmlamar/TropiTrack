@@ -16,7 +16,6 @@ export async function getWorkers(
       .from("workers")
       .select(`
         *,
-        user:users!workers_user_id_fkey(id, email, first_name, last_name),
         current_projects:project_assignments(
           project:projects(id, name),
           role_on_project
@@ -81,7 +80,6 @@ export async function getWorker(companyId: string, id: string): Promise<ApiRespo
       .from("workers")
       .select(`
         *,
-        user:users!workers_user_id_fkey(id, email, first_name, last_name),
         current_projects:project_assignments(
           project:projects(id, name),
           role_on_project
