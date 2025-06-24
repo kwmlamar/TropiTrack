@@ -240,7 +240,6 @@ export default function ProjectsTable({ user }: { user: User }) {
           </p>
         </div>
         <Button 
-          className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
           onClick={() => setIsAddProjectDialogOpen(true)}
         >
           Add Project

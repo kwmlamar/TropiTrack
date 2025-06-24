@@ -98,7 +98,6 @@ export default function ClientTable({ user }: { user: User }) {
           <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
         </div>
         <Button 
-          className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
           onClick={() => setAddClientDialogOpen(true)}
         >
           Add Client

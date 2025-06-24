@@ -14,7 +14,6 @@ import {
   Calculator,
   Copy,
   Check,
-  UserPlus,
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { z } from "zod";
@@ -625,13 +624,7 @@ export function BulkTimesheetForm({
                   onClick={addSelectedWorkers}
                   disabled={selectedWorkers.size === 0}
                 >
-                  <UserPlus className="h-4 w-4 mr-2" />
                   Add Selected Workers
-                  {selectedWorkers.size > 0 && (
-                    <span className="ml-2 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs font-medium">
-                      {selectedWorkers.size}
-                    </span>
-                  )}
                 </Button>
               </div>
             </div>

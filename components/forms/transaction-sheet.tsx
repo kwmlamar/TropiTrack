@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Edit, Loader2 } from "lucide-react"
+import { Edit, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -99,7 +99,6 @@ export function NewTransactionButton({ onSuccess }: NewTransactionButtonProps) {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4 mr-2" />
         New Transaction
       </Button>
       <Sheet open={open} onOpenChange={setOpen}>

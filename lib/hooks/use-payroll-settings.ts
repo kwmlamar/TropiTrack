@@ -71,9 +71,9 @@ export function usePayrollSettings() {
   const calculateDeductions = useCallback((grossPay: number, overtimePay: number = 0) => {
     if (!payrollSettings) return { nibDeduction: 0, otherDeductions: 0 }
 
-    // Calculate NIB deduction
-    const nibRate = payrollSettings.nib_rate / 100
-    const nibDeduction = grossPay * nibRate
+    // Calculate NIB deduction with hardcoded 4.65% rate
+    const EMPLOYEE_NIB_RATE = 0.0465 // 4.65%
+    const nibDeduction = grossPay * EMPLOYEE_NIB_RATE
 
     // Calculate other deductions based on active rules
     const otherDeductions = deductionRules.reduce((total, rule) => {

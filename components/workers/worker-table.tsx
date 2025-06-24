@@ -122,7 +122,6 @@ export default function WorkersTable({ user }: { user: User }) {
         <div className="flex items-center justify-between">
           
           <Button 
-            className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
             onClick={() => setAddWorkerDialogOpen(true)}
           >
             Add Worker

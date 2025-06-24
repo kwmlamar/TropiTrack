@@ -13,10 +13,6 @@ import { getPayrollSettings, updatePayrollSettings, createPayrollSettings } from
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 
 const payrollSettingsSchema = z.object({
-  nib_rate: z.coerce
-    .number()
-    .min(0, "NIB rate cannot be negative")
-    .max(100, "NIB rate cannot exceed 100%"),
   overtime_rate: z.coerce
     .number()
     .min(1, "Overtime rate must be at least 1x")
@@ -34,7 +30,6 @@ export function PayrollSettingsForm() {
     resolver: zodResolver(payrollSettingsSchema),
     defaultValues: {
       overtime_rate: 1.5,
-      nib_rate: 4.65,
     },
   })
 
@@ -63,7 +58,6 @@ export function PayrollSettingsForm() {
       if (result.success && result.data) {
         form.reset({
           overtime_rate: result.data.overtime_rate,
-          nib_rate: result.data.nib_rate,
         })
       }
     } catch (error) {
@@ -82,33 +76,36 @@ export function PayrollSettingsForm() {
 
     setSaving(true)
     try {
-      const result = await getPayrollSettings()
-      let saveResult
+      const settingsData = {
+        company_id: companyId,
+        overtime_rate: data.overtime_rate,
+        nib_rate: 4.65, // Hardcoded NIB rate
+        column_settings: {}, // Default empty column settings
+      }
 
-      if (result.success && result.data) {
+      // Check if settings exist
+      const existingSettings = await getPayrollSettings()
+      let result
+
+      if (existingSettings.success && existingSettings.data) {
         // Update existing settings
-        saveResult = await updatePayrollSettings({
-          id: result.data.id,
-          ...data,
+        result = await updatePayrollSettings({
+          id: existingSettings.data.id,
+          ...settingsData,
         })
       } else {
         // Create new settings
-        saveResult = await createPayrollSettings({
-          ...data,
-          company_id: companyId,
-        })
+        result = await createPayrollSettings(settingsData)
       }
 
-      if (saveResult.success) {
+      if (result.success) {
         toast.success("Payroll settings saved successfully")
       } else {
-        toast.error("Failed to save payroll settings", {
-          description: saveResult.error,
-        })
+        toast.error(result.error || "Failed to save payroll settings")
       }
     } catch (error) {
       console.error("Error saving payroll settings:", error)
-      toast.error("Failed to save payroll settings")
+      toast.error("An unexpected error occurred")
     } finally {
       setSaving(false)
     }
@@ -141,28 +138,6 @@ export function PayrollSettingsForm() {
               </FormControl>
               <FormDescription>
                 The multiplier applied to regular hourly rate for overtime hours (e.g., 1.5 for time-and-a-half)
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="nib_rate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>NIB Rate (%)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="4.65"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                The National Insurance Board contribution rate as a percentage
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -3,13 +3,12 @@ import { CircleCheck, CircleX } from "lucide-react"
 
 interface NibComplianceProps {
   totalNibContributions: number
-  nibRate?: number
 }
 
 export function NibComplianceCard({
   totalNibContributions,
-  nibRate,
 }: NibComplianceProps) {
+  const EMPLOYEE_NIB_RATE = 4.65 // 4.65%
   const EMPLOYER_NIB_RATE = 6.65 // 6.65%
 
   const formatCurrency = (amount: number) => {
@@ -21,9 +20,7 @@ export function NibComplianceCard({
   }
 
   // Calculate employer contribution based on employee contribution
-  const employerContribution = nibRate
-    ? (totalNibContributions / nibRate) * EMPLOYER_NIB_RATE
-    : 0
+  const employerContribution = (totalNibContributions / EMPLOYEE_NIB_RATE) * EMPLOYER_NIB_RATE
 
   const totalContributions = totalNibContributions + employerContribution
   const isCompliant = totalNibContributions > 0
@@ -40,14 +37,14 @@ export function NibComplianceCard({
           NIB Compliance
         </CardTitle>
         <CardDescription className="sr-only">
-          {nibRate ? `Employee NIB Rate: ${nibRate}%` : "NIB rate not configured"}
+          Employee NIB Rate: {EMPLOYEE_NIB_RATE}%
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Employee Rate</span>
-            <span className="font-medium">{nibRate}%</span>
+            <span className="font-medium">{EMPLOYEE_NIB_RATE}%</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Employee Contributions</span>

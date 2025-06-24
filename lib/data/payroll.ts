@@ -287,7 +287,7 @@ export async function generatePayrollForWorkerAndPeriod(
     });
     console.log(`[PayrollGen] Calculated totals: TotalHours=${totalHours}, OvertimeHours=${totalOvertimeHours}, GrossPay=${grossPay}`);
 
-    const EMPLOYEE_NIB_RATE = 0.0465; // 4.65%
+    const EMPLOYEE_NIB_RATE = 0.0465; // 4.65% - Hardcoded for Bahamas compliance
     const nibDeduction = grossPay * EMPLOYEE_NIB_RATE;
     const otherDeductions = 0;
 
