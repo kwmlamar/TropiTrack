@@ -69,6 +69,59 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
     })
   }, [payrolls, dateRange])
 
+  // Aggregate payroll data by worker
+  const aggregatedPayrolls = useMemo(() => {
+    const workerMap = new Map<string, {
+      worker_id: string
+      worker_name: string
+      position: string
+      hourly_rate: number
+      total_hours: number
+      overtime_hours: number
+      gross_pay: number
+      net_pay: number
+      nib_deduction: number
+      status: string
+      project_name?: string
+      payroll_count: number
+    }>()
+
+    filteredPayrolls.forEach(payroll => {
+      const key = payroll.worker_id || payroll.worker_name
+      
+      if (workerMap.has(key)) {
+        const existing = workerMap.get(key)!
+        existing.total_hours += payroll.total_hours
+        existing.overtime_hours += payroll.overtime_hours
+        existing.gross_pay += payroll.gross_pay
+        existing.net_pay += payroll.net_pay
+        existing.nib_deduction += payroll.nib_deduction
+        existing.payroll_count += 1
+        // Use the most recent status or keep existing if it's "paid"
+        if (payroll.status === "paid" || existing.status !== "paid") {
+          existing.status = payroll.status
+        }
+      } else {
+        workerMap.set(key, {
+          worker_id: payroll.worker_id || "",
+          worker_name: payroll.worker_name,
+          position: payroll.position || "",
+          hourly_rate: payroll.hourly_rate,
+          total_hours: payroll.total_hours,
+          overtime_hours: payroll.overtime_hours,
+          gross_pay: payroll.gross_pay,
+          net_pay: payroll.net_pay,
+          nib_deduction: payroll.nib_deduction,
+          status: payroll.status,
+          project_name: payroll.project_name,
+          payroll_count: 1
+        })
+      }
+    })
+
+    return Array.from(workerMap.values())
+  }, [filteredPayrolls])
+
   const getStatusBadge = (status: PayrollRecord['status']) => {
     const labels = {
       paid: "Paid",
@@ -93,7 +146,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
     setCurrentPage(1); // Reset to first page when changing date range
   };
 
-  const getPaginatedData = (data: PayrollRecord[]) => {
+  const getPaginatedAggregatedData = (data: typeof aggregatedPayrolls) => {
     const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -277,38 +330,38 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                           {
                             period: "Current Week",
                             status: "All",
-                            workers: filteredPayrolls.length,
-                            totalHours: filteredPayrolls.reduce((sum, p) => sum + p.total_hours, 0),
-                            grossPay: filteredPayrolls.reduce((sum, p) => sum + p.gross_pay, 0),
-                            nibDeductions: filteredPayrolls.reduce((sum, p) => sum + p.nib_deduction, 0),
-                            netPay: filteredPayrolls.reduce((sum, p) => sum + p.net_pay, 0),
+                            workers: aggregatedPayrolls.length,
+                            totalHours: aggregatedPayrolls.reduce((sum, p) => sum + p.total_hours, 0),
+                            grossPay: aggregatedPayrolls.reduce((sum, p) => sum + p.gross_pay, 0),
+                            nibDeductions: aggregatedPayrolls.reduce((sum, p) => sum + p.nib_deduction, 0),
+                            netPay: aggregatedPayrolls.reduce((sum, p) => sum + p.net_pay, 0),
                           },
                           {
                             period: "Current Week",
                             status: "Paid",
-                            workers: filteredPayrolls.filter(p => p.status === "paid").length,
-                            totalHours: filteredPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.total_hours, 0),
-                            grossPay: filteredPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.gross_pay, 0),
-                            nibDeductions: filteredPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.nib_deduction, 0),
-                            netPay: filteredPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.net_pay, 0),
+                            workers: aggregatedPayrolls.filter(p => p.status === "paid").length,
+                            totalHours: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.total_hours, 0),
+                            grossPay: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.gross_pay, 0),
+                            nibDeductions: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.nib_deduction, 0),
+                            netPay: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.net_pay, 0),
                           },
                           {
                             period: "Current Week",
                             status: "Confirmed",
-                            workers: filteredPayrolls.filter(p => p.status === "confirmed").length,
-                            totalHours: filteredPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.total_hours, 0),
-                            grossPay: filteredPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.gross_pay, 0),
-                            nibDeductions: filteredPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.nib_deduction, 0),
-                            netPay: filteredPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.net_pay, 0),
+                            workers: aggregatedPayrolls.filter(p => p.status === "confirmed").length,
+                            totalHours: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.total_hours, 0),
+                            grossPay: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.gross_pay, 0),
+                            nibDeductions: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.nib_deduction, 0),
+                            netPay: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.net_pay, 0),
                           },
                           {
                             period: "Current Week",
                             status: "Pending",
-                            workers: filteredPayrolls.filter(p => p.status === "pending").length,
-                            totalHours: filteredPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.total_hours, 0),
-                            grossPay: filteredPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.gross_pay, 0),
-                            nibDeductions: filteredPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.nib_deduction, 0),
-                            netPay: filteredPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.net_pay, 0),
+                            workers: aggregatedPayrolls.filter(p => p.status === "pending").length,
+                            totalHours: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.total_hours, 0),
+                            grossPay: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.gross_pay, 0),
+                            nibDeductions: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.nib_deduction, 0),
+                            netPay: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.net_pay, 0),
                           }
                         ];
 
@@ -380,11 +433,11 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                     </TableHeader>
                     <TableBody>
                       {(() => {
-                        const { paginatedData } = getPaginatedData(filteredPayrolls);
+                        const { paginatedData } = getPaginatedAggregatedData(aggregatedPayrolls);
                         return (
                           <>
                             {paginatedData.map((payroll) => (
-                              <TableRow key={payroll.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
+                              <TableRow key={payroll.worker_id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
                                 <TableCell className="py-4 px-6 font-medium">{payroll.worker_name}</TableCell>
                                 <TableCell className="py-4 px-6 text-sm text-muted-foreground">{payroll.position}</TableCell>
                                 <TableCell className="py-4 px-6">
@@ -412,7 +465,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                   }).format(payroll.net_pay)}
                                 </TableCell>
                                 <TableCell className="py-4 px-6">
-                                  {getStatusBadge(payroll.status)}
+                                  {getStatusBadge(payroll.status as PayrollRecord['status'])}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -425,7 +478,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
               </CardContent>
             </Card>
             {(() => {
-              return <PaginationControls {...getPaginatedData(filteredPayrolls)} />;
+              return <PaginationControls {...getPaginatedAggregatedData(aggregatedPayrolls)} />;
             })()}
           </TabsContent>
 
@@ -455,7 +508,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                     </TableHeader>
                     <TableBody>
                       {(() => {
-                        const { paginatedData } = getPaginatedData(filteredPayrolls);
+                        const { paginatedData } = getPaginatedAggregatedData(aggregatedPayrolls);
                         return (
                           <>
                             {paginatedData.map((payroll) => {
@@ -467,7 +520,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                               const isCompliant = employeeNib > 0;
                               
                               return (
-                                <TableRow key={payroll.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
+                                <TableRow key={payroll.worker_id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
                                   <TableCell className="py-4 px-6 font-medium">{payroll.worker_name}</TableCell>
                                   <TableCell className="py-4 px-6">
                                     {new Intl.NumberFormat("en-BS", {
@@ -505,7 +558,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                     }).format(payroll.net_pay)}
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
-                                    {getStatusBadge(payroll.status)}
+                                    {getStatusBadge(payroll.status as PayrollRecord['status'])}
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
                                     <Badge className={`px-3 py-1 text-xs ${
@@ -528,7 +581,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
               </CardContent>
             </Card>
             {(() => {
-              return <PaginationControls {...getPaginatedData(filteredPayrolls)} />;
+              return <PaginationControls {...getPaginatedAggregatedData(aggregatedPayrolls)} />;
             })()}
           </TabsContent>
 
@@ -558,7 +611,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                     </TableHeader>
                     <TableBody>
                       {(() => {
-                        const { paginatedData } = getPaginatedData(filteredPayrolls);
+                        const { paginatedData } = getPaginatedAggregatedData(aggregatedPayrolls);
                         return (
                           <>
                             {paginatedData.map((payroll) => {
@@ -568,7 +621,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                               const overtimePay = payroll.gross_pay - regularPay;
                               
                               return (
-                                <TableRow key={payroll.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
+                                <TableRow key={payroll.worker_id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
                                   <TableCell className="py-4 px-6 font-medium">{payroll.worker_name}</TableCell>
                                   <TableCell className="py-4 px-6">{regularHours.toFixed(1)}</TableCell>
                                   <TableCell className="py-4 px-6 font-medium">{payroll.overtime_hours.toFixed(1)}</TableCell>
@@ -603,7 +656,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                     }).format(payroll.gross_pay)}
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
-                                    {getStatusBadge(payroll.status)}
+                                    {getStatusBadge(payroll.status as PayrollRecord['status'])}
                                   </TableCell>
                                 </TableRow>
                               );
@@ -617,7 +670,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
               </CardContent>
             </Card>
             {(() => {
-              return <PaginationControls {...getPaginatedData(filteredPayrolls)} />;
+              return <PaginationControls {...getPaginatedAggregatedData(aggregatedPayrolls)} />;
             })()}
           </TabsContent>
 
@@ -647,11 +700,11 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                     </TableHeader>
                     <TableBody>
                       {(() => {
-                        const { paginatedData } = getPaginatedData(filteredPayrolls);
+                        const { paginatedData } = getPaginatedAggregatedData(aggregatedPayrolls);
                         return (
                           <>
                             {paginatedData.map((payroll) => (
-                              <TableRow key={payroll.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
+                              <TableRow key={payroll.worker_id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
                                 <TableCell className="py-4 px-6 font-medium">
                                   {payroll.project_name || "Unassigned"}
                                 </TableCell>
@@ -680,7 +733,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                   }).format(payroll.net_pay)}
                                 </TableCell>
                                 <TableCell className="py-4 px-6">
-                                  {getStatusBadge(payroll.status)}
+                                  {getStatusBadge(payroll.status as PayrollRecord['status'])}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -693,7 +746,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
               </CardContent>
             </Card>
             {(() => {
-              return <PaginationControls {...getPaginatedData(filteredPayrolls)} />;
+              return <PaginationControls {...getPaginatedAggregatedData(aggregatedPayrolls)} />;
             })()}
           </TabsContent>
         </Tabs>
@@ -714,17 +767,39 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                       style: "currency",
                       currency: "BSD",
                       minimumFractionDigits: 0,
-                    }).format(filteredPayrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0))}
+                    }).format(aggregatedPayrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0))}
                   </div>
                   <div className="text-sm font-normal mt-1">
                     <span className="text-muted-foreground">Total gross pay across </span>
-                    <span className="text-primary font-medium">{new Set(filteredPayrolls.map(p => p.worker_name)).size} workers</span>
+                    <span className="text-primary font-medium">{aggregatedPayrolls.length} workers</span>
                   </div>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <PayrollDistributionChart payrolls={filteredPayrolls} />
+              <PayrollDistributionChart payrolls={aggregatedPayrolls.map(p => ({
+                id: p.worker_id,
+                worker_id: p.worker_id,
+                worker_name: p.worker_name,
+                total_hours: p.total_hours,
+                overtime_hours: p.overtime_hours,
+                hourly_rate: p.hourly_rate,
+                gross_pay: p.gross_pay,
+                nib_deduction: p.nib_deduction,
+                other_deductions: 0,
+                total_deductions: p.nib_deduction,
+                net_pay: p.net_pay,
+                position: p.position,
+                department: "",
+                status: p.status as PayrollRecord['status'],
+                company_id: "",
+                project_id: "",
+                project_name: p.project_name,
+                created_at: "",
+                updated_at: "",
+                pay_period_start: "",
+                pay_period_end: ""
+              }))} />
             </CardContent>
           </Card>
         </div>
