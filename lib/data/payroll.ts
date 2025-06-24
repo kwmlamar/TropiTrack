@@ -9,11 +9,27 @@ function mapPayrollRecord(data: any): PayrollRecord {
     ? data.worker[0] as { id: string; name: string; hourly_rate?: number; position?: string; department?: string; }
     : null;
 
+  const projectInfo = Array.isArray(data.projects) && data.projects.length > 0 
+    ? data.projects[0] as { id: string; name: string; }
+    : data.projects && typeof data.projects === 'object' && data.projects.name
+    ? data.projects as { id: string; name: string; }
+    : null;
+
+  // Debug logging
+  console.log("Payroll mapping debug:", {
+    payrollId: data.id,
+    projectId: data.project_id,
+    projectData: data.projects,
+    projectInfo: projectInfo,
+    projectName: projectInfo?.name || data.project_name || ""
+  });
+
   const mapped: PayrollRecord = {
     id: data.id,
     company_id: data.company_id,
     worker_id: data.worker_id,
     project_id: data.project_id,
+    project_name: projectInfo?.name || data.project_name || "",
     pay_period_start: data.pay_period_start,
     pay_period_end: data.pay_period_end,
     total_hours: data.total_hours,
@@ -67,7 +83,8 @@ export async function getPayrolls(
         updated_at, 
         pay_period_start, 
         pay_period_end,
-        worker:worker_id(id, name, hourly_rate, position, department)
+        worker:worker_id(id, name, hourly_rate, position, department),
+        projects!project_id(id, name)
       `)
       .eq("company_id", profile.company_id)
       .order("pay_period_start", { ascending: false });
@@ -107,7 +124,7 @@ export async function getPayroll(id: string): Promise<ApiResponse<PayrollRecord>
   try {
     const { data, error } = await supabase
       .from("payroll")
-      .select("id, worker_id, worker_name, project_id, total_hours, overtime_hours, hourly_rate, gross_pay, nib_deduction, other_deductions, total_deductions, net_pay, position, department, status, company_id, created_at, updated_at, pay_period_start, pay_period_end, worker:worker_id(id, name, hourly_rate, position, department)")
+      .select("id, worker_id, worker_name, project_id, total_hours, overtime_hours, hourly_rate, gross_pay, nib_deduction, other_deductions, total_deductions, net_pay, position, department, status, company_id, created_at, updated_at, pay_period_start, pay_period_end, worker:worker_id(id, name, hourly_rate, position, department), projects!project_id(id, name)")
       .eq("id", id)
       .single();
 

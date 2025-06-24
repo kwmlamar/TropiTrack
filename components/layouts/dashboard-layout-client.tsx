@@ -20,7 +20,7 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 50)",
+          "--sidebar-width": "calc(var(--spacing) * 64)",
           "--header-height": "calc(var(--spacing) * 12)",
         } as React.CSSProperties
       }

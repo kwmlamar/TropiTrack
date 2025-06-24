@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { PayrollHeader } from "@/components/payroll/payroll-header"
-import { PayrollTable } from "@/components/payroll/payroll-table"
 import { PayrollPreviewDialog } from "@/components/payroll/payroll-preview-modal"
+import { PayrollReports } from "@/components/payroll/payroll-reports"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
@@ -21,11 +21,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSepar
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table"
 
 const ITEMS_PER_PAGE = 10;
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
+  const [allPayrolls, setAllPayrolls] = useState<PayrollRecord[]>([]) // Store all payroll data for reports
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
@@ -33,6 +39,10 @@ export default function PayrollPage({ user }: { user: User }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState<string>("all")
+
+  // Current week date range for overview (always stays current)
+  const [currentWeekRange, setCurrentWeekRange] = useState<DateRange | undefined>()
 
   const {
     loading: settingsLoading,
@@ -50,16 +60,27 @@ export default function PayrollPage({ user }: { user: User }) {
       const newWeekStartDay = dayMap[paymentSchedule.period_start_day] || 1
       setWeekStartDay(newWeekStartDay)
       
-      // Always set date range to current week
+      // Set current week range for overview (always current)
+      setCurrentWeekRange({
+        from: startOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
+        to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
+      })
+      
+      // Set navigable date range to current week initially
       setDateRange({
         from: startOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
         to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
       })
     } else if (!settingsLoading) {
       // If no payment schedule, use default Monday start
+      const defaultWeekStart = 1;
+      setCurrentWeekRange({
+        from: startOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
+        to: endOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
+      })
       setDateRange({
-        from: startOfWeek(new Date(), { weekStartsOn: 1 }),
-        to: endOfWeek(new Date(), { weekStartsOn: 1 }),
+        from: startOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
+        to: endOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
       })
     }
   }, [paymentSchedule, settingsLoading])
@@ -77,22 +98,32 @@ export default function PayrollPage({ user }: { user: User }) {
 
   // Filter payrolls based on search term using useMemo
   const filteredPayrolls = useMemo(() => {
-    if (!searchTerm) return payrolls;
+    let filtered = payrolls;
     
-    const searchLower = searchTerm.toLowerCase();
-    return payrolls.filter(payroll => {
-      return (
-        payroll.worker_name?.toLowerCase().includes(searchLower) ||
-        payroll.position?.toLowerCase().includes(searchLower) ||
-        payroll.status?.toLowerCase().includes(searchLower)
-      );
-    });
-  }, [payrolls, searchTerm]);
+    // Apply status filter
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter(payroll => payroll.status === selectedStatus);
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(payroll => {
+        return (
+          payroll.worker_name?.toLowerCase().includes(searchLower) ||
+          payroll.position?.toLowerCase().includes(searchLower) ||
+          payroll.status?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+    
+    return filtered;
+  }, [payrolls, selectedStatus, searchTerm]);
 
   // Reset to first page when search term changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, selectedStatus]);
 
   const loadPayroll = async () => {
     try {
@@ -123,6 +154,24 @@ export default function PayrollPage({ user }: { user: User }) {
           }
         })
         setPayrolls(processedPayrolls)
+        
+        // Also load all payroll data for reports (without date filtering)
+        const allPayrollsResponse = await getAggregatedPayrolls({ target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly" })
+        if (allPayrollsResponse.data) {
+          const processedAllPayrolls = allPayrollsResponse.data.map(payroll => {
+            const overtimePay = payroll.overtime_hours * (payroll.hourly_rate * (payrollSettings?.overtime_rate || 1.5))
+            const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay, overtimePay)
+            
+            return {
+              ...payroll,
+              nib_deduction: nibDeduction,
+              other_deductions: otherDeductions,
+              total_deductions: nibDeduction + otherDeductions,
+              net_pay: payroll.gross_pay - (nibDeduction + otherDeductions),
+            }
+          })
+          setAllPayrolls(processedAllPayrolls)
+        }
       }
     } catch (error) {
       console.error('Failed to load payroll data:', error)
@@ -159,9 +208,12 @@ export default function PayrollPage({ user }: { user: User }) {
     setCurrentPage(page);
   };
 
-  // Calculate summary data from payrolls
-  const totalGrossPay = payrolls.reduce((sum, record) => sum + record.gross_pay, 0)
-  const totalNibDeductions = payrolls.reduce((sum, record) => sum + record.nib_deduction, 0)
+  // Calculate summary data from payrolls for current period
+  const currentPeriodPayrolls = payrolls.filter(payroll => {
+    if (!currentWeekRange?.from || !currentWeekRange?.to) return false;
+    const payrollDate = new Date(payroll.created_at);
+    return payrollDate >= currentWeekRange.from && payrollDate <= currentWeekRange.to;
+  });
 
   const handlePreviewAndConfirm = () => {
     if (selectedPayrollIds.size === 0) {
@@ -217,7 +269,7 @@ export default function PayrollPage({ user }: { user: User }) {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allPayrollIds = new Set(payrolls.map(payroll => payroll.id));
+      const allPayrollIds = new Set(paginatedPayrolls.map(payroll => payroll.id));
       setSelectedPayrollIds(allPayrollIds);
     } else {
       setSelectedPayrollIds(new Set());
@@ -234,6 +286,21 @@ export default function PayrollPage({ user }: { user: User }) {
       }
       return newSelection;
     });
+  };
+
+  const getStatusBadge = (status: PayrollRecord['status']) => {
+    const labels = {
+      paid: "Paid",
+      pending: "Pending",
+      confirmed: "Confirmed",
+      void: "Void",
+    };
+
+    return (
+      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+        {labels[status]}
+      </Badge>
+    );
   };
 
   return (
@@ -277,10 +344,10 @@ export default function PayrollPage({ user }: { user: User }) {
                 Payroll Overview
               </h2>
               <p className="text-muted-foreground">
-                {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Payroll Summary:
-                {dateRange?.from && dateRange?.to
-                  ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
-                  : " Select a date range"}
+                Current Week Summary:
+                {currentWeekRange?.from && currentWeekRange?.to
+                  ? ` ${format(currentWeekRange.from, "MMM d")}-${format(currentWeekRange.to, "MMM d, yyyy")}`
+                  : " Loading..."}
               </p>
             </div>
 
@@ -295,7 +362,7 @@ export default function PayrollPage({ user }: { user: User }) {
                         style: "currency",
                         currency: "BSD",
                         minimumFractionDigits: 2,
-                      }).format(totalGrossPay)}
+                      }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.gross_pay, 0))}
                     </p>
                   </div>
                 </CardContent>
@@ -306,7 +373,7 @@ export default function PayrollPage({ user }: { user: User }) {
                   <div className="space-y-2">
                     <p className="text-base font-medium text-primary">Total Workers</p>
                     <p className="text-3xl font-bold tracking-tight text-primary">
-                      {payrolls.length}
+                      {currentPeriodPayrolls.length}
                     </p>
                   </div>
                 </CardContent>
@@ -321,33 +388,83 @@ export default function PayrollPage({ user }: { user: User }) {
                         style: "currency",
                         currency: "BSD",
                         minimumFractionDigits: 2,
-                      }).format(totalNibDeductions)}
+                      }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.nib_deduction, 0))}
                     </p>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
+            {/* Recent Payments Table */}
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Advanced Analytics</CardTitle>
+                <CardTitle className="text-lg">Recent Payments</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Comprehensive payroll analytics and insights dashboard.
+                  Latest payroll payments processed in the system.
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-center space-y-4">
-                    <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
+                <div className="overflow-x-auto">
+                  <TableComponent className="min-w-full">
+                    <TableHeader>
+                      <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentPeriodPayrolls
+                        .filter(payroll => payroll.status === "paid")
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                        .slice(0, 5)
+                        .map((payroll) => (
+                          <TableRow 
+                            key={payroll.id} 
+                            className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
+                          >
+                            <TableCell className="py-4 px-6">
+                              <div className="font-bold">{payroll.worker_name}</div>
+                            </TableCell>
+                            <TableCell className="py-4 px-6">
+                              <div className="text-sm text-muted-foreground">{payroll.position}</div>
+                            </TableCell>
+                            <TableCell className="py-4 px-6">
+                              {getStatusBadge(payroll.status)}
+                            </TableCell>
+                            <TableCell className="py-4 px-6">
+                              {new Intl.NumberFormat("en-BS", {
+                                style: "currency",
+                                currency: "BSD",
+                                minimumFractionDigits: 2,
+                              }).format(payroll.net_pay)}
+                            </TableCell>
+                            <TableCell className="py-4 px-6">
+                              <div className="text-sm text-muted-foreground">
+                                {format(new Date(payroll.created_at), "MMM d, yyyy")}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </TableComponent>
+                  
+                  {/* Empty State */}
+                  {currentPeriodPayrolls.filter(payroll => payroll.status === "paid").length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 px-6">
+                      <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                        <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-muted-foreground mb-2">No recent payments</h3>
+                      <p className="text-sm text-muted-foreground text-center max-w-sm">
+                        No payroll payments have been processed yet. Payments will appear here once they are marked as paid.
+                      </p>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">Coming Soon</h3>
-                      <p className="text-muted-foreground">Advanced payroll analytics and insights are being developed.</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -410,7 +527,11 @@ export default function PayrollPage({ user }: { user: User }) {
                       <Button variant="outline" className="gap-2">
                         <SlidersHorizontal className="h-4 w-4" />
                         Filters
-
+                        {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
+                          <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                            {(payPeriodType !== "weekly" ? 1 : 0) + (selectedStatus !== "all" ? 1 : 0)}
+                          </Badge>
+                        )}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-80 p-4">
@@ -436,14 +557,33 @@ export default function PayrollPage({ user }: { user: User }) {
 
                       <Separator />
 
+                      {/* Status Filter */}
+                      <div className="space-y-3 py-2">
+                        <Label className="text-sm font-medium">Status</Label>
+                        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Separator />
+
                       {/* Clear Filters */}
-                      {payPeriodType !== "weekly" && (
+                      {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
                         <div className="pt-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => {
                               setPayPeriodType("weekly");
+                              setSelectedStatus("all");
                             }}
                             className="w-full justify-start text-muted-foreground hover:text-foreground"
                           >
@@ -467,7 +607,7 @@ export default function PayrollPage({ user }: { user: User }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
-                    Preview & Confirm
+                    Review Payroll
                   </Button>
 
                   {/* Mark as Paid Button */}
@@ -479,19 +619,94 @@ export default function PayrollPage({ user }: { user: User }) {
                     className="bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground shadow-lg transition-colors"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Mark as Paid
+                    Run Payroll
                   </Button>
                 </div>
 
                 <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                   <CardContent className="px-6">
-                    <PayrollTable
-                      data={paginatedPayrolls}
-                      selectedPayrollIds={selectedPayrollIds}
-                      setSelectedPayrollIds={setSelectedPayrollIds}
-                      onSelectAll={handleSelectAll}
-                      onSelectPayroll={handleSelectPayroll}
-                    />
+                    <div className="overflow-x-auto">
+                      <TableComponent className="min-w-full">
+                        <TableHeader>
+                          <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left w-[100px]">
+                              <Checkbox
+                                checked={selectedPayrollIds.size === paginatedPayrolls.length && paginatedPayrolls.length > 0}
+                                onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                                aria-label="Select all"
+                              />
+                            </TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">NIB Deduction</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedPayrolls.map((payroll) => (
+                            <TableRow 
+                              key={payroll.id} 
+                              className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
+                            >
+                              <TableCell className="py-4 px-6 w-[100px]">
+                                <Checkbox
+                                  checked={selectedPayrollIds.has(payroll.id)}
+                                  onCheckedChange={(checked) => handleSelectPayroll(payroll.id, checked === true)}
+                                  aria-label="Select payroll"
+                                />
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                <div className="font-bold">{payroll.worker_name}</div>
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                <div className="text-sm text-muted-foreground">{payroll.position}</div>
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                {getStatusBadge(payroll.status)}
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(payroll.gross_pay)}
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(payroll.nib_deduction)}
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(payroll.net_pay)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </TableComponent>
+                      
+                      {/* Empty State */}
+                      {paginatedPayrolls.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 px-6">
+                          <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                            <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold text-muted-foreground mb-2">No payroll records found</h3>
+                          <p className="text-sm text-muted-foreground text-center max-w-sm">
+                            No payroll records match your current filters. Try adjusting your search or date range.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -547,22 +762,7 @@ export default function PayrollPage({ user }: { user: User }) {
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6">
-            {/* Coming Soon Message */}
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="h-10 w-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight mb-2">Payroll Reports</h2>
-              <p className="text-muted-foreground text-center max-w-md mb-6">
-                Advanced payroll reporting and analytics are coming soon. You&apos;ll be able to generate detailed reports, export data, and analyze payroll trends.
-              </p>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                <span>In development</span>
-              </div>
-            </div>
+            <PayrollReports payrolls={allPayrolls} />
           </TabsContent>
         </Tabs>
       </div>

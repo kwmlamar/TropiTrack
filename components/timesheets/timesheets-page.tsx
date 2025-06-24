@@ -754,7 +754,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 p-4">
+                <DropdownMenuContent align="start" side="bottom" className="w-80 p-4">
                   <DropdownMenuLabel className="text-base font-semibold">
                     Filter Timesheets
                   </DropdownMenuLabel>
@@ -763,12 +763,30 @@ export default function TimesheetsPage({ user }: { user: User }) {
                   {/* View Mode Filter */}
                   <div className="space-y-3 py-2">
                     <Label className="text-sm font-medium">View Mode</Label>
-                    <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "daily" | "weekly")}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="daily">Daily</TabsTrigger>
-                        <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setViewMode("daily")}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                          viewMode === "daily"
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-background text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
+                        }`}
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                        Daily
+                      </button>
+                      <button
+                        onClick={() => setViewMode("weekly")}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                          viewMode === "weekly"
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-background text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
+                        }`}
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                        Weekly
+                      </button>
+                    </div>
                   </div>
 
                   <Separator />
@@ -1133,7 +1151,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
                 </div>
                 
                 {/* Empty State */}
-                {paginatedWorkerEntries.length === 0 && (
+                {((viewMode === "weekly" && paginatedWorkerEntries.length === 0) || 
+                  (viewMode === "daily" && paginatedTimesheets.length === 0)) && (
                   <div className="flex flex-col items-center justify-center py-12 px-6">
                     <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
                       <CalendarDays className="h-8 w-8 text-muted-foreground" />

@@ -41,5 +41,6 @@ export type ProjectAssignmentWithDetails = ProjectAssignment & {
     id: string
     name: string
     position: string
+    hourly_rate?: number
   }
 }

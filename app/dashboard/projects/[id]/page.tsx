@@ -122,7 +122,7 @@ export default async function ProjectPage({
       id: assignment.worker_id,
       name: worker?.name || "Unknown Worker",
       position: assignment.role_on_project || worker?.position || "Worker",
-      hourlyRate: assignment.hourly_rate || 0,
+      hourlyRate: worker?.hourly_rate || 0,
       totalHours: totals.hours,
       totalPay: totals.pay,
     };

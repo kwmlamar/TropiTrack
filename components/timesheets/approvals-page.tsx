@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { format, startOfWeek, endOfWeek, parseISO } from "date-fns"
-import { Check, X, Calendar, Users } from "lucide-react"
+import { Check, X, Calendar, Users, ChevronLeft, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -33,16 +33,26 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
   const [isProcessing, setIsProcessing] = useState(false)
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("daily")
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>(initialTimesheets)
+  const [currentPage, setCurrentPage] = useState(1)
   const { paymentSchedule } = usePayrollSettings()
+
+  const ITEMS_PER_PAGE = 20
 
   // Update timesheets when initialTimesheets changes
   useEffect(() => {
     setTimesheets(initialTimesheets)
+    setCurrentPage(1) // Reset to first page when timesheets change
   }, [initialTimesheets])
 
   const pendingTimesheets = timesheets.filter(
     (ts) => ts.supervisor_approval === "pending"
   )
+
+  // Pagination logic for daily view
+  const totalPages = Math.ceil(pendingTimesheets.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedTimesheets = pendingTimesheets.slice(startIndex, endIndex)
 
   // Get week start day from payroll settings
   const weekStartDay = paymentSchedule?.period_start_type === "day_of_week" 
@@ -171,7 +181,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
     if (checked) {
       const timesheetsToSelect = workerId
         ? pendingTimesheets.filter(ts => ts.worker_id === workerId)
-        : pendingTimesheets
+        : (viewMode === "daily" ? paginatedTimesheets : pendingTimesheets)
       const newSelection = new Set(selectedTimesheetIds)
       timesheetsToSelect.forEach(ts => newSelection.add(ts.id))
       setSelectedTimesheetIds(newSelection)
@@ -184,8 +194,11 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
           .forEach(ts => newSelection.delete(ts.id))
         setSelectedTimesheetIds(newSelection)
       } else {
-        // Deselect all timesheets
-        setSelectedTimesheetIds(new Set())
+        // Deselect all timesheets (current page for daily view, all for weekly view)
+        const timesheetsToDeselect = viewMode === "daily" ? paginatedTimesheets : pendingTimesheets
+        const newSelection = new Set(selectedTimesheetIds)
+        timesheetsToDeselect.forEach(ts => newSelection.delete(ts.id))
+        setSelectedTimesheetIds(newSelection)
       }
     }
   }
@@ -380,94 +393,138 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
               })}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="w-12 py-4 px-6">
-                    <Checkbox
-                      checked={selectedTimesheetIds.size === pendingTimesheets.length}
-                      onCheckedChange={handleSelectAll}
-                      aria-label="Select all timesheets"
-                    />
-                  </TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Worker</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Date</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Project</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Hours</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Status</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingTimesheets.map((timesheet) => (
-                  <TableRow key={timesheet.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
-                    <TableCell className="py-4 px-6">
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                    <TableHead className="w-12 py-4 px-6">
                       <Checkbox
-                        checked={selectedTimesheetIds.has(timesheet.id)}
-                        onCheckedChange={(checked) => 
-                          handleSelectTimesheet(timesheet.id, checked as boolean)
-                        }
-                        aria-label="Select timesheet"
+                        checked={paginatedTimesheets.length > 0 && paginatedTimesheets.every(ts => selectedTimesheetIds.has(ts.id))}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all timesheets"
                       />
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <div className="font-medium text-sm">{timesheet.worker?.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {timesheet.worker?.position}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        {format(new Date(timesheet.date), "MMM d, yyyy")}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <div className="font-medium text-sm">{timesheet.project?.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {timesheet.project?.location}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <div className="font-medium text-sm">{timesheet.total_hours}h</div>
-                      {timesheet.overtime_hours > 0 && (
-                        <div className="text-xs text-orange-600 font-medium">
-                          +{timesheet.overtime_hours}h OT
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
-                        Pending
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-4 px-6 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleReject(timesheet.id)}
-                          disabled={isProcessing}
-                          className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                          Reject
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(timesheet.id)}
-                          disabled={isProcessing}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
-                        >
-                          <Check className="h-4 w-4 mr-2" />
-                          Approve
-                        </Button>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Worker</TableHead>
+                    <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Date</TableHead>
+                    <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Project</TableHead>
+                    <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Hours</TableHead>
+                    <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground">Status</TableHead>
+                    <TableHead className="py-4 px-6 font-semibold text-sm text-muted-foreground text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedTimesheets.map((timesheet) => (
+                    <TableRow key={timesheet.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                      <TableCell className="py-4 px-6">
+                        <Checkbox
+                          checked={selectedTimesheetIds.has(timesheet.id)}
+                          onCheckedChange={(checked) => 
+                            handleSelectTimesheet(timesheet.id, checked as boolean)
+                          }
+                          aria-label="Select timesheet"
+                        />
+                      </TableCell>
+                      <TableCell className="py-4 px-6">
+                        <div className="font-medium text-sm">{timesheet.worker?.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {timesheet.worker?.position}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          {format(new Date(timesheet.date), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4 px-6">
+                        <div className="font-medium text-sm">{timesheet.project?.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {timesheet.project?.location}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4 px-6">
+                        <div className="font-medium text-sm">{timesheet.total_hours}h</div>
+                        {timesheet.overtime_hours > 0 && (
+                          <div className="text-xs text-orange-600 font-medium">
+                            +{timesheet.overtime_hours}h OT
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-4 px-6">
+                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
+                          Pending
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-4 px-6 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleReject(timesheet.id)}
+                            disabled={isProcessing}
+                            className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Reject
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(timesheet.id)}
+                            disabled={isProcessing}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200 font-medium"
+                          >
+                            <Check className="h-4 w-4 mr-2" />
+                            Approve
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1} to {Math.min(endIndex, pendingTimesheets.length)} of {pendingTimesheets.length} timesheets
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
