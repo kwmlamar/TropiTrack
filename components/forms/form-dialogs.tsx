@@ -14,18 +14,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 
 import { TimesheetForm } from "./timesheet-form";
 import { BulkTimesheetForm } from "./bulk-timesheet-form";
-import { WorkerForm } from "./worker-form";
 import { ProjectForm } from "./project-form";
 import { ClientForm } from "./client-form";
 import type { Worker } from "@/lib/types/worker";
@@ -182,78 +173,6 @@ export function BulkTimesheetDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-// Worker Sheet
-interface WorkerSheetProps {
-  worker?: Worker;
-  userId: string;
-  onSuccess?: (worker: Worker) => void;
-  trigger?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
-
-export function WorkerSheet({
-  worker,
-  userId,
-  onSuccess,
-  trigger,
-  open: controlledOpen,
-  onOpenChange: controlledOnOpenChange,
-}: WorkerSheetProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const open = controlledOpen ?? internalOpen;
-  const onOpenChange = controlledOnOpenChange ?? setInternalOpen;
-
-  const handleSuccess = async (data: Worker) => {
-    setIsLoading(true);
-    try {
-      await onSuccess?.(data);
-      onOpenChange(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    onOpenChange(false);
-  };
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      {trigger && <SheetTrigger asChild>{trigger}</SheetTrigger>}
-
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-2xl overflow-y-auto px-4 sm:px-6 border-border/50 bg-card/50 backdrop-blur-sm"
-      >
-        <SheetHeader className="sr-only">
-          <SheetTitle className="text-xl font-semibold">
-            {worker ? "Edit Worker" : "New Worker"}
-          </SheetTitle>
-          <SheetDescription className="text-muted-foreground">
-            {worker ? "Update the worker details and assigned projects." : "Create a new worker and assign them to projects."}
-          </SheetDescription>
-        </SheetHeader>
-        <div className="pt-8 relative">
-          {isLoading && (
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          )}
-          <WorkerForm
-            worker={worker}
-            userId={userId}
-            onSuccess={handleSuccess}
-            onCancel={handleCancel}
-          />
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
 

@@ -456,7 +456,8 @@ export async function getTransactionStatusBreakdown(
     let query = supabase
       .from("transactions")
       .select("type, amount, status")
-      .eq("company_id", profile.company_id);
+      .eq("company_id", profile.company_id)
+      .eq("type", "income"); // Only include income transactions for invoices chart
 
     // Apply date filters if provided
     if (filters.date_from) {

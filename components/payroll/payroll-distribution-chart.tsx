@@ -6,6 +6,7 @@ import type { PayrollRecord } from "@/lib/types"
 
 interface PayrollDistributionChartProps {
   payrolls: PayrollRecord[]
+  maxWorkers?: number // Optional limit for number of workers to display
 }
 
 // Color palette that complements the app
@@ -20,7 +21,7 @@ const colors = {
   blue: '#3b82f6', // Blue
 }
 
-export function PayrollDistributionChart({ payrolls }: PayrollDistributionChartProps) {
+export function PayrollDistributionChart({ payrolls, maxWorkers }: PayrollDistributionChartProps) {
   const chartData = useMemo(() => {
     // Group payrolls by worker and calculate total gross pay
     const workerTotals = payrolls.reduce((acc, payroll) => {
@@ -40,16 +41,22 @@ export function PayrollDistributionChart({ payrolls }: PayrollDistributionChartP
     }, {} as Record<string, { name: string; grossPay: number; netPay: number; totalHours: number }>)
 
     // Convert to array and sort by gross pay (descending)
-    return Object.values(workerTotals)
+    let sortedData = Object.values(workerTotals)
       .sort((a, b) => b.grossPay - a.grossPay)
-      .slice(0, 10) // Show top 10 workers
       .map((worker) => ({
         name: worker.name,
         grossPay: Math.round(worker.grossPay * 100) / 100,
         netPay: Math.round(worker.netPay * 100) / 100,
         totalHours: Math.round(worker.totalHours * 10) / 10,
       }))
-  }, [payrolls])
+
+    // Apply maxWorkers limit if specified
+    if (maxWorkers && maxWorkers > 0) {
+      sortedData = sortedData.slice(0, maxWorkers)
+    }
+
+    return sortedData
+  }, [payrolls, maxWorkers])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-BS', {

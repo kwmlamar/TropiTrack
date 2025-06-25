@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { WorkerSheet } from "@/components/forms/form-dialogs";
+import { EditWorkerDialog } from "@/components/forms/worker-form";
 import { useRouter } from "next/navigation";
 import { AddWorkerDialog } from "./add-worker-dialog";
 
@@ -46,6 +46,8 @@ export default function WorkersTable({ user }: { user: User }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [addWorkerDialogOpen, setAddWorkerDialogOpen] = useState(false);
+  const [editWorkerDialogOpen, setEditWorkerDialogOpen] = useState(false);
+  const [selectedWorkerForEdit, setSelectedWorkerForEdit] = useState<Worker | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -238,18 +240,15 @@ export default function WorkersTable({ user }: { user: User }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <WorkerSheet
-                          userId={user.id}
-                          worker={worker}
-                          onSuccess={loadWorkers}
-                          trigger={
-                            <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              Edit Worker
-                            </DropdownMenuItem>
-                          }
-                        />
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setSelectedWorkerForEdit(worker);
+                            setEditWorkerDialogOpen(true);
+                          }}
+                        >
+                          Edit Worker
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedWorker(worker);
@@ -350,6 +349,23 @@ export default function WorkersTable({ user }: { user: User }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Worker Dialog */}
+      {selectedWorkerForEdit && (
+        <EditWorkerDialog
+          open={editWorkerDialogOpen}
+          onOpenChange={setEditWorkerDialogOpen}
+          userId={user.id}
+          worker={selectedWorkerForEdit}
+          onSuccess={() => {
+            loadWorkers();
+            setSelectedWorkerForEdit(null);
+          }}
+          onCancel={() => {
+            setSelectedWorkerForEdit(null);
+          }}
+        />
+      )}
     </div>
   );
 }

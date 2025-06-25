@@ -17,8 +17,10 @@ export async function getWorkers(
       .select(`
         *,
         current_projects:project_assignments(
+          id,
           project:projects(id, name),
-          role_on_project
+          role_on_project,
+          is_active
         ),
         _count:timesheets(count)
       `)
@@ -60,6 +62,38 @@ export async function getWorkers(
       return { data: null, error: error.message, success: false }
     }
 
+    // Deduplicate projects for each worker
+    if (data) {
+      data.forEach((worker: WorkerWithDetails) => {
+        if (worker.current_projects) {
+          const projectMap = new Map()
+          
+          // Show all assignments for debugging
+          worker.current_projects.forEach((assignment: { project: { id: string; name: string } | null; is_active?: boolean; id?: string }) => {
+            console.log("Worker assignment:", assignment)
+            if (assignment.project) {
+              const projectId = assignment.project.id
+              console.log("Processing worker project ID:", projectId, "is_active:", assignment.is_active)
+              
+              // Only include active assignments
+              if (assignment.is_active !== false) {
+                if (!projectMap.has(projectId)) {
+                  projectMap.set(projectId, assignment)
+                  console.log("Added worker project to map:", projectId)
+                } else {
+                  console.log("Duplicate worker project found, skipping:", projectId)
+                }
+              } else {
+                console.log("Skipping inactive worker assignment for project:", projectId)
+              }
+            }
+          })
+          
+          worker.current_projects = Array.from(projectMap.values())
+        }
+      })
+    }
+
     return { data: data as WorkerWithDetails[], error: null, success: true }
   } catch (error) {
     console.error("Unexpected error fetching workers:", error)
@@ -81,8 +115,10 @@ export async function getWorker(companyId: string, id: string): Promise<ApiRespo
       .select(`
         *,
         current_projects:project_assignments(
+          id,
           project:projects(id, name),
-          role_on_project
+          role_on_project,
+          is_active
         ),
         _count:timesheets(count)
       `)
@@ -93,6 +129,40 @@ export async function getWorker(companyId: string, id: string): Promise<ApiRespo
     if (error) {
       console.error("Error fetching worker:", error)
       return { data: null, error: error.message, success: false }
+    }
+
+    // Debug logging
+    console.log("Raw worker data:", data)
+    console.log("Current projects before filtering:", data.current_projects)
+
+    // For now, just deduplicate without filtering to see what we have
+    if (data.current_projects) {
+      const projectMap = new Map()
+      
+      // Show all assignments for debugging
+      data.current_projects.forEach((assignment: { project: { id: string; name: string } | null; is_active?: boolean; id?: string }) => {
+        console.log("Assignment:", assignment)
+        if (assignment.project) {
+          const projectId = assignment.project.id
+          console.log("Processing project ID:", projectId, "is_active:", assignment.is_active)
+          
+          // Only include active assignments
+          if (assignment.is_active !== false) {
+            if (!projectMap.has(projectId)) {
+              projectMap.set(projectId, assignment)
+              console.log("Added project to map:", projectId)
+            } else {
+              console.log("Duplicate project found, skipping:", projectId)
+            }
+          } else {
+            console.log("Skipping inactive assignment for project:", projectId)
+          }
+        }
+      })
+      
+      data.current_projects = Array.from(projectMap.values())
+      console.log("Current projects after filtering:", data.current_projects)
+      console.log("Final project count:", data.current_projects.length)
     }
 
     return { data: data as WorkerWithDetails, error: null, success: true }

@@ -32,7 +32,8 @@ import {
   fetchClientsForCompany,
   fetchWorkersForCompany,
 } from "@/lib/data/data";
-import { ProjectDialog, WorkerSheet } from "./forms/form-dialogs";
+import { ProjectDialog } from "./forms/form-dialogs";
+import { AddWorkerDialog } from "./workers/add-worker-dialog";
 
 const data = {
   user: {
@@ -190,7 +191,7 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
       </SidebarFooter>
 
       {/* Dialogs */}
-      <WorkerSheet 
+      <AddWorkerDialog 
         open={workerSheet} 
         onOpenChange={setWorkerSheet}
         userId={profile.id}
