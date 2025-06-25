@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -72,7 +72,12 @@ export function PaymentScheduleForm() {
     })
   }, [payDay, payDayType, periodStartDay, periodStartType, payPeriodType])
 
-  const loadUserProfile = useCallback(async () => {
+  useEffect(() => {
+    loadUserProfile()
+    loadPaymentSchedule()
+  }, [])
+
+  const loadUserProfile = async () => {
     try {
       const profile = await getUserProfileWithCompany()
       if (profile?.company_id) {
@@ -84,9 +89,9 @@ export function PaymentScheduleForm() {
       console.error("Error loading user profile:", error)
       toast.error("Failed to load user profile")
     }
-  }, [])
+  }
 
-  const loadPaymentSchedule = useCallback(async () => {
+  const loadPaymentSchedule = async () => {
     try {
       const result = await getPaymentSchedule()
       if (result.success && result.data) {
@@ -106,12 +111,7 @@ export function PaymentScheduleForm() {
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  useEffect(() => {
-    loadUserProfile()
-    loadPaymentSchedule()
-  }, [loadUserProfile, loadPaymentSchedule])
+  }
 
   const onSubmit = async (data: PaymentScheduleFormData) => {
     if (!companyId) {

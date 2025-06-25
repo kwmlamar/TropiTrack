@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -33,7 +33,12 @@ export function PayrollSettingsForm() {
     },
   })
 
-  const loadUserProfile = useCallback(async () => {
+  useEffect(() => {
+    loadUserProfile()
+    loadPayrollSettings()
+  }, [])
+
+  const loadUserProfile = async () => {
     try {
       const profile = await getUserProfileWithCompany()
       if (profile?.company_id) {
@@ -45,9 +50,9 @@ export function PayrollSettingsForm() {
       console.error("Error loading user profile:", error)
       toast.error("Failed to load user profile")
     }
-  }, [])
+  }
 
-  const loadPayrollSettings = useCallback(async () => {
+  const loadPayrollSettings = async () => {
     try {
       const result = await getPayrollSettings()
       if (result.success && result.data) {
@@ -61,12 +66,7 @@ export function PayrollSettingsForm() {
     } finally {
       setLoading(false)
     }
-  }, [form])
-
-  useEffect(() => {
-    loadUserProfile()
-    loadPayrollSettings()
-  }, [loadUserProfile, loadPayrollSettings])
+  }
 
   const onSubmit = async (data: PayrollSettingsFormData) => {
     if (!companyId) {

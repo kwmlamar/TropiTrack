@@ -18,7 +18,7 @@ async function getUserProfileWithCompany(): Promise<UserProfileWithCompany | nul
     // Get the user profile from the profiles table
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, companies(id, name)')
       .eq('id', authUser.id)
       .single()
 
@@ -27,32 +27,9 @@ async function getUserProfileWithCompany(): Promise<UserProfileWithCompany | nul
       return null
     }
 
-    // If profile doesn't have company_id, return it without company info
-    if (!profile.company_id) {
-      return {
-        ...profile,
-        company: null,
-      };
-    }
-
-    // If profile has company_id, get the company info
-    const { data: companyData, error: companyError } = await supabase
-      .from('companies')
-      .select('id, name')
-      .eq('id', profile.company_id)
-      .single()
-
-    if (companyError) {
-      console.error('Error fetching company:', companyError)
-      return {
-        ...profile,
-        company: null,
-      };
-    }
-
     return {
       ...profile,
-      company: companyData,
+      company: profile.companies
     }
   } catch (error) {
     console.error('Error in getUserProfileWithCompany:', error)

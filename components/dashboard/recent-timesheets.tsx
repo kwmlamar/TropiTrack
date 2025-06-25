@@ -26,7 +26,7 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
   const [searchTerm, setSearchTerm] = useState("")
   const [error, setError] = useState<string | null>(null)
 
-  const getDateRange = useCallback(() => {
+  const getDateRange = () => {
     switch (viewMode) {
       case "daily":
         return {
@@ -44,7 +44,7 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
           end: endOfMonth(selectedDate)
         }
     }
-  }, [viewMode, selectedDate])
+  }
 
   const loadRecentTimesheets = useCallback(async () => {
     try {
@@ -72,7 +72,7 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
       console.error('Failed to load recent timesheets:', error)
       setError("Failed to load timesheets")
     }
-  }, [getDateRange])
+  }, [viewMode, selectedDate])
 
   useEffect(() => {
     if (!isLoading) {

@@ -29,43 +29,20 @@ export async function getUserProfile() {
 
 export async function getUserProfileWithCompany() {
   const supabase = await createClient();
-  const userId = await getAuthUserId();
+    const userId = await getAuthUserId();
 
-  // First, get the basic profile
-  const { data: profile, error } = await supabase
+
+  const { data, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, companies(id, name)")
     .eq("id", userId)
     .single();
 
   if (error) throw new Error(error.message);
 
-  // If profile doesn't have company_id, return it without company info
-  if (!profile.company_id) {
-    return {
-      ...profile,
-      company: null,
-    };
-  }
-
-  // If profile has company_id, get the company info
-  const { data: companyData, error: companyError } = await supabase
-    .from("companies")
-    .select("id, name")
-    .eq("id", profile.company_id)
-    .single();
-
-  if (companyError) {
-    console.error("Error fetching company:", companyError);
-    return {
-      ...profile,
-      company: null,
-    };
-  }
-
   return {
-    ...profile,
-    company: companyData,
+    ...data,
+    company: data.companies, // normalize naming
   };
 }
 

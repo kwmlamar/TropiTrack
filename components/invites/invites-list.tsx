@@ -38,7 +38,7 @@ export function InvitesList({userId}: InvitesListProps) {
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [])
 
   useEffect(() => {
     loadInvites()
