@@ -2,7 +2,7 @@
 
 import { Clock, DollarSign, HardHat } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { getTimesheetSummary } from "@/lib/data/timesheets"
 import { getWorkers } from "@/lib/data/workers"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
@@ -25,11 +25,7 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
   })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadStats()
-  }, [viewMode, selectedDate])
-
-  const getDateRange = () => {
+  const getDateRange = useCallback(() => {
     switch (viewMode) {
       case "daily":
         return {
@@ -47,9 +43,9 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
           end: endOfMonth(selectedDate)
         }
     }
-  }
+  }, [viewMode, selectedDate])
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true)
       const profile = await getUserProfileWithCompany()
@@ -120,7 +116,11 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
     } finally {
       setLoading(false)
     }
-  }
+  }, [getDateRange, viewMode])
+
+  useEffect(() => {
+    loadStats()
+  }, [loadStats])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-BS", {

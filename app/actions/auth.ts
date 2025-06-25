@@ -8,7 +8,7 @@ type LoginResult =
   | { error: string; field?: string } // <-- allow field optionally with error
 
 type SignupResult =
-  | { success: true; redirectTo: string }
+  | { success: true; redirectTo?: string }
   | { error: string; field?: string }
 
 export async function login(formData: FormData): Promise<LoginResult> {
@@ -109,5 +109,42 @@ export async function signup(formData: FormData): Promise<SignupResult> {
 
   // Return success with redirect path
   return { success: true, redirectTo: "/verify-email" };
+}
+
+// Google OAuth functions
+export async function signInWithGoogle(): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error("Google OAuth error:", error);
+    return { error: error.message };
+  }
+
+  return { url: data.url };
+}
+
+export async function signUpWithGoogle(): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error("Google OAuth error:", error);
+    return { error: error.message };
+  }
+
+  return { url: data.url };
 }
 

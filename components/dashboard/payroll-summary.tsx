@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, DollarSign } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -27,7 +27,7 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
   } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const getDateRange = () => {
+  const getDateRange = useCallback(() => {
     switch (viewMode) {
       case "daily":
         return {
@@ -45,7 +45,7 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
           end: endOfMonth(selectedDate)
         }
     }
-  }
+  }, [viewMode, selectedDate])
 
   useEffect(() => {
     const fetchPayrollData = async () => {
@@ -90,7 +90,7 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
     }
 
     fetchPayrollData()
-  }, [viewMode, selectedDate])
+  }, [getDateRange, viewMode])
 
   if (loading) {
     return (

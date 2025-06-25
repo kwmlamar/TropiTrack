@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,15 +19,29 @@ export function CompanySetupDialog() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Check if user needs company setup on mount (only once per session)
   useEffect(() => {
-    const hasShownThisSession = sessionStorage.getItem('company-setup-shown');
+    // Check if we should force the dialog to show (for new OAuth users)
+    const forceSetup = searchParams.get('setup') === 'company';
     
-    if (!hasShownThisSession) {
-      checkCompanySetup();
+    if (forceSetup) {
+      // Clear the session storage to ensure the dialog shows
+      sessionStorage.removeItem('company-setup-shown');
+      setIsOpen(true);
+      // Clean up the URL parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('setup');
+      window.history.replaceState({}, '', newUrl.toString());
+    } else {
+      const hasShownThisSession = sessionStorage.getItem('company-setup-shown');
+      
+      if (!hasShownThisSession) {
+        checkCompanySetup();
+      }
     }
-  }, []);
+  }, [searchParams]);
 
   const checkCompanySetup = async () => {
     try {
@@ -72,7 +86,9 @@ export function CompanySetupDialog() {
       });
       
       setIsOpen(false);
-      // Optionally refresh the page or update the UI
+      // Clear the session storage so the dialog won't show again
+      sessionStorage.setItem('company-setup-shown', 'true');
+      // Refresh the page to update all components
       router.refresh();
     } catch {
       toast.error("Something went wrong", {
@@ -85,12 +101,14 @@ export function CompanySetupDialog() {
 
   const handleSkip = () => {
     setIsOpen(false);
-    // Dialog is already marked as shown in sessionStorage, so it won't show again this session
+    // Mark that we've shown the dialog this session
+    sessionStorage.setItem('company-setup-shown', 'true');
   };
 
   const handleClose = () => {
     setIsOpen(false);
-    // Dialog is already marked as shown in sessionStorage, so it won't show again this session
+    // Mark that we've shown the dialog this session
+    sessionStorage.setItem('company-setup-shown', 'true');
   };
 
   return (

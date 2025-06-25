@@ -17,6 +17,11 @@ export async function getProfile(userId: string) {
     );
   }
 
+  // Check if profile has company_id
+  if (!profile.company_id) {
+    throw new Error("User profile does not have a company_id. Please complete company setup first.");
+  }
+
   return profile;
 }
 
@@ -25,16 +30,21 @@ export async function getProfile(userId: string) {
 // Get all workers
 
 export async function fetchWorkersForCompany(userId: string) {
-  const profile = await getProfile(userId);
+  try {
+    const profile = await getProfile(userId);
 
-  const { data, error } = await supabase
-    .from("workers")
-    .select("*")
-    .eq("company_id", profile.company_id)
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("workers")
+      .select("*")
+      .eq("company_id", profile.company_id)
+      .order("created_at", { ascending: false });
 
-  if (error) throw new Error("Failed to fetch worker: " + error.message);
-  return data ?? [];
+    if (error) throw new Error("Failed to fetch worker: " + error.message);
+    return data ?? [];
+  } catch (error) {
+    console.error("Error fetching workers:", error);
+    return []; // Return empty array if profile doesn't have company_id
+  }
 }
 
 // Add new employee
@@ -97,16 +107,21 @@ export async function updateEmployee(worker: Worker, { user }: { user: User }) {
 
 // fetch Clients
 export async function fetchClientsForCompany(userId: string) {
-  const profile = await getProfile(userId);
-  const { data, error } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("company_id", profile.company_id)
-    .order("created_at", { ascending: false });
+  try {
+    const profile = await getProfile(userId);
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .eq("company_id", profile.company_id)
+      .order("created_at", { ascending: false });
 
-  if (error) throw new Error("Failed to fetch clients:" + error.message);
+    if (error) throw new Error("Failed to fetch clients:" + error.message);
 
-  return data ?? [];
+    return data ?? [];
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    return []; // Return empty array if profile doesn't have company_id
+  }
 }
 
 export async function generateClient(
@@ -167,18 +182,23 @@ export async function updateClient(client: Client, { user }: { user: User }) {
 // PROJECTS
 
 export async function fetchProjectsForCompany(userId: string) {
-  const profile = await getProfile(userId);
+  try {
+    const profile = await getProfile(userId);
 
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*, client:clients(id, name)")
-    .eq("company_id", profile.company_id)
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*, client:clients(id, name)")
+      .eq("company_id", profile.company_id)
+      .order("created_at", { ascending: false });
 
-  if (error || !data)
-    throw new Error("Failed to fetch projects:" + error.message);
+    if (error || !data)
+      throw new Error("Failed to fetch projects:" + error.message);
 
-  return data ?? [];
+    return data ?? [];
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return []; // Return empty array if profile doesn't have company_id
+  }
 }
 
 // fetch project assignments

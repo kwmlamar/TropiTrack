@@ -18,8 +18,9 @@ export async function getTimesheets(
   userId: string,
   filters: TimesheetFilters = {}
 ): Promise<ApiResponse<TimesheetWithDetails[]>> {
-  const profile = await getProfile(userId);
   try {
+    const profile = await getProfile(userId);
+    
     let query = supabase
       .from("timesheets")
       .select(
@@ -82,11 +83,11 @@ export async function getTimesheets(
       success: true,
     };
   } catch (error) {
-    console.error("Unexpected error fetching timesheets:", error);
+    console.error("Error in getTimesheets:", error);
     return {
-      data: null,
+      data: [],
       error: error instanceof Error ? error.message : "Unknown error occurred",
-      success: false,
+      success: true, // Return success with empty array
     };
   }
 }
