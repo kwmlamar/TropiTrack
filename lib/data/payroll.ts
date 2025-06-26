@@ -9,20 +9,9 @@ function mapPayrollRecord(data: any): PayrollRecord {
     ? data.worker[0] as { id: string; name: string; hourly_rate?: number; position?: string; department?: string; }
     : null;
 
-  const projectInfo = Array.isArray(data.projects) && data.projects.length > 0 
-    ? data.projects[0] as { id: string; name: string; }
-    : data.projects && typeof data.projects === 'object' && data.projects.name
+  const projectInfo = data.projects
     ? data.projects as { id: string; name: string; }
     : null;
-
-  // Debug logging
-  console.log("Payroll mapping debug:", {
-    payrollId: data.id,
-    projectId: data.project_id,
-    projectData: data.projects,
-    projectInfo: projectInfo,
-    projectName: projectInfo?.name || data.project_name || ""
-  });
 
   const mapped: PayrollRecord = {
     id: data.id,

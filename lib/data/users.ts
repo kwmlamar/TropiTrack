@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient"
 import type { User, NewUser, UpdateUser, UserFilters, UserWithDetails } from "@/lib/types/user"
 import type { ApiResponse } from "@/lib/types"
+import { escapeSearchTerm } from "@/lib/utils"
 
 /**
  * Get users with optional filtering (company scoped)
@@ -25,8 +26,11 @@ export async function getUsers(companyId: string, filters: UserFilters = {}): Pr
     }
 
     if (filters.search) {
+      // Escape special characters that could cause PostgreSQL parsing errors
+      const escapedSearch = escapeSearchTerm(filters.search)
+      
       query = query.or(
-        `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`,
+        `first_name.ilike.%${escapedSearch}%,last_name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%`,
       )
     }
 

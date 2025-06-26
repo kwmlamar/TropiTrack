@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { supabaseAdmin } from "@/utils/supabase/server-admin";
 
 type LoginResult =
   | { success: true }
@@ -33,18 +32,22 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("name") as string;
-  const companyName = formData.get("company_name") as string || "My Company"; // Default company name
+  const companyName = formData.get("company_name") as string || "My Company";
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/dashboard`,
+      data: {
+        full_name: fullName,
+        company_name: companyName, // Pass company name to trigger
+      },
     },
   });
 
   if (!authData.user) {
-    console.error("No user returned from signUp - likely due to email confirmation requried.")
+    console.error("No user returned from signUp - likely due to email confirmation required.")
     return { success: true, redirectTo: "/verify-email" };
   }
 
@@ -53,59 +56,9 @@ export async function signup(formData: FormData): Promise<SignupResult> {
     return { error: "Signup failed. Please try again." };
   }
 
-  // Insert company data
-  const { data: companyData, error: companyError } = await supabase
-    .from("companies")
-    .insert([
-      {
-        name: companyName,
-        email,
-      },
-    ])
-    .select()
-    .single();
-
-  if (companyError || !companyData) {
-    console.error("Failed to create company.", companyError);
-    return { error: "Failed to create company. Please try again." };
-  }
-
-  // Manually insert profile directly
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
-    .insert([
-      {
-        id: authData.user.id,
-        name: fullName,
-        email,
-        company_id: companyData.id, // Assuming company_id is a UUID
-      },
-    ])
-    .select()
-    .single();
-
-  if (profileError || !profileData) {
-    console.error("Failed to create profile.", profileError);
-    return { error: "Failed to create profile. Please try again." };
-  }
-
-  // Update user metadata
-  const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-    authData.user.id,
-    {
-      user_metadata: {
-        full_name: fullName,
-        company_id: companyData.id,
-      },
-    }
-  );
-
-  if (updateError) {
-    console.error("Failed to update user metadata", updateError);
-    return { error: "Failed to update user metadata. Please try again." };
-  } else {
-    console.log("Updated user metadata:", updatedUser?.user?.user_metadata);
-  }
+  // The database trigger (handle_new_user) will automatically create
+  // the company and profile for new users
+  // No need to manually create them here
 
   // Return success with redirect path
   return { success: true, redirectTo: "/verify-email" };

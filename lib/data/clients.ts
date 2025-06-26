@@ -7,8 +7,8 @@ import type {
   ClientWithDetails,
 } from "@/lib/types/client";
 import { getProfile } from "./data";
-
-import { supabase } from "@/lib/supabaseClient"
+import { supabase } from "@/lib/supabaseClient";
+import { escapeSearchTerm } from "@/lib/utils";
 
 /**
  * Get clients with optional filtering (company scoped)
@@ -39,8 +39,11 @@ export async function getClients(
     }
 
     if (filters.search) {
+      // Escape special characters that could cause PostgreSQL parsing errors
+      const escapedSearch = escapeSearchTerm(filters.search);
+      
       query = query.or(
-        `name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,company.ilike.%${filters.search}%`
+        `name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%,company.ilike.%${escapedSearch}%`
       );
     }
 

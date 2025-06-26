@@ -6,6 +6,7 @@ RETURNS trigger AS $$
 DECLARE
   new_company_id UUID;
   user_name TEXT;
+  company_name TEXT;
 BEGIN
   -- Extract name from user metadata or email
   user_name := COALESCE(
@@ -15,9 +16,15 @@ BEGIN
     'User'
   );
 
-  -- Create a default company for new users
+  -- Extract company name from user metadata or use default
+  company_name := COALESCE(
+    new.raw_user_meta_data->>'company_name',
+    'My Company'
+  );
+
+  -- Create a company for new users
   INSERT INTO public.companies (name, email)
-  VALUES ('My Company', new.email)
+  VALUES (company_name, new.email)
   RETURNING id INTO new_company_id;
 
   -- Log the company creation for debugging

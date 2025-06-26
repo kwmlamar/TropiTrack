@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import type { Transaction, CreateTransactionInput, UpdateTransactionInput, TransactionFilters, ApiResponse } from "@/lib/types";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
+import { escapeSearchTerm } from "@/lib/utils";
 
 // Helper function to generate unique transaction ID
 function generateTransactionId(): string {
@@ -78,7 +79,10 @@ export async function getTransactions(
       query = query.eq("category", filters.category);
     }
     if (filters.search) {
-      query = query.or(`description.ilike.%${filters.search}%,transaction_id.ilike.%${filters.search}%,reference.ilike.%${filters.search}%`);
+      // Escape special characters that could cause PostgreSQL parsing errors
+      const escapedSearch = escapeSearchTerm(filters.search);
+      
+      query = query.or(`description.ilike.%${escapedSearch}%,transaction_id.ilike.%${escapedSearch}%,reference.ilike.%${escapedSearch}%`);
     }
     if (filters.limit) {
       query = query.limit(filters.limit);

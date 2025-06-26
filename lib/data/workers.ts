@@ -1,6 +1,7 @@
 import type { Worker, NewWorker, UpdateWorker, WorkerFilters, WorkerWithDetails } from "@/lib/types/worker"
 import type { ApiResponse } from "@/lib/types" 
 import { getProfile } from "./data"
+import { escapeSearchTerm } from "@/lib/utils"
 
 import { supabase } from "@/lib/supabaseClient"
 
@@ -44,7 +45,10 @@ export async function getWorkers(
     }
 
     if (filters.search) {
-      query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,role.ilike.%${filters.search}%`)
+      // Escape special characters that could cause PostgreSQL parsing errors
+      const escapedSearch = escapeSearchTerm(filters.search)
+      
+      query = query.or(`name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%,role.ilike.%${escapedSearch}%`)
     }
 
     if (filters.limit) {

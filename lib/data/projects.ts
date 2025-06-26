@@ -7,6 +7,7 @@ import type {
 } from "@/lib/types/project";
 import type { ApiResponse } from "@/lib/types";
 import { getProfile } from "./data";
+import { escapeSearchTerm } from "@/lib/utils";
 
 import { supabase } from "@/lib/supabaseClient"
 
@@ -54,8 +55,11 @@ export async function getProjects(
     }
 
     if (filters.search) {
+      // Escape special characters that could cause PostgreSQL parsing errors
+      const escapedSearch = escapeSearchTerm(filters.search);
+      
       query = query.or(
-        `name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,location.ilike.%${filters.search}%`
+        `name.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%,location.ilike.%${escapedSearch}%`
       );
     }
 
