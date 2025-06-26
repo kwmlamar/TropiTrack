@@ -5,6 +5,7 @@ import { format, startOfWeek, endOfWeek, parseISO } from "date-fns"
 import { Check, X, Calendar, Users, ChevronLeft, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table,
   TableBody,
@@ -218,32 +219,16 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-1 rounded-lg bg-muted p-1">
-          <Button
-            variant={viewMode === "daily" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("daily")}
-            className={`rounded-md transition-all duration-200 ${
-              viewMode === "daily" 
-                ? "bg-[#E8EDF5] text-primary shadow-sm" 
-                : "hover:bg-muted-foreground/10"
-            }`}
-          >
-            Daily View
-          </Button>
-          <Button
-            variant={viewMode === "weekly" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("weekly")}
-            className={`rounded-md transition-all duration-200 ${
-              viewMode === "weekly" 
-                ? "bg-[#E8EDF5] text-primary shadow-sm" 
-                : "hover:bg-muted-foreground/10"
-            }`}
-          >
-            Weekly View
-          </Button>
-        </div>
+        <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "daily" | "weekly")} className="w-auto">
+          <TabsList className="grid w-auto grid-cols-2">
+            <TabsTrigger value="daily" className="rounded-md transition-all duration-200 border-0">
+              Daily View
+            </TabsTrigger>
+            <TabsTrigger value="weekly" className="rounded-md transition-all duration-200 border-0">
+              Weekly View
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="flex items-center space-x-2">
           {pendingTimesheets.length > 0 && (
             <Button
@@ -257,7 +242,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
           <Button
             onClick={() => handleBatchApprove(Array.from(selectedTimesheetIds))}
             disabled={isProcessing || selectedTimesheetIds.size === 0}
-            className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
           >
             <Check className="h-4 w-4 mr-2" />
             Approve Selected {selectedTimesheetIds.size > 0 && `(${selectedTimesheetIds.size})`}

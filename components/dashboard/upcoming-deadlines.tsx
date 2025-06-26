@@ -1,37 +1,36 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useEffect } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useEffect, useState } from "react"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
 interface UpcomingDeadlinesProps {
   viewMode: ViewMode
   selectedDate: Date
-  isLoading: boolean
 }
 
-export function UpcomingDeadlines({ viewMode, selectedDate, isLoading }: UpcomingDeadlinesProps) {
-  
+export function UpcomingDeadlines({ viewMode, selectedDate }: UpcomingDeadlinesProps) {
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!isLoading) {
-      loadDeadlines()
-    }
-  }, [viewMode, selectedDate, isLoading])
+    loadDeadlines()
+  }, [viewMode, selectedDate])
 
   const loadDeadlines = async () => {
     try {
+      setLoading(true)
       // TODO: Replace with actual API call
       // This is mock data for now
       
     } catch (error) {
       console.error("Error loading deadlines:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
@@ -43,10 +42,10 @@ export function UpcomingDeadlines({ viewMode, selectedDate, isLoading }: Upcomin
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-24" />
+                  <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  <div className="h-3 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                 </div>
-                <Skeleton className="h-4 w-16" />
+                <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
               </div>
             ))}
           </div>

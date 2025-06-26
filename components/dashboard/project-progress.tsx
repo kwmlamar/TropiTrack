@@ -1,37 +1,36 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useEffect } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useEffect, useState } from "react"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
 interface ProjectProgressProps {
   viewMode: ViewMode
   selectedDate: Date
-  isLoading: boolean
 }
 
-export function ProjectProgress({ viewMode, selectedDate, isLoading }: ProjectProgressProps) {
-  
+export function ProjectProgress({ viewMode, selectedDate }: ProjectProgressProps) {
+  const [loading, setLoading] = useState(true)
 
   const loadProjectData = async () => {
     try {
+      setLoading(true)
       // TODO: Replace with actual API call
       // This is mock data for now
       
     } catch (error) {
       console.error("Error loading project data:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (!isLoading) {
-      loadProjectData()
-    }
-  }, [viewMode, selectedDate, isLoading])
+    loadProjectData()
+  }, [viewMode, selectedDate])
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
@@ -43,10 +42,10 @@ export function ProjectProgress({ viewMode, selectedDate, isLoading }: ProjectPr
             {[1, 2, 3].map((i) => (
               <div key={i} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-4 w-16" />
+                  <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                 </div>
-                <Skeleton className="h-2 w-full" />
+                <div className="h-2 w-full animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
               </div>
             ))}
           </div>

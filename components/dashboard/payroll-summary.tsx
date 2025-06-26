@@ -6,14 +6,12 @@ import { ArrowRight, DollarSign } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
-import { Skeleton } from "@/components/ui/skeleton"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
 interface PayrollSummaryProps {
   viewMode: ViewMode
   selectedDate: Date
-  isLoading: boolean
 }
 
 export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) {
@@ -97,19 +95,19 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
       <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <div className="space-y-1">
-            <Skeleton className="h-7 w-40" />
-            <Skeleton className="h-4 w-60" />
+            <div className="h-7 w-40 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+            <div className="h-4 w-60 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex items-center justify-between rounded-lg border p-3">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-24" />
+                <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
               </div>
             ))}
-            <Skeleton className="h-10 w-full" />
+            <div className="h-10 w-full animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
           </div>
         </CardContent>
       </Card>

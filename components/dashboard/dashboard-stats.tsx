@@ -14,7 +14,6 @@ type ViewMode = "daily" | "weekly" | "monthly"
 interface DashboardStatsProps {
   viewMode: ViewMode
   selectedDate: Date
-  isLoading: boolean
 }
 
 export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) {
@@ -169,8 +168,8 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
           <Card key={index} className="border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200">
             <CardContent className="px-6 py-4">
               <div className="space-y-3">
-                <div className="h-4 w-24 animate-pulse rounded bg-muted/50" />
-                <div className="h-8 w-32 animate-pulse rounded bg-muted/50" />
+                <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-8 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
               </div>
             </CardContent>
           </Card>

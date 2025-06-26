@@ -10,7 +10,6 @@ import { getTimesheets } from "@/lib/data/timesheets"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import type { TimesheetWithDetails } from "@/lib/types"
-import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 type ViewMode = "daily" | "weekly" | "monthly"
@@ -18,13 +17,13 @@ type ViewMode = "daily" | "weekly" | "monthly"
 interface RecentTimesheetsProps {
   viewMode: ViewMode
   selectedDate: Date
-  isLoading: boolean
 }
 
-export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTimesheetsProps) {
+export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsProps) {
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const getDateRange = () => {
     switch (viewMode) {
@@ -48,6 +47,7 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
 
   const loadRecentTimesheets = useCallback(async () => {
     try {
+      setLoading(true)
       setError(null)
       const profile = await getUserProfileWithCompany()
       if (!profile) {
@@ -71,14 +71,14 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
     } catch (error) {
       console.error('Failed to load recent timesheets:', error)
       setError("Failed to load timesheets")
+    } finally {
+      setLoading(false)
     }
   }, [viewMode, selectedDate])
 
   useEffect(() => {
-    if (!isLoading) {
-      loadRecentTimesheets()
-    }
-  }, [loadRecentTimesheets, isLoading])
+    loadRecentTimesheets()
+  }, [loadRecentTimesheets])
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
@@ -92,39 +92,39 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
     )
   })
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <Skeleton className="h-7 w-40" />
-              <Skeleton className="h-4 w-60" />
+              <div className="h-7 w-40 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+              <div className="h-4 w-60 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
             </div>
-            <Skeleton className="h-9 w-24" />
+            <div className="h-9 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
           </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex items-center gap-2">
-            <Skeleton className="h-9 flex-1" />
-            <Skeleton className="h-9 w-9" />
+            <div className="h-9 flex-1 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+            <div className="h-9 w-9 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
           </div>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center justify-between rounded-lg border p-3">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-muted-foreground/20 dark:bg-muted/50" />
                   <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-24" />
+                    <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                    <div className="h-3 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="space-y-2 text-right">
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-3 w-24" />
+                    <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                    <div className="h-3 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                   </div>
-                  <Skeleton className="h-6 w-20" />
+                  <div className="h-6 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                 </div>
               </div>
             ))}

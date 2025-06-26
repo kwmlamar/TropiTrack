@@ -18,7 +18,6 @@ type ViewMode = "daily" | "weekly" | "monthly"
 export function DashboardClient() {
   const [viewMode, setViewMode] = useState<ViewMode>("monthly")
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [isLoading] = useState(false)
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode)
@@ -39,22 +38,22 @@ export function DashboardClient() {
 
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
         <Suspense fallback={<Skeleton className="h-28 w-full" />}>
-          <DashboardStats viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+          <DashboardStats viewMode={viewMode} selectedDate={selectedDate} />
         </Suspense>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
           <div className="space-y-6 lg:col-span-2">
             <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-              <RecentTimesheets viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+              <RecentTimesheets viewMode={viewMode} selectedDate={selectedDate} />
             </Suspense>
 
             <div className="grid gap-6 md:grid-cols-2">
               <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                <ProjectProgress viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+                <ProjectProgress viewMode={viewMode} selectedDate={selectedDate} />
               </Suspense>
 
               <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                <WorkerAttendance viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+                <WorkerAttendance viewMode={viewMode} selectedDate={selectedDate} />
               </Suspense>
             </div>
           </div>
@@ -65,15 +64,15 @@ export function DashboardClient() {
             </Suspense>
 
             <Suspense fallback={<Skeleton className="h-[250px] w-full" />}>
-              <PayrollSummary viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+              <PayrollSummary viewMode={viewMode} selectedDate={selectedDate} />
             </Suspense>
 
             <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
-              <UpcomingDeadlines viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+              <UpcomingDeadlines viewMode={viewMode} selectedDate={selectedDate} />
             </Suspense>
 
             <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              <RecentActivity viewMode={viewMode} selectedDate={selectedDate} isLoading={isLoading} />
+              <RecentActivity viewMode={viewMode} selectedDate={selectedDate} />
             </Suspense>
           </div>
         </div>

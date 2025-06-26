@@ -1,37 +1,36 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useEffect } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useEffect, useState } from "react"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
 interface RecentActivityProps {
   viewMode: ViewMode
   selectedDate: Date
-  isLoading: boolean
 }
 
-export function RecentActivity({ viewMode, selectedDate, isLoading }: RecentActivityProps) {
-  
+export function RecentActivity({ viewMode, selectedDate }: RecentActivityProps) {
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!isLoading) {
-      loadActivities()
-    }
-  }, [viewMode, selectedDate, isLoading])
+    loadActivities()
+  }, [viewMode, selectedDate])
 
   const loadActivities = async () => {
     try {
+      setLoading(true)
       // TODO: Replace with actual API call
       // This is mock data for now
       
     } catch (error) {
       console.error("Error loading activities:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
@@ -42,10 +41,10 @@ export function RecentActivity({ viewMode, selectedDate, isLoading }: RecentActi
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-start gap-4">
-                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="h-8 w-8 animate-pulse rounded-full bg-muted-foreground/20 dark:bg-muted/50" />
                 <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  <div className="h-3 w-1/2 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                 </div>
               </div>
             ))}
