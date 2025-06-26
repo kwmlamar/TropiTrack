@@ -130,8 +130,23 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
       void: "Void",
     };
 
+    const getBadgeClassName = (status: PayrollRecord['status']) => {
+      switch (status) {
+        case "paid":
+          return "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-6 py-1 text-sm font-medium";
+        case "pending":
+          return "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-6 py-1 text-sm font-medium";
+        case "confirmed":
+          return "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-6 py-1 text-sm font-medium";
+        case "void":
+          return "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-6 py-1 text-sm font-medium";
+        default:
+          return "px-6 py-1 text-sm font-medium";
+      }
+    };
+
     return (
-      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+      <Badge className={getBadgeClassName(status)}>
         {labels[status]}
       </Badge>
     );
@@ -303,7 +318,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
           {/* Payroll Summary Tab */}
           <TabsContent value="payroll-summary" className="space-y-4">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Payroll Summary Report</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -369,7 +384,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                           <TableRow key={index} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
                             <TableCell className="py-4 px-6 font-medium">{row.period}</TableCell>
                             <TableCell className="py-4 px-6">
-                              <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-3 py-1 text-xs">
+                              <Badge className="bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-3 py-1 text-xs font-medium">
                                 {row.status}
                               </Badge>
                             </TableCell>
@@ -408,7 +423,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
           {/* Worker Detail Tab */}
           <TabsContent value="worker-detail" className="space-y-4">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Worker Detail Report</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -484,7 +499,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
           {/* NIB Compliance Tab */}
           <TabsContent value="nib-compliance" className="space-y-4">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">NIB Compliance Report</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -561,10 +576,10 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                     {getStatusBadge(payroll.status as PayrollRecord['status'])}
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
-                                    <Badge className={`px-3 py-1 text-xs ${
+                                    <Badge className={`px-3 py-1 text-xs font-medium ${
                                       isCompliant 
-                                        ? "bg-green-100 text-green-800 border-green-200" 
-                                        : "bg-red-100 text-red-800 border-red-200"
+                                        ? "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30" 
+                                        : "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30"
                                     }`}>
                                       {isCompliant ? "Compliant" : "Non-Compliant"}
                                     </Badge>
@@ -587,7 +602,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
           {/* Overtime Analysis Tab */}
           <TabsContent value="overtime-analysis" className="space-y-4">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Overtime Analysis Report</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -626,10 +641,10 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                   <TableCell className="py-4 px-6">{regularHours.toFixed(1)}</TableCell>
                                   <TableCell className="py-4 px-6 font-medium">{payroll.overtime_hours.toFixed(1)}</TableCell>
                                   <TableCell className="py-4 px-6">
-                                    <Badge className={`px-3 py-1 text-xs ${
+                                    <Badge className={`px-3 py-1 text-xs font-medium ${
                                       overtimePercentage > 20 
-                                        ? "bg-orange-100 text-orange-800 border-orange-200" 
-                                        : "bg-blue-100 text-blue-800 border-blue-200"
+                                        ? "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30" 
+                                        : "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30"
                                     }`}>
                                       {overtimePercentage.toFixed(1)}%
                                     </Badge>
@@ -676,7 +691,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
           {/* Project Allocation Tab */}
           <TabsContent value="project-allocation" className="space-y-4">
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Project Allocation Report</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -757,12 +772,12 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-foreground">Visual Analytics</h3>
           
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center justify-between">
                 <div>
                   <div className="text-lg font-semibold">Payroll Distribution</div>
-                  <div className="text-2xl font-bold text-primary mt-1">
+                  <div className="text-2xl font-bold mt-1">
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
                       currency: "BSD",

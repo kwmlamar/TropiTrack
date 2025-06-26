@@ -102,12 +102,12 @@ export default function AccountingOverview() {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Cash Flow Line Chart */}
-        <Card className="col-span-1 lg:col-span-2 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
+        <Card className="col-span-1 lg:col-span-2 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between">
               <div>
                 <div className="text-xl font-semibold">Cash Flow</div>
-                <div className="text-2xl font-bold text-primary mt-1">{formatCurrency(stats.netAmount)}</div>
+                <div className="text-2xl font-bold mt-1">{formatCurrency(stats.netAmount)}</div>
                 <div className="text-sm font-normal mt-1">
                   <span className="text-muted-foreground">This year </span>
                   <span className={stats.netAmount >= 0 ? "text-green-600" : "text-red-600"}>
@@ -139,31 +139,31 @@ export default function AccountingOverview() {
                   <XAxis 
                     dataKey="month" 
                     className="text-sm text-muted-foreground"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    tick={{ fill: 'var(--primary)', fontSize: 12 }}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tickLine={{ stroke: 'var(--border)' }}
                   />
                   <YAxis 
                     className="text-sm text-muted-foreground"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    tick={{ fill: 'var(--primary)', fontSize: 12 }}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tickLine={{ stroke: 'var(--border)' }}
                   />
                   <Tooltip 
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
+                      backgroundColor: 'var(--background)',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                     formatter={(value: number) => [
-                      <span key="value" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                      <span key="value" style={{ color: 'var(--primary)', fontWeight: 600 }}>
                         ${value.toLocaleString()}
                       </span>, 
                       ''
                     ]}
-                    labelStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                    labelStyle={{ color: 'var(--primary)', fontWeight: 600 }}
                   />
                   <Legend 
                     wrapperStyle={{ paddingTop: '20px' }}
@@ -204,12 +204,12 @@ export default function AccountingOverview() {
         </Card>
 
         {/* Expenses Bar Chart */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between">
               <div>
                 <div className="text-lg font-semibold">Expenses by Category</div>
-                <div className="text-2xl font-bold text-primary mt-1">{formatCurrency(stats.totalExpenses)}</div>
+                <div className="text-2xl font-bold mt-1">{formatCurrency(stats.totalExpenses)}</div>
                 <div className="text-sm font-normal mt-1">
                   <span className="text-muted-foreground">This year </span>
                   <span className="text-red-600">-{((stats.totalExpenses / (stats.totalIncome || 1)) * 100).toFixed(1)}%</span>
@@ -225,35 +225,35 @@ export default function AccountingOverview() {
                   <XAxis 
                     dataKey="category" 
                     className="text-sm text-muted-foreground"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                    tick={{ fill: 'var(--primary)', fontSize: 10 }}
                     angle={-45}
                     textAnchor="end"
                     height={100}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tickLine={{ stroke: 'var(--border)' }}
                   />
                   <YAxis 
                     className="text-sm text-muted-foreground"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                    tick={{ fill: 'var(--primary)', fontSize: 11 }}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tickLine={{ stroke: 'var(--border)' }}
                   />
                   <Tooltip 
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
+                      backgroundColor: 'var(--background)',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                     formatter={(value: number) => [
-                      <span key="value" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                      <span key="value" style={{ color: 'var(--primary)', fontWeight: 600 }}>
                         ${value.toLocaleString()}
                       </span>, 
                       ''
                     ]}
-                    labelStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
-                    itemStyle={{ color: 'hsl(var(--primary))' }}
+                    labelStyle={{ color: 'var(--primary)', fontWeight: 600 }}
+                    itemStyle={{ color: 'var(--primary)' }}
                   />
                   <Bar 
                     dataKey="amount" 
@@ -268,12 +268,12 @@ export default function AccountingOverview() {
         </Card>
 
         {/* Invoices Bar Chart */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between">
               <div>
                 <div className="text-lg font-semibold">Invoices</div>
-                <div className="text-2xl font-bold text-primary mt-1">{formatCurrency(stats.totalIncome)}</div>
+                <div className="text-2xl font-bold mt-1">{formatCurrency(stats.totalIncome)}</div>
                 <div className="text-sm font-normal mt-1">
                   <span className="text-muted-foreground">This year </span>
                   <span className="text-green-600">+{((stats.totalIncome / (stats.totalIncome + stats.totalExpenses || 1)) * 100).toFixed(1)}%</span>
@@ -289,32 +289,32 @@ export default function AccountingOverview() {
                   <XAxis 
                     dataKey="status" 
                     className="text-sm text-muted-foreground"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    tick={{ fill: 'var(--primary)', fontSize: 12 }}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tickLine={{ stroke: 'var(--border)' }}
                   />
                   <YAxis 
                     className="text-sm text-muted-foreground"
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                    tick={{ fill: 'var(--primary)', fontSize: 11 }}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                    tickLine={{ stroke: 'hsl(var(--border))' }}
+                    axisLine={{ stroke: 'var(--border)' }}
+                    tickLine={{ stroke: 'var(--border)' }}
                   />
                   <Tooltip 
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
+                      backgroundColor: 'var(--background)',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                     formatter={(value: number) => [
-                      <span key="value" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                      <span key="value" style={{ color: 'var(--primary)', fontWeight: 600 }}>
                         ${value.toLocaleString()}
                       </span>, 
                       ''
                     ]}
-                    labelStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
-                    itemStyle={{ color: 'hsl(var(--primary))' }}
+                    labelStyle={{ color: 'var(--primary)', fontWeight: 600 }}
+                    itemStyle={{ color: 'var(--primary)' }}
                   />
                   <Bar 
                     dataKey="amount" 

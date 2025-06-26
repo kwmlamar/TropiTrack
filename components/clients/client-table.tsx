@@ -121,7 +121,7 @@ export default function ClientTable({ user }: { user: User }) {
       </div>
 
       {/* Clients Table */}
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_2fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">

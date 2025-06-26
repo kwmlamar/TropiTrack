@@ -95,8 +95,23 @@ export function PayrollTable({ data, selectedPayrollIds, setSelectedPayrollIds, 
       void: "Void",
     };
 
+    const getBadgeClassName = (status: PayrollRecord['status']) => {
+      switch (status) {
+        case "paid":
+          return "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-6 py-1 text-sm font-medium";
+        case "pending":
+          return "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-6 py-1 text-sm font-medium";
+        case "confirmed":
+          return "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-6 py-1 text-sm font-medium";
+        case "void":
+          return "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-6 py-1 text-sm font-medium";
+        default:
+          return "px-6 py-1 text-sm font-medium";
+      }
+    };
+
     return (
-      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+      <Badge className={getBadgeClassName(status)}>
         {labels[status]}
       </Badge>
     );

@@ -148,7 +148,7 @@ export default function WorkersTable({ user }: { user: User }) {
       </div>
 
       {/* Workers Table */}
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
@@ -217,11 +217,10 @@ export default function WorkersTable({ user }: { user: User }) {
 
                   <div>
                     <Badge
-                      variant={worker.is_active ? "default" : "secondary"}
                       className={
                         worker.is_active
-                          ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm"
-                          : "bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm"
+                          ? "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-6 py-1 text-sm font-medium"
+                          : "bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/20 dark:bg-secondary/20 dark:text-secondary-foreground dark:border-secondary/30 px-6 py-1 text-sm font-medium"
                       }
                     >
                       {worker.is_active ? "Active" : "Inactive"}

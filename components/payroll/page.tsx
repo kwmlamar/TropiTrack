@@ -296,8 +296,23 @@ export default function PayrollPage({ user }: { user: User }) {
       void: "Void",
     };
 
+    const getBadgeClassName = (status: PayrollRecord['status']) => {
+      switch (status) {
+        case "paid":
+          return "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-6 py-1 text-sm font-medium";
+        case "pending":
+          return "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-6 py-1 text-sm font-medium";
+        case "confirmed":
+          return "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-6 py-1 text-sm font-medium";
+        case "void":
+          return "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-6 py-1 text-sm font-medium";
+        default:
+          return "px-6 py-1 text-sm font-medium";
+      }
+    };
+
     return (
-      <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] px-6 py-1 text-sm font-medium">
+      <Badge className={getBadgeClassName(status)}>
         {labels[status]}
       </Badge>
     );
@@ -353,11 +368,11 @@ export default function PayrollPage({ user }: { user: User }) {
 
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
                 <CardContent className="px-6 py-4">
                   <div className="space-y-2">
-                    <p className="text-base font-medium text-primary">Total Payroll</p>
-                    <p className="text-3xl font-bold tracking-tight text-primary">
+                    <p className="text-base font-medium text-primary dark:text-foreground">Total Payroll</p>
+                    <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
                       {new Intl.NumberFormat("en-BS", {
                         style: "currency",
                         currency: "BSD",
@@ -368,22 +383,22 @@ export default function PayrollPage({ user }: { user: User }) {
                 </CardContent>
               </Card>
 
-              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
                 <CardContent className="px-6 py-4">
                   <div className="space-y-2">
-                    <p className="text-base font-medium text-primary">Total Workers</p>
-                    <p className="text-3xl font-bold tracking-tight text-primary">
+                    <p className="text-base font-medium text-primary dark:text-foreground">Total Workers</p>
+                    <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
                       {currentPeriodPayrolls.length}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
                 <CardContent className="px-6 py-4">
                   <div className="space-y-2">
-                    <p className="text-base font-medium text-primary">NIB Remittance</p>
-                    <p className="text-3xl font-bold tracking-tight text-primary">
+                    <p className="text-base font-medium text-primary dark:text-foreground">NIB Remittance</p>
+                    <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
                       {new Intl.NumberFormat("en-BS", {
                         style: "currency",
                         currency: "BSD",
@@ -396,7 +411,7 @@ export default function PayrollPage({ user }: { user: User }) {
             </div>
 
             {/* Recent Payments Table */}
-            <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Recent Payments</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -623,7 +638,7 @@ export default function PayrollPage({ user }: { user: User }) {
                   </Button>
                 </div>
 
-                <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                   <CardContent className="px-6">
                     <div className="overflow-x-auto">
                       <TableComponent className="min-w-full">

@@ -60,7 +60,7 @@ export function TeamMembersSection({
             Edit
           </Button>
         </div>
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
+        <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm overflow-hidden">
           <CardContent className="p-0">
             {teamMembers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">

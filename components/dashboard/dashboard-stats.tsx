@@ -166,8 +166,8 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {statsData.map((_, index) => (
-          <Card key={index} className="border-border/50 bg-muted/50 backdrop-blur-sm transition-all duration-200 hover:shadow-md">
-            <CardContent className="p-6">
+          <Card key={index} className="border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200">
+            <CardContent className="px-6 py-4">
               <div className="space-y-3">
                 <div className="h-4 w-24 animate-pulse rounded bg-muted/50" />
                 <div className="h-8 w-32 animate-pulse rounded bg-muted/50" />
@@ -184,12 +184,12 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
       {statsData.map((stat, index) => (
         <Card 
           key={index} 
-          className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80"
+          className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80"
         >
           <CardContent className="px-6 py-4">
             <div className="space-y-2">
-              <p className="text-base font-medium text-primary">{stat.title}</p>
-              <p className="text-3xl font-bold tracking-tight text-primary">{stat.value}</p>
+              <p className="text-base font-medium text-primary dark:text-foreground">{stat.title}</p>
+              <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">{stat.value}</p>
             </div>
           </CardContent>
         </Card>

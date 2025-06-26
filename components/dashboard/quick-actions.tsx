@@ -35,7 +35,7 @@ export function QuickActions() {
 
   return (
     <>
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 backdrop-blur-sm shadow-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm shadow-sm">
         <CardHeader className="pb-2">
           <div className="space-y-1">
             <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>

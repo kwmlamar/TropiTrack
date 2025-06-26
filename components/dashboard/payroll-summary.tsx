@@ -94,7 +94,7 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
 
   if (loading) {
     return (
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <div className="space-y-1">
             <Skeleton className="h-7 w-40" />
@@ -118,7 +118,7 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
 
   if (!payrollData) {
     return (
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <div className="space-y-1">
             <CardTitle>Payroll Summary</CardTitle>
@@ -152,7 +152,7 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
   }
 
   return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
       <CardHeader className="pb-2">
         <div className="space-y-1">
           <CardTitle>Payroll Summary</CardTitle>

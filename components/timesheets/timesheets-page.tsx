@@ -513,13 +513,13 @@ export default function TimesheetsPage({ user }: { user: User }) {
     const getBadgeClassName = (status: AttendanceStatus) => {
       switch (status) {
         case "present":
-          return "bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs";
+          return "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 text-xs font-medium";
         case "absent":
-          return "text-xs";
+          return "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 text-xs font-medium";
         case "late":
-          return "text-xs";
+          return "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 text-xs font-medium";
         default:
-          return "text-xs";
+          return "text-xs font-medium";
       }
     }
 
@@ -907,7 +907,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
             </div>
 
             {/* Timesheet Table */}
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20 overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
@@ -1029,11 +1029,11 @@ export default function TimesheetsPage({ user }: { user: User }) {
                               <td className="p-4 text-center">
                                 {timesheetsInWeek.length > 0 && (
                                   isWeekApproved ? (
-                                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs font-medium">
+                                    <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 text-xs font-medium">
                                       Approved
                                     </Badge>
                                   ) : (
-                                    <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
+                                    <Badge className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 text-xs font-medium">
                                       Pending
                                     </Badge>
                                   )
@@ -1131,11 +1131,11 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   <td className="p-4 text-center">
                                     {timesheetsInWeek.length > 0 && (
                                       isWeekApproved ? (
-                                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs font-medium">
+                                        <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 text-xs font-medium">
                                           Approved
                                         </Badge>
                                       ) : (
-                                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
+                                        <Badge className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 text-xs font-medium">
                                           Pending
                                         </Badge>
                                       )

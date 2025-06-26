@@ -90,35 +90,35 @@ export function PayrollDistributionChart({ payrolls, maxWorkers }: PayrollDistri
           <XAxis 
             dataKey="name" 
             className="text-sm text-muted-foreground"
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+            tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
             angle={-45}
             textAnchor="end"
             height={80}
-            axisLine={{ stroke: 'hsl(var(--border))' }}
-            tickLine={{ stroke: 'hsl(var(--border))' }}
+            axisLine={{ stroke: 'var(--border)' }}
+            tickLine={{ stroke: 'var(--border)' }}
           />
           <YAxis 
             className="text-sm text-muted-foreground"
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+            tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
             tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-            axisLine={{ stroke: 'hsl(var(--border))' }}
-            tickLine={{ stroke: 'hsl(var(--border))' }}
+            axisLine={{ stroke: 'var(--border)' }}
+            tickLine={{ stroke: 'var(--border)' }}
           />
           <Tooltip 
             contentStyle={{
-              backgroundColor: 'hsl(var(--background))',
-              border: '1px solid hsl(var(--border))',
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--border)',
               borderRadius: '8px',
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
             }}
             formatter={(value: number, name: string) => [
-              <span key="value" style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>
+              <span key="value" style={{ color: 'var(--primary)', fontWeight: 600 }}>
                 {name === 'grossPay' ? formatCurrency(value) : `${value.toFixed(1)}h`}
               </span>, 
               name === 'grossPay' ? 'Gross Pay' : name === 'totalHours' ? 'Hours' : name
             ]}
-            labelStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
-            itemStyle={{ color: 'hsl(var(--primary))' }}
+            labelStyle={{ color: 'var(--primary)', fontWeight: 600 }}
+            itemStyle={{ color: 'var(--primary)' }}
           />
           <Bar 
             dataKey="grossPay" 

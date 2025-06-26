@@ -265,7 +265,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
         </div>
       </div>
 
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardContent>
           {pendingTimesheets.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
@@ -290,7 +290,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                       const isAllSelected = timesheets.every(ts => selectedTimesheetIds.has(ts.id))
 
                       return (
-                        <Card key={periodKey} className="border-border/50 bg-card/50 backdrop-blur-sm">
+                        <Card key={periodKey} className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                           <CardHeader className="py-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -451,7 +451,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                         )}
                       </TableCell>
                       <TableCell className="py-4 px-6">
-                        <Badge className="bg-[#E8EDF5] text-primary border-[#E8EDF5] text-xs font-medium">
+                        <Badge className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 text-xs font-medium">
                           Pending
                         </Badge>
                       </TableCell>

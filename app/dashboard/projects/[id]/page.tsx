@@ -282,7 +282,7 @@ export default async function ProjectPage({
             </TabsContent>
 
             <TabsContent value="budget" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Project Budget</CardTitle>
                   <p className="text-sm text-muted-foreground">
@@ -300,7 +300,7 @@ export default async function ProjectPage({
             </TabsContent>
 
             <TabsContent value="payroll" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Project Payroll</CardTitle>
                   <p className="text-sm text-muted-foreground">
@@ -318,7 +318,7 @@ export default async function ProjectPage({
             </TabsContent>
 
             <TabsContent value="documents" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Project Documents</CardTitle>
                   <p className="text-sm text-muted-foreground">

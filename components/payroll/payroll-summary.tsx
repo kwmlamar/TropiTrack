@@ -51,7 +51,7 @@ export function PayrollSummary({ data }: PayrollSummaryProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-lg">Payroll Summary</CardTitle>
         </CardHeader>
@@ -70,7 +70,7 @@ export function PayrollSummary({ data }: PayrollSummaryProps) {
         </CardContent>
       </Card>
 
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             Financial Summary

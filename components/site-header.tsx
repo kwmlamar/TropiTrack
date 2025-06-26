@@ -31,6 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfileWithCompany } from "@/lib/types/userProfile";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { ModeToggle } from "@/components/mode-toggle";
 import Link from "next/link";
 
 async function logout() {
@@ -132,6 +133,9 @@ export function SiteHeader({
 
           {/* Notifications */}
           <NotificationBell />
+
+          {/* Mode Toggle */}
+          <ModeToggle />
 
           {/* User Menu */}
           <DropdownMenu>

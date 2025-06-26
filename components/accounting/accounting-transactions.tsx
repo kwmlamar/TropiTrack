@@ -158,19 +158,19 @@ export default function AccountingTransactions() {
     const statusConfig = {
       completed: {
         label: "Completed",
-        className: "bg-[#E8EDF5] text-primary px-3 py-1 text-xs font-medium",
+        className: "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-3 py-1 text-xs font-medium",
       },
       pending: {
         label: "Pending",
-        className: "bg-[#E8EDF5] text-primary px-3 py-1 text-xs font-medium",
+        className: "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-3 py-1 text-xs font-medium",
       },
       failed: {
         label: "Failed",
-        className: "bg-[#E8EDF5] text-primary px-3 py-1 text-xs font-medium",
+        className: "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-3 py-1 text-xs font-medium",
       },
       cancelled: {
         label: "Cancelled",
-        className: "bg-[#E8EDF5] text-primary px-3 py-1 text-xs font-medium",
+        className: "bg-muted/10 text-muted-foreground border-muted/20 hover:bg-muted/20 dark:bg-muted/20 dark:text-muted-foreground dark:border-muted/30 px-3 py-1 text-xs font-medium",
       },
     };
 
@@ -283,7 +283,7 @@ export default function AccountingTransactions() {
       </div>
 
       {/* Transactions Table */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 overflow-hidden">
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20 overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>

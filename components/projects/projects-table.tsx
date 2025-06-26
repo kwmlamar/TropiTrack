@@ -182,32 +182,23 @@ export default function ProjectsTable({ user }: { user: User }) {
     const statusConfig = {
       not_started: {
         label: "Not Started",
-        variant: "secondary" as const,
-        className:
-          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
+        className: "bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/20 dark:bg-secondary/20 dark:text-secondary-foreground dark:border-secondary/30 px-4 py-1.5 text-sm font-medium",
       },
       in_progress: {
         label: "In Progress",
-        variant: "default" as const,
-        className:
-          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
+        className: "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-4 py-1.5 text-sm font-medium",
       },
       paused: {
         label: "Paused",
-        variant: "secondary" as const,
-        className:
-          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
+        className: "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-4 py-1.5 text-sm font-medium",
       },
       completed: {
         label: "Completed",
-        variant: "default" as const,
-        className:
-          "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
+        className: "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-4 py-1.5 text-sm font-medium",
       },
       cancelled: {
         label: "Cancelled",
-        variant: "destructive" as const,
-        className: "bg-[#E8EDF5] text-primary px-4 py-1.5 text-sm font-medium",
+        className: "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-4 py-1.5 text-sm font-medium",
       },
     };
 
@@ -216,7 +207,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       statusConfig.not_started;
 
     return (
-      <Badge variant={config.variant} className={config.className}>
+      <Badge className={config.className}>
         {config.label}
       </Badge>
     );
@@ -359,7 +350,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       </div>
 
       {/* Projects Table */}
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">

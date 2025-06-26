@@ -94,7 +94,7 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
 
   if (isLoading) {
     return (
-      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -135,7 +135,7 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
   }
 
   return (
-    <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
           <CardTitle>Recent Timesheets</CardTitle>
@@ -200,9 +200,9 @@ export function RecentTimesheets({ viewMode, selectedDate, isLoading }: RecentTi
                     className={cn(
                       "transition-colors",
                       timesheet.supervisor_approval === "approved"
-                        ? "bg-[#E8EDF5] text-primary hover:bg-[#E8EDF5]/80"
+                        ? "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30"
                         : timesheet.supervisor_approval === "pending"
-                          ? "border-[#E8EDF5] text-primary hover:bg-[#E8EDF5]/80"
+                          ? "border-warning/30 text-warning hover:bg-warning/10 dark:border-warning/40 dark:text-warning-foreground dark:hover:bg-warning/20"
                           : ""
                     )}
                   >
