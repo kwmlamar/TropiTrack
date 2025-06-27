@@ -195,7 +195,7 @@ export async function createWorker(userId: string, worker: NewWorker): Promise<A
 
     const { data, error } = await supabase
       .from("workers")
-      .insert([{ ...normalizedWorker, company_id: profile.company_id }]) 
+      .insert([{ ...normalizedWorker, company_id: profile.company_id, created_by: userId }]) 
       .select()
       .single()
 

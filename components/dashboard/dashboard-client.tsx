@@ -63,9 +63,7 @@ export function DashboardClient() {
               <QuickActions />
             </Suspense>
 
-            <Suspense fallback={<Skeleton className="h-[250px] w-full" />}>
-              <PayrollSummary viewMode={viewMode} selectedDate={selectedDate} />
-            </Suspense>
+            <PayrollSummary viewMode={viewMode} selectedDate={selectedDate} />
 
             <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
               <UpcomingDeadlines viewMode={viewMode} selectedDate={selectedDate} />

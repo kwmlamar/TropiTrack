@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { User, Mail, Phone, MapPin, Building2, Loader2 } from "lucide-react"
+import { User, Mail, Phone, MapPin, Building2, Loader2, Edit } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form"
 import { toast } from "sonner"
 
-import { insertClient } from "@/lib/data/clients"
+import { insertClient, updateClient } from "@/lib/data/clients"
 import type { Client } from "@/lib/types/client"
 
 // Client schema for the dialog
@@ -43,20 +43,23 @@ const clientSchema = z.object({
 
 type ClientFormData = z.infer<typeof clientSchema>
 
-interface AddClientDialogProps {
+interface ClientDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   userId: string
+  client?: Client // Optional client for editing mode
   onSuccess?: (client: Client) => void
 }
 
-export function AddClientDialog({
+export function ClientDialog({
   open,
   onOpenChange,
   userId,
+  client,
   onSuccess,
-}: AddClientDialogProps) {
+}: ClientDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isEditing = !!client
 
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
@@ -71,32 +74,76 @@ export function AddClientDialog({
     },
   })
 
+  // Reset form when client changes (for editing mode)
+  useEffect(() => {
+    if (client) {
+      form.reset({
+        name: client.name || "",
+        company: client.company || "",
+        contact_person: client.contact_person || "",
+        email: client.email || "",
+        phone: client.phone || "",
+        address: client.address || "",
+        notes: client.notes || "",
+      })
+    } else {
+      form.reset({
+        name: "",
+        company: "",
+        contact_person: "",
+        email: "",
+        phone: "",
+        address: "",
+        notes: "",
+      })
+    }
+  }, [client, form])
+
   const onSubmit = async (data: ClientFormData) => {
     setIsSubmitting(true)
     try {
-      const result = await insertClient(userId, {
-        ...data,
-        is_active: true,
-        // Convert empty strings to undefined for optional fields
-        email: data.email || undefined,
-        phone: data.phone || undefined,
-        address: data.address || undefined,
-        contact_person: data.contact_person || undefined,
-        company: data.company || undefined,
-        notes: data.notes || undefined,
-      })
+      let result
+
+      if (isEditing && client) {
+        // Update existing client
+        result = await updateClient(userId, client.id, {
+          ...data,
+          // Convert empty strings to undefined for optional fields
+          email: data.email || undefined,
+          phone: data.phone || undefined,
+          address: data.address || undefined,
+          contact_person: data.contact_person || undefined,
+          company: data.company || undefined,
+          notes: data.notes || undefined,
+        })
+      } else {
+        // Create new client
+        result = await insertClient(userId, {
+          ...data,
+          is_active: true,
+          // Convert empty strings to undefined for optional fields
+          email: data.email || undefined,
+          phone: data.phone || undefined,
+          address: data.address || undefined,
+          contact_person: data.contact_person || undefined,
+          company: data.company || undefined,
+          notes: data.notes || undefined,
+        })
+      }
 
       if (result.success && result.data) {
-        toast.success("Client added successfully")
+        toast.success(isEditing ? "Client updated successfully" : "Client added successfully")
         onSuccess?.(result.data)
         onOpenChange(false)
-        form.reset()
+        if (!isEditing) {
+          form.reset()
+        }
       } else {
-        toast.error(result.error || "Failed to add client")
+        toast.error(result.error || (isEditing ? "Failed to update client" : "Failed to add client"))
       }
     } catch (error) {
       toast.error("An unexpected error occurred")
-      console.error("Error creating client:", error)
+      console.error("Error saving client:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -107,11 +154,14 @@ export function AddClientDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Add New Client
+            {isEditing ? <Edit className="h-5 w-5" /> : <User className="h-5 w-5" />}
+            {isEditing ? "Edit Client" : "Add New Client"}
           </DialogTitle>
           <DialogDescription>
-            Add a new client to your portfolio with their contact information.
+            {isEditing 
+              ? "Update client information and contact details."
+              : "Add a new client to your portfolio with their contact information."
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -249,7 +299,7 @@ export function AddClientDialog({
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Add Client
+                {isEditing ? "Update Client" : "Add Client"}
               </Button>
             </DialogFooter>
           </form>

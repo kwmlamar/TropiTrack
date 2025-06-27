@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  CalendarIcon,
   Clock,
   Building2,
   Loader2,
@@ -15,13 +14,13 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { startOfWeek, endOfWeek, addDays, format } from "date-fns";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
+import { MultiDatePicker } from "@/components/ui/multi-date-picker";
 import {
   Popover,
   PopoverContent,
@@ -86,14 +85,9 @@ const timesheetEntrySchema = z.object({
 // Schema for the bulk timesheet form
 const bulkTimesheetSchema = z.object({
   project_id: z.string().min(1, "Project is required"),
-  date_range: z
-    .object({
-      from: z.date(),
-      to: z.date().optional(),
-    })
-    .refine((data) => data.from, {
-      message: "Start date is required",
-    }),
+  selected_dates: z
+    .array(z.date())
+    .min(1, "At least one date must be selected"),
   entries: z
     .array(timesheetEntrySchema)
     .min(1, "At least one worker entry is required"),
@@ -142,10 +136,7 @@ export function BulkTimesheetForm({
     resolver: zodResolver(bulkTimesheetSchema),
     defaultValues: {
       project_id: "",
-      date_range: {
-        from: new Date(),
-        to: undefined,
-      },
+      selected_dates: [],
       entries: [
         {
           worker_id: "",
@@ -171,24 +162,18 @@ export function BulkTimesheetForm({
     name: "entries",
   });
   
-  const watchedDateRange = useWatch({
+  const watchedSelectedDates = useWatch({
     control: form.control,
-    name: "date_range",
+    name: "selected_dates",
   });
 
   // Calculate totals reactively based on watched form values
   const calculateTotals = () => {
     const entries = watchedEntries || [];
-    const dateRange = watchedDateRange;
+    const selectedDates = watchedSelectedDates || [];
 
     // Calculate number of days
-    let numberOfDays = 1;
-    if (dateRange && dateRange.from && dateRange.to) {
-      const diffTime = Math.abs(
-        dateRange.to.getTime() - dateRange.from.getTime()
-      );
-      numberOfDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    }
+    const numberOfDays = selectedDates.length;
 
     let totalHours = 0;
     let totalCost = 0;
@@ -227,27 +212,14 @@ export function BulkTimesheetForm({
     setSubmissionSuccess(false);
 
     try {
-      // Generate array of dates from the range
-      const dates: string[] = [];
-      const startDate = data.date_range.from;
-      const endDate = data.date_range.to || data.date_range.from;
-
-      const currentDate = new Date(startDate);
-      const finalDate = new Date(endDate);
-
-      while (currentDate <= finalDate) {
-        dates.push(format(currentDate, "yyyy-MM-dd"));
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-
       // Create timesheet entries for each worker × each date combination
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const timesheetPromises: Promise<any>[] = [];
 
       data.entries.forEach((entry) => {
-        dates.forEach((date) => {
+        data.selected_dates.forEach((date) => {
           const timesheetData: CreateTimesheetInput = {
-            date: date,
+            date: format(date, "yyyy-MM-dd"),
             project_id: data.project_id,
             worker_id: entry.worker_id,
             task_description: entry.task_description || "",
@@ -329,24 +301,36 @@ export function BulkTimesheetForm({
   // Function to apply quick date range
   const applyQuickDateRange = (range: "today" | "thisWeek" | "nextWeek") => {
     const today = new Date();
-    let from: Date, to: Date;
     const weekStartsOn = getPeriodStartDay();
+    let dates: Date[] = [];
 
     switch (range) {
       case "today":
-        from = to = today;
+        dates = [today];
         break;
       case "thisWeek":
-        from = startOfWeek(today, { weekStartsOn });
-        to = endOfWeek(today, { weekStartsOn });
+        const thisWeekStart = startOfWeek(today, { weekStartsOn });
+        const thisWeekEnd = endOfWeek(today, { weekStartsOn });
+        dates = [];
+        const currentDate = new Date(thisWeekStart);
+        while (currentDate <= thisWeekEnd) {
+          dates.push(new Date(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
         break;
       case "nextWeek":
-        from = addDays(startOfWeek(today, { weekStartsOn }), 7);
-        to = addDays(endOfWeek(today, { weekStartsOn }), 7);
+        const nextWeekStart = addDays(startOfWeek(today, { weekStartsOn }), 7);
+        const nextWeekEnd = addDays(endOfWeek(today, { weekStartsOn }), 7);
+        dates = [];
+        const nextCurrentDate = new Date(nextWeekStart);
+        while (nextCurrentDate <= nextWeekEnd) {
+          dates.push(new Date(nextCurrentDate));
+          nextCurrentDate.setDate(nextCurrentDate.getDate() + 1);
+        }
         break;
     }
 
-    form.setValue("date_range", { from, to });
+    form.setValue("selected_dates", dates);
   };
 
   // Function to copy a field to all entries
@@ -446,63 +430,16 @@ export function BulkTimesheetForm({
             <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="date_range"
+                name="selected_dates"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date Range</FormLabel>
+                    <FormLabel>Select Dates</FormLabel>
                     <div className="flex flex-col space-y-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value?.from && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value?.from ? (
-                              field.value.to ? (
-                                <>
-                                  {format(field.value.from, "LLL dd, y")} -{" "}
-                                  {format(field.value.to, "LLL dd, y")}
-                                </>
-                              ) : (
-                                format(field.value.from, "LLL dd, y")
-                              )
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="range"
-                            defaultMonth={field.value?.from ?? new Date()}
-                            selected={field.value}
-                            onSelect={(range) => {
-                              if (!range) {
-                                field.onChange(null);
-                                return;
-                              }
-                              
-                              // If the same date is selected twice, treat it as a single day selection
-                              if (range.from && range.to && 
-                                  range.from.getTime() === range.to.getTime()) {
-                                field.onChange({ from: range.from, to: range.from });
-                                return;
-                              }
-                              
-                              field.onChange(range);
-                            }}
-                            numberOfMonths={2}
-                            weekStartsOn={getPeriodStartDay()}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <MultiDatePicker
+                        selectedDates={field.value}
+                        onDatesChange={field.onChange}
+                        placeholder="Choose individual dates"
+                      />
                       <div className="flex gap-2">
                         <Button
                           type="button"

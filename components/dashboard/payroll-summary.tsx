@@ -25,37 +25,41 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
   } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const getDateRange = () => {
-    switch (viewMode) {
-      case "daily":
-        return {
-          start: startOfDay(selectedDate),
-          end: endOfDay(selectedDate)
-        }
-      case "weekly":
-        return {
-          start: startOfWeek(selectedDate),
-          end: endOfWeek(selectedDate)
-        }
-      case "monthly":
-        return {
-          start: startOfMonth(selectedDate),
-          end: endOfMonth(selectedDate)
-        }
-    }
-  }
-
   useEffect(() => {
+    const getDateRange = () => {
+      switch (viewMode) {
+        case "daily":
+          return {
+            start: startOfDay(selectedDate),
+            end: endOfDay(selectedDate)
+          }
+        case "weekly":
+          return {
+            start: startOfWeek(selectedDate),
+            end: endOfWeek(selectedDate)
+          }
+        case "monthly":
+          return {
+            start: startOfMonth(selectedDate),
+            end: endOfMonth(selectedDate)
+          }
+      }
+    }
+
     const fetchPayrollData = async () => {
       try {
+        console.log("[PayrollSummary] Starting fetch with:", { viewMode, selectedDate })
         setLoading(true)
         const { start, end } = getDateRange()
+        console.log("[PayrollSummary] Date range:", { start, end })
 
         const response = await getAggregatedPayrolls({
           date_from: format(start, "yyyy-MM-dd"),
           date_to: format(end, "yyyy-MM-dd"),
           target_period_type: viewMode === "daily" ? "weekly" : viewMode
         })
+
+        console.log("[PayrollSummary] API response:", response)
 
         if (response.success && response.data && response.data.length > 0) {
           // Aggregate the data
@@ -75,14 +79,17 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
             pay_period_end: ""
           })
 
+          console.log("[PayrollSummary] Aggregated data:", aggregated)
           setPayrollData(aggregated)
         } else {
+          console.log("[PayrollSummary] No data or error in response")
           setPayrollData(null)
         }
       } catch (error) {
-        console.error("Error fetching payroll data:", error)
+        console.error("[PayrollSummary] Error fetching payroll data:", error)
         setPayrollData(null)
       } finally {
+        console.log("[PayrollSummary] Setting loading to false")
         setLoading(false)
       }
     }

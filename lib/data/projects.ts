@@ -143,7 +143,7 @@ export async function createProject(
   try {
     const { data, error } = await supabase
       .from("projects")
-      .insert([{ ...project, company_id: profile.company_id }])
+      .insert([{ ...project, company_id: profile.company_id, created_by: userId }])
       .select()
       .single();
 

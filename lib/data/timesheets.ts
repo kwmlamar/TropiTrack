@@ -171,6 +171,7 @@ export async function createTimesheet(
         ...calculatedTimesheet,
         hourly_rate: workerHourlyRate,
         company_id: profile.company_id,
+        created_by: userId,
         supervisor_approval: "pending",
       })
       .select()

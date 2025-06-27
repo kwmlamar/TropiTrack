@@ -130,7 +130,7 @@ export async function insertClient(
 
     const { data, error } = await supabase
       .from("clients")
-      .insert([{ ...normalizedClient, company_id: profile.company_id }])
+      .insert([{ ...normalizedClient, company_id: profile.company_id, created_by: userId }])
       .select()
       .single();
 

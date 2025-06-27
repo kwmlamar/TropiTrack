@@ -138,8 +138,8 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
             Create Timesheet Entries
           </h2>
           <p className="text-muted-foreground mt-1">
-            Select a project, date range, and workers to create multiple timesheet entries at once. 
-            Use the quick templates to speed up data entry.
+            Select a project, individual dates, and workers to create multiple timesheet entries at once. 
+            Use the quick templates or pick specific dates to match your construction schedule.
           </p>
         </div>
         

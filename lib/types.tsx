@@ -116,6 +116,7 @@ export type PayrollRecord = {
   updated_at?: string;
   pay_period_start: string;
   pay_period_end: string;
+  created_by?: string;
 };
 
 export type CreatePayrollInput = Omit<PayrollRecord, "id" | "created_at" | "updated_at" | "total_deductions" | "net_pay">;

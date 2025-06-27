@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Edit } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { EditProjectDialog } from "./edit-project-dialog"
 import type { ProjectWithDetails } from "@/lib/types/project"
@@ -30,6 +31,38 @@ export function ProjectDetailsSection({
     // Refresh the page to show updated data
     window.location.reload()
   }
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      not_started: {
+        label: "Not Started",
+        className: "bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/20 dark:bg-secondary/20 dark:text-secondary-foreground dark:border-secondary/30 px-4 py-1.5 text-sm font-medium",
+      },
+      in_progress: {
+        label: "In Progress",
+        className: "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-4 py-1.5 text-sm font-medium",
+      },
+      paused: {
+        label: "Paused",
+        className: "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-4 py-1.5 text-sm font-medium",
+      },
+      completed: {
+        label: "Completed",
+        className: "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-4 py-1.5 text-sm font-medium",
+      },
+      cancelled: {
+        label: "Cancelled",
+        className: "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-4 py-1.5 text-sm font-medium",
+      },
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.not_started;
+    return (
+      <Badge variant="outline" className={config.className}>
+        {config.label}
+      </Badge>
+    );
+  };
 
   return (
     <>
@@ -73,7 +106,9 @@ export function ProjectDetailsSection({
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <h4 className="font-medium text-sm text-muted-foreground">Status</h4>
-              <p className="text-sm mt-1">{project.status}</p>
+              <div className="mt-1">
+                {getStatusBadge(project.status)}
+              </div>
             </div>
             <div>
               <h4 className="font-medium text-sm text-muted-foreground">Start Date</h4>

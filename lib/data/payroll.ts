@@ -132,7 +132,7 @@ export async function getPayroll(id: string): Promise<ApiResponse<PayrollRecord>
 
 export async function createPayroll(input: CreatePayrollInput): Promise<ApiResponse<PayrollRecord>> {
   try {
-    const { data, error } = await supabase.from("payroll").insert(input).select().single();
+    const { data, error } = await supabase.from("payroll").insert({ ...input, created_by: input.created_by }).select().single();
     if (error) {
       return { data: null, error: error.message, success: false };
     }
@@ -329,6 +329,7 @@ export async function generatePayrollForWorkerAndPeriod(
       company_id: profile.company_id,
       pay_period_start: dateFrom,
       pay_period_end: dateTo,
+      created_by: userId,
     };
 
     console.log("[PayrollGen] Payroll data to be processed:", payrollData);

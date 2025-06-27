@@ -26,8 +26,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -36,7 +34,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  SlidersHorizontal,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -51,9 +48,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { AddProjectDialog } from "@/components/projects/add-project-dialog";
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 
 const columns = [
   "Project",
@@ -77,6 +74,8 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
+  const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const rowsPerPage = 10;
 
   useEffect(() => {
@@ -130,6 +129,22 @@ export default function ProjectsTable({ user }: { user: User }) {
         loadProjects();
       }
     }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setIsEditProjectDialogOpen(true);
+  };
+
+  const handleEditProjectSuccess = () => {
+    loadProjects();
+    setIsEditProjectDialogOpen(false);
+    setEditingProject(null);
+  };
+
+  const handleEditProjectClose = () => {
+    setIsEditProjectDialogOpen(false);
+    setEditingProject(null);
   };
 
   const assignmentCounts = useMemo(() => {
@@ -202,12 +217,9 @@ export default function ProjectsTable({ user }: { user: User }) {
       },
     };
 
-    const config =
-      statusConfig[status as keyof typeof statusConfig] ||
-      statusConfig.not_started;
-
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.not_started;
     return (
-      <Badge className={config.className}>
+      <Badge variant="outline" className={config.className}>
         {config.label}
       </Badge>
     );
@@ -215,28 +227,29 @@ export default function ProjectsTable({ user }: { user: User }) {
 
   const handleAddProjectSuccess = () => {
     loadProjects();
-    loadProjectAssignments();
+    setIsAddProjectDialogOpen(false);
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="space-y-4 pb-4">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Project Management
-          </h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Projects</h2>
           <p className="text-muted-foreground">
-            Manage construction projects and track progress across your portfolio
+            Manage your construction projects and track progress.
           </p>
         </div>
         <Button 
+          className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
           onClick={() => setIsAddProjectDialogOpen(true)}
         >
+          <Building2 className="mr-2 h-4 w-4" />
           Add Project
         </Button>
       </div>
 
+      {/* Add Project Dialog */}
       <AddProjectDialog
         open={isAddProjectDialogOpen}
         onOpenChange={setIsAddProjectDialogOpen}
@@ -245,108 +258,80 @@ export default function ProjectsTable({ user }: { user: User }) {
         onSuccess={handleAddProjectSuccess}
       />
 
-      {/* Filters and Controls */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Search Bar */}
-        <div className="space-y-2 flex-1">
+      {/* Edit Project Dialog */}
+      {editingProject && (
+        <EditProjectDialog
+          open={isEditProjectDialogOpen}
+          onOpenChange={handleEditProjectClose}
+          userId={user.id}
+          project={editingProject}
+          clients={clients}
+          onSuccess={handleEditProjectSuccess}
+        />
+      )}
 
-          <SearchForm
-            placeholder="Search projects..."
-            className="w-full"
-            value={searchTerm}
-            onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
+      {/* Filters Section */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Client Filter */}
+        <div className="flex-1">
+          <Label htmlFor="client-filter" className="text-sm font-medium mb-2 block">
+            Filter by Client
+          </Label>
+          <SearchableCombobox
+            items={clients}
+            selectedItem={selectedClient}
+            onSelect={setSelectedClient}
+            placeholder="All clients"
+            displayKey="name"
           />
         </div>
 
-        {/* Filter Button */}
-        <div className="flex items-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <SlidersHorizontal className="h-4 w-4" />
-                Filters
-                {(statusFilter !== "all" || selectedClient) && (
-                  <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                    {(statusFilter !== "all" ? 1 : 0) + (selectedClient ? 1 : 0)}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-4">
-              <DropdownMenuLabel className="text-base font-semibold">
-                Filter Projects
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              
-              {/* Status Filter */}
-              <div className="space-y-3 py-2">
-                <Label className="text-sm font-medium">Status</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="not_started">Not Started</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Separator />
-
-              {/* Client Filter */}
-              <div className="space-y-3 py-2">
-                <Label className="text-sm font-medium">Client</Label>
-                <div className="space-y-2">
-                  <SearchableCombobox
-                    items={clients}
-                    selectedItem={selectedClient}
-                    onSelect={(item) => setSelectedClient(item)}
-                    displayKey="name"
-                    placeholder="Select a client"
-                  />
-                  {selectedClient && (
-                    <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                      <span className="text-sm font-medium">{selectedClient.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedClient(null)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Clear Filters */}
-              {(statusFilter !== "all" || selectedClient) && (
-                <div className="pt-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setStatusFilter("all");
-                      setSelectedClient(null);
-                    }}
-                    className="w-full justify-start text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="mr-2 h-3 w-3" />
-                    Clear all filters
-                  </Button>
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Status Filter */}
+        <div className="flex-1">
+          <Label htmlFor="status-filter" className="text-sm font-medium mb-2 block">
+            Filter by Status
+          </Label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="not_started">Not Started</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="paused">Paused</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* Clear Filters */}
+        {(selectedClient || statusFilter !== "all") && (
+          <div className="flex items-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedClient(null);
+                setStatusFilter("all");
+              }}
+              className="h-10"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Clear Filters
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Search Section */}
+      <div className="w-full">
+        <SearchForm
+          placeholder="Search projects..."
+          className="w-full"
+          value={searchTerm}
+          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
+        />
       </div>
 
       {/* Projects Table */}
@@ -437,11 +422,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem
                             onSelect={(e) => e.preventDefault()}
-                            onClick={() => {
-                              // For now, we'll just open the add dialog
-                              // In the future, we could create an edit dialog
-                              setIsAddProjectDialogOpen(true)
-                            }}
+                            onClick={() => handleEditProject(project)}
                           >
                             Edit Project
                           </DropdownMenuItem>

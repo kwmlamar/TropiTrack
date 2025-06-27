@@ -19,8 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ClientDialog } from "@/components/forms/form-dialogs"
-import { AddClientDialog } from "./add-client-dialog"
+import { ClientDialog } from "./add-client-dialog"
 
 const columns = ["Name", "Email"]
 const ITEMS_PER_PAGE = 10;
@@ -32,7 +31,8 @@ export default function ClientTable({ user }: { user: User }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [addClientDialogOpen, setAddClientDialogOpen] = useState(false)
+  const [clientDialogOpen, setClientDialogOpen] = useState(false)
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
 
   useEffect(() => {
     loadClients()
@@ -62,6 +62,21 @@ export default function ClientTable({ user }: { user: User }) {
       setSelectedClient(null)
       loadClients()
     }
+  }
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client)
+    setClientDialogOpen(true)
+  }
+
+  const handleDialogClose = () => {
+    setClientDialogOpen(false)
+    setEditingClient(null)
+  }
+
+  const handleClientSuccess = () => {
+    loadClients()
+    handleDialogClose()
   }
 
   const filteredClients = clients.filter((client) => {
@@ -98,16 +113,20 @@ export default function ClientTable({ user }: { user: User }) {
           <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
         </div>
         <Button 
-          onClick={() => setAddClientDialogOpen(true)}
+          onClick={() => setClientDialogOpen(true)}
         >
+          <UserCheck className="mr-2 h-4 w-4" />
           Add Client
         </Button>
       </div>
-      <AddClientDialog
+
+      {/* Unified Client Dialog */}
+      <ClientDialog
         userId={user.id}
-        onSuccess={loadClients}
-        open={addClientDialogOpen}
-        onOpenChange={setAddClientDialogOpen}
+        client={editingClient || undefined}
+        onSuccess={handleClientSuccess}
+        open={clientDialogOpen}
+        onOpenChange={handleDialogClose}
       />
 
       {/* Search Section */}
@@ -152,7 +171,7 @@ export default function ClientTable({ user }: { user: User }) {
               </p>
               <Button 
                 className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
-                onClick={() => setAddClientDialogOpen(true)}
+                onClick={() => setClientDialogOpen(true)}
               >
                 <UserCheck className="mr-2 h-4 w-4" />
                 Add Your First Client
@@ -195,14 +214,14 @@ export default function ClientTable({ user }: { user: User }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <ClientDialog
-                          userId={user.id}
-                          client={client}
-                          onSuccess={loadClients}
-                          trigger={
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit Client</DropdownMenuItem>
-                          }
-                        />
+                        <DropdownMenuItem 
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            handleEditClient(client)
+                          }}
+                        >
+                          Edit Client
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedClient(client)
