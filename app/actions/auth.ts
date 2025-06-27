@@ -68,23 +68,8 @@ export async function signup(formData: FormData): Promise<SignupResult> {
 export async function signInWithGoogle(): Promise<{ url: string } | { error: string }> {
   const supabase = await createClient();
   
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    console.error("Google OAuth error:", error);
-    return { error: error.message };
-  }
-
-  return { url: data.url };
-}
-
-export async function signUpWithGoogle(): Promise<{ url: string } | { error: string }> {
-  const supabase = await createClient();
+  console.log('Starting Google OAuth sign in...');
+  console.log('Redirect URL:', `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`);
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -98,6 +83,39 @@ export async function signUpWithGoogle(): Promise<{ url: string } | { error: str
     return { error: error.message };
   }
 
+  if (!data?.url) {
+    console.error("No OAuth URL returned from Supabase");
+    return { error: "Failed to generate OAuth URL" };
+  }
+
+  console.log('Google OAuth URL generated successfully');
+  return { url: data.url };
+}
+
+export async function signUpWithGoogle(): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient();
+  
+  console.log('Starting Google OAuth sign up...');
+  console.log('Redirect URL:', `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`);
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error("Google OAuth error:", error);
+    return { error: error.message };
+  }
+
+  if (!data?.url) {
+    console.error("No OAuth URL returned from Supabase");
+    return { error: "Failed to generate OAuth URL" };
+  }
+
+  console.log('Google OAuth URL generated successfully');
   return { url: data.url };
 }
 
