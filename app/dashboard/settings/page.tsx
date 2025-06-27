@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils"
 import { PayrollSettingsForm } from "@/components/settings/payroll/payroll-settings-form"
 import { PaymentScheduleForm } from "@/components/settings/payroll/payment-schedule-form"
 import { DeductionRulesForm } from "@/components/settings/payroll/deduction-rules-form"
+import { CompanyInformationForm } from "@/components/settings/company-information-form"
+import { PreferencesForm } from "@/components/settings/preferences-form"
 
 const settingsTabs = [
   {
@@ -77,17 +79,8 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Information</CardTitle>
-              <CardDescription>
-                Update your company details and business information.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Company Information Form */}
-            </CardContent>
-          </Card>
+          <CompanyInformationForm />
+          <PreferencesForm />
 
           <Card>
             <CardHeader>
