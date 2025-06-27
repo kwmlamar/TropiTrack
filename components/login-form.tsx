@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { login, signInWithGoogle } from "@/app/actions/auth"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
+import { TropiTrackLogo } from "@/components/tropitrack-logo"
 
 export function LoginForm({
   className,
@@ -79,7 +80,12 @@ export function LoginForm({
   }
 
   return (
-    <div className={cn("flex flex-col gap-4 w-full", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 w-full", className)} {...props}>
+      {/* TropiTrack Logo */}
+      <div className="flex justify-center">
+        <TropiTrackLogo size="lg" />
+      </div>
+      
       <Card className="w-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Login to your account</CardTitle>

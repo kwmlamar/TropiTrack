@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { TropiTrackLogo } from "@/components/tropitrack-logo";
 
 export function SignupForm({
   className,
@@ -82,7 +83,12 @@ export function SignupForm({
   }
 
   return (
-    <div className={cn("flex flex-col gap-4 w-full", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 w-full", className)} {...props}>
+      {/* TropiTrack Logo */}
+      <div className="flex justify-center">
+        <TropiTrackLogo size="lg" />
+      </div>
+      
       <Card className="w-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Create your account</CardTitle>

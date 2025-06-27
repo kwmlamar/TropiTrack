@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { signup, signUpWithGoogle } from "@/app/actions/auth";
 import { toast } from "sonner";
+import { TropiTrackLogo } from "@/components/tropitrack-logo";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -145,22 +146,7 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       {/* Header with Logo */}
       <div className="flex flex-col items-center space-y-4">
-        <div className="flex items-center space-x-2">
-          {/* Light Mode Logo */}
-          <img
-            src="/logo/5.png"
-            alt="TropiTrack logo"
-            className="w-50 h-50 object-contain block dark:hidden"
-          />
-
-          {/* Dark Mode Logo */}
-          <img
-            src="/logo/2.png"
-            alt="TropiTrack logo dark"
-            className="w-50 h-50 object-contain hidden dark:block"
-          />
-        </div>
-
+        <TropiTrackLogo size="lg" />
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
             Create your account
