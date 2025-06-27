@@ -2,8 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ModeToggle } from "@/components/mode-toggle"
-import { PricingToggle } from "@/components/pricing-toggle"
 import { FaqAccordion } from "@/components/faq-accordion"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { Clock, CreditCard, Users, Smartphone, CheckCircle, ArrowRight } from "lucide-react"
@@ -17,9 +15,6 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="rounded-md bg-primary p-1">
-              <Clock className="h-5 w-5 text-primary-foreground" />
-            </div>
             <span className="text-xl font-bold tracking-tight">TropiTrack</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
@@ -37,7 +32,6 @@ export default function Home() {
             </Link>
           </nav>
           <div className="flex items-center gap-4">
-            <ModeToggle />
             <Button asChild variant="outline" className="hidden md:flex">
               <Link href="#contact">Contact</Link>
             </Button>
@@ -70,9 +64,11 @@ export default function Home() {
                   streamline payroll.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button size="lg" className="group">
-                    Try it free
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <Button size="lg" className="group" asChild>
+                    <Link href="/signup">
+                      Try it free
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
                   </Button>
                   <Button size="lg" variant="outline">
                     Schedule a demo
@@ -85,7 +81,7 @@ export default function Home() {
                   </div>
                   <div className="flex items-center">
                     <CheckCircle className="mr-1 h-4 w-4 text-primary" />
-                    14-day free trial
+                    1 month free trial
                   </div>
                   <div className="flex items-center">
                     <CheckCircle className="mr-1 h-4 w-4 text-primary" />
@@ -118,7 +114,7 @@ export default function Home() {
                 Everything you need to manage your crew
               </h2>
               <p className="mt-4 text-xl text-muted-foreground max-w-3xl mx-auto">
-                Powerful features designed specifically for construction teams in the Caribbean
+                Powerful features designed specifically for construction teams in the Bahamas
               </p>
             </div>
 
@@ -376,45 +372,57 @@ export default function Home() {
               <p className="mt-4 text-xl text-muted-foreground max-w-3xl mx-auto">
                 Choose the plan that works best for your construction business
               </p>
-              <div className="mt-8">
-                <PricingToggle onToggle={() => {}} />
-              </div>
             </div>
 
             <div className="grid gap-8 md:grid-cols-3">
               <Card className="bg-card">
                 <CardContent className="p-6">
                   <div className="mb-4">
-                    <h3 className="text-2xl font-bold">Starter</h3>
-                    <p className="text-muted-foreground">For small teams getting started</p>
+                    <h3 className="text-2xl font-bold">🟢 Starter</h3>
+                    <p className="text-muted-foreground">Small crews (5-15 workers)</p>
+                    <p className="text-sm text-muted-foreground">Reduced from $49</p>
                   </div>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold">$29</span>
+                    <span className="text-4xl font-bold">$39</span>
                     <span className="text-muted-foreground">/month</span>
                   </div>
                   <ul className="mb-6 space-y-2">
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Up to 10 workers</span>
+                      <span>Up to 15 workers</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Basic time tracking</span>
+                      <span>3 active projects</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Simple payroll reports</span>
+                      <span>Time tracking + approvals</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Mobile app access</span>
+                      <span>Basic payroll reports</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>Mobile supervisor access</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>Basic project templates</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>WhatsApp support</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
                       <span>Email support</span>
                     </li>
                   </ul>
-                  <Button className="w-full">Get Started</Button>
+                  <Button className="w-full" asChild>
+                    <Link href="/signup">Get Started</Link>
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -424,25 +432,34 @@ export default function Home() {
                 </div>
                 <CardContent className="p-6">
                   <div className="mb-4">
-                    <h3 className="text-2xl font-bold">Professional</h3>
-                    <p className="text-muted-foreground">For growing construction teams</p>
+                    <h3 className="text-2xl font-bold">🟨 Pro</h3>
+                    <p className="text-muted-foreground">Growing companies (15-50 workers)</p>
+                    <p className="text-sm text-muted-foreground">Reduced from $99</p>
                   </div>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold">$79</span>
+                    <span className="text-4xl font-bold">$89</span>
                     <span className="text-muted-foreground">/month</span>
                   </div>
                   <ul className="mb-6 space-y-2">
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Up to 30 workers</span>
+                      <span>Up to 50 workers</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Advanced time tracking</span>
+                      <span>Unlimited projects</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Full payroll integration</span>
+                      <span>Advanced invoicing + payment tracking</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>Document management (plans, permits, photos)</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>Role-based permissions</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
@@ -450,25 +467,36 @@ export default function Home() {
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>GPS verification</span>
+                      <span>Basic reporting dashboard</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Priority support</span>
+                      <span>SMS notifications for approvals</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>Chat/email support</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>2-hour response time</span>
                     </li>
                   </ul>
-                  <Button className="w-full">Get Started</Button>
+                  <Button className="w-full" asChild>
+                    <Link href="/signup">Get Started</Link>
+                  </Button>
                 </CardContent>
               </Card>
 
               <Card className="bg-card">
                 <CardContent className="p-6">
                   <div className="mb-4">
-                    <h3 className="text-2xl font-bold">Enterprise</h3>
-                    <p className="text-muted-foreground">For large construction companies</p>
+                    <h3 className="text-2xl font-bold">🟦 Enterprise</h3>
+                    <p className="text-muted-foreground">Multi-site operations (50+ workers)</p>
+                    <p className="text-sm text-muted-foreground">Reduced from $199</p>
                   </div>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold">$199</span>
+                    <span className="text-4xl font-bold">$179</span>
                     <span className="text-muted-foreground">/month</span>
                   </div>
                   <ul className="mb-6 space-y-2">
@@ -478,23 +506,39 @@ export default function Home() {
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Advanced analytics</span>
+                      <span>Multi-company access (subcontractors, vendors)</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Custom integrations</span>
+                      <span>Advanced analytics + custom reports</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Multi-site management</span>
+                      <span>Equipment tracking</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                      <span>Advanced reporting</span>
+                      <span>Safety incident reporting</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>Integration with accounting software</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>API access</span>
                     </li>
                     <li className="flex items-center">
                       <CheckCircle className="mr-2 h-5 w-5 text-primary" />
                       <span>Dedicated account manager</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>On-site training (1 day included)</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                      <span>Priority support (1-hour response)</span>
                     </li>
                   </ul>
                   <Button className="w-full">Contact Sales</Button>
@@ -534,9 +578,11 @@ export default function Home() {
                   payroll.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                  <Button size="lg" className="group">
-                    Start your free trial
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <Button size="lg" className="group" asChild>
+                    <Link href="/signup">
+                      Start your free trial
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
                   </Button>
                   <Button size="lg" variant="outline">
                     Schedule a demo
@@ -544,7 +590,7 @@ export default function Home() {
                 </div>
                 <div className="mt-6">
                   <p className="text-sm text-muted-foreground">
-                    No credit card required. 14-day free trial. Cancel anytime.
+                    No credit card required. 1 month free trial. Cancel anytime.
                   </p>
                 </div>
               </div>
