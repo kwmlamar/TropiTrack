@@ -32,7 +32,7 @@ BEGIN
 
   -- Create profile with company_id
   INSERT INTO public.profiles (id, role, created_at, name, email, company_id)
-  VALUES (new.id, 'employee', now(), user_name, new.email, new_company_id);
+  VALUES (new.id, 'admin', now(), user_name, new.email, new_company_id);
 
   -- Log the profile creation for debugging
   RAISE NOTICE 'Created profile for user: % with company_id: %', new.id, new_company_id;

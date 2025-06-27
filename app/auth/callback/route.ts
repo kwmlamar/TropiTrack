@@ -45,10 +45,69 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}/error?message=No user data returned`)
       }
 
-      // The database trigger (handle_new_user) will automatically create
-      // the company and profile for new OAuth users
-      // No need to manually create them here
-      
+      // Check if user profile exists, if not create it manually
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // Profile doesn't exist, create it manually
+        console.log('Profile not found, creating manually for user:', data.user.id)
+        
+        try {
+          // Extract user info
+          const userEmail = data.user.email || ''
+          const userName = data.user.user_metadata?.full_name || 
+                          data.user.user_metadata?.name || 
+                          userEmail.split('@')[0] || 
+                          'User'
+          const companyName = data.user.user_metadata?.company_name || 'My Company'
+
+          // Create company first
+          const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .insert({
+              name: companyName,
+              email: userEmail
+            })
+            .select()
+            .single()
+
+          if (companyError) {
+            console.error('Error creating company:', companyError)
+            return NextResponse.redirect(`${origin}/error?message=Failed to create company: ${companyError.message}`)
+          }
+
+          // Create profile
+          const { error: profileCreateError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              role: 'admin',
+              name: userName,
+              email: userEmail,
+              company_id: company.id
+            })
+
+          if (profileCreateError) {
+            console.error('Error creating profile:', profileCreateError)
+            return NextResponse.redirect(`${origin}/error?message=Failed to create profile: ${profileCreateError.message}`)
+          }
+
+          console.log('Successfully created profile and company manually')
+        } catch (manualCreateError) {
+          console.error('Error in manual profile creation:', manualCreateError)
+          return NextResponse.redirect(`${origin}/error?message=Failed to create user profile: ${manualCreateError instanceof Error ? manualCreateError.message : 'Unknown error'}`)
+        }
+      } else if (profileError) {
+        console.error('Error checking profile:', profileError)
+        return NextResponse.redirect(`${origin}/error?message=Error checking user profile: ${profileError.message}`)
+      } else {
+        console.log('Profile already exists for user:', data.user.id)
+      }
+
       console.log('Authentication successful, redirecting to:', next)
       return NextResponse.redirect(`${origin}${next}`)
     } catch (err) {
