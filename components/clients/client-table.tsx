@@ -5,7 +5,7 @@ import { SearchForm } from "@/components/search-form"
 import { Button } from "@/components/ui/button"
 import { fetchClientsForCompany, deleteClient } from "@/lib/data/data"
 import type { User } from "@supabase/supabase-js"
-import type { Client } from "@/lib/types"
+import type { Client } from "@/lib/types/client"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
 import { MoreVertical, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react"
@@ -219,56 +219,56 @@ export default function ClientTable({ user }: { user: User }) {
               ))}
             </div>
           )}
+
+          {/* Pagination Controls */}
+          {filteredClients.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between px-6 py-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredClients.length)} of {filteredClients.length} clients
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className={`h-8 w-8 p-0 ${
+                        currentPage === page 
+                          ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
+                          : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
+                      }`}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Pagination Controls */}
-      {filteredClients.length > ITEMS_PER_PAGE && (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
-          <div className="text-sm text-muted-foreground">
-            Showing {startIndex + 1} to {Math.min(endIndex, filteredClients.length)} of {filteredClients.length} clients
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handlePageChange(page)}
-                  className={`h-8 w-8 p-0 ${
-                    currentPage === page 
-                      ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
-                      : "hover:bg-[#E8EDF5]/70"
-                  }`}
-                >
-                  {page}
-                </Button>
-              ))}
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

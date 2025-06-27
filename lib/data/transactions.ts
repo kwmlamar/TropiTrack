@@ -109,6 +109,65 @@ export async function getTransactions(
   }
 }
 
+// Server-side version of getTransactions
+export async function getTransactionsServer(
+  filters: TransactionFilters = {},
+  companyId: string
+): Promise<ApiResponse<Transaction[]>> {
+  try {
+    let query = supabase
+      .from("transactions")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false });
+
+    // Apply filters
+    if (filters.date_from) {
+      query = query.gte("date", filters.date_from);
+    }
+    if (filters.date_to) {
+      query = query.lte("date", filters.date_to);
+    }
+    if (filters.type) {
+      query = query.eq("type", filters.type);
+    }
+    if (filters.status) {
+      query = query.eq("status", filters.status);
+    }
+    if (filters.category) {
+      query = query.eq("category", filters.category);
+    }
+    if (filters.search) {
+      // Escape special characters that could cause PostgreSQL parsing errors
+      const escapedSearch = escapeSearchTerm(filters.search);
+      
+      query = query.or(`description.ilike.%${escapedSearch}%,transaction_id.ilike.%${escapedSearch}%,reference.ilike.%${escapedSearch}%`);
+    }
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+    if (filters.offset) {
+      query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching transactions:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    const transactions = data ? data.map(mapTransactionRecord) : [];
+    return { data: transactions, error: null, success: true };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
 export async function getTransaction(id: string): Promise<ApiResponse<Transaction>> {
   try {
     const { data, error } = await supabase

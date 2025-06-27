@@ -1166,60 +1166,60 @@ export default function TimesheetsPage({ user }: { user: User }) {
                     </p>
                   </div>
                 )}
+
+                {/* Pagination Controls */}
+                {((viewMode === "weekly" && weeklyWorkerEntries.length > ITEMS_PER_PAGE) || 
+                  (viewMode === "daily" && filteredTimesheets.length > ITEMS_PER_PAGE)) && (
+                  <div className="flex items-center justify-between px-6 py-4">
+                    <div className="text-sm text-muted-foreground">
+                      {viewMode === "weekly" 
+                        ? `Showing ${weeklyStartIndex + 1} to ${Math.min(weeklyEndIndex, weeklyWorkerEntries.length)} of ${weeklyWorkerEntries.length} workers`
+                        : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTimesheets.length)} of ${filteredTimesheets.length} timesheets`
+                      }
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: viewMode === "weekly" ? weeklyTotalPages : totalPages }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(page)}
+                            className={`h-8 w-8 p-0 ${
+                              currentPage === page 
+                                ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
+                                : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
+                            }`}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === (viewMode === "weekly" ? weeklyTotalPages : totalPages)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
-
-            {/* Pagination Controls */}
-            {((viewMode === "weekly" && weeklyWorkerEntries.length > ITEMS_PER_PAGE) || 
-              (viewMode === "daily" && filteredTimesheets.length > ITEMS_PER_PAGE)) && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
-                <div className="text-sm text-muted-foreground">
-                  {viewMode === "weekly" 
-                    ? `Showing ${weeklyStartIndex + 1} to ${Math.min(weeklyEndIndex, weeklyWorkerEntries.length)} of ${weeklyWorkerEntries.length} workers`
-                    : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTimesheets.length)} of ${filteredTimesheets.length} timesheets`
-                  }
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="flex items-center space-x-1">
-                    {Array.from({ length: viewMode === "weekly" ? weeklyTotalPages : totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(page)}
-                        className={`h-8 w-8 p-0 ${
-                          currentPage === page 
-                            ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
-                            : "hover:bg-[#E8EDF5]/70"
-                        }`}
-                      >
-                        {page}
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === (viewMode === "weekly" ? weeklyTotalPages : totalPages)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
           </TabsContent>
           <TabsContent value="approvals" className="container mx-auto py-6 space-y-6">
             <ApprovalsPage

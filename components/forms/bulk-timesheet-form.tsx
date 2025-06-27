@@ -953,7 +953,7 @@ export function BulkTimesheetForm({
           <Button 
             type="submit" 
             disabled={isSubmitting}
-            className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg"
+            className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
           >
             {isSubmitting && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

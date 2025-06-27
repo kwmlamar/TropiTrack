@@ -463,7 +463,7 @@ export default function ProjectsTable({ user }: { user: User }) {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-border/50">
+                <div className="flex items-center justify-between px-6 py-4">
                   <div className="text-sm text-muted-foreground">
                     Showing {startIndex + 1} to {Math.min(endIndex, filteredProjects.length)} of {filteredProjects.length} projects
                   </div>
@@ -487,8 +487,8 @@ export default function ProjectsTable({ user }: { user: User }) {
                           onClick={() => goToPage(page)}
                           className={`h-8 w-8 p-0 ${
                             currentPage === page 
-                              ? "bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary border-[#E8EDF5]" 
-                              : ""
+                              ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
+                              : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
                           }`}
                         >
                           {page}

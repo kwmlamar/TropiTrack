@@ -183,7 +183,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
     if (totalPages <= 1) return null;
 
     return (
-      <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/30">
+      <div className="flex items-center justify-between px-6 py-4">
         <div className="text-sm text-muted-foreground">
           Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} records
         </div>
@@ -207,8 +207,8 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                 onClick={() => handlePageChange(page)}
                 className={`h-8 w-8 p-0 ${
                   currentPage === page 
-                    ? "bg-[#E8EDF5] text-primary border-[#E8EDF5]" 
-                    : "hover:bg-[#E8EDF5]/70"
+                    ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
+                    : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
                 }`}
               >
                 {page}

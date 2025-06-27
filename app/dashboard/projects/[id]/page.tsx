@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/layouts/dashboard-layout";
 import { updateRecentProject } from "@/lib/data/recent-projects";
 import { getProject } from "@/lib/data/projects";
 import { getProfile } from "@/lib/data/data";
-import { getTransactions } from "@/lib/data/transactions";
+import { getTransactionsServer } from "@/lib/data/transactions";
 import { getPayrollsByProject } from "@/lib/data/payroll";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { getProjectAssignments } from "@/lib/data/project-assignments";
 import { fetchClientsForCompany } from "@/lib/data/data";
 import { ProjectDetailsSection } from "@/components/projects/project-details-section";
 import { TeamMembersClient } from "@/components/projects/team-members-client";
+import { ProjectDocumentsNew } from "@/components/projects/project-documents-new";
 import { getWorkers } from "@/lib/data/workers";
 
 // Helper function to get color based on percentage
@@ -81,10 +82,10 @@ export default async function ProjectPage({
   const projectAssignments = projectAssignmentsResponse.data || [];
 
   // Fetch transactions for this project (using project name as reference)
-  const transactionsResponse = await getTransactions({ 
+  const transactionsResponse = await getTransactionsServer({ 
     search: project.name,
     type: "expense"
-  });
+  }, profile.company_id);
   const projectTransactions = transactionsResponse.data || [];
 
   // Fetch payrolls for this project
@@ -318,21 +319,7 @@ export default async function ProjectPage({
             </TabsContent>
 
             <TabsContent value="documents" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Project Documents</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Manage contracts, plans, permits, and other project documents.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                      <p className="text-muted-foreground">Document management features coming soon...</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProjectDocumentsNew projectId={id} userId={user.id} />
             </TabsContent>
           </Tabs>
         </div>
