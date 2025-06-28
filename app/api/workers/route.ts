@@ -33,7 +33,7 @@ export async function GET() {
       .from("workers")
       .select("id, name")
       .eq("company_id", profile.company_id)
-      .eq("active", true)
+      .eq("is_active", true)
       .order("name")
 
     if (workersError) {

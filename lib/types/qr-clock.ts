@@ -29,6 +29,7 @@ export interface QRCode {
   code_hash: string
   name: string
   description?: string
+  qr_type: 'clock_in' | 'clock_out' | 'break_start' | 'break_end'
   is_active: boolean
   expires_at?: string
   created_by: string
@@ -99,7 +100,9 @@ export interface NewQRCode {
   project_location_id: string
   name: string
   description?: string
+  qr_type?: 'clock_in' | 'clock_out' | 'break_start' | 'break_end'
   expires_at?: string
+  is_active?: boolean
 }
 
 export interface ClockEventInput {
@@ -124,4 +127,26 @@ export interface QRCodeGenerateResponse {
   qr_code?: QRCode
   qr_code_url?: string
   error?: string
+}
+
+// Timesheet type for auto-generation from clock events
+export interface Timesheet {
+  id?: string
+  date: string
+  worker_id: string
+  project_id: string
+  task_description: string
+  clock_in: string
+  clock_out: string
+  break_duration: number
+  regular_hours: number
+  overtime_hours: number
+  total_hours: number
+  total_pay: number
+  hourly_rate: number
+  supervisor_approval: "pending" | "approved" | "rejected"
+  notes?: string
+  company_id?: string
+  created_at?: string
+  updated_at?: string
 } 

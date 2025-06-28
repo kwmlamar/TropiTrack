@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, use } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,9 +20,9 @@ import { toast } from "sonner"
 import Link from "next/link"
 
 interface QRScanPageProps {
-  params: {
+  params: Promise<{
     hash: string
-  }
+  }>
 }
 
 interface Worker {
@@ -53,6 +53,7 @@ interface ClockStatus {
 }
 
 export default function QRScanPage({ params }: QRScanPageProps) {
+  const { hash } = use(params)
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [qrCode, setQrCode] = useState<QRCodeData | null>(null)
@@ -72,9 +73,13 @@ export default function QRScanPage({ params }: QRScanPageProps) {
     try {
       setLoading(true)
       
-      // Get QR code data
-      const qrResponse = await fetch(`/api/qr-clock/scan?hash=${params.hash}`)
+      console.log("Loading QR code data for hash:", hash)
+      
+      // Get QR code data and workers
+      const qrResponse = await fetch(`/api/qr-clock/scan?hash=${hash}`)
       const qrData = await qrResponse.json()
+      
+      console.log("QR code API response:", qrData)
       
       if (!qrData.success) {
         setError("Invalid QR code")
@@ -82,16 +87,16 @@ export default function QRScanPage({ params }: QRScanPageProps) {
       }
       
       setQrCode(qrData.qr_code)
+      console.log("QR code data:", qrData.qr_code)
       
-      // Get workers for this company
-      const workersResponse = await fetch('/api/workers')
-      const workersData = await workersResponse.json()
-      
-      if (workersData.success) {
-        setWorkers(workersData.workers)
-        if (workersData.workers.length > 0) {
-          setSelectedWorker(workersData.workers[0].id)
-        }
+      // Workers are now included in the QR code response
+      if (qrData.workers && qrData.workers.length > 0) {
+        console.log("Workers found:", qrData.workers)
+        setWorkers(qrData.workers)
+        setSelectedWorker(qrData.workers[0].id)
+      } else {
+        console.log('No workers found for this QR code')
+        setWorkers([])
       }
       
     } catch (error) {
@@ -100,7 +105,7 @@ export default function QRScanPage({ params }: QRScanPageProps) {
     } finally {
       setLoading(false)
     }
-  }, [params.hash])
+  }, [hash])
 
   useEffect(() => {
     loadQRCodeData()
@@ -146,30 +151,42 @@ export default function QRScanPage({ params }: QRScanPageProps) {
   const handleScan = async () => {
     if (!selectedWorker || !qrCode || !biometricData) return
     
+    console.log("Starting scan with:", {
+      selectedWorker,
+      projectId: qrCode.project_location.project.id,
+      biometricData,
+      qrCodeHash: hash
+    })
+    
     try {
       setScanning(true)
       setScanResult(null)
+      
+      const scanPayload = {
+        qr_code_hash: hash,
+        worker_id: selectedWorker,
+        project_id: qrCode.project_location.project.id,
+        biometric_data: biometricData,
+        device_info: {
+          user_agent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+          location: await getLocationData(),
+          device_id: await getDeviceId()
+        }
+      }
+      
+      console.log("Sending scan payload:", scanPayload)
       
       const response = await fetch("/api/qr-clock/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          qr_code_hash: params.hash,
-          worker_id: selectedWorker,
-          project_id: qrCode.project_location.project.id,
-          biometric_data: biometricData,
-          device_info: {
-            user_agent: navigator.userAgent,
-            timestamp: new Date().toISOString(),
-            location: await getLocationData(),
-            device_id: await getDeviceId()
-          }
-        }),
+        body: JSON.stringify(scanPayload),
       })
 
       const result = await response.json()
+      console.log("Scan API response:", result)
 
       if (result.success) {
         setScanResult({
@@ -180,6 +197,7 @@ export default function QRScanPage({ params }: QRScanPageProps) {
         setClockStatus(result.worker_status)
         toast.success(result.message)
       } else {
+        console.log("Scan failed - Debug info:", result.debug)
         setScanResult({
           success: false,
           message: result.message,
@@ -244,65 +262,105 @@ export default function QRScanPage({ params }: QRScanPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-12">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-lg font-medium">Loading...</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
+        {/* Gradient overlay with Bahamas colors */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-cyan-400/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
+        
+        {/* Animated gradient orbs */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-yellow-300/15 to-cyan-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
+        
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-6">
+          <Card className="w-full max-w-sm border-yellow-400/30 bg-black/50 backdrop-blur-sm">
+            <CardContent className="text-center py-16">
+              <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+              <p className="text-xl font-medium text-yellow-100">Loading...</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-12">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h1 className="text-xl font-bold mb-2">Invalid QR Code</h1>
-            <p className="text-muted-foreground mb-6">{error}</p>
-            <Link href="/dashboard">
-              <Button>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
+        {/* Gradient overlay with Bahamas colors */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-cyan-400/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
+        
+        {/* Animated gradient orbs */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-yellow-300/15 to-cyan-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
+        
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-6">
+          <Card className="w-full max-w-sm border-yellow-400/30 bg-black/50 backdrop-blur-sm">
+            <CardContent className="text-center py-16">
+              <XCircle className="h-16 w-16 text-red-400 mx-auto mb-6" />
+              <h1 className="text-2xl font-bold mb-4 text-yellow-100">Invalid QR Code</h1>
+              <p className="text-gray-300 mb-8 text-lg">{error}</p>
+              <Link href="/dashboard">
+                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-4 h-auto font-semibold">
+                  <ArrowLeft className="h-5 w-5 mr-3" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-md mx-auto space-y-6">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
+      {/* Gradient overlay with Bahamas colors */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-cyan-400/20"></div>
+      <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
+      
+      {/* Animated gradient orbs */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-yellow-300/15 to-cyan-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
+      
+      <div className="relative z-10 max-w-sm mx-auto space-y-6 p-6">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Clock In/Out</h1>
-          <p className="text-gray-600">Secure biometric verification required</p>
+        <div className="text-center pt-8">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
+            Clock In/Out
+          </h1>
+          <p className="text-gray-300 text-lg">Secure biometric verification required</p>
         </div>
 
         {/* QR Code Info */}
         {qrCode && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
+          <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
+                <Building className="h-6 w-6" />
                 {qrCode.name}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span className="font-medium">Project:</span>
-                <span>{qrCode.project_location.project.name}</span>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3 text-base">
+                <MapPin className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+                <div>
+                  <span className="font-medium text-yellow-100">Project:</span>
+                  <span className="text-white ml-2 font-medium">{qrCode.project_location?.project?.name || 'Unknown Project'}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span className="font-medium">Location:</span>
-                <span>{qrCode.project_location.name}</span>
+              <div className="flex items-center gap-3 text-base">
+                <MapPin className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+                <div>
+                  <span className="font-medium text-yellow-100">Location:</span>
+                  <span className="text-white ml-2 font-medium">{qrCode.project_location?.name || 'Unknown Location'}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -310,48 +368,65 @@ export default function QRScanPage({ params }: QRScanPageProps) {
 
         {/* Step 1: Worker Selection */}
         {authStep === 'select' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
+          <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
+                <User className="h-6 w-6" />
                 Step 1: Select Worker
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <select
-                value={selectedWorker}
-                onChange={(e) => setSelectedWorker(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {workers.map((worker) => (
-                  <option key={worker.id} value={worker.id}>
-                    {worker.name}
-                  </option>
-                ))}
-              </select>
-              <Button 
-                onClick={handleWorkerSelect}
-                disabled={!selectedWorker}
-                className="w-full"
-              >
-                Continue to Verification
-              </Button>
+            <CardContent className="space-y-6">
+              {workers.length > 0 ? (
+                <>
+                  <select
+                    value={selectedWorker}
+                    onChange={(e) => setSelectedWorker(e.target.value)}
+                    className="w-full p-4 border border-yellow-400/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-gradient-to-r from-gray-800 to-gray-900 text-white placeholder-gray-400 text-lg shadow-lg"
+                  >
+                    {workers.map((worker) => (
+                      <option key={worker.id} value={worker.id} className="text-white bg-gray-800">
+                        {worker.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button 
+                    onClick={handleWorkerSelect}
+                    disabled={!selectedWorker}
+                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-semibold text-lg px-8 py-4 h-auto"
+                  >
+                    Continue to Verification
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <User className="h-16 w-16 mx-auto text-yellow-400 mb-6" />
+                  <h3 className="text-xl font-medium mb-4 text-yellow-100">No Workers Available</h3>
+                  <p className="text-gray-300 mb-8 text-lg">
+                    No active workers found in your company. Please add workers first.
+                  </p>
+                  <Link href="/dashboard/workers">
+                    <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-4 h-auto font-semibold">
+                      Go to Workers
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
 
         {/* Step 2: Biometric Authentication */}
         {authStep === 'biometric' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
+          <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
+                <Shield className="h-6 w-6" />
                 Step 2: Biometric Verification
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-base text-gray-300 mb-6">
                   Verify your identity to prevent buddy punching
                 </p>
               </div>
@@ -360,35 +435,33 @@ export default function QRScanPage({ params }: QRScanPageProps) {
                 <Button
                   onClick={() => handleBiometricAuth()}
                   disabled={scanning}
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center"
+                  className="h-24 flex flex-col items-center justify-center bg-gradient-to-br from-cyan-400 to-cyan-600 hover:from-cyan-500 hover:to-cyan-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <Fingerprint className="h-8 w-8 mb-2" />
-                  <span className="text-sm">Fingerprint</span>
+                  <Fingerprint className="h-10 w-10 mb-3" />
+                  <span className="text-base font-semibold">Fingerprint</span>
                 </Button>
                 
                 <Button
                   onClick={() => handleBiometricAuth()}
                   disabled={scanning}
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center"
+                  className="h-24 flex flex-col items-center justify-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <Camera className="h-8 w-8 mb-2" />
-                  <span className="text-sm">Face ID</span>
+                  <Camera className="h-10 w-10 mb-3" />
+                  <span className="text-base font-semibold">Face ID</span>
                 </Button>
               </div>
 
               {scanning && (
-                <div className="text-center">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-sm text-gray-600">Verifying identity...</p>
+                <div className="text-center py-6">
+                  <div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-base text-gray-300">Verifying identity...</p>
                 </div>
               )}
 
               <Button 
                 onClick={resetFlow}
                 variant="ghost"
-                className="w-full"
+                className="w-full text-gray-300 hover:text-yellow-100 hover:bg-yellow-400/10 text-lg py-4 h-auto"
               >
                 Back to Worker Selection
               </Button>
@@ -401,24 +474,24 @@ export default function QRScanPage({ params }: QRScanPageProps) {
           <>
             {/* Current Status */}
             {clockStatus && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
+              <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
+                    <Clock className="h-6 w-6" />
                     Current Status
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Status:</span>
-                    <Badge variant={clockStatus.is_clocked_in ? "default" : "secondary"}>
+                    <span className="text-base font-medium text-gray-300">Status:</span>
+                    <Badge variant={clockStatus.is_clocked_in ? "default" : "secondary"} className={`text-base px-4 py-2 ${clockStatus.is_clocked_in ? "bg-green-600" : "bg-gray-600"}`}>
                       {clockStatus.is_clocked_in ? "CLOCKED IN" : "CLOCKED OUT"}
                     </Badge>
                   </div>
                   {clockStatus.last_event_time && (
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm font-medium">Last Action:</span>
-                      <span className="text-sm text-gray-600">
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium text-gray-300">Last Action:</span>
+                      <span className="text-base text-gray-200">
                         {new Date(clockStatus.last_event_time).toLocaleTimeString()}
                       </span>
                     </div>
@@ -431,17 +504,17 @@ export default function QRScanPage({ params }: QRScanPageProps) {
             <Button
               onClick={handleScan}
               disabled={scanning}
-              className="w-full h-16 text-lg font-semibold"
+              className="w-full h-20 text-xl font-semibold bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
               size="lg"
             >
               {scanning ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin mr-3" />
                   Processing...
                 </>
               ) : (
                 <>
-                  <Clock className="h-5 w-5 mr-2" />
+                  <Clock className="h-6 w-6 mr-3" />
                   CLOCK {clockStatus?.is_clocked_in ? 'OUT' : 'IN'}
                 </>
               )}
@@ -449,8 +522,8 @@ export default function QRScanPage({ params }: QRScanPageProps) {
 
             <Button 
               onClick={resetFlow}
-              variant="outline"
-              className="w-full"
+              variant="ghost"
+              className="w-full text-gray-300 hover:text-yellow-100 hover:bg-yellow-400/10 text-lg py-4 h-auto"
             >
               Start Over
             </Button>
@@ -459,36 +532,26 @@ export default function QRScanPage({ params }: QRScanPageProps) {
 
         {/* Scan Result */}
         {scanResult && (
-          <Card className={`border-2 ${scanResult.success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-            <CardContent className="text-center py-8">
+          <Card className={`border-2 backdrop-blur-sm rounded-xl ${scanResult.success ? 'border-green-400/50 bg-green-900/20' : 'border-red-400/50 bg-red-900/20'}`}>
+            <CardContent className="text-center py-12">
               {scanResult.success ? (
                 <>
-                  <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                  <h2 className="text-2xl font-bold text-green-800 mb-2">
+                  <CheckCircle className="h-20 w-20 text-green-400 mx-auto mb-6" />
+                  <h2 className="text-3xl font-bold text-green-100 mb-4">
                     {getActionMessage(scanResult.action)}
                   </h2>
-                  <p className="text-green-700 text-lg">{scanResult.message}</p>
+                  <p className="text-green-200 text-xl">{scanResult.message}</p>
                 </>
               ) : (
                 <>
-                  <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-                  <h2 className="text-xl font-bold text-red-800 mb-2">Error</h2>
-                  <p className="text-red-700">{scanResult.message}</p>
+                  <XCircle className="h-20 w-20 text-red-400 mx-auto mb-6" />
+                  <h2 className="text-2xl font-bold text-red-100 mb-4">Error</h2>
+                  <p className="text-red-200 text-lg">{scanResult.message}</p>
                 </>
               )}
             </CardContent>
           </Card>
         )}
-
-        {/* Back Button */}
-        <div className="text-center">
-          <Link href="/dashboard">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-        </div>
       </div>
     </div>
   )

@@ -53,7 +53,7 @@ export type ProjectWithDetails = Project & {
     role: string
   }[]
   _count?: {
-    time_entries: number
+    timesheets: number
     assigned_workers: number
   }
 }

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
@@ -30,12 +29,17 @@ import {
   Copy, 
   Clock,
   MapPin,
-  Building
+  Edit,
+  FileText
 } from "lucide-react"
 import { toast } from "sonner"
 import { getQRCodes, getProjectLocations } from "@/lib/data/qr-clock"
 import { getProfile } from "@/lib/data/data"
+import { getProjects } from "@/lib/data/projects"
+import { getWorkers } from "@/lib/data/workers"
 import type { QRCode, ProjectLocation } from "@/lib/types/qr-clock"
+import type { Project } from "@/lib/types/project"
+import type { Worker } from "@/lib/types/worker"
 import QRCodeGenerator from 'qrcode'
 import {
   Tooltip,
@@ -43,6 +47,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Switch } from "@/components/ui/switch"
+import { GenerateTimesheetsDialog } from "./generate-timesheets-dialog"
 
 interface QRCodeManagerProps {
   userId: string
@@ -51,8 +57,12 @@ interface QRCodeManagerProps {
 export function QRCodeManager({ userId }: QRCodeManagerProps) {
   const [qrCodes, setQRCodes] = useState<QRCode[]>([])
   const [projectLocations, setProjectLocations] = useState<ProjectLocation[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [workers, setWorkers] = useState<Worker[]>([])
   const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [generateTimesheetsOpen, setGenerateTimesheetsOpen] = useState(false)
   const [qrCodeImages, setQrCodeImages] = useState<Record<string, string>>({})
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const [selectedQRCode, setSelectedQRCode] = useState<QRCode | null>(null)
@@ -63,6 +73,14 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
     name: "",
     description: "",
     project_location_id: "",
+  })
+
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    description: "",
+    project_location_id: "",
+    is_active: true,
   })
 
   useEffect(() => {
@@ -76,9 +94,11 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
       const profile = await getProfile(userId)
       const companyId = profile.company_id
       
-      const [qrCodesResult, locationsResult] = await Promise.all([
+      const [qrCodesResult, locationsResult, projectsResult, workersResult] = await Promise.all([
         getQRCodes(companyId),
-        getProjectLocations(companyId)
+        getProjectLocations(companyId),
+        getProjects(userId),
+        getWorkers(userId)
       ])
 
       if (qrCodesResult.success) {
@@ -107,6 +127,8 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
       }
       
       if (locationsResult.success) setProjectLocations(locationsResult.data || [])
+      if (projectsResult.success) setProjects(projectsResult.data || [])
+      if (workersResult.success) setWorkers(workersResult.data || [])
     } catch (error) {
       console.error("Error loading QR code data:", error)
       toast.error("Failed to load QR codes")
@@ -146,6 +168,57 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
       console.error("Error creating QR code:", error)
       toast.error("Failed to create QR code")
     }
+  }
+
+  const handleEditQRCode = async () => {
+    if (!selectedQRCode) return
+
+    try {
+      const response = await fetch("/api/qr-clock/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          qrCodeId: selectedQRCode.id,
+          updates: editFormData,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success("QR code updated successfully")
+        setEditDialogOpen(false)
+        setEditFormData({
+          name: "",
+          description: "",
+          project_location_id: "",
+          is_active: true,
+        })
+        setSelectedQRCode(null)
+        
+        // Reload data to get the updated QR code
+        await loadData()
+      } else {
+        console.error("QR code update failed:", result)
+        toast.error(result.message || "Failed to update QR code")
+      }
+    } catch (error) {
+      console.error("Error updating QR code:", error)
+      toast.error("Failed to update QR code")
+    }
+  }
+
+  const openEditDialog = (qrCode: QRCode) => {
+    setSelectedQRCode(qrCode)
+    setEditFormData({
+      name: qrCode.name,
+      description: qrCode.description || "",
+      project_location_id: qrCode.project_location_id,
+      is_active: qrCode.is_active,
+    })
+    setEditDialogOpen(true)
   }
 
   const copyQRCodeUrl = (qrCode: QRCode) => {
@@ -209,6 +282,40 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
     }
   }
 
+  const handleToggleActive = async (qrCode: QRCode, checked: boolean) => {
+    try {
+      const response = await fetch("/api/qr-clock/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          qrCodeId: qrCode.id,
+          updates: {
+            is_active: checked,
+          },
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success("QR code status updated successfully")
+        setEditDialogOpen(false)
+        setSelectedQRCode(null)
+        
+        // Reload data to get the updated QR code
+        await loadData()
+      } else {
+        console.error("QR code status update failed:", result)
+        toast.error(result.message || "Failed to update QR code status")
+      }
+    } catch (error) {
+      console.error("Error updating QR code status:", error)
+      toast.error("Failed to update QR code status")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -224,89 +331,113 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight">QR Code Management</h1>
           <p className="text-muted-foreground">
             Create QR codes for workers to clock in/out at project locations
           </p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create QR Code
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New QR Code</DialogTitle>
-              <DialogDescription>
-                Create a QR code for workers to scan and automatically clock in/out
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Location Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Main Entrance, Site Office, etc."
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Additional details about this location"
-                />
-              </div>
-              <div>
-                <Label htmlFor="project_location">Project Location</Label>
-                <Select
-                  value={formData.project_location_id}
-                  onValueChange={(value) => setFormData({ ...formData, project_location_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a project location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projectLocations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateQRCode} disabled={!formData.name || !formData.project_location_id}>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setGenerateTimesheetsOpen(true)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Generate Timesheets
+          </Button>
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
                 Create QR Code
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>Create New QR Code</DialogTitle>
+                <DialogDescription>
+                  Create a QR code for workers to scan and automatically clock in/out
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Location Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Main Entrance, Site Office, etc."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Additional details about this location"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="project_location">Project Location</Label>
+                  <Select
+                    value={formData.project_location_id}
+                    onValueChange={(value) => setFormData({ ...formData, project_location_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a project location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projectLocations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateQRCode} disabled={!formData.name || !formData.project_location_id}>
+                  Create QR Code
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* QR Codes Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {qrCodes.map((qrCode) => (
-          <Card key={qrCode.id} className="relative">
+        {qrCodes
+          .sort((a, b) => {
+            // Sort by active status first (active first), then by creation date (newest first)
+            if (a.is_active !== b.is_active) {
+              return a.is_active ? -1 : 1;
+            }
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          })
+          .map((qrCode) => (
+          <Card key={qrCode.id} className={`relative ${!qrCode.is_active ? 'opacity-60 bg-muted/50' : ''}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-blue-600" />
-                  <CardTitle className="text-lg">{qrCode.name}</CardTitle>
+                  <CardTitle className={`text-lg ${!qrCode.is_active ? 'text-muted-foreground' : ''}`}>
+                    {qrCode.name}
+                  </CardTitle>
                 </div>
-                <Badge variant={qrCode.is_active ? "default" : "secondary"}>
-                  {qrCode.is_active ? "Active" : "Inactive"}
-                </Badge>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Active</span>
+                    <Switch
+                      checked={qrCode.is_active}
+                      onCheckedChange={(checked) => handleToggleActive(qrCode, checked)}
+                    />
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -319,7 +450,9 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
                         <img 
                           src={qrCodeImages[qrCode.id]} 
                           alt={`QR Code for ${qrCode.name}`}
-                          className="w-32 h-32 border rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                          className={`w-32 h-32 border rounded-lg cursor-pointer hover:opacity-80 transition-opacity ${
+                            !qrCode.is_active ? 'grayscale opacity-50' : ''
+                          }`}
                           onClick={() => openQRPreview(qrCode)}
                         />
                       </TooltipTrigger>
@@ -329,7 +462,9 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
                     </Tooltip>
                   </TooltipProvider>
                 ) : (
-                  <div className="w-32 h-32 border rounded-lg flex items-center justify-center bg-muted">
+                  <div className={`w-32 h-32 border rounded-lg flex items-center justify-center bg-muted ${
+                    !qrCode.is_active ? 'opacity-50' : ''
+                  }`}>
                     <QrCode className="h-8 w-8 text-muted-foreground" />
                   </div>
                 )}
@@ -371,6 +506,18 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
                 >
                   <Download className="h-4 w-4 mr-1" />
                   Download
+                </Button>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEditDialog(qrCode)}
+                  className="flex-1"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
                 </Button>
               </div>
             </CardContent>
@@ -439,6 +586,89 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit QR Code</DialogTitle>
+            <DialogDescription>
+              Update the QR code details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name">Location Name</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                placeholder="e.g., Main Entrance, Site Office, etc."
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-description">Description (Optional)</Label>
+              <Textarea
+                id="edit-description"
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                placeholder="Additional details about this location"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-project-location">Project Location</Label>
+              <Select
+                value={editFormData.project_location_id}
+                onValueChange={(value) => setEditFormData({ ...editFormData, project_location_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectLocations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="edit-active">Active Status</Label>
+                <p className="text-sm text-muted-foreground">
+                  {editFormData.is_active ? "QR code is active and can be scanned" : "QR code is inactive and cannot be scanned"}
+                </p>
+              </div>
+              <Switch
+                id="edit-active"
+                checked={editFormData.is_active}
+                onCheckedChange={(checked) => setEditFormData({ ...editFormData, is_active: checked })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditQRCode} disabled={!editFormData.name || !editFormData.project_location_id}>
+              Update QR Code
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate Timesheets Dialog */}
+      <GenerateTimesheetsDialog
+        open={generateTimesheetsOpen}
+        onOpenChange={setGenerateTimesheetsOpen}
+        projects={projects}
+        workers={workers}
+        onSuccess={() => {
+          // Optionally refresh data or show success message
+          toast.success("Timesheets generated successfully!")
+        }}
+      />
     </div>
   )
 } 

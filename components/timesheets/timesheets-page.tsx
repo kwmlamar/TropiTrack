@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Trash2, SlidersHorizontal, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { CalendarDays, Trash2, SlidersHorizontal, Search, ChevronLeft, ChevronRight, Info, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 
 import {
@@ -653,6 +654,34 @@ export default function TimesheetsPage({ user }: { user: User }) {
           Manage and approve employee timesheets.
         </p>
       </div>
+
+      {/* Automatic Timesheet Generation Info */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="font-medium mb-1">Automatic Timesheet Generation</p>
+              <p className="text-sm mb-2">
+                Timesheets are automatically generated from QR clock events when workers clock out. 
+                Hours are intelligently rounded to handle real-world scenarios like early/late arrivals.
+              </p>
+              <div className="text-xs space-y-1">
+                <p><strong>Standard Rounding:</strong> Rounds to 8 hours if within 9 minutes, otherwise to nearest 15 minutes</p>
+                <p><strong>Manual Generation:</strong> Available from the{" "}
+                <Link href="/dashboard/qr-codes" className="underline hover:text-blue-900">
+                  QR Code Management
+                </Link>{" "}
+                page with customizable rounding options.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4" />
+              <span>Auto-generated</span>
+            </div>
+          </div>
+        </AlertDescription>
+      </Alert>
 
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
         <Tabs defaultValue="timesheets" className="w-full">

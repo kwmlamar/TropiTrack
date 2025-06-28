@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS clock_events (
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   project_location_id UUID REFERENCES project_locations(id) ON DELETE SET NULL,
   qr_code_id UUID REFERENCES qr_codes(id) ON DELETE SET NULL,
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   event_type VARCHAR(50) NOT NULL CHECK (event_type IN ('clock_in', 'clock_out', 'break_start', 'break_end')),
   event_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   device_info JSONB, -- Store device fingerprint, GPS coordinates, etc.
@@ -85,6 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_qr_codes_expires_at ON qr_codes(expires_at);
 -- Clock events indexes
 CREATE INDEX IF NOT EXISTS idx_clock_events_worker_id ON clock_events(worker_id);
 CREATE INDEX IF NOT EXISTS idx_clock_events_project_id ON clock_events(project_id);
+CREATE INDEX IF NOT EXISTS idx_clock_events_company_id ON clock_events(company_id);
 CREATE INDEX IF NOT EXISTS idx_clock_events_event_time ON clock_events(event_time);
 CREATE INDEX IF NOT EXISTS idx_clock_events_worker_date ON clock_events(worker_id, event_time);
 CREATE INDEX IF NOT EXISTS idx_clock_events_qr_code_id ON clock_events(qr_code_id);
@@ -124,22 +126,10 @@ CREATE POLICY "Users can delete QR codes for their company" ON qr_codes
 
 -- Clock events policies
 CREATE POLICY "Users can view clock events for their company" ON clock_events
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM workers w 
-      WHERE w.id = clock_events.worker_id 
-      AND w.company_id = get_user_company_id()
-    )
-  );
+  FOR SELECT USING (company_id = get_user_company_id());
 
 CREATE POLICY "Users can insert clock events for their company" ON clock_events
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM workers w 
-      WHERE w.id = clock_events.worker_id 
-      AND w.company_id = get_user_company_id()
-    )
-  );
+  FOR INSERT WITH CHECK (company_id = get_user_company_id());
 
 -- ============================================================================
 -- HELPER FUNCTIONS

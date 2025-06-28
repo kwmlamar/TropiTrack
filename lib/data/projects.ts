@@ -28,7 +28,7 @@ export async function getProjects(
         assigned_workers:project_assignments(
           worker:workers(id, name, role)
         ),
-        _count:time_entries(count)
+        _count:timesheets(count)
       `
       )
       .eq("company_id", companyId)
