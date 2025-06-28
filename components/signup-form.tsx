@@ -44,9 +44,9 @@ export function SignupForm({
         }
       } else {
         toast.success("Account created!", {
-          description: "Please check your email to verify your account.",
+          description: "Welcome to TropiTrack! Let's get you set up.",
         });
-        // Redirect to the verify email page
+        // Redirect to the onboarding page
         if (result.redirectTo) {
           router.push(result.redirectTo);
         }

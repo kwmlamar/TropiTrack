@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import {
   Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const ITEMS_PER_PAGE = 10;
 
@@ -40,6 +41,7 @@ export default function PayrollPage({ user }: { user: User }) {
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [isLoading, setIsLoading] = useState(true)
 
   // Current week date range for overview (always stays current)
   const [currentWeekRange, setCurrentWeekRange] = useState<DateRange | undefined>()
@@ -126,6 +128,7 @@ export default function PayrollPage({ user }: { user: User }) {
   }, [searchTerm, selectedStatus]);
 
   const loadPayroll = async () => {
+    setIsLoading(true)
     try {
       const filters: { date_from?: string; date_to?: string; target_period_type: "weekly" | "bi-weekly" | "monthly" } = {
         target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly"
@@ -175,6 +178,8 @@ export default function PayrollPage({ user }: { user: User }) {
       }
     } catch (error) {
       console.error('Failed to load payroll data:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -352,433 +357,658 @@ export default function PayrollPage({ user }: { user: User }) {
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Payroll Overview Header */}
-            <div className="space-y-4 mt-4">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Payroll Overview
-              </h2>
-              <p className="text-muted-foreground">
-                Current Week Summary:
-                {currentWeekRange?.from && currentWeekRange?.to
-                  ? ` ${format(currentWeekRange.from, "MMM d")}-${format(currentWeekRange.to, "MMM d, yyyy")}`
-                  : " Loading..."}
-              </p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                <CardContent className="px-6 py-4">
-                  <div className="space-y-2">
-                    <p className="text-base font-medium text-primary dark:text-foreground">Total Payroll</p>
-                    <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
-                      {new Intl.NumberFormat("en-BS", {
-                        style: "currency",
-                        currency: "BSD",
-                        minimumFractionDigits: 2,
-                      }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.gross_pay, 0))}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                <CardContent className="px-6 py-4">
-                  <div className="space-y-2">
-                    <p className="text-base font-medium text-primary dark:text-foreground">Total Workers</p>
-                    <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
-                      {currentPeriodPayrolls.length}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                <CardContent className="px-6 py-4">
-                  <div className="space-y-2">
-                    <p className="text-base font-medium text-primary dark:text-foreground">NIB Remittance</p>
-                    <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
-                      {new Intl.NumberFormat("en-BS", {
-                        style: "currency",
-                        currency: "BSD",
-                        minimumFractionDigits: 2,
-                      }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.nib_deduction, 0))}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Payments Table */}
-            <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg">Recent Payments</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Latest payroll payments processed in the system.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <TableComponent className="min-w-full">
-                    <TableHeader>
-                      <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentPeriodPayrolls
-                        .filter(payroll => payroll.status === "paid")
-                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                        .slice(0, 5)
-                        .map((payroll) => (
-                          <TableRow 
-                            key={payroll.id} 
-                            className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
-                          >
-                            <TableCell className="py-4 px-6">
-                              <div className="font-bold">{payroll.worker_name}</div>
-                            </TableCell>
-                            <TableCell className="py-4 px-6">
-                              <div className="text-sm text-muted-foreground">{payroll.position}</div>
-                            </TableCell>
-                            <TableCell className="py-4 px-6">
-                              {getStatusBadge(payroll.status)}
-                            </TableCell>
-                            <TableCell className="py-4 px-6">
-                              {new Intl.NumberFormat("en-BS", {
-                                style: "currency",
-                                currency: "BSD",
-                                minimumFractionDigits: 2,
-                              }).format(payroll.net_pay)}
-                            </TableCell>
-                            <TableCell className="py-4 px-6">
-                              <div className="text-sm text-muted-foreground">
-                                {format(new Date(payroll.created_at), "MMM d, yyyy")}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </TableComponent>
-                  
-                  {/* Empty State */}
-                  {currentPeriodPayrolls.filter(payroll => payroll.status === "paid").length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12 px-6">
-                      <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
-                        <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-muted-foreground mb-2">No recent payments</h3>
-                      <p className="text-sm text-muted-foreground text-center max-w-sm">
-                        No payroll payments have been processed yet. Payments will appear here once they are marked as paid.
-                      </p>
-                    </div>
-                  )}
+          {isLoading || settingsLoading ? (
+            <>
+              <TabsContent value="overview" className="space-y-6">
+                {/* Payroll Overview Header */}
+                <div className="space-y-4 mt-4">
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Payroll Overview
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Current Week Summary:
+                    {currentWeekRange?.from && currentWeekRange?.to
+                      ? ` ${format(currentWeekRange.from, "MMM d")}-${format(currentWeekRange.to, "MMM d, yyyy")}`
+                      : " Loading..."}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="payments" className="space-y-6">
-            {/* Payments Header */}
-            <div className="space-y-4 mt-4">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Payments
-              </h2>
-              <p className="text-muted-foreground">
-                {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Pay Period:
-                {dateRange?.from && dateRange?.to
-                  ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
-                  : " Select a date range"}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="space-y-6 overflow-x-auto">
-                {/* Search, Filters, and Actions Row */}
-                <div className="flex items-center gap-4 p-4">
-                  {/* Navigation Buttons */}
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="default"
-                      onClick={handlePreviousWeek}
-                      className="h-10 w-10 p-0"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      onClick={handleNextWeek}
-                      className="h-10 w-10 p-0"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Search Bar */}
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search payroll records..."
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Filters Button */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="gap-2">
-                        <SlidersHorizontal className="h-4 w-4" />
-                        Filters
-                        {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
-                          <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                            {(payPeriodType !== "weekly" ? 1 : 0) + (selectedStatus !== "all" ? 1 : 0)}
-                          </Badge>
-                        )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-80 p-4">
-                      <DropdownMenuLabel className="text-base font-semibold">
-                        Filter Payroll
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      
-                      {/* Pay Period Type Filter */}
-                      <div className="space-y-3 py-2">
-                        <Label className="text-sm font-medium">Pay Period Type</Label>
-                        <Select value={payPeriodType} onValueChange={setPayPeriodType}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select pay period" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Separator />
-
-                      {/* Status Filter */}
-                      <div className="space-y-3 py-2">
-                        <Label className="text-sm font-medium">Status</Label>
-                        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Separator />
-
-                      {/* Clear Filters */}
-                      {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
-                        <div className="pt-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setPayPeriodType("weekly");
-                              setSelectedStatus("all");
-                            }}
-                            className="w-full justify-start text-muted-foreground hover:text-foreground"
-                          >
-                            Clear filters
-                          </Button>
+                {/* Stats Cards Skeleton */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                      <CardContent className="px-6 py-4">
+                        <div className="space-y-3">
+                          <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                          <div className="h-8 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                         </div>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {/* Preview and Confirm Button */}
-                  <Button
-                    variant="outline"
-                    className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary border-[#E8EDF5] shadow-lg"
-                    onClick={handlePreviewAndConfirm}
-                    disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
-                      payrolls.find(payroll => payroll.id === id)?.status === "pending"
-                    )}
-                  >
-                    <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Review Payroll
-                  </Button>
-
-                  {/* Mark as Paid Button */}
-                  <Button
-                    onClick={handleMarkAsPaid}
-                    disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
-                      payrolls.find(payroll => payroll.id === id)?.status === "confirmed"
-                    )}
-                    className="bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground shadow-lg transition-colors"
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Run Payroll
-                  </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
 
+                {/* Recent Payments Table Skeleton */}
                 <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                  <CardContent className="px-6">
+                  <CardHeader>
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-4 w-64" />
+                  </CardHeader>
+                  <CardContent>
                     <div className="overflow-x-auto">
                       <TableComponent className="min-w-full">
                         <TableHeader>
                           <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left w-[100px]">
-                              <Checkbox
-                                checked={selectedPayrollIds.size === paginatedPayrolls.length && paginatedPayrolls.length > 0}
-                                onCheckedChange={(checked) => handleSelectAll(checked === true)}
-                                aria-label="Select all"
-                              />
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                              <Skeleton className="h-4 w-16" />
                             </TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">NIB Deduction</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                              <Skeleton className="h-4 w-16" />
+                            </TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                              <Skeleton className="h-4 w-16" />
+                            </TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                              <Skeleton className="h-4 w-16" />
+                            </TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                              <Skeleton className="h-4 w-16" />
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {paginatedPayrolls.map((payroll) => (
-                            <TableRow 
-                              key={payroll.id} 
-                              className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
-                            >
-                              <TableCell className="py-4 px-6 w-[100px]">
-                                <Checkbox
-                                  checked={selectedPayrollIds.has(payroll.id)}
-                                  onCheckedChange={(checked) => handleSelectPayroll(payroll.id, checked === true)}
-                                  aria-label="Select payroll"
-                                />
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <TableRow key={i} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                              <TableCell className="py-4 px-6">
+                                <Skeleton className="h-4 w-24" />
                               </TableCell>
                               <TableCell className="py-4 px-6">
-                                <div className="font-bold">{payroll.worker_name}</div>
+                                <Skeleton className="h-4 w-20" />
                               </TableCell>
                               <TableCell className="py-4 px-6">
-                                <div className="text-sm text-muted-foreground">{payroll.position}</div>
+                                <Skeleton className="h-6 w-16 rounded-full" />
                               </TableCell>
                               <TableCell className="py-4 px-6">
-                                {getStatusBadge(payroll.status)}
+                                <Skeleton className="h-4 w-20" />
                               </TableCell>
                               <TableCell className="py-4 px-6">
-                                {new Intl.NumberFormat("en-BS", {
-                                  style: "currency",
-                                  currency: "BSD",
-                                  minimumFractionDigits: 2,
-                                }).format(payroll.gross_pay)}
-                              </TableCell>
-                              <TableCell className="py-4 px-6">
-                                {new Intl.NumberFormat("en-BS", {
-                                  style: "currency",
-                                  currency: "BSD",
-                                  minimumFractionDigits: 2,
-                                }).format(payroll.nib_deduction)}
-                              </TableCell>
-                              <TableCell className="py-4 px-6">
-                                {new Intl.NumberFormat("en-BS", {
-                                  style: "currency",
-                                  currency: "BSD",
-                                  minimumFractionDigits: 2,
-                                }).format(payroll.net_pay)}
+                                <Skeleton className="h-4 w-20" />
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </TableComponent>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="payments" className="space-y-6">
+                {/* Payments Header */}
+                <div className="space-y-4 mt-4">
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Payments
+                  </h2>
+                  <p className="text-muted-foreground">
+                    {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Pay Period:
+                    {dateRange?.from && dateRange?.to
+                      ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
+                      : " Select a date range"}
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-6 overflow-x-auto">
+                    {/* Search, Filters, and Actions Row Skeleton */}
+                    <div className="flex items-center gap-4 p-4">
+                      {/* Navigation Buttons Skeleton */}
+                      <div className="flex items-center space-x-2">
+                        <Skeleton className="h-10 w-10" />
+                        <Skeleton className="h-10 w-10" />
+                      </div>
+
+                      {/* Search Bar Skeleton */}
+                      <div className="flex-1">
+                        <Skeleton className="h-10 w-full" />
+                      </div>
+
+                      {/* Filters Button Skeleton */}
+                      <Skeleton className="h-10 w-24" />
+
+                      {/* Action Buttons Skeleton */}
+                      <Skeleton className="h-10 w-32" />
+                      <Skeleton className="h-10 w-28" />
+                    </div>
+
+                    {/* Payments Table Skeleton */}
+                    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                      <CardContent className="px-6">
+                        <div className="overflow-x-auto">
+                          <TableComponent className="min-w-full">
+                            <TableHeader>
+                              <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left w-[100px]">
+                                  <Skeleton className="h-4 w-4" />
+                                </TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                                  <Skeleton className="h-4 w-16" />
+                                </TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                                  <Skeleton className="h-4 w-16" />
+                                </TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                                  <Skeleton className="h-4 w-16" />
+                                </TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                                  <Skeleton className="h-4 w-20" />
+                                </TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                                  <Skeleton className="h-4 w-24" />
+                                </TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
+                                  <Skeleton className="h-4 w-20" />
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+                                <TableRow key={i} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                                  <TableCell className="py-4 px-6 w-[100px]">
+                                    <Skeleton className="h-4 w-4" />
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Skeleton className="h-4 w-24" />
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Skeleton className="h-4 w-20" />
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Skeleton className="h-6 w-16 rounded-full" />
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Skeleton className="h-4 w-20" />
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Skeleton className="h-4 w-20" />
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Skeleton className="h-4 w-20" />
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </TableComponent>
+                        </div>
+
+                        {/* Pagination Controls Skeleton */}
+                        <div className="flex items-center justify-between px-6 py-4">
+                          <Skeleton className="h-4 w-48" />
+                          <div className="flex items-center space-x-2">
+                            <Skeleton className="h-8 w-8" />
+                            <div className="flex items-center space-x-1">
+                              {[1, 2, 3].map((i) => (
+                                <Skeleton key={i} className="h-8 w-8" />
+                              ))}
+                            </div>
+                            <Skeleton className="h-8 w-8" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reports" className="space-y-6">
+                {/* Reports Skeleton */}
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-4 w-64" />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Card key={i} className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                      <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                      </CardHeader>
+                      <CardContent>
+                        <Skeleton className="h-32 w-full" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            </>
+          ) : (
+            <>
+              <TabsContent value="overview" className="space-y-6">
+                {/* Payroll Overview Header */}
+                <div className="space-y-4 mt-4">
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Payroll Overview
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Current Week Summary:
+                    {currentWeekRange?.from && currentWeekRange?.to
+                      ? ` ${format(currentWeekRange.from, "MMM d")}-${format(currentWeekRange.to, "MMM d, yyyy")}`
+                      : " Loading..."}
+                  </p>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                    <CardContent className="px-6 py-4">
+                      <div className="space-y-2">
+                        <p className="text-base font-medium text-primary dark:text-foreground">Total Payroll</p>
+                        <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
+                          {new Intl.NumberFormat("en-BS", {
+                            style: "currency",
+                            currency: "BSD",
+                            minimumFractionDigits: 2,
+                          }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.gross_pay, 0))}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                    <CardContent className="px-6 py-4">
+                      <div className="space-y-2">
+                        <p className="text-base font-medium text-primary dark:text-foreground">Total Workers</p>
+                        <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
+                          {currentPeriodPayrolls.length}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                    <CardContent className="px-6 py-4">
+                      <div className="space-y-2">
+                        <p className="text-base font-medium text-primary dark:text-foreground">NIB Remittance</p>
+                        <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
+                          {new Intl.NumberFormat("en-BS", {
+                            style: "currency",
+                            currency: "BSD",
+                            minimumFractionDigits: 2,
+                          }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.nib_deduction, 0))}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent Payments Table */}
+                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Recent Payments</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Latest payroll payments processed in the system.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <TableComponent className="min-w-full">
+                        <TableHeader>
+                          <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
+                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {currentPeriodPayrolls
+                            .filter(payroll => payroll.status === "paid")
+                            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                            .slice(0, 5)
+                            .map((payroll) => (
+                              <TableRow 
+                                key={payroll.id} 
+                                className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
+                              >
+                                <TableCell className="py-4 px-6">
+                                  <div className="font-bold">{payroll.worker_name}</div>
+                                </TableCell>
+                                <TableCell className="py-4 px-6">
+                                  <div className="text-sm text-muted-foreground">{payroll.position}</div>
+                                </TableCell>
+                                <TableCell className="py-4 px-6">
+                                  {getStatusBadge(payroll.status)}
+                                </TableCell>
+                                <TableCell className="py-4 px-6">
+                                  {new Intl.NumberFormat("en-BS", {
+                                    style: "currency",
+                                    currency: "BSD",
+                                    minimumFractionDigits: 2,
+                                  }).format(payroll.net_pay)}
+                                </TableCell>
+                                <TableCell className="py-4 px-6">
+                                  <div className="text-sm text-muted-foreground">
+                                    {format(new Date(payroll.created_at), "MMM d, yyyy")}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </TableComponent>
                       
                       {/* Empty State */}
-                      {paginatedPayrolls.length === 0 && (
+                      {currentPeriodPayrolls.filter(payroll => payroll.status === "paid").length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 px-6">
                           <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
                             <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                             </svg>
                           </div>
-                          <h3 className="text-lg font-semibold text-muted-foreground mb-2">No payroll records found</h3>
+                          <h3 className="text-lg font-semibold text-muted-foreground mb-2">No recent payments</h3>
                           <p className="text-sm text-muted-foreground text-center max-w-sm">
-                            No payroll records match your current filters. Try adjusting your search or date range.
+                            No payroll payments have been processed yet. Payments will appear here once they are marked as paid.
                           </p>
                         </div>
                       )}
                     </div>
-
-                    {/* Pagination Controls */}
-                    {filteredPayrolls.length > ITEMS_PER_PAGE && (
-                      <div className="flex items-center justify-between px-6 py-4">
-                        <div className="text-sm text-muted-foreground">
-                          Showing {startIndex + 1} to {Math.min(endIndex, filteredPayrolls.length)} of {filteredPayrolls.length} payroll records
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="h-8 w-8 p-0"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          
-                          <div className="flex items-center space-x-1">
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <Button
-                                key={page}
-                                variant={currentPage === page ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => handlePageChange(page)}
-                                className={`h-8 w-8 p-0 ${
-                                  currentPage === page 
-                                    ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
-                                    : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
-                                }`}
-                              >
-                                {page}
-                              </Button>
-                            ))}
-                          </div>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            className="h-8 w-8 p-0"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
-              </div>
-            </div>
-          </TabsContent>
+              </TabsContent>
 
-          <TabsContent value="reports" className="space-y-6">
-            <PayrollReports payrolls={allPayrolls} />
-          </TabsContent>
+              <TabsContent value="payments" className="space-y-6">
+                {/* Payments Header */}
+                <div className="space-y-4 mt-4">
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Payments
+                  </h2>
+                  <p className="text-muted-foreground">
+                    {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Pay Period:
+                    {dateRange?.from && dateRange?.to
+                      ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
+                      : " Select a date range"}
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-6 overflow-x-auto">
+                    {/* Search, Filters, and Actions Row */}
+                    <div className="flex items-center gap-4 p-4">
+                      {/* Navigation Buttons */}
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="default"
+                          onClick={handlePreviousWeek}
+                          className="h-10 w-10 p-0"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="default"
+                          onClick={handleNextWeek}
+                          className="h-10 w-10 p-0"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Search Bar */}
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search payroll records..."
+                            className="pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Filters Button */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="gap-2">
+                            <SlidersHorizontal className="h-4 w-4" />
+                            Filters
+                            {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
+                              <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                                {(payPeriodType !== "weekly" ? 1 : 0) + (selectedStatus !== "all" ? 1 : 0)}
+                              </Badge>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-80 p-4">
+                          <DropdownMenuLabel className="text-base font-semibold">
+                            Filter Payroll
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          
+                          {/* Pay Period Type Filter */}
+                          <div className="space-y-3 py-2">
+                            <Label className="text-sm font-medium">Pay Period Type</Label>
+                            <Select value={payPeriodType} onValueChange={setPayPeriodType}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select pay period" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="weekly">Weekly</SelectItem>
+                                <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <Separator />
+
+                          {/* Status Filter */}
+                          <div className="space-y-3 py-2">
+                            <Label className="text-sm font-medium">Status</Label>
+                            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                <SelectItem value="paid">Paid</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <Separator />
+
+                          {/* Clear Filters */}
+                          {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
+                            <div className="pt-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setPayPeriodType("weekly");
+                                  setSelectedStatus("all");
+                                }}
+                                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                              >
+                                Clear filters
+                              </Button>
+                            </div>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      {/* Preview and Confirm Button */}
+                      <Button
+                        variant="outline"
+                        className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary border-[#E8EDF5] shadow-lg"
+                        onClick={handlePreviewAndConfirm}
+                        disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
+                          payrolls.find(payroll => payroll.id === id)?.status === "pending"
+                        )}
+                      >
+                        <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Review Payroll
+                      </Button>
+
+                      {/* Mark as Paid Button */}
+                      <Button
+                        onClick={handleMarkAsPaid}
+                        disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
+                          payrolls.find(payroll => payroll.id === id)?.status === "confirmed"
+                        )}
+                        className="bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground shadow-lg transition-colors"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Run Payroll
+                      </Button>
+                    </div>
+
+                    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                      <CardContent className="px-6">
+                        <div className="overflow-x-auto">
+                          <TableComponent className="min-w-full">
+                            <TableHeader>
+                              <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left w-[100px]">
+                                  <Checkbox
+                                    checked={selectedPayrollIds.size === paginatedPayrolls.length && paginatedPayrolls.length > 0}
+                                    onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                                    aria-label="Select all"
+                                  />
+                                </TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">NIB Deduction</TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedPayrolls.map((payroll) => (
+                                <TableRow 
+                                  key={payroll.id} 
+                                  className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
+                                >
+                                  <TableCell className="py-4 px-6 w-[100px]">
+                                    <Checkbox
+                                      checked={selectedPayrollIds.has(payroll.id)}
+                                      onCheckedChange={(checked) => handleSelectPayroll(payroll.id, checked === true)}
+                                      aria-label="Select payroll"
+                                    />
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <div className="font-bold">{payroll.worker_name}</div>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <div className="text-sm text-muted-foreground">{payroll.position}</div>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    {getStatusBadge(payroll.status)}
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    {new Intl.NumberFormat("en-BS", {
+                                      style: "currency",
+                                      currency: "BSD",
+                                      minimumFractionDigits: 2,
+                                    }).format(payroll.gross_pay)}
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    {new Intl.NumberFormat("en-BS", {
+                                      style: "currency",
+                                      currency: "BSD",
+                                      minimumFractionDigits: 2,
+                                    }).format(payroll.nib_deduction)}
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    {new Intl.NumberFormat("en-BS", {
+                                      style: "currency",
+                                      currency: "BSD",
+                                      minimumFractionDigits: 2,
+                                    }).format(payroll.net_pay)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </TableComponent>
+                          
+                          {/* Empty State */}
+                          {paginatedPayrolls.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-12 px-6">
+                              <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                                <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                </svg>
+                              </div>
+                              <h3 className="text-lg font-semibold text-muted-foreground mb-2">No payroll records found</h3>
+                              <p className="text-sm text-muted-foreground text-center max-w-sm">
+                                No payroll records match your current filters. Try adjusting your search or date range.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {filteredPayrolls.length > ITEMS_PER_PAGE && (
+                          <div className="flex items-center justify-between px-6 py-4">
+                            <div className="text-sm text-muted-foreground">
+                              Showing {startIndex + 1} to {Math.min(endIndex, filteredPayrolls.length)} of {filteredPayrolls.length} payroll records
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="h-8 w-8 p-0"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              
+                              <div className="flex items-center space-x-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                  <Button
+                                    key={page}
+                                    variant={currentPage === page ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handlePageChange(page)}
+                                    className={`h-8 w-8 p-0 ${
+                                      currentPage === page 
+                                        ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
+                                        : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
+                                    }`}
+                                  >
+                                    {page}
+                                  </Button>
+                                ))}
+                              </div>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="h-8 w-8 p-0"
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reports" className="space-y-6">
+                <PayrollReports payrolls={allPayrolls} />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
 

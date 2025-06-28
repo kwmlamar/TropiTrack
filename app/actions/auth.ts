@@ -38,7 +38,7 @@ export async function signup(formData: FormData): Promise<SignupResult> {
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/dashboard`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/onboarding`,
       data: {
         full_name: fullName,
         company_name: companyName, // Pass company name to trigger
@@ -48,7 +48,7 @@ export async function signup(formData: FormData): Promise<SignupResult> {
 
   if (!authData.user) {
     console.error("No user returned from signUp - likely due to email confirmation required.")
-    return { success: true, redirectTo: "/verify-email" };
+    return { success: true, redirectTo: "/onboarding" };
   }
 
   if (authError) {
@@ -61,7 +61,7 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   // No need to manually create them here
 
   // Return success with redirect path
-  return { success: true, redirectTo: "/verify-email" };
+  return { success: true, redirectTo: "/onboarding" };
 }
 
 // Google OAuth functions
