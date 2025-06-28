@@ -17,6 +17,7 @@ import { fetchClientsForCompany } from "@/lib/data/data";
 import { ProjectDetailsSection } from "@/components/projects/project-details-section";
 import { TeamMembersClient } from "@/components/projects/team-members-client";
 import { ProjectDocumentsNew } from "@/components/projects/project-documents-new";
+import { ProjectLocationsSection } from "@/components/projects/project-locations-section";
 import { getWorkers } from "@/lib/data/workers";
 
 // Helper function to get color based on percentage
@@ -190,6 +191,14 @@ export default async function ProjectPage({
                   Documents
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
                 </TabsTrigger>
+
+                <TabsTrigger
+                  value="locations"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+                >
+                  Location
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -319,7 +328,11 @@ export default async function ProjectPage({
             </TabsContent>
 
             <TabsContent value="documents" className="container mx-auto py-4 space-y-6">
-              <ProjectDocumentsNew projectId={id} userId={user.id} />
+              <ProjectDocumentsNew projectId={id} />
+            </TabsContent>
+
+            <TabsContent value="locations" className="container mx-auto py-4 space-y-6">
+              <ProjectLocationsSection projectId={id} userId={user.id} />
             </TabsContent>
           </Tabs>
         </div>

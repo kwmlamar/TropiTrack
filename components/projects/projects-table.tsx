@@ -26,6 +26,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -34,6 +36,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Filter,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -234,17 +237,15 @@ export default function ProjectsTable({ user }: { user: User }) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Projects</h2>
+        <div className='space-y-4'>
+          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
           <p className="text-muted-foreground">
             Manage your construction projects and track progress.
           </p>
         </div>
         <Button 
-          className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
           onClick={() => setIsAddProjectDialogOpen(true)}
         >
-          <Building2 className="mr-2 h-4 w-4" />
           Add Project
         </Button>
       </div>
@@ -270,68 +271,84 @@ export default function ProjectsTable({ user }: { user: User }) {
         />
       )}
 
-      {/* Filters Section */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Client Filter */}
+      {/* Search Section */}
+      <div className="flex items-center gap-4">
         <div className="flex-1">
-          <Label htmlFor="client-filter" className="text-sm font-medium mb-2 block">
-            Filter by Client
-          </Label>
-          <SearchableCombobox
-            items={clients}
-            selectedItem={selectedClient}
-            onSelect={setSelectedClient}
-            placeholder="All clients"
-            displayKey="name"
+          <SearchForm
+            placeholder="Search projects..."
+            className="w-full"
+            value={searchTerm}
+            onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
           />
         </div>
-
-        {/* Status Filter */}
-        <div className="flex-1">
-          <Label htmlFor="status-filter" className="text-sm font-medium mb-2 block">
-            Filter by Status
-          </Label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="not_started">Not Started</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="paused">Paused</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Clear Filters */}
-        {(selectedClient || statusFilter !== "all") && (
-          <div className="flex items-end">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSelectedClient(null);
-                setStatusFilter("all");
-              }}
-              className="h-10"
-            >
-              <X className="mr-2 h-4 w-4" />
-              Clear Filters
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="h-10">
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
             </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Search Section */}
-      <div className="w-full">
-        <SearchForm
-          placeholder="Search projects..."
-          className="w-full"
-          value={searchTerm}
-          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
-        />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            
+            {/* Client Filter */}
+            <div className="p-2">
+              <Label htmlFor="client-filter" className="text-sm font-medium mb-2 block">
+                Filter by Client
+              </Label>
+              <SearchableCombobox
+                items={clients}
+                selectedItem={selectedClient}
+                onSelect={setSelectedClient}
+                placeholder="All clients"
+                displayKey="name"
+              />
+            </div>
+            
+            <DropdownMenuSeparator />
+            
+            {/* Status Filter */}
+            <div className="p-2">
+              <Label htmlFor="status-filter" className="text-sm font-medium mb-2 block">
+                Filter by Status
+              </Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="not_started">Not Started</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Clear Filters */}
+            {(selectedClient || statusFilter !== "all") && (
+              <>
+                <DropdownMenuSeparator />
+                <div className="p-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedClient(null);
+                      setStatusFilter("all");
+                    }}
+                    className="w-full h-8"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Clear Filters
+                  </Button>
+                </div>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Projects Table */}
@@ -372,10 +389,8 @@ export default function ProjectsTable({ user }: { user: User }) {
                   : "You haven't added any projects yet. Add your first project to start building your portfolio."}
               </p>
               <Button 
-                className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/70 text-primary"
                 onClick={() => setIsAddProjectDialogOpen(true)}
               >
-                <Building2 className="mr-2 h-4 w-4" />
                 Add Your First Project
               </Button>
             </div>

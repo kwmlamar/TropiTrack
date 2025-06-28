@@ -14,8 +14,10 @@ export default async function ProjectsPage() {
 
   return (
     <DashboardLayout title="Projects">
-      <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
-        <ProjectsTable user={user} />
+      <div className="container mx-auto p-6">
+        <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
+          <ProjectsTable user={user} />
+        </div>
       </div>
     </DashboardLayout>
   );

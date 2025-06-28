@@ -11,6 +11,7 @@ import {
   Briefcase,
   FileText,
   Book,
+  QrCode,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -91,6 +92,13 @@ const data = {
       icon: Users,
       badge: null,
       description: "Team management",
+    },
+    {
+      title: "QR Codes",
+      url: "/dashboard/qr-codes",
+      icon: QrCode,
+      badge: null,
+      description: "Manage clock in/out QR codes",
     },
   ],
   navSecondary: [
