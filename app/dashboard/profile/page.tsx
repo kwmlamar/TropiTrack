@@ -1,14 +1,28 @@
-import DashboardLayout from "@/components/layouts/dashboard-layout";
+import DashboardLayout from "@/components/layouts/dashboard-layout"
+import { ProfileForm } from "@/components/profile/profile-form"
+import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
+import { redirect } from "next/navigation"
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const profile = await getUserProfileWithCompany()
+
+  if (!profile) {
+    redirect('/login')
+  }
+
   return (
-    <DashboardLayout title="Settings">
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <h1 className="text-3xl font-bold text-primary">Coming Soon</h1>
-        <p className="mt-2 text-muted-foreground">
-          The Profile module is under construction. Check back soon!
-        </p>
+    <DashboardLayout title="Profile">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="text-muted-foreground">
+            Manage your personal information and account settings.
+          </p>
+        </div>
+
+        <ProfileForm initialProfile={profile} />
       </div>
     </DashboardLayout>
-  );
+  )
 }
