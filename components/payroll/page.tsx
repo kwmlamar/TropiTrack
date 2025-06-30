@@ -27,10 +27,12 @@ import {
   Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useSearchParams } from "next/navigation"
 
 const ITEMS_PER_PAGE = 20;
 
 export default function PayrollPage({ user }: { user: User }) {
+  const searchParams = useSearchParams()
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
   const [allPayrolls, setAllPayrolls] = useState<PayrollRecord[]>([]) // Store all payroll data for reports
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
@@ -92,6 +94,30 @@ export default function PayrollPage({ user }: { user: User }) {
       setPayPeriodType("weekly")
     }
   }, [settingsLoading])
+
+  // Handle URL parameters for navigation from dashboard
+  useEffect(() => {
+    const dateFrom = searchParams.get('dateFrom')
+    const dateTo = searchParams.get('dateTo')
+    const periodType = searchParams.get('periodType')
+
+    if (dateFrom && dateTo) {
+      setDateRange({
+        from: new Date(dateFrom),
+        to: new Date(dateTo)
+      })
+    }
+
+    if (periodType) {
+      // Map dashboard period types to payroll period types
+      const periodTypeMap: Record<string, string> = {
+        'daily': 'weekly',
+        'weekly': 'weekly',
+        'monthly': 'monthly'
+      }
+      setPayPeriodType(periodTypeMap[periodType] || 'weekly')
+    }
+  }, [searchParams])
 
   useEffect(() => {
     loadPayroll()

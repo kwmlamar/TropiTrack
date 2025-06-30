@@ -3,9 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, DollarSign } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
+import { useRouter } from "next/navigation"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -15,6 +16,7 @@ interface PayrollSummaryProps {
 }
 
 export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) {
+  const router = useRouter()
   const [payrollData, setPayrollData] = useState<{
     gross_pay: number
     nib_deduction: number
@@ -25,26 +27,27 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
   } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const getDateRange = () => {
-      switch (viewMode) {
-        case "daily":
-          return {
-            start: startOfDay(selectedDate),
-            end: endOfDay(selectedDate)
-          }
-        case "weekly":
-          return {
-            start: startOfWeek(selectedDate),
-            end: endOfWeek(selectedDate)
-          }
-        case "monthly":
-          return {
-            start: startOfMonth(selectedDate),
-            end: endOfMonth(selectedDate)
-          }
-      }
+  const getDateRange = useCallback(() => {
+    switch (viewMode) {
+      case "daily":
+        return {
+          start: startOfDay(selectedDate),
+          end: endOfDay(selectedDate)
+        }
+      case "weekly":
+        return {
+          start: startOfWeek(selectedDate),
+          end: endOfWeek(selectedDate)
+        }
+      case "monthly":
+        return {
+          start: startOfMonth(selectedDate),
+          end: endOfMonth(selectedDate)
+        }
     }
+  }, [viewMode, selectedDate])
+
+  useEffect(() => {
 
     const fetchPayrollData = async () => {
       try {
@@ -96,6 +99,16 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
 
     fetchPayrollData()
   }, [viewMode, selectedDate])
+
+  const handleProcessPayroll = () => {
+    // Navigate to payroll page with current date range
+    const { start, end } = getDateRange()
+    const dateFrom = format(start, "yyyy-MM-dd")
+    const dateTo = format(end, "yyyy-MM-dd")
+    
+    // Navigate to payroll page with query parameters
+    router.push(`/dashboard/payroll?dateFrom=${dateFrom}&dateTo=${dateTo}&periodType=${viewMode}`)
+  }
 
   if (loading) {
     return (
@@ -197,7 +210,10 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
             <span className="text-lg font-semibold">${payrollData.net_pay.toFixed(2)}</span>
           </div>
         </div>
-        <Button className="w-full gap-2 transition-colors hover:bg-primary/90">
+        <Button 
+          className="w-full gap-2 transition-colors hover:bg-primary/90"
+          onClick={handleProcessPayroll}
+        >
           <DollarSign className="h-4 w-4" />
           <span>Process Payroll</span>
           <ArrowRight className="h-4 w-4" />
