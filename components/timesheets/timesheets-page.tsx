@@ -1252,7 +1252,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
           </TabsContent>
           <TabsContent value="approvals" className="container mx-auto py-6 space-y-6">
             <ApprovalsPage
-              timesheets={timesheets}
               onApprove={handleApproveTimesheet}
               onReject={handleRejectTimesheet}
               user={user}

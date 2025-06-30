@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EditWorkerDialog } from "@/components/forms/worker-form";
+import { BiometricEnrollment } from './biometric-enrollment';
+import BiometricStatus from './biometric-status';
 import { getWorker } from "@/lib/data/workers";
 import { getTimesheets } from "@/lib/data/timesheets";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
@@ -24,6 +26,7 @@ import {
   StickyNote,
   Edit,
 } from "lucide-react";
+import { getWorkerBiometricStatus } from '@/lib/data/biometric';
 
 export default function WorkerDetails() {
   const params = useParams();
@@ -34,6 +37,33 @@ export default function WorkerDetails() {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [showBiometricEnrollment, setShowBiometricEnrollment] = useState(false);
+  const [, setBiometricStatus] = useState<unknown>(null);
+  const [, setBiometricLoading] = useState(false);
+
+
+
+  // Load biometric status
+  const loadBiometricStatus = async () => {
+    if (!worker?.id) return;
+    
+    setBiometricLoading(true);
+    try {
+      const result = await getWorkerBiometricStatus(worker.id);
+      if (result.success) {
+        setBiometricStatus(result);
+      }
+    } catch (error) {
+      console.error('Failed to load biometric status:', error);
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  const handleBiometricEnrollmentComplete = () => {
+    setShowBiometricEnrollment(false);
+    loadBiometricStatus(); // Refresh the status
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -70,6 +100,10 @@ export default function WorkerDetails() {
 
     loadData();
   }, [params.id]);
+
+  useEffect(() => {
+    loadBiometricStatus();
+  }, [worker?.id]);
 
   if (loading) {
     return (
@@ -198,6 +232,14 @@ export default function WorkerDetails() {
                   className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
                 >
                   Notes
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="biometrics"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                >
+                  Biometrics
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
                 </TabsTrigger>
               </TabsList>
@@ -450,6 +492,35 @@ export default function WorkerDetails() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="biometrics" className="space-y-4">
+              {showBiometricEnrollment ? (
+                <BiometricEnrollment
+                  workerId={worker.id}
+                  workerName={worker.name}
+                  onEnrollmentComplete={handleBiometricEnrollmentComplete}
+                  onCancel={() => setShowBiometricEnrollment(false)}
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Biometric Authentication</h3>
+                    <Button
+                      onClick={() => setShowBiometricEnrollment(true)}
+                      disabled={worker.biometric_enrolled}
+                    >
+                      {worker.biometric_enrolled ? 'Already Enrolled' : 'Enroll Biometrics'}
+                    </Button>
+                  </div>
+                  
+                  <BiometricStatus 
+                    worker={worker}
+                    onStartEnrollment={() => setShowBiometricEnrollment(true)}
+                    onRefreshStatus={loadBiometricStatus}
+                  />
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>

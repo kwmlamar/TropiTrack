@@ -15,9 +15,6 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="rounded-md bg-primary p-1">
-              <Clock className="h-5 w-5 text-primary-foreground" />
-            </div>
             <span className="text-xl font-bold tracking-tight">TropiTrack</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
@@ -26,9 +23,6 @@ export default function Home() {
             </Link>
             <Link href="#pricing" className="text-sm font-medium transition-colors hover:text-primary">
               Pricing
-            </Link>
-            <Link href="#testimonials" className="text-sm font-medium transition-colors hover:text-primary">
-              Reviews
             </Link>
             <Link href="#faq" className="text-sm font-medium transition-colors hover:text-primary">
               FAQ
@@ -283,87 +277,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section id="testimonials" className="py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
-                Built for construction teams in the Bahamas
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                See how TropiTrack can transform your construction business
-              </p>
-            </div>
-
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="bg-card border-0 shadow-lg">
-                <CardContent className="p-8">
-                  <div className="flex text-primary mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-current" />
-                    ))}
-                  </div>
-                  <blockquote className="text-lg mb-6 leading-relaxed">
-                    &ldquo;TropiTrack has transformed how we manage our crews. We&apos;ve cut payroll processing time by 75% and eliminated timesheet errors completely.&rdquo;
-                  </blockquote>
-                  <div className="flex items-center">
-                    <div className="mr-4 h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Building2 className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">Michael Johnson</p>
-                      <p className="text-muted-foreground">Nassau Construction Ltd</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-0 shadow-lg">
-                <CardContent className="p-8">
-                  <div className="flex text-primary mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-current" />
-                    ))}
-                  </div>
-                  <blockquote className="text-lg mb-6 leading-relaxed">
-                    &ldquo;The offline capability is perfect for our remote job sites. Workers can clock in/out even without internet, and it syncs later seamlessly.&rdquo;
-                  </blockquote>
-                  <div className="flex items-center">
-                    <div className="mr-4 h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Building2 className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">Sarah Williams</p>
-                      <p className="text-muted-foreground">Island Builders Co.</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-0 shadow-lg">
-                <CardContent className="p-8">
-                  <div className="flex text-primary mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-current" />
-                    ))}
-                  </div>
-                  <blockquote className="text-lg mb-6 leading-relaxed">
-                    &ldquo;As a small contractor, I needed something simple but powerful. TropiTrack gives me enterprise features at a price I can afford.&rdquo;
-                  </blockquote>
-                  <div className="flex items-center">
-                    <div className="mr-4 h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Building2 className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">David Thompson</p>
-                      <p className="text-muted-foreground">Thompson & Sons Construction</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
 
         {/* Pricing Section */}
         <section id="pricing" className="py-24 bg-muted/50">
@@ -585,9 +498,6 @@ export default function Home() {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             <div>
               <div className="flex items-center gap-2 mb-6">
-                <div className="rounded-md bg-primary p-1">
-                  <Clock className="h-5 w-5 text-primary-foreground" />
-                </div>
                 <span className="text-xl font-bold tracking-tight">TropiTrack</span>
               </div>
               <p className="text-muted-foreground mb-6">

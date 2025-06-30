@@ -13,6 +13,7 @@ import {
 import { PayrollDistributionChart } from "./payroll-distribution-chart"
 import type { PayrollRecord } from "@/lib/types"
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, format } from "date-fns"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 interface PayrollReportsProps {
   payrolls: PayrollRecord[]
@@ -24,21 +25,35 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [dateRange, setDateRange] = useState("this-week")
 
+  const { paymentSchedule } = usePayrollSettings()
+
+  // Get week start day from payment schedule
+  const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+    if (paymentSchedule?.period_start_type === "day_of_week") {
+      const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+        1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+      }
+      return dayMap[paymentSchedule.period_start_day] || 1
+    }
+    return 1 // Default to Monday if no payment schedule
+  }
+
   // Calculate date ranges
   const getDateRange = (range: string) => {
     const now = new Date()
+    const weekStartsOn = getWeekStartsOn()
     
     switch (range) {
       case "this-week":
         return {
-          from: startOfWeek(now, { weekStartsOn: 1 }), // Monday start
-          to: endOfWeek(now, { weekStartsOn: 1 })
+          from: startOfWeek(now, { weekStartsOn }),
+          to: endOfWeek(now, { weekStartsOn })
         }
       case "last-week":
         const lastWeek = subWeeks(now, 1)
         return {
-          from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
-          to: endOfWeek(lastWeek, { weekStartsOn: 1 })
+          from: startOfWeek(lastWeek, { weekStartsOn }),
+          to: endOfWeek(lastWeek, { weekStartsOn })
         }
       case "this-month":
         return {
@@ -53,8 +68,8 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
         }
       default:
         return {
-          from: startOfWeek(now, { weekStartsOn: 1 }),
-          to: endOfWeek(now, { weekStartsOn: 1 })
+          from: startOfWeek(now, { weekStartsOn }),
+          to: endOfWeek(now, { weekStartsOn })
         }
     }
   }
@@ -64,10 +79,14 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
     const { from, to } = getDateRange(dateRange)
     
     return payrolls.filter(payroll => {
-      const payrollDate = new Date(payroll.created_at)
-      return payrollDate >= from && payrollDate <= to
+      // Use pay_period_start and pay_period_end instead of created_at
+      const periodStart = new Date(payroll.pay_period_start)
+      const periodEnd = new Date(payroll.pay_period_end)
+      
+      // Check if the pay period overlaps with the selected date range
+      return periodStart <= to && periodEnd >= from
     })
-  }, [payrolls, dateRange])
+  }, [payrolls, dateRange, paymentSchedule])
 
   // Aggregate payroll data by worker
   const aggregatedPayrolls = useMemo(() => {
@@ -341,9 +360,17 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                     </TableHeader>
                     <TableBody>
                       {(() => {
+                        // Get the current date range for the period display
+                        const { from, to } = getDateRange(dateRange)
+                        const periodLabel = dateRange === "this-week" ? "Current Week" :
+                          dateRange === "last-week" ? "Last Week" :
+                          dateRange === "this-month" ? "Current Month" :
+                          dateRange === "last-month" ? "Last Month" :
+                          `${format(from, "MMM dd")} - ${format(to, "MMM dd, yyyy")}`
+
                         const summaryData = [
                           {
-                            period: "Current Week",
+                            period: periodLabel,
                             status: "All",
                             workers: aggregatedPayrolls.length,
                             totalHours: aggregatedPayrolls.reduce((sum, p) => sum + p.total_hours, 0),
@@ -352,7 +379,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             netPay: aggregatedPayrolls.reduce((sum, p) => sum + p.net_pay, 0),
                           },
                           {
-                            period: "Current Week",
+                            period: periodLabel,
                             status: "Paid",
                             workers: aggregatedPayrolls.filter(p => p.status === "paid").length,
                             totalHours: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.total_hours, 0),
@@ -361,7 +388,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             netPay: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.net_pay, 0),
                           },
                           {
-                            period: "Current Week",
+                            period: periodLabel,
                             status: "Confirmed",
                             workers: aggregatedPayrolls.filter(p => p.status === "confirmed").length,
                             totalHours: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.total_hours, 0),
@@ -370,7 +397,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             netPay: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.net_pay, 0),
                           },
                           {
-                            period: "Current Week",
+                            period: periodLabel,
                             status: "Pending",
                             workers: aggregatedPayrolls.filter(p => p.status === "pending").length,
                             totalHours: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.total_hours, 0),

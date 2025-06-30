@@ -14,7 +14,9 @@ import {
   MapPin,
   Fingerprint,
   Camera,
-  Shield
+  Shield,
+  Loader2,
+  Globe
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -52,6 +54,77 @@ interface ClockStatus {
   last_event_time: string
 }
 
+type Language = 'english' | 'creole'
+
+const translations = {
+  english: {
+    kioskTitle: "TropiTrack Kiosk",
+    kioskSubtitle: "Time & Attendance System",
+    loading: "Loading...",
+    loadingSubtitle: "Preparing clock-in system",
+    invalidQR: "Invalid QR Code",
+    backToDashboard: "Back to Dashboard",
+    step1Title: "Step 1: Select Your Name",
+    step2Title: "Step 2: Identity Verification",
+    step3Title: "Step 3: Clock In/Out",
+    selectWorker: "Select Worker:",
+    continueToVerification: "Continue to Verification",
+    noWorkersTitle: "No Workers Available",
+    noWorkersMessage: "No active workers found in your company. Please add workers first.",
+    goToWorkers: "Go to Workers",
+    verifyIdentity: "Please verify your identity to prevent buddy punching",
+    fingerprint: "Fingerprint",
+    faceId: "Face ID",
+    verifyingIdentity: "Verifying identity...",
+    backToWorkerSelection: "Back to Worker Selection",
+    currentStatus: "Current Status",
+    status: "Status:",
+    lastAction: "Last Action:",
+    clockIn: "Clock In",
+    clockOut: "Clock Out",
+    processing: "Processing...",
+    success: "Success!",
+    error: "Error",
+    clockInOutAgain: "Clock In/Out Again",
+    languageSelection: "Select Language / Chwazi Lang",
+    english: "English",
+    creole: "Kreyòl"
+  },
+  creole: {
+    kioskTitle: "TropiTrack Kiosk",
+    kioskSubtitle: "Sistèm Tan ak Prezans",
+    loading: "Chaje...",
+    loadingSubtitle: "Prepare sistèm antre-soti",
+    invalidQR: "Kòd QR Envalid",
+    backToDashboard: "Retounen nan Tablo",
+    step1Title: "Etap 1: Chwazi Non Ou",
+    step2Title: "Etap 2: Verifikasyon Idantite",
+    step3Title: "Etap 3: Antre-Soti",
+    selectWorker: "Chwazi Travayè:",
+    continueToVerification: "Kontinye nan Verifikasyon",
+    noWorkersTitle: "Pa Gen Travayè Disponib",
+    noWorkersMessage: "Pa gen travayè aktif yo jwenn nan konpayi ou. Tanpri ajoute travayè anvan.",
+    goToWorkers: "Ale nan Travayè",
+    verifyIdentity: "Tanpri verifye idantite ou pou anpeche frape kòkòt",
+    fingerprint: "Anprent Dijital",
+    faceId: "Id Figi",
+    verifyingIdentity: "Verifye idantite...",
+    backToWorkerSelection: "Retounen nan Seleksyon Travayè",
+    currentStatus: "Estati Aktyèl",
+    status: "Estati:",
+    lastAction: "Dènye Aksyon:",
+    clockIn: "Antre",
+    clockOut: "Soti",
+    processing: "Pwosesis...",
+    success: "Siksè!",
+    error: "Erè",
+    clockInOutAgain: "Antre-Soti Ankò",
+    languageSelection: "Select Language / Chwazi Lang",
+    english: "English",
+    creole: "Kreyòl"
+  }
+}
+
 export default function QRScanPage({ params }: QRScanPageProps) {
   const { hash } = use(params)
   const [loading, setLoading] = useState(true)
@@ -66,8 +139,21 @@ export default function QRScanPage({ params }: QRScanPageProps) {
     action: 'clock_in' | 'clock_out'
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [authStep, setAuthStep] = useState<'select' | 'biometric' | 'complete'>('select')
+  const [authStep, setAuthStep] = useState<'language' | 'select' | 'biometric' | 'complete'>('language')
   const [biometricData, setBiometricData] = useState<string | null>(null)
+  const [language, setLanguage] = useState<Language>('english')
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  const t = translations[language]
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
 
   const loadQRCodeData = useCallback(async () => {
     try {
@@ -110,6 +196,11 @@ export default function QRScanPage({ params }: QRScanPageProps) {
   useEffect(() => {
     loadQRCodeData()
   }, [loadQRCodeData])
+
+  const handleLanguageSelect = (selectedLanguage: Language) => {
+    setLanguage(selectedLanguage)
+    setAuthStep('select')
+  }
 
   const handleWorkerSelect = () => {
     setAuthStep('biometric')
@@ -200,19 +291,19 @@ export default function QRScanPage({ params }: QRScanPageProps) {
         console.log("Scan failed - Debug info:", result.debug)
         setScanResult({
           success: false,
-          message: result.message,
+          message: result.message || "Scan failed",
           action: 'clock_in'
         })
-        toast.error(result.message)
+        toast.error(result.message || "Scan failed")
       }
     } catch (error) {
-      console.error("Error scanning QR code:", error)
+      console.error("Scan error:", error)
       setScanResult({
         success: false,
-        message: "Failed to process scan",
+        message: "Network error occurred",
         action: 'clock_in'
       })
-      toast.error("Failed to process scan")
+      toast.error("Network error occurred")
     } finally {
       setScanning(false)
     }
@@ -223,9 +314,8 @@ export default function QRScanPage({ params }: QRScanPageProps) {
       if (navigator.geolocation) {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
             timeout: 5000,
-            maximumAge: 0
+            enableHighAccuracy: false
           })
         })
         return {
@@ -235,131 +325,163 @@ export default function QRScanPage({ params }: QRScanPageProps) {
         }
       }
     } catch {
-      console.warn("Location access denied or unavailable")
+      console.log("Location access denied or unavailable")
     }
     return null
   }
 
   const getDeviceId = async () => {
-    // Generate a device fingerprint based on available data
+    // Generate a simple device fingerprint
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
-    ctx?.fillText('device fingerprint', 10, 10)
-    const fingerprint = canvas.toDataURL()
-    
-    return btoa(fingerprint + navigator.userAgent + screen.width + screen.height)
+    ctx?.fillText('device-fingerprint', 0, 0)
+    return canvas.toDataURL().slice(-20)
   }
 
-  const getActionMessage = (action: string) => {
-    return action === 'clock_in' ? 'CLOCKED IN' : 'CLOCKED OUT'
-  }
+
 
   const resetFlow = () => {
-    setAuthStep('select')
+    setAuthStep('language')
     setBiometricData(null)
     setScanResult(null)
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
-        {/* Gradient overlay with Bahamas colors */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-cyan-400/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
-        
-        {/* Animated gradient orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-yellow-300/15 to-cyan-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
-        
-        <div className="relative z-10 flex items-center justify-center min-h-screen p-6">
-          <Card className="w-full max-w-sm border-yellow-400/30 bg-black/50 backdrop-blur-sm">
-            <CardContent className="text-center py-16">
-              <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-              <p className="text-xl font-medium text-yellow-100">Loading...</p>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="text-center py-16">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-6 text-primary" />
+            <h2 className="text-2xl font-semibold mb-2">{t.loading}</h2>
+            <p className="text-muted-foreground">{t.loadingSubtitle}</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
-        {/* Gradient overlay with Bahamas colors */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-cyan-400/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
-        
-        {/* Animated gradient orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-yellow-300/15 to-cyan-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
-        
-        <div className="relative z-10 flex items-center justify-center min-h-screen p-6">
-          <Card className="w-full max-w-sm border-yellow-400/30 bg-black/50 backdrop-blur-sm">
-            <CardContent className="text-center py-16">
-              <XCircle className="h-16 w-16 text-red-400 mx-auto mb-6" />
-              <h1 className="text-2xl font-bold mb-4 text-yellow-100">Invalid QR Code</h1>
-              <p className="text-gray-300 mb-8 text-lg">{error}</p>
-              <Link href="/dashboard">
-                <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-4 h-auto font-semibold">
-                  <ArrowLeft className="h-5 w-5 mr-3" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="text-center py-16">
+            <XCircle className="h-16 w-16 mx-auto mb-6 text-destructive" />
+            <h1 className="text-2xl font-bold mb-4">{t.invalidQR}</h1>
+            <p className="text-muted-foreground mb-8">{error}</p>
+            <Link href="/dashboard">
+              <Button className="w-full">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {t.backToDashboard}
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Gradient overlay with Bahamas colors */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-cyan-400/20"></div>
-      <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
-      
-      {/* Animated gradient orbs */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-yellow-300/15 to-cyan-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
-      
-      <div className="relative z-10 max-w-sm mx-auto space-y-6 p-6">
-        {/* Header */}
-        <div className="text-center pt-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
-            Clock In/Out
-          </h1>
-          <p className="text-gray-300 text-lg">Secure biometric verification required</p>
+    <div className="min-h-screen bg-background">
+      {/* Kiosk Header */}
+      <div className="bg-primary text-primary-foreground py-4 px-6 shadow-lg">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Clock className="h-8 w-8" />
+            <div>
+              <h1 className="text-2xl font-bold">{t.kioskTitle}</h1>
+              <p className="text-sm opacity-90">{t.kioskSubtitle}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            {/* Language Dropdown */}
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 opacity-80" />
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as Language)}
+                className="bg-white text-black border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer min-w-[120px]"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.5em 1.5em',
+                  paddingRight: '2rem'
+                }}
+              >
+                <option value="english" style={{ backgroundColor: 'white', color: 'black' }}>🇺🇸 English</option>
+                <option value="creole" style={{ backgroundColor: 'white', color: 'black' }}>🇭🇹 Kreyòl</option>
+              </select>
+            </div>
+            
+            {/* Date and Time */}
+            <div className="text-right">
+              <div className="text-sm opacity-90">
+                {currentTime.toLocaleDateString()}
+              </div>
+              <div className="text-lg font-semibold">
+                {currentTime.toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto p-6 space-y-6">
+        {/* Language Selection */}
+        {authStep === 'language' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <Globe className="h-6 w-6 text-primary" />
+                {t.languageSelection}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => handleLanguageSelect('english')}
+                  className="h-20 flex flex-col items-center justify-center text-lg font-semibold"
+                  size="lg"
+                >
+                  <span className="text-2xl mb-2">🇺🇸</span>
+                  {t.english}
+                </Button>
+                
+                <Button
+                  onClick={() => handleLanguageSelect('creole')}
+                  className="h-20 flex flex-col items-center justify-center text-lg font-semibold"
+                  size="lg"
+                >
+                  <span className="text-2xl mb-2">🇭🇹</span>
+                  {t.creole}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* QR Code Info */}
-        {qrCode && (
-          <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
-                <Building className="h-6 w-6" />
+        {qrCode && authStep !== 'language' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <Building className="h-6 w-6 text-primary" />
                 {qrCode.name}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 text-base">
-                <MapPin className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <div>
-                  <span className="font-medium text-yellow-100">Project:</span>
-                  <span className="text-white ml-2 font-medium">{qrCode.project_location?.project?.name || 'Unknown Project'}</span>
+                  <span className="font-medium">Project:</span>
+                  <span className="ml-2">{qrCode.project_location?.project?.name || 'Unknown Project'}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-base">
-                <MapPin className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <div>
-                  <span className="font-medium text-yellow-100">Location:</span>
-                  <span className="text-white ml-2 font-medium">{qrCode.project_location?.name || 'Unknown Location'}</span>
+                  <span className="font-medium">Location:</span>
+                  <span className="ml-2">{qrCode.project_location?.name || 'Unknown Location'}</span>
                 </div>
               </div>
             </CardContent>
@@ -368,45 +490,49 @@ export default function QRScanPage({ params }: QRScanPageProps) {
 
         {/* Step 1: Worker Selection */}
         {authStep === 'select' && (
-          <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
-                <User className="h-6 w-6" />
-                Step 1: Select Worker
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <User className="h-6 w-6 text-primary" />
+                {t.step1Title}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {workers.length > 0 ? (
                 <>
-                  <select
-                    value={selectedWorker}
-                    onChange={(e) => setSelectedWorker(e.target.value)}
-                    className="w-full p-4 border border-yellow-400/30 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-gradient-to-r from-gray-800 to-gray-900 text-white placeholder-gray-400 text-lg shadow-lg"
-                  >
-                    {workers.map((worker) => (
-                      <option key={worker.id} value={worker.id} className="text-white bg-gray-800">
-                        {worker.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">{t.selectWorker}</label>
+                    <select
+                      value={selectedWorker}
+                      onChange={(e) => setSelectedWorker(e.target.value)}
+                      className="w-full p-4 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground text-lg"
+                    >
+                      {workers.map((worker) => (
+                        <option key={worker.id} value={worker.id}>
+                          {worker.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <Button 
                     onClick={handleWorkerSelect}
                     disabled={!selectedWorker}
-                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-semibold text-lg px-8 py-4 h-auto"
+                    className="w-full h-14 text-lg font-semibold"
+                    size="lg"
                   >
-                    Continue to Verification
+                    {t.continueToVerification}
                   </Button>
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <User className="h-16 w-16 mx-auto text-yellow-400 mb-6" />
-                  <h3 className="text-xl font-medium mb-4 text-yellow-100">No Workers Available</h3>
-                  <p className="text-gray-300 mb-8 text-lg">
-                    No active workers found in your company. Please add workers first.
+                  <User className="h-16 w-16 mx-auto text-muted-foreground mb-6" />
+                  <h3 className="text-xl font-medium mb-4">{t.noWorkersTitle}</h3>
+                  <p className="text-muted-foreground mb-8">
+                    {t.noWorkersMessage}
                   </p>
                   <Link href="/dashboard/workers">
-                    <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-4 h-auto font-semibold">
-                      Go to Workers
+                    <Button size="lg">
+                      {t.goToWorkers}
                     </Button>
                   </Link>
                 </div>
@@ -417,17 +543,17 @@ export default function QRScanPage({ params }: QRScanPageProps) {
 
         {/* Step 2: Biometric Authentication */}
         {authStep === 'biometric' && (
-          <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
-                <Shield className="h-6 w-6" />
-                Step 2: Biometric Verification
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <Shield className="h-6 w-6 text-primary" />
+                {t.step2Title}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <p className="text-base text-gray-300 mb-6">
-                  Verify your identity to prevent buddy punching
+                <p className="text-muted-foreground mb-6">
+                  {t.verifyIdentity}
                 </p>
               </div>
               
@@ -435,35 +561,37 @@ export default function QRScanPage({ params }: QRScanPageProps) {
                 <Button
                   onClick={() => handleBiometricAuth()}
                   disabled={scanning}
-                  className="h-24 flex flex-col items-center justify-center bg-gradient-to-br from-cyan-400 to-cyan-600 hover:from-cyan-500 hover:to-cyan-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  variant="outline"
+                  className="h-24 flex flex-col items-center justify-center border-2 hover:border-primary"
                 >
-                  <Fingerprint className="h-10 w-10 mb-3" />
-                  <span className="text-base font-semibold">Fingerprint</span>
+                  <Fingerprint className="h-10 w-10 mb-3 text-primary" />
+                  <span className="text-base font-semibold">{t.fingerprint}</span>
                 </Button>
                 
                 <Button
                   onClick={() => handleBiometricAuth()}
                   disabled={scanning}
-                  className="h-24 flex flex-col items-center justify-center bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  variant="outline"
+                  className="h-24 flex flex-col items-center justify-center border-2 hover:border-primary"
                 >
-                  <Camera className="h-10 w-10 mb-3" />
-                  <span className="text-base font-semibold">Face ID</span>
+                  <Camera className="h-10 w-10 mb-3 text-primary" />
+                  <span className="text-base font-semibold">{t.faceId}</span>
                 </Button>
               </div>
 
               {scanning && (
                 <div className="text-center py-6">
-                  <div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-base text-gray-300">Verifying identity...</p>
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                  <p className="text-muted-foreground">{t.verifyingIdentity}</p>
                 </div>
               )}
 
               <Button 
                 onClick={resetFlow}
                 variant="ghost"
-                className="w-full text-gray-300 hover:text-yellow-100 hover:bg-yellow-400/10 text-lg py-4 h-auto"
+                className="w-full"
               >
-                Back to Worker Selection
+                {t.backToWorkerSelection}
               </Button>
             </CardContent>
           </Card>
@@ -474,24 +602,24 @@ export default function QRScanPage({ params }: QRScanPageProps) {
           <>
             {/* Current Status */}
             {clockStatus && (
-              <Card className="border-yellow-400/30 bg-black/50 backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-yellow-100 text-xl">
-                    <Clock className="h-6 w-6" />
-                    Current Status
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <Clock className="h-6 w-6 text-primary" />
+                    {t.currentStatus}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-medium text-gray-300">Status:</span>
-                    <Badge variant={clockStatus.is_clocked_in ? "default" : "secondary"} className={`text-base px-4 py-2 ${clockStatus.is_clocked_in ? "bg-green-600" : "bg-gray-600"}`}>
+                    <span className="font-medium">{t.status}</span>
+                    <Badge variant={clockStatus.is_clocked_in ? "default" : "secondary"} className="text-base px-4 py-2">
                       {clockStatus.is_clocked_in ? "CLOCKED IN" : "CLOCKED OUT"}
                     </Badge>
                   </div>
                   {clockStatus.last_event_time && (
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-medium text-gray-300">Last Action:</span>
-                      <span className="text-base text-gray-200">
+                      <span className="font-medium">{t.lastAction}</span>
+                      <span>
                         {new Date(clockStatus.last_event_time).toLocaleTimeString()}
                       </span>
                     </div>
@@ -504,53 +632,44 @@ export default function QRScanPage({ params }: QRScanPageProps) {
             <Button
               onClick={handleScan}
               disabled={scanning}
-              className="w-full h-20 text-xl font-semibold bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+              className="w-full h-20 text-xl font-semibold"
               size="lg"
             >
               {scanning ? (
                 <>
-                  <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin mr-3" />
-                  Processing...
+                  <Loader2 className="h-6 w-6 mr-3 animate-spin" />
+                  {t.processing}
                 </>
               ) : (
                 <>
                   <Clock className="h-6 w-6 mr-3" />
-                  CLOCK {clockStatus?.is_clocked_in ? 'OUT' : 'IN'}
+                  {clockStatus?.is_clocked_in ? t.clockOut : t.clockIn}
                 </>
               )}
             </Button>
 
-            <Button 
-              onClick={resetFlow}
-              variant="ghost"
-              className="w-full text-gray-300 hover:text-yellow-100 hover:bg-yellow-400/10 text-lg py-4 h-auto"
-            >
-              Start Over
-            </Button>
+            {/* Scan Result */}
+            {scanResult && (
+              <Card className={scanResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
+                <CardContent className="text-center py-8">
+                  {scanResult.success ? (
+                    <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-600" />
+                  ) : (
+                    <XCircle className="h-16 w-16 mx-auto mb-4 text-red-600" />
+                  )}
+                  <h3 className="text-xl font-semibold mb-2">
+                    {scanResult.success ? t.success : t.error}
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    {scanResult.message}
+                  </p>
+                  <Button onClick={resetFlow} variant="outline">
+                    {t.clockInOutAgain}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </>
-        )}
-
-        {/* Scan Result */}
-        {scanResult && (
-          <Card className={`border-2 backdrop-blur-sm rounded-xl ${scanResult.success ? 'border-green-400/50 bg-green-900/20' : 'border-red-400/50 bg-red-900/20'}`}>
-            <CardContent className="text-center py-12">
-              {scanResult.success ? (
-                <>
-                  <CheckCircle className="h-20 w-20 text-green-400 mx-auto mb-6" />
-                  <h2 className="text-3xl font-bold text-green-100 mb-4">
-                    {getActionMessage(scanResult.action)}
-                  </h2>
-                  <p className="text-green-200 text-xl">{scanResult.message}</p>
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-20 w-20 text-red-400 mx-auto mb-6" />
-                  <h2 className="text-2xl font-bold text-red-100 mb-4">Error</h2>
-                  <p className="text-red-200 text-lg">{scanResult.message}</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
         )}
       </div>
     </div>

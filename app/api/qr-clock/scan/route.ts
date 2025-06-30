@@ -3,6 +3,14 @@ import { createClient } from "@/utils/supabase/server"
 import { getQRCodeByHash, processQRCodeScanForWorker, generateTimesheetFromClockEvents } from "@/lib/data/qr-clock"
 import type { ClockEventInput, DeviceInfo, QRCode } from "@/lib/types/qr-clock"
 
+// Time restriction configuration
+const TIME_RESTRICTIONS = {
+  EARLIEST_CLOCK_IN: 5, // 5 AM
+  LATEST_CLOCK_OUT: 21, // 9 PM
+  EARLIEST_CLOCK_OUT: 5, // 5 AM (prevent clock out too early)
+  ENABLED: true // Set to false to disable time restrictions
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -123,16 +131,6 @@ export async function POST(request: NextRequest) {
 
     console.log("Worker verified successfully:", worker)
 
-    // Anti-buddy punching checks including location validation
-    const securityChecks = await performSecurityChecks(worker_id, project_id, device_info, biometric_data, qrCode)
-    if (!securityChecks.passed) {
-      return NextResponse.json({
-        success: false,
-        message: securityChecks.message,
-        security_violation: true
-      }, { status: 400 })
-    }
-
     // Get worker's current clock status to determine action
     const { data: statusData, error: statusError } = await supabase
       .rpc('get_worker_clock_status', {
@@ -150,13 +148,24 @@ export async function POST(request: NextRequest) {
 
     const currentStatus = statusData?.[0]
     const shouldClockIn = !currentStatus?.is_clocked_in
+    const eventType = shouldClockIn ? 'clock_in' : 'clock_out'
+
+    // Anti-buddy punching checks including location validation
+    const securityChecks = await performSecurityChecks(worker_id, project_id, device_info, biometric_data, qrCode, eventType)
+    if (!securityChecks.passed) {
+      return NextResponse.json({
+        success: false,
+        message: securityChecks.message,
+        security_violation: true
+      }, { status: 400 })
+    }
 
     // Create clock event input with enhanced security data
     const clockEventInput: ClockEventInput = {
       worker_id,
       project_id,
       qr_code_hash,
-      event_type: shouldClockIn ? 'clock_in' : 'clock_out',
+      event_type: eventType,
       device_info: {
         ...device_info,
         biometric_verified: !!biometric_data,
@@ -173,7 +182,9 @@ export async function POST(request: NextRequest) {
       if (shouldClockIn === false) { // This means we just clocked out
         console.log(`Worker ${worker_id} clocked out, attempting to generate timesheet...`)
         try {
-          const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+          // Use local timezone for date calculation
+          const now = new Date()
+          const today = now.toLocaleDateString('en-CA') // YYYY-MM-DD format in local timezone
           console.log(`Generating timesheet for worker ${worker_id}, project ${project_id}, date ${today}`)
           
           const timesheetResult = await generateTimesheetFromClockEvents(
@@ -253,7 +264,8 @@ async function performSecurityChecks(
   projectId: string, 
   deviceInfo: DeviceInfo, 
   biometricData: string,
-  qrCode: QRCode
+  qrCode: QRCode,
+  eventType: 'clock_in' | 'clock_out'
 ) {
   const supabase = await createClient()
   
@@ -284,7 +296,48 @@ async function performSecurityChecks(
       }
     }
 
-    // Check 3: Location validation using GPS coordinates (optional for testing)
+    // Check 3: Time-based restrictions
+    if (TIME_RESTRICTIONS.ENABLED) {
+      const now = new Date()
+      const hour = now.getHours()
+      const minute = now.getMinutes()
+      const currentTime = hour + minute / 60 // Convert to decimal hours for easier comparison
+      const timeString = `${hour}:${minute.toString().padStart(2, '0')}`
+      
+      console.log(`Time check: ${eventType} attempted at ${timeString} (${currentTime.toFixed(2)} hours)`)
+      
+      if (eventType === 'clock_in') {
+        // No clock in before 5 AM
+        if (currentTime < TIME_RESTRICTIONS.EARLIEST_CLOCK_IN) {
+          console.log(`Time restriction: Clock in attempted at ${timeString} (before ${TIME_RESTRICTIONS.EARLIEST_CLOCK_IN}:00)`)
+          return {
+            passed: false,
+            message: `Clock in is only allowed between ${TIME_RESTRICTIONS.EARLIEST_CLOCK_IN}:00 and ${TIME_RESTRICTIONS.LATEST_CLOCK_OUT}:00`
+          }
+        }
+      } else if (eventType === 'clock_out') {
+        // No clock out before 5 AM or after 9 PM
+        if (currentTime < TIME_RESTRICTIONS.EARLIEST_CLOCK_OUT) {
+          console.log(`Time restriction: Clock out attempted at ${timeString} (before ${TIME_RESTRICTIONS.EARLIEST_CLOCK_OUT}:00)`)
+          return {
+            passed: false,
+            message: `Clock out is only allowed between ${TIME_RESTRICTIONS.EARLIEST_CLOCK_OUT}:00 and ${TIME_RESTRICTIONS.LATEST_CLOCK_OUT}:00`
+          }
+        } else if (currentTime > TIME_RESTRICTIONS.LATEST_CLOCK_OUT) {
+          console.log(`Time restriction: Clock out attempted at ${timeString} (after ${TIME_RESTRICTIONS.LATEST_CLOCK_OUT}:00)`)
+          return {
+            passed: false,
+            message: `Clock out is only allowed between ${TIME_RESTRICTIONS.EARLIEST_CLOCK_OUT}:00 and ${TIME_RESTRICTIONS.LATEST_CLOCK_OUT}:00`
+          }
+        }
+      }
+      
+      console.log(`Time check passed: ${eventType} allowed at ${timeString}`)
+    } else {
+      console.log("Time restrictions disabled")
+    }
+
+    // Check 4: Location validation using GPS coordinates (optional for testing)
     if (deviceInfo?.gps && qrCode?.project_location) {
       const workerLocation = deviceInfo.gps
       const projectLocation = qrCode.project_location
@@ -312,24 +365,12 @@ async function performSecurityChecks(
       }
     }
 
-    // Check 4: Device fingerprinting (prevent multiple devices for same worker)
+    // Check 5: Device fingerprinting (prevent multiple devices for same worker)
     if (deviceInfo?.fingerprint) {
       // In production, store and verify device fingerprints
       // For now, we'll just log the device fingerprint
       console.log("Device verification:", deviceInfo.fingerprint)
     }
-
-    // Check 5: Time-based restrictions (disabled for testing)
-    // const now = new Date()
-    // const hour = now.getHours()
-    // const isWorkHours = hour >= 6 && hour <= 18 // 6 AM to 6 PM
-    // 
-    // if (!isWorkHours) {
-    //   return {
-    //     passed: false,
-    //     message: "Clock events only allowed during work hours (6 AM - 6 PM)"
-    //   }
-    // }
 
     return {
       passed: true,

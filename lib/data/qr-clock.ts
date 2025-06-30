@@ -983,3 +983,147 @@ export async function generateTimesheetsForDate(
     }
   }
 }
+
+/**
+ * Generate automatic clock outs for workers who haven't clocked out
+ */
+export async function generateAutomaticClockOuts(
+  companyId: string,
+  cutoffTime: string = "23:59:59"
+): Promise<ApiResponse<{ processed: number; errors: string[] }>> {
+  try {
+    // Get all active clock-ins that haven't been clocked out
+    const { data: activeClockIns, error: fetchError } = await supabase
+      .from("clock_events")
+      .select(`
+        *,
+        worker:workers(id, name),
+        qr_code:qr_codes(*)
+      `)
+      .eq("company_id", companyId)
+      .eq("event_type", "clock_in")
+      .is("clock_out_time", null)
+      .is("deleted_at", null)
+
+    if (fetchError) {
+      console.error("Error fetching active clock-ins:", fetchError)
+      return { data: null, error: fetchError.message, success: false }
+    }
+
+    if (!activeClockIns || activeClockIns.length === 0) {
+      return { 
+        data: { processed: 0, errors: [] }, 
+        error: null, 
+        success: true 
+      }
+    }
+
+    const errors: string[] = []
+    let processed = 0
+
+    for (const clockIn of activeClockIns) {
+      try {
+        // Create automatic clock out
+        const { error: insertError } = await supabase
+          .from("clock_events")
+          .insert([{
+            worker_id: clockIn.worker_id,
+            project_id: clockIn.project_id,
+            qr_code_id: clockIn.qr_code_id,
+            company_id: companyId,
+            event_type: "clock_out",
+            clock_in_time: clockIn.clock_in_time,
+            clock_out_time: `${new Date().toISOString().split('T')[0]}T${cutoffTime}`,
+            notes: "Automatic clock out",
+            is_automatic: true,
+            created_by: "system"
+          }])
+
+        if (insertError) {
+          errors.push(`Failed to create auto clock-out for ${clockIn.worker?.name}: ${insertError.message}`)
+        } else {
+          processed++
+        }
+      } catch (error) {
+        errors.push(`Error processing auto clock-out for ${clockIn.worker?.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    }
+
+    return { 
+      data: { processed, errors }, 
+      error: null, 
+      success: true 
+    }
+  } catch (error) {
+    console.error("Unexpected error generating automatic clock outs:", error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    }
+  }
+}
+
+/**
+ * Test function for timesheet calculation
+ */
+export async function testTimesheetCalculation(): Promise<void> {
+  console.log("Testing timesheet calculation...")
+  
+  // Mock data for testing
+  const mockClockEvents = [
+    {
+      id: "1",
+      worker_id: "test-worker",
+      project_id: "test-project",
+      event_type: "clock_in",
+      clock_in_time: "2024-01-01T08:00:00Z",
+      clock_out_time: "2024-01-01T17:00:00Z",
+      notes: "Test clock event"
+    }
+  ]
+
+  const result = processClockEventsToTimesheet(
+    mockClockEvents as unknown as ClockEvent[],
+    25.00,
+    "standard",
+    true
+  )
+
+  console.log("Timesheet calculation test result:", result)
+}
+
+/**
+ * Test function for time restrictions
+ */
+export async function testTimeRestrictions(): Promise<void> {
+  console.log("Testing time restrictions...")
+  
+  // Test various time scenarios
+  const testTimes = [
+    "08:00:00",
+    "12:00:00", 
+    "17:00:00",
+    "23:59:59"
+  ]
+
+  testTimes.forEach(time => {
+    const isValid = time >= "06:00:00" && time <= "23:59:59"
+    console.log(`Time ${time} is ${isValid ? 'valid' : 'invalid'}`)
+  })
+}
+
+/**
+ * Test function for automatic clock out
+ */
+export async function testAutomaticClockOut(): Promise<void> {
+  console.log("Testing automatic clock out...")
+  
+  try {
+    // Test with a mock company ID
+    const result = await generateAutomaticClockOuts("test-company-id")
+    console.log("Automatic clock out test result:", result)
+  } catch (error) {
+    console.error("Automatic clock out test failed:", error)
+  }
+}

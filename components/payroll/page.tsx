@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 export default function PayrollPage({ user }: { user: User }) {
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])

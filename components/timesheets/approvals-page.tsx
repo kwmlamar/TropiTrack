@@ -20,30 +20,49 @@ import type { TimesheetWithDetails } from "@/lib/types"
 import { Checkbox } from "@/components/ui/checkbox"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 import { generatePayrollForWorkerAndPeriod } from "@/lib/data/payroll"
+import { getTimesheets } from "@/lib/data/timesheets"
 import { User } from "@supabase/supabase-js"
 
 interface ApprovalsPageProps {
-  timesheets: TimesheetWithDetails[]
   onApprove: (id: string) => Promise<void>
   onReject: (id: string) => Promise<void>
   user: User
 }
 
-export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReject, user }: ApprovalsPageProps) {
+export function ApprovalsPage({ onApprove, onReject, user }: ApprovalsPageProps) {
   const [selectedTimesheetIds, setSelectedTimesheetIds] = useState<Set<string>>(new Set())
   const [isProcessing, setIsProcessing] = useState(false)
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("daily")
-  const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>(initialTimesheets)
+  const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [loading, setLoading] = useState(true)
   const { paymentSchedule } = usePayrollSettings()
 
   const ITEMS_PER_PAGE = 20
 
-  // Update timesheets when initialTimesheets changes
+  // Load all timesheets for approvals (not filtered by week)
+  const loadAllTimesheets = async () => {
+    setLoading(true)
+    try {
+      const result = await getTimesheets(user.id, {})
+      if (result.success && result.data) {
+        setTimesheets(result.data)
+      } else {
+        console.error("Failed to load timesheets:", result.error)
+        toast.error("Failed to load timesheets")
+      }
+    } catch (error) {
+      console.error("Error loading timesheets:", error)
+      toast.error("Failed to load timesheets")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load timesheets on component mount
   useEffect(() => {
-    setTimesheets(initialTimesheets)
-    setCurrentPage(1) // Reset to first page when timesheets change
-  }, [initialTimesheets])
+    loadAllTimesheets()
+  }, [user.id])
 
   const pendingTimesheets = timesheets.filter(
     (ts) => ts.supervisor_approval === "pending"
@@ -118,6 +137,13 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
     try {
       setIsProcessing(true)
       await onReject(id)
+      
+      // Update local state
+      const updatedTimesheets = timesheets.map(ts => 
+        ts.id === id ? { ...ts, supervisor_approval: "rejected" as const } : ts
+      )
+      setTimesheets(updatedTimesheets)
+      
       toast.success("Timesheet rejected")
     } catch (error) {
       console.error('Error rejecting timesheet:', error)
@@ -159,7 +185,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
           console.error(`[Approvals] Failed to generate payroll for worker ${workerId}:`, result.error)
         }
       }
-      
+
       // Update local state
       const updatedTimesheets = timesheets.map(ts => 
         timesheetIds.includes(ts.id) ? { ...ts, supervisor_approval: "approved" as const } : ts
@@ -169,38 +195,21 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
       // Clear selection
       setSelectedTimesheetIds(new Set())
       
-      toast.success(`Approved ${timesheetIds.length} timesheet${timesheetIds.length === 1 ? '' : 's'} and generated payroll`)
+      toast.success(`Approved ${timesheetIds.length} timesheets and generated payroll`)
     } catch (error) {
-      console.error('Error in approval process:', error)
-      toast.error("Failed to approve timesheets or generate payroll. Please try again.")
+      console.error('Error in batch approval process:', error)
+      toast.error("Failed to approve timesheets or generate payroll")
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const handleSelectAll = (checked: boolean, workerId?: string) => {
+  const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const timesheetsToSelect = workerId
-        ? pendingTimesheets.filter(ts => ts.worker_id === workerId)
-        : (viewMode === "daily" ? paginatedTimesheets : pendingTimesheets)
-      const newSelection = new Set(selectedTimesheetIds)
-      timesheetsToSelect.forEach(ts => newSelection.add(ts.id))
-      setSelectedTimesheetIds(newSelection)
+      const allIds = new Set(pendingTimesheets.map(ts => ts.id))
+      setSelectedTimesheetIds(allIds)
     } else {
-      if (workerId) {
-        // Only deselect timesheets for this worker
-        const newSelection = new Set(selectedTimesheetIds)
-        pendingTimesheets
-          .filter(ts => ts.worker_id === workerId)
-          .forEach(ts => newSelection.delete(ts.id))
-        setSelectedTimesheetIds(newSelection)
-      } else {
-        // Deselect all timesheets (current page for daily view, all for weekly view)
-        const timesheetsToDeselect = viewMode === "daily" ? paginatedTimesheets : pendingTimesheets
-        const newSelection = new Set(selectedTimesheetIds)
-        timesheetsToDeselect.forEach(ts => newSelection.delete(ts.id))
-        setSelectedTimesheetIds(newSelection)
-      }
+      setSelectedTimesheetIds(new Set())
     }
   }
 
@@ -214,6 +223,32 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
       }
       return next
     })
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "daily" | "weekly")} className="w-auto">
+            <TabsList className="grid w-auto grid-cols-2">
+              <TabsTrigger value="daily" className="rounded-md transition-all duration-200 border-0">
+                Daily View
+              </TabsTrigger>
+              <TabsTrigger value="weekly" className="rounded-md transition-all duration-200 border-0">
+                Weekly View
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+          <CardContent>
+            <div className="text-center py-6 text-muted-foreground">
+              Loading timesheets...
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -288,16 +323,31 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                                 <div className="text-sm">
                                   <span className="font-medium">{totalHours}h</span>
                                   {overtimeHours > 0 && (
-                                    <span className="text-orange-600 ml-2">+{overtimeHours}h OT</span>
+                                    <span className="text-orange-600 font-medium ml-1">
+                                      (+{overtimeHours}h OT)
+                                    </span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Checkbox
                                     checked={isAllSelected}
-                                    onCheckedChange={(checked: boolean) => handleSelectAll(checked, worker?.id)}
-                                    aria-label="Select all timesheets for this worker"
-                                    disabled={isProcessing}
+                                    onCheckedChange={(checked) => {
+                                      timesheets.forEach(ts => {
+                                        handleSelectTimesheet(ts.id, checked as boolean)
+                                      })
+                                    }}
+                                    aria-label="Select all timesheets in period"
                                   />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleBatchApprove(timesheets.map(ts => ts.id))}
+                                    disabled={isProcessing}
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                                  >
+                                    <Check className="h-4 w-4 mr-2" />
+                                    Approve All
+                                  </Button>
                                 </div>
                               </div>
                             </div>
@@ -418,7 +468,7 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                       <TableCell className="py-4 px-6">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3 w-3 text-muted-foreground" />
-                          {format(new Date(timesheet.date), "MMM d, yyyy")}
+                          {format(parseISO(timesheet.date), "EEE, MMM d")}
                         </div>
                       </TableCell>
                       <TableCell className="py-4 px-6">
@@ -467,8 +517,8 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                   ))}
                 </TableBody>
               </Table>
-              
-              {/* Pagination Controls */}
+
+              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
@@ -478,12 +528,13 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
                     </Button>
+                    
                     <div className="flex items-center space-x-1">
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Button
@@ -491,19 +542,24 @@ export function ApprovalsPage({ timesheets: initialTimesheets, onApprove, onReje
                           variant={currentPage === page ? "default" : "outline"}
                           size="sm"
                           onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8 p-0"
+                          className={`h-8 w-8 p-0 ${
+                            currentPage === page 
+                              ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
+                              : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
+                          }`}
                         >
                           {page}
                         </Button>
                       ))}
                     </div>
+                    
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      onClick={() => setCurrentPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
                     >
-                      Next
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
