@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { PayrollHeader } from "@/components/payroll/payroll-header"
-import { PayrollPreviewDialog } from "@/components/payroll/payroll-preview-modal"
+
 import { PayrollReports } from "@/components/payroll/payroll-reports"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -41,7 +41,7 @@ export default function PayrollPage({ user }: { user: User }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [isLoading, setIsLoading] = useState(true)
 
@@ -261,14 +261,30 @@ export default function PayrollPage({ user }: { user: User }) {
       return
     }
 
-    // Open the preview modal
-    setIsPreviewModalOpen(true)
+    // Directly confirm payrolls without preview dialog
+    handleDirectConfirm()
   }
 
-  const handlePreviewSuccess = () => {
-    setSelectedPayrollIds(new Set())
-    loadPayroll() // Refresh payroll data
+  const handleDirectConfirm = async () => {
+    if (selectedPayrollIds.size === 0) {
+      return
+    }
+
+    const payrollIdsToUpdate = Array.from(selectedPayrollIds)
+    const result = await updatePayrollStatus(payrollIdsToUpdate, "confirmed")
+
+    if (result.success) {
+      toast.success(`Successfully confirmed ${selectedPayrollIds.size} payroll entries.`)
+      setSelectedPayrollIds(new Set())
+      loadPayroll() // Refresh payroll data
+    } else {
+      toast.error("Failed to confirm payroll entries.", {
+        description: result.error || "An unknown error occurred.",
+      })
+    }
   }
+
+
 
   const handleMarkAsPaid = async () => {
     if (selectedPayrollIds.size === 0) {
@@ -872,11 +888,8 @@ export default function PayrollPage({ user }: { user: User }) {
                           payrolls.find(payroll => payroll.id === id)?.status === "pending"
                         )}
                       >
-                        <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        Review Payroll
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Confirm Payroll
                       </Button>
 
                       {/* Mark as Paid Button */}
@@ -1038,15 +1051,7 @@ export default function PayrollPage({ user }: { user: User }) {
         </Tabs>
       </div>
 
-      {isPreviewModalOpen && (
-        <PayrollPreviewDialog
-          isOpen={isPreviewModalOpen}
-          onClose={() => setIsPreviewModalOpen(false)}
-          selectedPayrolls={payrolls.filter(payroll => selectedPayrollIds.has(payroll.id))}
-          user={user}
-          onSuccess={handlePreviewSuccess}
-        />
-      )}
+
     </div>
   )
 }
