@@ -103,6 +103,8 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
       status: string
       project_name?: string
       payroll_count: number
+      total_paid?: number
+      remaining_balance?: number
     }>()
 
     filteredPayrolls.forEach(payroll => {
@@ -116,6 +118,8 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
         existing.net_pay += payroll.net_pay
         existing.nib_deduction += payroll.nib_deduction
         existing.payroll_count += 1
+        existing.total_paid = (existing.total_paid || 0) + (payroll.total_paid || 0)
+        existing.remaining_balance = (existing.remaining_balance || 0) + (payroll.remaining_balance || 0)
         // Use the most recent status or keep existing if it's "paid"
         if (payroll.status === "paid" || existing.status !== "paid") {
           existing.status = payroll.status
@@ -133,12 +137,21 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
           nib_deduction: payroll.nib_deduction,
           status: payroll.status,
           project_name: payroll.project_name,
-          payroll_count: 1
+          payroll_count: 1,
+          total_paid: payroll.total_paid || 0,
+          remaining_balance: payroll.remaining_balance || 0
         })
       }
     })
 
     return Array.from(workerMap.values())
+  }, [filteredPayrolls])
+
+  // Calculate total unpaid balance for the filtered period
+  const totalUnpaidBalance = useMemo(() => {
+    return filteredPayrolls.reduce((total, payroll) => {
+      return total + (payroll.remaining_balance || 0)
+    }, 0)
   }, [filteredPayrolls])
 
   const getStatusBadge = (status: PayrollRecord['status']) => {
@@ -253,12 +266,28 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
     <div className="space-y-6">
       {/* Reports Header */}
       <div className="space-y-4 mt-4">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">
-          Payroll Reports
-        </h2>
-        <p className="text-muted-foreground">
-          Generate detailed reports and analyze payroll data across different dimensions.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Payroll Reports
+            </h2>
+            <p className="text-muted-foreground">
+              Generate detailed reports and analyze payroll data across different dimensions.
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-muted-foreground">Total Unpaid Balance</div>
+            <div className={`text-2xl font-bold ${totalUnpaidBalance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+              {new Intl.NumberFormat("en-BS", {
+                style: "currency",
+                currency: "BSD",
+              }).format(totalUnpaidBalance)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {filteredPayrolls.length} payroll records
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Detailed Reports Section */}
@@ -356,6 +385,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                         <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
                         <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">NIB Deductions</TableHead>
                         <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Unpaid Balance</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -377,6 +407,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             grossPay: aggregatedPayrolls.reduce((sum, p) => sum + p.gross_pay, 0),
                             nibDeductions: aggregatedPayrolls.reduce((sum, p) => sum + p.nib_deduction, 0),
                             netPay: aggregatedPayrolls.reduce((sum, p) => sum + p.net_pay, 0),
+                            unpaidBalance: totalUnpaidBalance,
                           },
                           {
                             period: periodLabel,
@@ -386,6 +417,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             grossPay: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.gross_pay, 0),
                             nibDeductions: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.nib_deduction, 0),
                             netPay: aggregatedPayrolls.filter(p => p.status === "paid").reduce((sum, p) => sum + p.net_pay, 0),
+                            unpaidBalance: 0, // Paid payrolls have 0 unpaid balance
                           },
                           {
                             period: periodLabel,
@@ -395,6 +427,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             grossPay: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.gross_pay, 0),
                             nibDeductions: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.nib_deduction, 0),
                             netPay: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + p.net_pay, 0),
+                            unpaidBalance: aggregatedPayrolls.filter(p => p.status === "confirmed").reduce((sum, p) => sum + (p.remaining_balance || 0), 0),
                           },
                           {
                             period: periodLabel,
@@ -404,6 +437,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             grossPay: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.gross_pay, 0),
                             nibDeductions: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.nib_deduction, 0),
                             netPay: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + p.net_pay, 0),
+                            unpaidBalance: aggregatedPayrolls.filter(p => p.status === "pending").reduce((sum, p) => sum + (p.remaining_balance || 0), 0),
                           }
                         ];
 
@@ -437,6 +471,15 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                 currency: "BSD",
                                 minimumFractionDigits: 2,
                               }).format(row.netPay)}
+                            </TableCell>
+                            <TableCell className="py-4 px-6">
+                              <div className={`font-medium ${row.unpaidBalance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(row.unpaidBalance)}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ));

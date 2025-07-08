@@ -94,6 +94,18 @@ export type TimesheetWithDetails = Timesheet & {
   }
 }
 
+export type PayrollPayment = {
+  id: string;
+  payroll_id: string;
+  amount: number;
+  payment_date: string;
+  status: string;
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at?: string;
+};
+
 export type PayrollRecord = {
   id: string;
   worker_id: string;
@@ -117,6 +129,10 @@ export type PayrollRecord = {
   pay_period_start: string;
   pay_period_end: string;
   created_by?: string;
+  // Partial payments
+  payments?: PayrollPayment[];
+  total_paid?: number;
+  remaining_balance?: number;
 };
 
 export type CreatePayrollInput = Omit<PayrollRecord, "id" | "created_at" | "updated_at" | "total_deductions" | "net_pay">;

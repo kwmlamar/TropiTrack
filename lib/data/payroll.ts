@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
-import type { PayrollRecord, CreatePayrollInput, UpdatePayrollInput, ApiResponse } from "@/lib/types";
+import type { PayrollRecord, CreatePayrollInput, UpdatePayrollInput, ApiResponse, PayrollPayment } from "@/lib/types";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
 import { getTimesheets } from "@/lib/data/timesheets";
 
@@ -614,4 +614,46 @@ export async function getPayrollsByProject(
       success: false,
     };
   }
+}
+
+// Fetch all payments for a payroll record
+export async function getPayrollPayments(payrollId: string): Promise<PayrollPayment[]> {
+  const { data, error } = await supabase
+    .from("payroll_payments")
+    .select("*")
+    .eq("payroll_id", payrollId)
+    .order("payment_date", { ascending: true });
+  if (error) {
+    console.error("Error fetching payroll payments:", error);
+    return [];
+  }
+  return data || [];
+}
+
+// Add a new partial payment
+export async function addPayrollPayment(input: Omit<PayrollPayment, "id" | "created_at" | "updated_at">): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from("payroll_payments")
+    .insert([{ ...input }]);
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+// Update getPayrolls to include payments, total_paid, and remaining_balance
+export async function getPayrollsWithPayments(
+  filters: { date_from?: string; date_to?: string } = {}
+): Promise<ApiResponse<PayrollRecord[]>> {
+  const base = await getPayrolls(filters);
+  if (!base.success || !base.data) return base;
+  const payrolls = await Promise.all(
+    base.data.map(async (payroll) => {
+      const payments = await getPayrollPayments(payroll.id);
+      const total_paid = payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0);
+      const remaining_balance = payroll.net_pay - total_paid;
+      return { ...payroll, payments, total_paid, remaining_balance };
+    })
+  );
+  return { ...base, data: payrolls };
 }

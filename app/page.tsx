@@ -614,7 +614,7 @@ export default function Home() {
               <ul className="space-y-3">
                 <li>
                   <p className="text-muted-foreground">
-                    Email: <a href="mailto:classicalsineus@gmail.com" className="hover:text-foreground transition-colors">classicalsineus@gmail.com</a>
+                    Email: <a href="mailto:lamar@tropitech.org" className="hover:text-foreground transition-colors">lamar@tropitech.org</a>
                   </p>
                 </li>
                 <li>

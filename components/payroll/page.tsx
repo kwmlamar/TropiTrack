@@ -6,8 +6,8 @@ import { PayrollHeader } from "@/components/payroll/payroll-header"
 import { PayrollReports } from "@/components/payroll/payroll-reports"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getAggregatedPayrolls } from "@/lib/data/payroll"
-import type { PayrollRecord } from "@/lib/types"
+import { getAggregatedPayrolls, getPayrollPayments, addPayrollPayment } from "@/lib/data/payroll"
+import type { PayrollRecord, PayrollPayment } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
 import { format, startOfWeek, endOfWeek } from "date-fns"
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSearchParams } from "next/navigation"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 const ITEMS_PER_PAGE = 20;
 
@@ -44,6 +45,15 @@ export default function PayrollPage({ user }: { user: User }) {
 
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [isLoading, setIsLoading] = useState(true)
+
+  // Partial payments modal state
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalPayroll, setModalPayroll] = useState<PayrollRecord | null>(null)
+  const [payments, setPayments] = useState<PayrollPayment[]>([])
+  const [loadingPayments, setLoadingPayments] = useState(false)
+  const [newAmount, setNewAmount] = useState("")
+  const [adding, setAdding] = useState(false)
+  const [paymentType, setPaymentType] = useState<"net" | "gross">("net")
 
   // Current week date range for overview (always stays current)
   const [currentWeekRange, setCurrentWeekRange] = useState<DateRange | undefined>()
@@ -170,35 +180,57 @@ export default function PayrollPage({ user }: { user: User }) {
       const response = await getAggregatedPayrolls(filters)
       if (response.data) {
         // Apply deductions based on settings - optimize by doing this in batch
-        const processedPayrolls = response.data.map(payroll => {
+        const processedPayrolls = await Promise.all(response.data.map(async (payroll) => {
           const overtimePay = payroll.overtime_hours * (payroll.hourly_rate * (payrollSettings?.overtime_rate || 1.5))
           const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay, overtimePay)
+          
+          // Get payments for this payroll
+          const payments = await getPayrollPayments(payroll.id)
+          const totalPaid = payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0)
+          
+          // Calculate remaining balance based on net pay (standard approach)
+          const netPay = payroll.gross_pay - (nibDeduction + otherDeductions)
+          // If payroll is marked as paid, remaining balance should be 0
+          const remainingBalance = payroll.status === "paid" ? 0 : Math.max(0, netPay - totalPaid)
           
           return {
             ...payroll,
             nib_deduction: nibDeduction,
             other_deductions: otherDeductions,
             total_deductions: nibDeduction + otherDeductions,
-            net_pay: payroll.gross_pay - (nibDeduction + otherDeductions),
+            net_pay: netPay,
+            total_paid: totalPaid,
+            remaining_balance: remainingBalance,
           }
-        })
+        }))
         setPayrolls(processedPayrolls)
         
         // Also load all payroll data for reports (without date filtering)
         const allPayrollsResponse = await getAggregatedPayrolls({ target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly" })
         if (allPayrollsResponse.data) {
-          const processedAllPayrolls = allPayrollsResponse.data.map(payroll => {
+          const processedAllPayrolls = await Promise.all(allPayrollsResponse.data.map(async (payroll) => {
             const overtimePay = payroll.overtime_hours * (payroll.hourly_rate * (payrollSettings?.overtime_rate || 1.5))
             const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay, overtimePay)
+            
+            // Get payments for this payroll
+            const payments = await getPayrollPayments(payroll.id)
+            const totalPaid = payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0)
+            
+            // Calculate remaining balance based on net pay (standard approach)
+            const netPay = payroll.gross_pay - (nibDeduction + otherDeductions)
+            // If payroll is marked as paid, remaining balance should be 0
+            const remainingBalance = payroll.status === "paid" ? 0 : Math.max(0, netPay - totalPaid)
             
             return {
               ...payroll,
               nib_deduction: nibDeduction,
               other_deductions: otherDeductions,
               total_deductions: nibDeduction + otherDeductions,
-              net_pay: payroll.gross_pay - (nibDeduction + otherDeductions),
+              net_pay: netPay,
+              total_paid: totalPaid,
+              remaining_balance: remainingBalance,
             }
-          })
+          }))
           setAllPayrolls(processedAllPayrolls)
         }
       }
@@ -245,6 +277,16 @@ export default function PayrollPage({ user }: { user: User }) {
     const payrollDate = new Date(payroll.created_at);
     return payrollDate >= currentWeekRange.from && payrollDate <= currentWeekRange.to;
   });
+
+  // Calculate total unpaid balance across all payrolls
+  const totalUnpaidBalance = payrolls.reduce((total, payroll) => {
+    return total + (payroll.remaining_balance || 0);
+  }, 0);
+
+  // These variables are calculated for potential future use in reports or analytics
+  // const totalGrossPay = payrolls.reduce((total, payroll) => total + payroll.gross_pay, 0);
+  // const totalNetPay = payrolls.reduce((total, payroll) => total + payroll.net_pay, 0);
+  // const totalPaid = payrolls.reduce((total, payroll) => total + (payroll.total_paid || 0), 0);
 
   const handlePreviewAndConfirm = () => {
     if (selectedPayrollIds.size === 0) {
@@ -334,6 +376,56 @@ export default function PayrollPage({ user }: { user: User }) {
       return newSelection;
     });
   };
+
+  // Partial payments functions
+  const openPaymentsModal = async (payroll: PayrollRecord) => {
+    setModalPayroll(payroll)
+    setModalOpen(true)
+    setLoadingPayments(true)
+    const result = await getPayrollPayments(payroll.id)
+    setPayments(result)
+    setLoadingPayments(false)
+  }
+
+  const handleAddPayment = async () => {
+    if (!modalPayroll || !newAmount) return
+    setAdding(true)
+    const amount = parseFloat(newAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Enter a valid amount")
+      setAdding(false)
+      return
+    }
+    
+    const totalPaid = payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0)
+    const maxAmount = paymentType === "net" ? modalPayroll.net_pay : modalPayroll.gross_pay
+    const remainingBalance = maxAmount - totalPaid
+    
+    if (amount > remainingBalance) {
+      toast.error(`Amount exceeds remaining ${paymentType} pay balance`)
+      setAdding(false)
+      return
+    }
+    
+    const res = await addPayrollPayment({
+      payroll_id: modalPayroll.id,
+      amount,
+      payment_date: new Date().toISOString().slice(0, 10),
+      status: "completed",
+      notes: `Partial payment (${paymentType} pay)`,
+      created_by: undefined,
+    })
+    if (res.success) {
+      toast.success("Payment added")
+      setNewAmount("")
+      // Refresh payments
+      const result = await getPayrollPayments(modalPayroll.id)
+      setPayments(result)
+    } else {
+      toast.error(res.error || "Failed to add payment")
+    }
+    setAdding(false)
+  }
 
   const getStatusBadge = (status: PayrollRecord['status']) => {
     const labels = {
@@ -637,7 +729,7 @@ export default function PayrollPage({ user }: { user: User }) {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
                     <CardContent className="px-6 py-4">
                       <div className="space-y-2">
@@ -674,6 +766,21 @@ export default function PayrollPage({ user }: { user: User }) {
                             currency: "BSD",
                             minimumFractionDigits: 2,
                           }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.nib_deduction, 0))}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+                    <CardContent className="px-6 py-4">
+                      <div className="space-y-2">
+                        <p className="text-base font-medium text-primary dark:text-foreground">Unpaid Balance</p>
+                        <p className={`text-3xl font-bold tracking-tight ${totalUnpaidBalance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                          {new Intl.NumberFormat("en-BS", {
+                            style: "currency",
+                            currency: "BSD",
+                            minimumFractionDigits: 2,
+                          }).format(totalUnpaidBalance)}
                         </p>
                       </div>
                     </CardContent>
@@ -924,6 +1031,8 @@ export default function PayrollPage({ user }: { user: User }) {
                                 <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
                                 <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">NIB Deduction</TableHead>
                                 <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Unpaid Balance</TableHead>
+                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -968,6 +1077,32 @@ export default function PayrollPage({ user }: { user: User }) {
                                       currency: "BSD",
                                       minimumFractionDigits: 2,
                                     }).format(payroll.net_pay)}
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <div className={`font-medium ${payroll.remaining_balance && payroll.remaining_balance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                      {new Intl.NumberFormat("en-BS", {
+                                        style: "currency",
+                                        currency: "BSD",
+                                        minimumFractionDigits: 2,
+                                      }).format(payroll.remaining_balance || 0)}
+                                    </div>
+                                    {payroll.total_paid && payroll.total_paid > 0 && (
+                                      <div className="text-xs text-muted-foreground">
+                                        Paid: {new Intl.NumberFormat("en-BS", {
+                                          style: "currency",
+                                          currency: "BSD",
+                                        }).format(payroll.total_paid)}
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => openPaymentsModal(payroll)}
+                                    >
+                                      Partial Payments
+                                    </Button>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -1051,7 +1186,135 @@ export default function PayrollPage({ user }: { user: User }) {
         </Tabs>
       </div>
 
-
+      {/* Partial Payments Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span>Partial Payments</span>
+            </DialogTitle>
+            <DialogDescription>
+              Manage partial payments for {modalPayroll?.worker_name}
+            </DialogDescription>
+          </DialogHeader>
+          {modalPayroll && (
+            <div className="space-y-4">
+              {/* Payment Summary */}
+              <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <div className="text-sm font-medium text-muted-foreground">Gross Pay</div>
+                  <div className="text-lg font-bold">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                    }).format(modalPayroll.gross_pay)}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-medium text-muted-foreground">Net Pay</div>
+                  <div className="text-lg font-bold">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                    }).format(modalPayroll.net_pay)}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-medium text-muted-foreground">Total Paid</div>
+                  <div className="text-lg font-bold text-green-600">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                    }).format(payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0))}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-medium text-muted-foreground">Remaining</div>
+                  <div className="text-lg font-bold text-orange-600">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                    }).format((paymentType === "net" ? modalPayroll.net_pay : modalPayroll.gross_pay) - payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Payment History */}
+              <div>
+                <div className="font-semibold mb-3">Payment History</div>
+                {loadingPayments ? (
+                  <div className="text-center py-4 text-muted-foreground">Loading payments...</div>
+                ) : payments.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                    No payments yet
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {payments.map(payment => (
+                      <div key={payment.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {new Intl.NumberFormat("en-BS", {
+                              style: "currency",
+                              currency: "BSD",
+                            }).format(Number(payment.amount))}
+                          </div>
+                          <div className="text-sm text-muted-foreground">{payment.payment_date}</div>
+                        </div>
+                        <Badge variant={payment.status === "completed" ? "default" : "secondary"} className="text-xs">
+                          {payment.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Add New Payment */}
+              <div className="border-t pt-4">
+                <div className="font-semibold mb-3">Add New Payment</div>
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <Label htmlFor="payment-amount" className="text-sm">Amount</Label>
+                      <Input
+                        id="payment-amount"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="Enter amount"
+                        value={newAmount}
+                        onChange={e => setNewAmount(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="w-32">
+                      <Label className="text-sm">Payment Type</Label>
+                      <Select value={paymentType} onValueChange={(value: "net" | "gross") => setPaymentType(value)}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="net">Net Pay</SelectItem>
+                          <SelectItem value="gross">Gross Pay</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button onClick={handleAddPayment} disabled={adding || !newAmount} className="w-full">
+                    {adding ? "Adding..." : "Add Payment"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
