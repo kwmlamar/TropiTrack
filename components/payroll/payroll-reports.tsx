@@ -6,6 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import {
   Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -14,6 +17,8 @@ import { PayrollDistributionChart } from "./payroll-distribution-chart"
 import type { PayrollRecord } from "@/lib/types"
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, format } from "date-fns"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+import type { DateRange } from "react-day-picker"
+import { cn } from "@/lib/utils"
 
 interface PayrollReportsProps {
   payrolls: PayrollRecord[]
@@ -24,6 +29,7 @@ const ITEMS_PER_PAGE = 10
 export function PayrollReports({ payrolls }: PayrollReportsProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [dateRange, setDateRange] = useState("this-week")
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>()
 
   const { paymentSchedule } = usePayrollSettings()
 
@@ -66,6 +72,11 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
           from: startOfMonth(lastMonth),
           to: endOfMonth(lastMonth)
         }
+      case "custom":
+        return customDateRange || {
+          from: startOfWeek(now, { weekStartsOn }),
+          to: endOfWeek(now, { weekStartsOn })
+        }
       default:
         return {
           from: startOfWeek(now, { weekStartsOn }),
@@ -78,6 +89,11 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
   const filteredPayrolls = useMemo(() => {
     const { from, to } = getDateRange(dateRange)
     
+    // Add null checks for from and to
+    if (!from || !to) {
+      return []
+    }
+    
     return payrolls.filter(payroll => {
       // Use pay_period_start and pay_period_end instead of created_at
       const periodStart = new Date(payroll.pay_period_start)
@@ -86,7 +102,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
       // Check if the pay period overlaps with the selected date range
       return periodStart <= to && periodEnd >= from
     })
-  }, [payrolls, dateRange, paymentSchedule])
+  }, [payrolls, dateRange, paymentSchedule, customDateRange])
 
   // Aggregate payroll data by worker
   const aggregatedPayrolls = useMemo(() => {
@@ -299,6 +315,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <p className="text-sm text-muted-foreground">
               {(() => {
                 const { from, to } = getDateRange(dateRange)
+                if (!from || !to) return "Select a date range"
                 return `${format(from, 'MMM d, yyyy')} - ${format(to, 'MMM d, yyyy')}`
               })()}
             </p>
@@ -314,8 +331,47 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                 <SelectItem value="last-week">Last Week</SelectItem>
                 <SelectItem value="this-month">This Month</SelectItem>
                 <SelectItem value="last-month">Last Month</SelectItem>
+                <SelectItem value="custom">Custom Range</SelectItem>
               </SelectContent>
             </Select>
+            {dateRange === "custom" && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !customDateRange && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customDateRange?.from ? (
+                      customDateRange.to ? (
+                        <>
+                          {format(customDateRange.from, "MMM dd, yyyy")} -{" "}
+                          {format(customDateRange.to, "MMM dd, yyyy")}
+                        </>
+                      ) : (
+                        format(customDateRange.from, "MMM dd, yyyy")
+                      )
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={4} style={{ maxWidth: '280px' }}>
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={customDateRange?.from}
+                    selected={customDateRange}
+                    onSelect={setCustomDateRange}
+                    numberOfMonths={1}
+                    className="rounded-md border"
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         </div>
         
@@ -396,7 +452,8 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                           dateRange === "last-week" ? "Last Week" :
                           dateRange === "this-month" ? "Current Month" :
                           dateRange === "last-month" ? "Last Month" :
-                          `${format(from, "MMM dd")} - ${format(to, "MMM dd, yyyy")}`
+                          dateRange === "custom" ? (from && to ? `${format(from, "MMM dd")} - ${format(to, "MMM dd, yyyy")}` : "Custom Range") :
+                          (from && to ? `${format(from, "MMM dd")} - ${format(to, "MMM dd, yyyy")}` : "Date Range")
 
                         const summaryData = [
                           {
