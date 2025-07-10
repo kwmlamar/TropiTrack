@@ -2,11 +2,11 @@
 @import "tw-animate-css";
 @import "leaflet/dist/leaflet.css";
 
-@custom-variant dark (&:is(.dark *));
+
 
 :root {
   /* Core Background & Foreground - Modern and clean */
-  --background: oklch(0.99 0.003 250);
+  --background: oklch(0.998 0.003 250);
   --foreground: #0D141C;
 
   /* Surface Colors - Subtle depth */
@@ -25,7 +25,7 @@
 
   /* Muted Colors - Improved readability */
   --muted: oklch(0.97 0.01 250);
-  --muted-foreground: #4A739C;
+  --muted-foreground: #00ABC9;
 
   /* Accent - Energetic blue */
   --accent: #E8EDF5;
@@ -54,7 +54,7 @@
   --chart-5: #DC2626;
 
   /* Sidebar - Professional and focused */
-  --sidebar: oklch(0.99 0.003 250);
+  --sidebar: oklch(1 0.003 250);
   --sidebar-foreground: #0D141C;
   --sidebar-primary: #4A739C;
   --sidebar-primary-foreground: oklch(1.0 0 0);
@@ -62,20 +62,22 @@
   --sidebar-accent-foreground: #0D141C;
   --sidebar-border: #E2E8F0;
   --sidebar-ring: #4A739C;
+  --sidebar-muted-foreground: #00ABC9;
+  --sidebar-selected: #00ABC9;
 
   /* Typography */
   --font-sans: "Work Sans Variable", "Work Sans", system-ui, sans-serif;
   --font-serif: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", "Fira Code", monospace;
 
-  /* Improved Border Radius Scale */
-  --radius-xs: 0.1rem;
+  /* Improved Border Radius Scale - Less Round */
+  --radius-xs: 0.15rem;
   --radius-sm: 0.2rem;
-  --radius: 0.3rem;
-  --radius-md: 0.4rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
+  --radius: 0.25rem;
+  --radius-md: 0.3rem;
+  --radius-lg: 0.35rem;
+  --radius-xl: 0.45rem;
+  --radius-2xl: 0.6rem;
   --radius-full: 9999px;
 
   /* Enhanced Shadow System */
@@ -114,76 +116,7 @@
   --z-toast: 1080;
 }
 
-.dark {
-  /* Core Background & Foreground - Rich dark mode */
-  --background: #0D141C;
-  --foreground: oklch(0.98 0.005 250);
 
-  /* Surface Colors - Layered depth */
-  --card: #1A2234;
-  --card-foreground: oklch(0.98 0.005 250);
-  --popover: #1A2234;
-  --popover-foreground: oklch(0.98 0.005 250);
-
-  /* Primary Colors - Luminous blue */
-  --primary: #4A739C;
-  --primary-foreground: oklch(1.0 0 0);
-
-  /* Secondary Colors - Sophisticated gray */
-  --secondary: #2A3441;
-  --secondary-foreground: oklch(0.98 0.005 250);
-
-  /* Muted Colors - Balanced contrast */
-  --muted: #2A3441;
-  --muted-foreground: #4A739C;
-
-  /* Accent - Glowing blue */
-  --accent: var(--primary);
-  --accent-foreground: var(--primary-foreground);
-
-  /* Status Colors - Vibrant but not harsh */
-  --destructive: #EF4444;
-  --destructive-foreground: oklch(1.0 0 0);
-  --success: #10B981;
-  --success-foreground: oklch(1.0 0 0);
-  --warning: #F59E0B;
-  --warning-foreground: oklch(1.0 0 0);
-  --info: #4A739C;
-  --info-foreground: oklch(1.0 0 0);
-
-  /* Interactive Elements - Clear boundaries */
-  --border: #2A3441;
-  --input: #1A2234;
-  --ring: #4A739C;
-
-  /* Chart Colors - Bright and distinct */
-  --chart-1: #4A739C;
-  --chart-2: #E8EDF5;
-  --chart-3: #10B981;
-  --chart-4: #F59E0B;
-  --chart-5: #EF4444;
-
-  /* Sidebar - Professional dark theme */
-  --sidebar: #0D141C;
-  --sidebar-foreground: oklch(0.98 0.005 250);
-  --sidebar-primary: #4A739C;
-  --sidebar-primary-foreground: oklch(1.0 0 0);
-  --sidebar-accent: #2A3441;
-  --sidebar-accent-foreground: oklch(0.98 0.005 250);
-  --sidebar-border: #2A3441;
-  --sidebar-ring: #4A739C;
-
-  /* Enhanced Shadow System for Dark Mode */
-  --shadow-2xs: 0px 1px 2px 0px oklch(0.0 0.0 0 / 0.3);
-  --shadow-xs: 0px 1px 3px 0px oklch(0.0 0.0 0 / 0.4), 0px 1px 2px -1px oklch(0.0 0.0 0 / 0.4);
-  --shadow-sm: 0px 2px 4px 0px oklch(0.0 0.0 0 / 0.4), 0px 1px 2px -1px oklch(0.0 0.0 0 / 0.4);
-  --shadow: 0px 2px 4px 0px oklch(0.0 0.0 0 / 0.4), 0px 1px 2px -1px oklch(0.0 0.0 0 / 0.4);
-  --shadow-md: 0px 4px 8px -1px oklch(0.0 0.0 0 / 0.4), 0px 2px 4px -2px oklch(0.0 0.0 0 / 0.4);
-  --shadow-lg: 0px 12px 18px -3px oklch(0.0 0.0 0 / 0.4), 0px 4px 8px -4px oklch(0.0 0.0 0 / 0.4);
-  --shadow-xl: 0px 24px 30px -5px oklch(0.0 0.0 0 / 0.4), 0px 8px 12px -6px oklch(0.0 0.0 0 / 0.4);
-  --shadow-2xl: 0px 28px 55px -12px oklch(0.0 0.0 0 / 0.6);
-  --shadow-inner: inset 0px 2px 4px 0px oklch(0.0 0.0 0 / 0.3);
-}
 
 @theme inline {
   /* Color System */
@@ -229,20 +162,22 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
+  --color-sidebar-selected: var(--sidebar-selected);
 
   /* Typography */
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
-  /* Border Radius */
-  --radius-xs: 0.1rem;
+  /* Border Radius - Less Round */
+  --radius-xs: 0.15rem;
   --radius-sm: 0.2rem;
-  --radius: 0.3rem;
-  --radius-md: 0.4rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
+  --radius: 0.25rem;
+  --radius-md: 0.3rem;
+  --radius-lg: 0.35rem;
+  --radius-xl: 0.45rem;
+  --radius-2xl: 0.6rem;
   --radius-full: 9999px;
 
   /* Shadows */

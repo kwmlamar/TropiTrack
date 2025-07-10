@@ -98,7 +98,7 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
     }
 
     fetchPayrollData()
-  }, [viewMode, selectedDate])
+  }, [viewMode, selectedDate, getDateRange])
 
   const handleProcessPayroll = () => {
     // Navigate to payroll page with current date range

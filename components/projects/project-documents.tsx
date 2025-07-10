@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import type { ProjectDocument, DocumentCategory, DocumentUploadData } from "@/lib/types/document"
+import type { ProjectDocument, DocumentCategory } from "@/lib/types/document"
 import { DOCUMENT_CATEGORIES, formatFileSize } from "@/lib/types/document"
 import { 
   getProjectDocuments, 
@@ -55,12 +55,17 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
   const [previewDocument, setPreviewDocument] = useState<ProjectDocument | null>(null)
   const [documentContent, setDocumentContent] = useState<string | null>(null)
   const [loadingContent, setLoadingContent] = useState(false)
-  const [uploadData, setUploadData] = useState<DocumentUploadData & { file: File | null }>({
+  const [uploadData, setUploadData] = useState<{
+    name: string
+    description: string
+    category: DocumentCategory
+    file: File | null
+  }>({
     name: "",
     description: "",
     category: "other",
     file: null
-  } as DocumentUploadData & { file: File | null })
+  })
 
   // Load documents on component mount
   useEffect(() => {
@@ -153,7 +158,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
           description: "",
           category: "other",
           file: null
-        } as DocumentUploadData & { file: File | null })
+        })
         loadDocuments()
       } else {
         toast.error(response.error || "Failed to upload document")

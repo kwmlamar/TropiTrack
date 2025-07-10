@@ -6,7 +6,6 @@ import {
   House,
   Building2,
   DollarSign,
-  Settings,
   Users,
   Briefcase,
   FileText,
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
 import {
   Sidebar,
   SidebarContent,
@@ -35,6 +33,7 @@ import {
 } from "@/lib/data/data";
 import { ProjectDialog } from "./forms/form-dialogs";
 import { AddWorkerDialog } from "./workers/add-worker-dialog";
+import { SidebarUserInfo } from "./sidebar-user-info";
 
 const data = {
   user: {
@@ -101,14 +100,7 @@ const data = {
       description: "Manage clock in/out QR codes",
     },
   ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "/dashboard/settings",
-      icon: Settings,
-      description: "App preferences",
-    },
-  ],
+
   recentProjects: [
     { name: "Paradise Resort Phase 1", status: "active", progress: 75 },
     { name: "Cable Beach Condos", status: "planning", progress: 25 },
@@ -194,8 +186,8 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
         <NavMain items={data.navMain} />
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl p-4">
-        <NavSecondary items={data.navSecondary} />
+      <SidebarFooter className="border-t border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl">
+        <SidebarUserInfo profile={profile} />
       </SidebarFooter>
 
       {/* Dialogs */}

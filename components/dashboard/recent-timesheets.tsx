@@ -74,7 +74,7 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
     } finally {
       setLoading(false)
     }
-  }, [viewMode, selectedDate])
+  }, [viewMode, selectedDate, getDateRange])
 
   useEffect(() => {
     loadRecentTimesheets()

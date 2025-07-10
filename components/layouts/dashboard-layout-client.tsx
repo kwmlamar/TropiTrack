@@ -3,7 +3,7 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { ModeToggle } from "../mode-toggle"
+
 import { CompanySetupDialog } from "@/components/company-setup-dialog"
 import { PWAInstaller } from "@/components/pwa-installer"
 import { SafariInstallGuide } from "@/components/safari-install-guide"
@@ -27,7 +27,7 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
     >
       <AppSidebar profile={profile} variant="inset" />
       <SidebarInset>
-        <SiteHeader user={profile} title={title} rightSlot={<ModeToggle />} />
+        <SiteHeader user={profile} title={title} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

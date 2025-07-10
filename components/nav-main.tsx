@@ -26,33 +26,54 @@ export function NavMain({ items }: NavMainProps) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <SidebarMenu className="space-y-1">
-        {items.map((item) => {
-          const isActive = pathname === item.url || pathname.startsWith(item.url + "/")
+      <div className="space-y-2">
+        <div className="px-3 py-2">
+          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Main Menu</h3>
+        </div>
+        <SidebarMenu className="space-y-0.5">
+          {items.map((item) => {
+          const isActive = item.url === "/dashboard" 
+            ? pathname === "/dashboard" 
+            : pathname === item.url || pathname.startsWith(item.url + "/")
 
           const menuButton = (
             <SidebarMenuButton
               asChild
               className={cn(
-                "group relative h-10 px-3 transition-all duration-200 hover:bg-sidebar-accent/70",
+                "group relative h-10 px-3 transition-all duration-200 rounded-xl",
                 "data-[slot=sidebar-menu-button]:justify-start",
-                isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm",
-                isActive &&
-                  "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-6 before:bg-sidebar-primary before:rounded-r-full",
+                isActive && "font-medium",
               )}
+              style={{
+                backgroundColor: isActive ? 'rgba(195, 209, 239, 0.2)' : 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = 'rgba(195, 209, 239, 0.1)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }
+              }}
             >
               <a href={item.url} className="flex items-center gap-3 w-full">
                 <item.icon
                   className={cn(
                     "h-4 w-4 transition-colors duration-200",
                     isActive
-                      ? "text-sidebar-primary"
-                      : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground",
+                      ? ""
+                      : "text-gray-400 group-hover:text-gray-600",
                   )}
+                  style={isActive ? { color: '#00ABC9' } : undefined}
                 />
                 {!isCollapsed && (
                   <>
-                    <span className="flex-1 text-sm font-medium truncate">{item.title}</span>
+                    <span className={cn(
+                      "flex-1 text-sm font-medium truncate",
+                      isActive ? "text-sidebar-foreground" : "text-gray-600 group-hover:text-gray-700"
+                    )}>{item.title}</span>
                     {item.badge && (
                       <Badge
                         variant="secondary"
@@ -88,7 +109,8 @@ export function NavMain({ items }: NavMainProps) {
 
           return <SidebarMenuItem key={item.title}>{menuButton}</SidebarMenuItem>
         })}
-      </SidebarMenu>
+        </SidebarMenu>
+      </div>
     </TooltipProvider>
   )
 }

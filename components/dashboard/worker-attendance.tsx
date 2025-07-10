@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { getTimesheets } from "@/lib/data/timesheets"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import { createClient } from "@/utils/supabase/client"
@@ -38,7 +38,7 @@ export function WorkerAttendance({ viewMode, selectedDate }: WorkerAttendancePro
   })
   const [loading, setLoading] = useState(true)
 
-  const getDateRange = () => {
+  const getDateRange = useCallback(() => {
     switch (viewMode) {
       case "daily":
         return {
@@ -56,7 +56,7 @@ export function WorkerAttendance({ viewMode, selectedDate }: WorkerAttendancePro
           end: endOfMonth(selectedDate)
         }
     }
-  }
+  }, [viewMode, selectedDate])
 
   useEffect(() => {
     const fetchAttendanceData = async () => {
@@ -110,7 +110,7 @@ export function WorkerAttendance({ viewMode, selectedDate }: WorkerAttendancePro
     }
 
     fetchAttendanceData()
-  }, [viewMode, selectedDate])
+  }, [viewMode, selectedDate, getDateRange])
 
   const chartData = [
     { name: "Present", value: attendanceData.present, color: "#10b981" },
