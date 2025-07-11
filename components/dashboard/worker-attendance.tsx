@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Button } from "@/components/ui/button"
 import { ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -35,8 +36,20 @@ export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: W
     utilization: 0
   })
   const [loading, setLoading] = useState(true)
+  const { paymentSchedule } = usePayrollSettings()
 
   const getDateRange = useCallback(() => {
+    // Get week start day from payment schedule, default to Saturday for construction industry
+    const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+      if (paymentSchedule?.period_start_type === "day_of_week") {
+        const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+          1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+        }
+        return dayMap[paymentSchedule.period_start_day] || 6
+      }
+      return 6 // Default to Saturday for construction industry
+    }
+
     switch (viewMode) {
       case "daily":
         return {
@@ -45,8 +58,8 @@ export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: W
         }
       case "weekly":
         return {
-          start: startOfWeek(selectedDate),
-          end: endOfWeek(selectedDate)
+          start: startOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() }),
+          end: endOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
         }
       case "monthly":
         return {
@@ -54,7 +67,7 @@ export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: W
           end: endOfMonth(selectedDate)
         }
     }
-  }, [viewMode, selectedDate])
+  }, [viewMode, selectedDate, paymentSchedule])
 
   useEffect(() => {
     const fetchAttendanceData = async () => {

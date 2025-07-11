@@ -44,7 +44,7 @@ export function PaymentScheduleForm() {
       pay_period_type: "bi-weekly",
       pay_day: 5, // Friday
       pay_day_type: "day_of_week",
-      period_start_day: 1, // Monday
+      period_start_day: 6, // Saturday (changed from Monday for construction industry)
       period_start_type: "day_of_week",
     },
   })
@@ -57,7 +57,7 @@ export function PaymentScheduleForm() {
 
   // Validate pay day and period start day whenever relevant fields change
   useEffect(() => {
-    const payDayWarning = validatePayDay(payDay, payDayType, payPeriodType)
+    const payDayWarning = validatePayDay(payDay, payDayType)
     const periodStartDayWarning = validatePeriodStartDay(
       periodStartDay,
       periodStartType,

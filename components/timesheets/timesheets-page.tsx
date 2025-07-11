@@ -3,41 +3,23 @@
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
 import { User } from "@supabase/supabase-js"
-import { CalendarDays, Trash2, SlidersHorizontal, Search, ChevronLeft, ChevronRight, Info, Clock } from "lucide-react"
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
+
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
-import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "sonner"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 
 import {
   getTimesheets,
   updateTimesheet as updateTimesheetData,
-  deleteTimesheet,
 } from "@/lib/data/timesheets"
 import type { TimesheetFilters, TimesheetWithDetails } from "@/lib/types"
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
-import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
-import { ApprovalsPage } from "./approvals-page"
 import { AddTimesheetDialog } from "./add-timesheet-dialog"
 
 type AttendanceStatus = "present" | "absent" | "late"
@@ -52,32 +34,16 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [selectedWorker, setSelectedWorker] = useState<string>("all")
-  const [selectedProject, setSelectedProject] = useState<string>("all")
-  const [viewMode, setViewMode] = useState<"daily" | "weekly">("weekly")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedTimesheetIds, setSelectedTimesheetIds] = useState<Set<string>>(new Set())
-  const [isApproving] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
+  const [selectedWorker] = useState<string>("all")
+  const [selectedProject] = useState<string>("all")
+  const [viewMode] = useState<"daily" | "weekly">("weekly")
+  const weekStartDay = 6 // Hard-coded to Saturday for construction industry
   const [currentPage, setCurrentPage] = useState(1)
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedCellDate, setSelectedCellDate] = useState<Date | null>(null)
   const [selectedCellWorker, setSelectedCellWorker] = useState<Worker | undefined>(undefined)
-
-  const { paymentSchedule, loading: payrollLoading } = usePayrollSettings()
-
-  // Initialize week start day from payroll settings
-  useEffect(() => {
-    if (!payrollLoading && paymentSchedule?.period_start_type === "day_of_week") {
-      const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
-        1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
-      }
-      setWeekStartDay(dayMap[paymentSchedule.period_start_day] || 1)
-    }
-  }, [paymentSchedule, payrollLoading])
 
   // Load timesheets effect
   useEffect(() => {
@@ -307,15 +273,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
       // Project filter
       const projectMatch = selectedProject === "all" || timesheet.project_id === selectedProject;
 
-      // Search filter
-      const searchMatch = searchTerm.trim() === "" ||
-        timesheet.worker?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        timesheet.project?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        timesheet.task_description?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      return dateMatch && workerMatch && projectMatch && searchMatch;
+      return dateMatch && workerMatch && projectMatch;
     });
-  }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, searchTerm, weekStartDay]);
+  }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, weekStartDay]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredTimesheets.length / ITEMS_PER_PAGE);
@@ -330,7 +290,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedDate, selectedWorker, selectedProject, viewMode, searchTerm, weekStartDay]);
+  }, [selectedDate, selectedWorker, selectedProject, viewMode, weekStartDay]);
 
   const groupedTimesheets = useMemo(() => {
     if (viewMode === "weekly") {
@@ -390,113 +350,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const weeklyEndIndex = weeklyStartIndex + ITEMS_PER_PAGE;
   const paginatedWorkerEntries = weeklyWorkerEntries.slice(weeklyStartIndex, weeklyEndIndex);
 
-  // Helper functions for checkbox logic
-  const getAllSelectableTimesheetIds = useMemo(() => {
-    if (viewMode === "weekly") {
-      const allIds = new Set<string>();
-      paginatedWorkerEntries.forEach(([, timesheetsInWeek]) => {
-        timesheetsInWeek.forEach((ts: TimesheetWithDetails) => allIds.add(ts.id));
-      });
-      return allIds;
-    } else {
-      return new Set(paginatedTimesheets.map((ts: TimesheetWithDetails) => ts.id));
-    }
-  }, [viewMode, paginatedWorkerEntries, paginatedTimesheets]);
 
-  const isAllSelected = useMemo(() => {
-    const allIds = getAllSelectableTimesheetIds;
-    const result = allIds.size > 0 && Array.from(allIds).every(id => selectedTimesheetIds.has(id));
-    console.log('isAllSelected calculation:', {
-      allIdsSize: allIds.size,
-      selectedIdsSize: selectedTimesheetIds.size,
-      allIds: Array.from(allIds),
-      selectedIds: Array.from(selectedTimesheetIds),
-      result
-    });
-    return result;
-  }, [getAllSelectableTimesheetIds, selectedTimesheetIds]);
-
-  const handleSelectAll = (checked: boolean) => {
-    console.log('handleSelectAll called with:', checked);
-    console.log('viewMode:', viewMode);
-    console.log('getAllSelectableTimesheetIds:', getAllSelectableTimesheetIds);
-    console.log('current selectedTimesheetIds:', selectedTimesheetIds);
-    
-    if (checked) {
-      setSelectedTimesheetIds(getAllSelectableTimesheetIds);
-    } else {
-      setSelectedTimesheetIds(new Set());
-    }
-  };
-
-  const handleSelectAllInWeek = (workerId: string, weekStart: string, checked: boolean) => {
-    console.log('handleSelectAllInWeek called with:', { workerId, weekStart, checked });
-    console.log('viewMode:', viewMode);
-    
-    setSelectedTimesheetIds(prev => {
-      const newSet = new Set(prev);
-      
-      if (viewMode === "weekly") {
-        // For weekly view, get timesheets for this worker from the grouped data
-        const timesheetsInWeek = (groupedTimesheets as Map<string, TimesheetWithDetails[]>).get(workerId) || [];
-        console.log('timesheetsInWeek for worker:', timesheetsInWeek);
-        timesheetsInWeek.forEach(ts => {
-          if (checked) {
-            newSet.add(ts.id);
-          } else {
-            newSet.delete(ts.id);
-          }
-        });
-      } else {
-        // For daily view, get timesheets for this worker and week
-        const workerWeeks = (groupedTimesheets as Map<string, Map<string, TimesheetWithDetails[]>>).get(workerId);
-        if (workerWeeks) {
-          const timesheetsInWeek = workerWeeks.get(weekStart) || [];
-          timesheetsInWeek.forEach(ts => {
-            if (checked) {
-              newSet.add(ts.id);
-            } else {
-              newSet.delete(ts.id);
-            }
-          });
-        }
-      }
-      
-      console.log('new selectedTimesheetIds:', newSet);
-      return newSet;
-    });
-  };
-
-  const handleDeleteSelected = async () => {
-    setIsDeleting(true);
-    try {
-      const deletes = Array.from(selectedTimesheetIds).map(id =>
-        deleteTimesheet(id)
-      );
-      const results = await Promise.all(deletes);
-
-      const failedDeletions = results.filter(result => !result.success);
-      if (failedDeletions.length > 0) {
-        toast.error("Failed to delete some timesheets", {
-          description: `${failedDeletions.length} timesheets could not be deleted.`,
-        });
-      } else {
-        toast.success("Timesheets deleted successfully", {
-          description: "All selected timesheets have been deleted.",
-        });
-      }
-
-      setSelectedTimesheetIds(new Set());
-      loadTimesheets();
-    } catch (error) {
-      console.error("Error deleting timesheets:", error);
-      toast.error("Error deleting timesheets", {
-        description: "An unexpected error occurred while deleting timesheets.",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   const getStatusBadge = (status: AttendanceStatus) => {
     const variants = {
@@ -540,42 +394,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
     return eachDayOfInterval({ start: weekStart, end: weekEnd });
   }, [selectedDate, viewMode, weekStartDay]);
 
-  const getWeekStartDayName = (day: 0 | 1 | 2 | 3 | 4 | 5 | 6): string => {
-    const dayNames = {
-      0: "Sunday",
-      1: "Monday",
-      2: "Tuesday",
-      3: "Wednesday",
-      4: "Thursday",
-      5: "Friday",
-      6: "Saturday"
-    }
-    return dayNames[day]
-  }
 
-  const handleApproveTimesheet = async (id: string) => {
-    try {
-      await handleUpdateTimesheet(id, "supervisor_approval", "approved")
-      loadTimesheets()
-    } catch (error) {
-      console.error("Failed to approve timesheet:", error)
-    }
-  }
 
-  const handleRejectTimesheet = async (id: string) => {
-    try {
-      const result = await updateTimesheetData({ id, supervisor_approval: "rejected" });
-      if (result.success) {
-        toast.success("Timesheet rejected successfully");
-        loadTimesheets();
-      } else {
-        toast.error("Failed to reject timesheet");
-      }
-    } catch (error) {
-      console.error("Error rejecting timesheet:", error);
-      toast.error("Error rejecting timesheet");
-    }
-  };
+
 
   // Navigation functions
   const handlePreviousPeriod = () => {
@@ -644,330 +465,76 @@ export default function TimesheetsPage({ user }: { user: User }) {
   }
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
+    <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
       {/* Header Section */}
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Timesheets
-        </h1>
-        <p className="text-muted-foreground">
-          Manage and approve employee timesheets.
-        </p>
-      </div>
+      {/* Removed Timesheets header and info alert as requested */}
 
-      {/* Automatic Timesheet Generation Info */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          <div className="flex items-start justify-between">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        {/* Timesheet Table Header */}
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
+          <div className="flex items-center space-x-2">
             <div>
-              <p className="font-medium mb-1">Automatic Timesheet Generation</p>
-              <p className="text-sm mb-2">
-                Timesheets are automatically generated from QR clock events when workers clock out. 
-                Hours are intelligently rounded to handle real-world scenarios like early/late arrivals.
-              </p>
-              <div className="text-xs space-y-1">
-                <p><strong>Standard Rounding:</strong> Rounds to 8 hours if within 9 minutes, otherwise to nearest 15 minutes</p>
-                <p><strong>Manual Generation:</strong> Available from the{" "}
-                <Link href="/dashboard/qr-codes" className="underline hover:text-blue-900">
-                  QR Code Management
-                </Link>{" "}
-                page with customizable rounding options.</p>
-              </div>
+              <h2 className="text-lg font-medium mb-0">
+                {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - <span className="text-gray-500">{format(selectedDate, "PPP")}</span>
+              </h2>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4" />
-              <span>Auto-generated</span>
-            </div>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handlePreviousPeriod}
+              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleNextPeriod}
+              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        </AlertDescription>
-      </Alert>
+          <div className="flex items-center space-x-2">
+                          {/* Create Timesheets Button */}
+              <Link href="/dashboard/timesheets/bulk">
+                <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
+                  Create Timesheets
+                </Button>
+              </Link>
 
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
-        <Tabs defaultValue="timesheets" className="w-full">
-          <div className="border-b border-muted">
-            <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
-              <TabsTrigger
-                value="timesheets"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-              >
-                Timesheets
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="approvals"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-              >
-                Approvals
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-              </TabsTrigger>
-            </TabsList>
           </div>
-          <TabsContent value="timesheets" className="container mx-auto py-4 space-y-6">
-            {/* Timesheet Table Header */}
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-              <div className="flex items-center space-x-2">
-                <div>
-                  <h2 className="text-lg font-semibold mb-2">
-                    {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - {format(selectedDate, "PPP")}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {viewMode === "weekly" &&
-                      `Week of ${format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d")} - ${format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM d, yyyy")}`}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handlePreviousPeriod}
-                  className="h-10 w-10 p-0"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handleNextPeriod}
-                  className="h-10 w-10 p-0"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex items-center space-x-2">
-                {/* Create Timesheets Button */}
-                <Link href="/dashboard/timesheets/bulk">
-                  <Button>
-                    Create Timesheets
-                  </Button>
-                </Link>
-                {selectedTimesheetIds.size > 0 && (
-                  <Button
-                    onClick={handleDeleteSelected}
-                    disabled={isDeleting || isApproving}
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive border-destructive/20 hover:border-destructive/40"
-                  >
-                    {isDeleting ? "Deleting..." : (<Trash2 className="h-4 w-4" />)}
-                  </Button>
-                )}
-              </div>
-            </div>
+        </div>
 
-            {/* Search and Filters Row */}
-            <div className="flex items-center gap-4">
-              {/* Search Bar */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search timesheets..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
 
-              {/* Filters Button */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filters
-                    {(selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly") && (
-                      <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                        {(selectedWorker !== "all" ? 1 : 0) + (selectedProject !== "all" ? 1 : 0) + (viewMode !== "weekly" ? 1 : 0)}
-                      </Badge>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" side="bottom" className="w-80 p-4">
-                  <DropdownMenuLabel className="text-base font-semibold">
-                    Filter Timesheets
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  
-                  {/* View Mode Filter */}
-                  <div className="space-y-3 py-2">
-                    <Label className="text-sm font-medium">View Mode</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setViewMode("daily")}
-                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
-                          viewMode === "daily"
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                            : "bg-background text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
-                        }`}
-                      >
-                        <CalendarDays className="h-4 w-4" />
-                        Daily
-                      </button>
-                      <button
-                        onClick={() => setViewMode("weekly")}
-                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
-                          viewMode === "weekly"
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                            : "bg-background text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
-                        }`}
-                      >
-                        <CalendarDays className="h-4 w-4" />
-                        Weekly
-                      </button>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Date Filter */}
-                  <div className="space-y-3 py-2">
-                    <Label className="text-sm font-medium">Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                          <CalendarDays className="mr-2 h-4 w-4" />
-                          {format(selectedDate, "PPP")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => date && setSelectedDate(date)}
-                          weekStartsOn={weekStartDay}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {viewMode === "weekly" && (
-                    <>
-                      <Separator />
-                      <div className="space-y-3 py-2">
-                        <Label className="text-sm font-medium">Week Starts On</Label>
-                        <Select
-                          value={weekStartDay.toString()}
-                          onValueChange={(value) => setWeekStartDay(Number(value) as 0 | 1 | 2 | 3 | 4 | 5 | 6)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select week start" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">Sunday</SelectItem>
-                            <SelectItem value="1">Monday</SelectItem>
-                            <SelectItem value="2">Tuesday</SelectItem>
-                            <SelectItem value="3">Wednesday</SelectItem>
-                            <SelectItem value="4">Thursday</SelectItem>
-                            <SelectItem value="5">Friday</SelectItem>
-                            <SelectItem value="6">Saturday</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {paymentSchedule?.period_start_type === "day_of_week" && (
-                          <p className="text-xs text-muted-foreground">
-                            Payroll period starts on {getWeekStartDayName(weekStartDay)}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                  <Separator />
-
-                  {/* Worker Filter */}
-                  <div className="space-y-3 py-2">
-                    <Label className="text-sm font-medium">Worker</Label>
-                    <Select value={selectedWorker} onValueChange={setSelectedWorker}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select worker" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Workers</SelectItem>
-                        {workers.map((worker) => (
-                          <SelectItem key={worker.id} value={worker.id}>
-                            {worker.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  {/* Project Filter */}
-                  <div className="space-y-3 py-2">
-                    <Label className="text-sm font-medium">Project</Label>
-                    <Select value={selectedProject} onValueChange={setSelectedProject}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select project" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Projects</SelectItem>
-                        {projects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  {/* Clear Filters */}
-                  {(selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly") && (
-                    <div className="pt-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedWorker("all");
-                          setSelectedProject("all");
-                          setViewMode("weekly");
-                        }}
-                        className="w-full justify-start text-muted-foreground hover:text-foreground"
-                      >
-                        Clear all filters
-                      </Button>
-                    </div>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
 
             {/* Timesheet Table */}
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20 overflow-hidden">
-              <CardContent className="p-0">
+            <Card className="border-0 bg-sidebar overflow-hidden ">
+              <CardContent className="px-0 ">
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground w-12">
-                          <Checkbox
-                            checked={isAllSelected}
-                            onCheckedChange={handleSelectAll}
-                            aria-label="Select all timesheets"
-                          />
-                        </th>
-                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Worker</th>
-                        <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Project</th>
+                      <tr className="border-b border-border">
+
+                        <th className="text-left p-4 pl-6 font-medium text-sm text-gray-500">Worker</th>
+                        <th className="text-left p-4 font-medium text-sm text-gray-500">Project</th>
                         {viewMode === "weekly" ? (
                           weekDays.map((day) => (
-                            <th key={day.toISOString()} className="text-center p-4 font-semibold text-sm text-muted-foreground min-w-[100px]">
-                              <div className="text-xs text-muted-foreground mb-1">{format(day, "EEE")}</div>
-                              <div className="font-medium">{format(day, "MMM d")}</div>
+                            <th key={day.toISOString()} className="text-center p-4 font-medium text-sm text-gray-500 min-w-[100px]">
+                              <div className="text-xs text-gray-400 mb-1">{format(day, "EEE")}</div>
+                              <div className="font-medium text-gray-500">{format(day, "MMM d")}</div>
                             </th>
                           ))
                         ) : (
                           <>
-                            <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Hours</th>
-                            <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Overtime</th>
-                            <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Status</th>
-                            <th className="text-left p-4 font-semibold text-sm text-muted-foreground">Notes</th>
+                            <th className="text-center p-4 font-medium text-sm text-gray-500">Hours</th>
+                            <th className="text-center p-4 font-medium text-sm text-gray-500">Overtime</th>
+                            <th className="text-center p-4 font-medium text-sm text-gray-500">Status</th>
+                            <th className="text-left p-4 font-medium text-sm text-gray-500">Notes</th>
                           </>
                         )}
-                        {viewMode === "weekly" && <th className="text-center p-4 font-semibold text-sm text-muted-foreground">Total</th>}
-                        {viewMode === "weekly" && <th className="text-center p-4 font-semibold text-sm text-muted-foreground"></th>}
+                        {viewMode === "weekly" && <th className="text-center p-4 font-medium text-sm text-gray-500">Total</th>}
+                        {viewMode === "weekly" && <th className="text-center p-4 font-medium text-sm text-gray-500"></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -975,7 +542,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
                         ? // Weekly view - one row per worker
                         paginatedWorkerEntries.map(([workerId, timesheetsInWeek]) => {
                           const worker = workers.find(w => w.id === workerId);
-                          const isAllInWeekSelected = timesheetsInWeek.length > 0 && timesheetsInWeek.every(ts => selectedTimesheetIds.has(ts.id));
                           const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
                           const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
 
@@ -984,14 +550,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
                           return (
                             <tr key={workerId} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
-                              <td className="p-4 w-12">
-                                <Checkbox
-                                  checked={isAllInWeekSelected}
-                                  onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, "", checked)}
-                                  aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week`}
-                                />
-                              </td>
-                              <td className="p-4">
+
+                              <td className="p-4 pl-6">
                                 <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
                                 <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
                               </td>
@@ -1055,7 +615,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   <div className="text-xs text-orange-600 font-medium">+{weekOvertimeHours}h OT</div>
                                 )}
                               </td>
-                              <td className="p-4 text-center">
+                              <td className="p-4 pr-6 text-center">
                                 {timesheetsInWeek.length > 0 && (
                                   isWeekApproved ? (
                                     <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 text-xs font-medium">
@@ -1077,7 +637,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
                           <React.Fragment key={workerId}>
                             {Array.from(workerWeeks.entries()).map(([weekStart, timesheetsInWeek]) => {
                               const worker = workers.find(w => w.id === workerId);
-                              const isAllInWeekSelected = timesheetsInWeek.length > 0 && timesheetsInWeek.every(ts => selectedTimesheetIds.has(ts.id));
                               const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
                               const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
 
@@ -1086,13 +645,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
                               return (
                                 <tr key={`${workerId}-${weekStart}`} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
-                                  <td className="p-4 w-12">
-                                    <Checkbox
-                                      checked={isAllInWeekSelected}
-                                      onCheckedChange={(checked: boolean) => handleSelectAllInWeek(workerId, weekStart, checked)}
-                                      aria-label={`Select all timesheets for ${worker?.name || "Unknown Worker"} in week ${weekStart}`}
-                                    />
-                                  </td>
+
                                   <td className="p-4">
                                     <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
                                     <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
@@ -1188,8 +741,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
                     </div>
                     <h3 className="text-lg font-semibold text-muted-foreground mb-2">No timesheets found</h3>
                     <p className="text-sm text-muted-foreground text-center max-w-sm">
-                      {searchTerm || selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly"
-                        ? "Try adjusting your filters or search terms"
+                      {selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly"
+                        ? "Try adjusting your filters"
                         : "Get started by creating your first timesheet"
                       }
                     </p>
@@ -1249,16 +802,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-          <TabsContent value="approvals" className="container mx-auto py-6 space-y-6">
-            <ApprovalsPage
-              onApprove={handleApproveTimesheet}
-              onReject={handleRejectTimesheet}
-              user={user}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
 
       {/* Add Timesheet Dialog */}
       {selectedCellDate && (

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-import { addDays, format } from "date-fns";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings";
 
 interface DateRangePickerProps {
   dateRange?: DateRange;
@@ -24,11 +25,31 @@ export function DateRangePicker({
   onDateRangeChange,
   className,
 }: DateRangePickerProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>(
-    dateRange || {
-      from: new Date(),
-      to: addDays(new Date(), 7),
+  const { paymentSchedule } = usePayrollSettings()
+  
+  // Get week start day from payment schedule, default to Saturday for construction industry
+  const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+    if (paymentSchedule?.period_start_type === "day_of_week") {
+      const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+        1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+      }
+      return dayMap[paymentSchedule.period_start_day] || 6
     }
+    return 6 // Default to Saturday for construction industry
+  }
+
+  // Get default date range based on payment schedule
+  const getDefaultDateRange = (): DateRange => {
+    const today = new Date()
+    const weekStartsOn = getWeekStartsOn()
+    return {
+      from: startOfWeek(today, { weekStartsOn }),
+      to: endOfWeek(today, { weekStartsOn }),
+    }
+  }
+
+  const [date, setDate] = React.useState<DateRange | undefined>(
+    dateRange || getDefaultDateRange()
   );
 
   React.useEffect(() => {
@@ -77,6 +98,7 @@ export function DateRangePicker({
             selected={date}
             onSelect={handleDateChange}
             numberOfMonths={2}
+            weekStartsOn={getWeekStartsOn()}
           />
         </PopoverContent>
       </Popover>

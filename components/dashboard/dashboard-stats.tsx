@@ -9,6 +9,7 @@ import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import { getProjects } from "@/lib/data/projects"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -25,12 +26,24 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
     activeProjects: { value: 0, change: 0 }
   })
   const [loading, setLoading] = useState(true)
+  const { paymentSchedule } = usePayrollSettings()
 
   const loadStats = useCallback(async () => {
     try {
       setLoading(true)
       const profile = await getUserProfileWithCompany()
       if (!profile) return
+
+      // Get week start day from payment schedule, default to Saturday for construction industry
+      const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+        if (paymentSchedule?.period_start_type === "day_of_week") {
+          const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+            1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+          }
+          return dayMap[paymentSchedule.period_start_day] || 6
+        }
+        return 6 // Default to Saturday for construction industry
+      }
 
       // Calculate date range directly within the function
       let start: Date, end: Date
@@ -40,8 +53,8 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
           end = endOfDay(selectedDate)
           break
         case "weekly":
-          start = startOfWeek(selectedDate)
-          end = endOfWeek(selectedDate)
+          start = startOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
+          end = endOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
           break
         case "monthly":
           start = startOfMonth(selectedDate)
@@ -126,7 +139,7 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
     } finally {
       setLoading(false)
     }
-  }, [viewMode, selectedDate])
+  }, [viewMode, selectedDate, paymentSchedule])
 
   useEffect(() => {
     loadStats()
@@ -199,9 +212,9 @@ export function DashboardStats({ viewMode, selectedDate }: DashboardStatsProps) 
           <Card key={index} className="bg-[#E8EDF5] dark:bg-[#E8EDF5] border-0 shadow-none">
             <CardContent className="px-4 py-2">
               <div className="space-y-1">
-                              <div className="h-3 w-20 animate-pulse rounded bg-blue-200/50 dark:bg-blue-400/30" />
-              <div className="h-6 w-16 animate-pulse rounded bg-blue-200/50 dark:bg-blue-400/30" />
-              <div className="h-3 w-24 animate-pulse rounded bg-blue-200/50 dark:bg-blue-400/30" />
+                              <div className="h-3 w-20 animate-pulse rounded bg-[#D1D8E0] dark:bg-[#D1D8E0]" />
+              <div className="h-6 w-16 animate-pulse rounded bg-[#D1D8E0] dark:bg-[#D1D8E0]" />
+              <div className="h-3 w-24 animate-pulse rounded bg-[#D1D8E0] dark:bg-[#D1D8E0]" />
               </div>
             </CardContent>
           </Card>

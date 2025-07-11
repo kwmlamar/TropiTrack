@@ -397,8 +397,8 @@ export async function fetchTimesheets({
   let endDate = date;
 
   if (viewMode === "weekly") {
-    startDate = startOfWeek(date, { weekStartsOn: 1 });
-    endDate = endOfWeek(date, { weekStartsOn: 1 });
+    startDate = startOfWeek(date, { weekStartsOn: 6 }); // Default to Saturday for construction industry
+    endDate = endOfWeek(date, { weekStartsOn: 6 });
   }
 
   const formattedStart = format(startDate, "yyyy-MM-dd");
@@ -441,11 +441,11 @@ export async function generateWeeklyTimesheet(input: WeeklyTimesheetProps) {
 
   const profile = await getProfile(user.id);
 
-  const weekStart = startOfWeek(new Date(startDate), { weekStartsOn: 1 }); // Monday
+  const weekStart = startOfWeek(new Date(startDate), { weekStartsOn: 6 }); // Saturday for construction industry
 
   const timesheets = Array.from({ length: 7 })
     .map((_, i) => {
-      const date = addDays(weekStart, i); // Mon–Sun
+      const date = addDays(weekStart, i); // Sat–Fri
       return {
         company_id: profile.company_id,
         worker_id: selectedWorker.id,
@@ -522,8 +522,8 @@ export async function deleteWeeklyTimesheets({
 }) {
   const profile = await getProfile(userId);
 
-  const weekStart = startOfWeek(new Date(startDate), { weekStartsOn: 1 }); // Monday
-  const weekEnd = endOfWeek(new Date(startDate), { weekStartsOn: 1 });
+  const weekStart = startOfWeek(new Date(startDate), { weekStartsOn: 6 }); // Saturday for construction industry
+  const weekEnd = endOfWeek(new Date(startDate), { weekStartsOn: 6 });
 
   const { error } = await supabase
   .from("timesheets")

@@ -41,7 +41,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
       }
       return dayMap[paymentSchedule.period_start_day] || 1
     }
-    return 1 // Default to Monday if no payment schedule
+    return 6 // Default to Saturday for construction industry
   }
 
   // Calculate date ranges

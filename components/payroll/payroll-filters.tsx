@@ -49,7 +49,7 @@ export function PayrollFilters({
     const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
       1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
     }
-    return dayMap[day] || 1
+    return dayMap[day] || 6 // Default to Saturday for construction industry
   }
 
   const getCurrentPeriodStart = (d: Date): Date => {

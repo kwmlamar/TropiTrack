@@ -24,8 +24,8 @@ import { getTimesheets } from "@/lib/data/timesheets"
 import { User } from "@supabase/supabase-js"
 
 interface ApprovalsPageProps {
-  onApprove: (id: string) => Promise<void>
-  onReject: (id: string) => Promise<void>
+  onApprove?: (id: string) => Promise<void>
+  onReject?: (id: string) => Promise<void>
   user: User
 }
 
@@ -108,7 +108,9 @@ export function ApprovalsPage({ onApprove, onReject, user }: ApprovalsPageProps)
   const handleApprove = async (id: string) => {
     try {
       setIsProcessing(true)
-      await onApprove(id)
+      if (onApprove) {
+        await onApprove(id)
+      }
       
       // Generate payroll for the approved timesheet
       const approvedTimesheet = pendingTimesheets.find(ts => ts.id === id)
@@ -136,7 +138,9 @@ export function ApprovalsPage({ onApprove, onReject, user }: ApprovalsPageProps)
   const handleReject = async (id: string) => {
     try {
       setIsProcessing(true)
-      await onReject(id)
+      if (onReject) {
+        await onReject(id)
+      }
       
       // Update local state
       const updatedTimesheets = timesheets.map(ts => 
@@ -159,7 +163,9 @@ export function ApprovalsPage({ onApprove, onReject, user }: ApprovalsPageProps)
     setIsProcessing(true)
     try {
       // First approve all timesheets
-      await Promise.all(timesheetIds.map(id => onApprove(id)))
+      if (onApprove) {
+        await Promise.all(timesheetIds.map(id => onApprove(id)))
+      }
       
       // Then generate payroll for each affected worker and period
       const affectedWorkersAndWeeks = new Map<string, { workerId: string, weekStart: string, weekEnd: string }>()

@@ -165,7 +165,7 @@ export function TimesheetForm({
     if (paymentSchedule?.period_start_type === "day_of_week") {
       return getWeekStartsOn(paymentSchedule.period_start_day);
     }
-    return 1; // Default to Monday if no payment schedule
+    return 6; // Default to Saturday for construction industry in Bahamas
   };
 
   const form = useForm<BulkTimesheetFormData>({

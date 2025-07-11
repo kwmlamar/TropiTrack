@@ -10,6 +10,7 @@ import type { TimesheetWithDetails } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Filter, Download } from "lucide-react"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -23,6 +24,7 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedTab, setSelectedTab] = useState("all")
+  const { paymentSchedule } = usePayrollSettings()
 
   const loadRecentTimesheets = useCallback(async () => {
     try {
@@ -34,6 +36,17 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
         return
       }
 
+      // Get week start day from payment schedule, default to Saturday for construction industry
+      const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+        if (paymentSchedule?.period_start_type === "day_of_week") {
+          const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+            1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+          }
+          return dayMap[paymentSchedule.period_start_day] || 6
+        }
+        return 6 // Default to Saturday for construction industry
+      }
+
       // Calculate date range directly within the function
       let start: Date, end: Date
       switch (viewMode) {
@@ -42,8 +55,8 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
           end = endOfDay(selectedDate)
           break
         case "weekly":
-          start = startOfWeek(selectedDate)
-          end = endOfWeek(selectedDate)
+          start = startOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
+          end = endOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
           break
         case "monthly":
           start = startOfMonth(selectedDate)
@@ -68,7 +81,7 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
     } finally {
       setLoading(false)
     }
-  }, [viewMode, selectedDate])
+  }, [viewMode, selectedDate, paymentSchedule])
 
   useEffect(() => {
     loadRecentTimesheets()

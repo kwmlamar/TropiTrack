@@ -6,6 +6,7 @@ import { DollarSign, ChevronDown } from "lucide-react"
 import { useEffect, useState, useCallback } from "react"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
+import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -29,13 +30,25 @@ interface ChartDataPoint {
 export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: PayrollSummaryProps) {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [loading, setLoading] = useState(true)
+  const { paymentSchedule } = usePayrollSettings()
 
   const getDateRange = useCallback(() => {
+    // Get week start day from payment schedule, default to Saturday for construction industry
+    const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+      if (paymentSchedule?.period_start_type === "day_of_week") {
+        const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+          1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+        }
+        return dayMap[paymentSchedule.period_start_day] || 6
+      }
+      return 6 // Default to Saturday for construction industry
+    }
+
     switch (viewMode) {
       case "weekly":
         return {
-          start: startOfWeek(selectedDate),
-          end: endOfWeek(selectedDate)
+          start: startOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() }),
+          end: endOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
         }
       case "monthly":
         return {
@@ -48,7 +61,7 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
           end: new Date(selectedDate.getFullYear(), 11, 31)
         }
     }
-  }, [viewMode, selectedDate])
+  }, [viewMode, selectedDate, paymentSchedule])
 
   const generateTimeSeriesData = useCallback(async () => {
     try {
@@ -64,10 +77,21 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
         let periodStart: Date
         let periodEnd: Date
         
+        // Get week start day from payment schedule, default to Saturday for construction industry
+        const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+          if (paymentSchedule?.period_start_type === "day_of_week") {
+            const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+              1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+            }
+            return dayMap[paymentSchedule.period_start_day] || 6
+          }
+          return 6 // Default to Saturday for construction industry
+        }
+
         switch (viewMode) {
           case "weekly":
-            periodStart = startOfWeek(currentDate)
-            periodEnd = endOfWeek(currentDate)
+            periodStart = startOfWeek(currentDate, { weekStartsOn: getWeekStartsOn() })
+            periodEnd = endOfWeek(currentDate, { weekStartsOn: getWeekStartsOn() })
             break
           case "monthly":
             periodStart = startOfMonth(currentDate)
@@ -136,7 +160,7 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
     } finally {
       setLoading(false)
     }
-  }, [viewMode, selectedDate, getDateRange])
+  }, [viewMode, selectedDate, getDateRange, paymentSchedule])
 
   useEffect(() => {
     generateTimeSeriesData()

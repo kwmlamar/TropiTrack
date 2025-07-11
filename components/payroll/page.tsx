@@ -86,8 +86,8 @@ export default function PayrollPage({ user }: { user: User }) {
         to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
       })
     } else if (!settingsLoading) {
-      // If no payment schedule, use default Monday start
-      const defaultWeekStart = 1;
+      // If no payment schedule, use default Saturday start for construction industry
+      const defaultWeekStart = 6;
       setCurrentWeekRange({
         from: startOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
         to: endOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
