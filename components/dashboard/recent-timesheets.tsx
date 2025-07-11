@@ -1,16 +1,15 @@
 "use client"
 
-import { MoreHorizontal, Search } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { useEffect, useState, useCallback } from "react"
 import { getTimesheets } from "@/lib/data/timesheets"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import type { TimesheetWithDetails } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Filter, Download } from "lucide-react"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -21,29 +20,9 @@ interface RecentTimesheetsProps {
 
 export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsProps) {
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-
-  const getDateRange = () => {
-    switch (viewMode) {
-      case "daily":
-        return {
-          start: startOfDay(selectedDate),
-          end: endOfDay(selectedDate)
-        }
-      case "weekly":
-        return {
-          start: startOfWeek(selectedDate),
-          end: endOfWeek(selectedDate)
-        }
-      case "monthly":
-        return {
-          start: startOfMonth(selectedDate),
-          end: endOfMonth(selectedDate)
-        }
-    }
-  }
+  const [selectedTab, setSelectedTab] = useState("all")
 
   const loadRecentTimesheets = useCallback(async () => {
     try {
@@ -55,7 +34,22 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
         return
       }
 
-      const { start, end } = getDateRange()
+      // Calculate date range directly within the function
+      let start: Date, end: Date
+      switch (viewMode) {
+        case "daily":
+          start = startOfDay(selectedDate)
+          end = endOfDay(selectedDate)
+          break
+        case "weekly":
+          start = startOfWeek(selectedDate)
+          end = endOfWeek(selectedDate)
+          break
+        case "monthly":
+          start = startOfMonth(selectedDate)
+          end = endOfMonth(selectedDate)
+          break
+      }
 
       const result = await getTimesheets(profile.id, {
         limit: 5,
@@ -74,27 +68,89 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
     } finally {
       setLoading(false)
     }
-  }, [viewMode, selectedDate, getDateRange])
+  }, [viewMode, selectedDate])
 
   useEffect(() => {
     loadRecentTimesheets()
   }, [loadRecentTimesheets])
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
-  }, [])
+  const getFilteredTimesheets = (status: string) => {
+    if (status === "all") return timesheets
+    
+    return timesheets.filter(timesheet => {
+      const approvalStatus = timesheet.supervisor_approval || "new"
+      return approvalStatus === status
+    })
+  }
 
-  const filteredTimesheets = timesheets.filter(timesheet => {
-    const searchLower = searchTerm.toLowerCase()
+  const getStatusCount = (status: string) => {
+    return getFilteredTimesheets(status).length
+  }
+
+  const TimesheetList = ({ timesheets, error }: { timesheets: TimesheetWithDetails[], error: string | null }) => {
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 text-destructive">
+          <p className="font-medium">Failed to load timesheets</p>
+          <p className="text-sm text-muted-foreground mt-1">{error}</p>
+        </div>
+      )
+    }
+
+    if (timesheets.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <p className="font-medium">No timesheets found</p>
+          <p className="text-sm mt-1">No timesheets match the selected filter</p>
+        </div>
+      )
+    }
+
     return (
-      timesheet.worker?.name.toLowerCase().includes(searchLower) ||
-      timesheet.project?.name.toLowerCase().includes(searchLower)
+      <div className="space-y-3">
+        {timesheets.map((timesheet) => (
+          <div 
+            key={timesheet.id} 
+            className="group flex items-center justify-between rounded-lg border p-3 transition-all hover:border-border/80"
+          >
+            <div className="flex items-center gap-4">
+              <div>
+                <p className="font-medium text-foreground">{timesheet.worker?.name || "Unknown Worker"}</p>
+                <p className="text-sm text-muted-foreground">{timesheet.project?.name || "Unknown Project"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="font-medium text-foreground">{timesheet.total_hours} hrs</p>
+                <p className="text-xs text-muted-foreground">{format(new Date(timesheet.date), "MMM d, h:mm a")}</p>
+              </div>
+              <Badge
+                variant={
+                  timesheet.supervisor_approval === "approved"
+                    ? "default"
+                    : timesheet.supervisor_approval === "pending"
+                      ? "outline"
+                      : "destructive"
+                }
+                className={cn(
+                  "text-xs",
+                  timesheet.supervisor_approval === "approved" && "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+                  timesheet.supervisor_approval === "pending" && "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+                  timesheet.supervisor_approval === "rejected" && "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                )}
+              >
+                {timesheet.supervisor_approval.charAt(0).toUpperCase() + timesheet.supervisor_approval.slice(1)}
+              </Badge>
+            </div>
+          </div>
+        ))}
+      </div>
     )
-  })
+  }
 
   if (loading) {
     return (
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -135,85 +191,92 @@ export function RecentTimesheets({ viewMode, selectedDate }: RecentTimesheetsPro
   }
 
   return (
-    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+    <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+      <CardHeader className="pb-2">
         <div className="space-y-1">
-          <CardTitle>Recent Timesheets</CardTitle>
-          <CardDescription>Latest time entries from your team</CardDescription>
+          <CardTitle className="font-medium">All Timesheets</CardTitle>
         </div>
-        <Button variant="outline" size="sm" className="h-9">
-          View All
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              type="search" 
-              placeholder="Search timesheets..." 
-              className="w-full bg-background pl-8 h-9"
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="inline-flex items-center gap-1 bg-background rounded p-1">
+            <button
+              onClick={() => setSelectedTab("all")}
+              className={`text-xs px-3 py-1.5 rounded transition-colors ${
+                selectedTab === "all" 
+                  ? "bg-sidebar text-foreground" 
+                  : "text-gray-600 hover:text-foreground"
+              }`}
+            >
+              All ({timesheets.length})
+            </button>
+            <button
+              onClick={() => setSelectedTab("new")}
+              className={`text-xs px-3 py-1.5 rounded transition-colors ${
+                selectedTab === "new" 
+                  ? "bg-sidebar text-foreground" 
+                  : "text-gray-600 hover:text-foreground"
+              }`}
+            >
+              New ({getStatusCount("new")})
+            </button>
+            <button
+              onClick={() => setSelectedTab("pending")}
+              className={`text-xs px-3 py-1.5 rounded transition-colors ${
+                selectedTab === "pending" 
+                  ? "bg-sidebar text-foreground" 
+                  : "text-gray-600 hover:text-foreground"
+              }`}
+            >
+              Pending ({getStatusCount("pending")})
+            </button>
+            <button
+              onClick={() => setSelectedTab("approved")}
+              className={`text-xs px-3 py-1.5 rounded transition-colors ${
+                selectedTab === "approved" 
+                  ? "bg-sidebar text-foreground" 
+                  : "text-gray-600 hover:text-foreground"
+              }`}
+            >
+              Approved ({getStatusCount("approved")})
+            </button>
+            <button
+              onClick={() => setSelectedTab("rejected")}
+              className={`text-xs px-3 py-1.5 rounded transition-colors ${
+                selectedTab === "rejected" 
+                  ? "bg-sidebar text-foreground" 
+                  : "text-gray-600 hover:text-foreground"
+              }`}
+            >
+              Rejected ({getStatusCount("rejected")})
+            </button>
           </div>
-          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filter
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
         </div>
-        <div className="space-y-3">
-          {error ? (
-            <div className="flex flex-col items-center justify-center py-8 text-destructive">
-              <p className="font-medium">Failed to load timesheets</p>
-              <p className="text-sm text-muted-foreground mt-1">{error}</p>
-            </div>
-          ) : filteredTimesheets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <p className="font-medium">No timesheets found</p>
-              <p className="text-sm mt-1">Try adjusting your search or filters</p>
-            </div>
-          ) : (
-            filteredTimesheets.map((timesheet) => (
-              <div 
-                key={timesheet.id} 
-                className="group flex items-center justify-between rounded-lg border p-3 transition-all hover:border-border/80 hover:shadow-sm"
-              >
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="font-medium text-foreground">{timesheet.worker?.name || "Unknown Worker"}</p>
-                    <p className="text-sm text-muted-foreground">{timesheet.project?.name || "Unknown Project"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-medium text-foreground">{timesheet.total_hours} hrs</p>
-                    <p className="text-xs text-muted-foreground">{format(new Date(timesheet.date), "MMM d, h:mm a")}</p>
-                  </div>
-                  <Badge
-                    variant={
-                      timesheet.supervisor_approval === "approved"
-                        ? "default"
-                        : timesheet.supervisor_approval === "pending"
-                          ? "outline"
-                          : "destructive"
-                    }
-                    className={cn(
-                      "transition-colors",
-                      timesheet.supervisor_approval === "approved"
-                        ? "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30"
-                        : timesheet.supervisor_approval === "pending"
-                          ? "border-warning/30 text-warning hover:bg-warning/10 dark:border-warning/40 dark:text-warning-foreground dark:hover:bg-warning/20"
-                          : ""
-                    )}
-                  >
-                    {timesheet.supervisor_approval.charAt(0).toUpperCase() + timesheet.supervisor_approval.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </CardContent>
+        
+        {selectedTab === "all" && (
+          <TimesheetList timesheets={getFilteredTimesheets("all")} error={error} />
+        )}
+        {selectedTab === "new" && (
+          <TimesheetList timesheets={getFilteredTimesheets("new")} error={error} />
+        )}
+        {selectedTab === "pending" && (
+          <TimesheetList timesheets={getFilteredTimesheets("pending")} error={error} />
+        )}
+        {selectedTab === "approved" && (
+          <TimesheetList timesheets={getFilteredTimesheets("approved")} error={error} />
+        )}
+        {selectedTab === "rejected" && (
+          <TimesheetList timesheets={getFilteredTimesheets("rejected")} error={error} />
+        )}
+      </CardHeader>
     </Card>
   )
 }

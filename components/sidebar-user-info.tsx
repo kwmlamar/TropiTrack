@@ -51,7 +51,7 @@ export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className="flex items-center gap-2 p-3 cursor-pointer hover:bg-sidebar-accent/50 rounded-lg transition-colors">
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-10 w-10">
             <AvatarImage
               src="/placeholder.svg"
               alt={profile.name}
@@ -80,7 +80,7 @@ export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
                   </span>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-sidebar-muted-foreground flex-shrink-0" />
+              <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
             </>
           )}
         </div>

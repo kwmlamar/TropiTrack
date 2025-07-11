@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Settings, Users, Briefcase, ClipboardList, DollarSign, Building2 } from "lucide-react"
@@ -46,6 +47,14 @@ const settingsTabs = [
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab")
+    if (tabParam && settingsTabs.some(tab => tab.id === tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
 
   return (
     <div className="container mx-auto p-6 space-y-8">

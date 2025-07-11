@@ -2,38 +2,36 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, DollarSign } from "lucide-react"
+import { DollarSign, ChevronDown } from "lucide-react"
 import { useEffect, useState, useCallback } from "react"
 import { getAggregatedPayrolls } from "@/lib/data/payroll"
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
-import { useRouter } from "next/navigation"
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 
-type ViewMode = "daily" | "weekly" | "monthly"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+type ViewMode = "weekly" | "monthly" | "yearly"
 
 interface PayrollSummaryProps {
   viewMode: ViewMode
   selectedDate: Date
+  onViewModeChange?: (mode: ViewMode) => void
 }
 
-export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) {
-  const router = useRouter()
-  const [payrollData, setPayrollData] = useState<{
-    gross_pay: number
-    nib_deduction: number
-    other_deductions: number
-    net_pay: number
-    pay_period_start: string
-    pay_period_end: string
-  } | null>(null)
+interface ChartDataPoint {
+  date: string
+  gross_pay: number
+  net_pay: number
+  nib_deduction: number
+  other_deductions: number
+}
+
+export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: PayrollSummaryProps) {
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [loading, setLoading] = useState(true)
 
   const getDateRange = useCallback(() => {
     switch (viewMode) {
-      case "daily":
-        return {
-          start: startOfDay(selectedDate),
-          end: endOfDay(selectedDate)
-        }
       case "weekly":
         return {
           start: startOfWeek(selectedDate),
@@ -44,75 +42,149 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
           start: startOfMonth(selectedDate),
           end: endOfMonth(selectedDate)
         }
+      case "yearly":
+        return {
+          start: new Date(selectedDate.getFullYear(), 0, 1),
+          end: new Date(selectedDate.getFullYear(), 11, 31)
+        }
     }
   }, [viewMode, selectedDate])
 
-  useEffect(() => {
-
-    const fetchPayrollData = async () => {
-      try {
-        console.log("[PayrollSummary] Starting fetch with:", { viewMode, selectedDate })
-        setLoading(true)
-        const { start, end } = getDateRange()
-        console.log("[PayrollSummary] Date range:", { start, end })
+  const generateTimeSeriesData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const { start, end } = getDateRange()
+      
+      // Generate data points based on view mode
+      const dataPoints: ChartDataPoint[] = []
+      let currentDate = new Date(start)
+      const endDate = new Date(end)
+      
+      while (currentDate <= endDate) {
+        let periodStart: Date
+        let periodEnd: Date
+        
+        switch (viewMode) {
+          case "weekly":
+            periodStart = startOfWeek(currentDate)
+            periodEnd = endOfWeek(currentDate)
+            break
+          case "monthly":
+            periodStart = startOfMonth(currentDate)
+            periodEnd = endOfMonth(currentDate)
+            break
+          case "yearly":
+            periodStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+            periodEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+            break
+        }
 
         const response = await getAggregatedPayrolls({
-          date_from: format(start, "yyyy-MM-dd"),
-          date_to: format(end, "yyyy-MM-dd"),
-          target_period_type: viewMode === "daily" ? "weekly" : viewMode
+          date_from: format(periodStart, "yyyy-MM-dd"),
+          date_to: format(periodEnd, "yyyy-MM-dd"),
+          target_period_type: viewMode === "yearly" ? "monthly" : viewMode
         })
 
-        console.log("[PayrollSummary] API response:", response)
-
         if (response.success && response.data && response.data.length > 0) {
-          // Aggregate the data
           const aggregated = response.data.reduce((acc, curr) => ({
             gross_pay: acc.gross_pay + curr.gross_pay,
             nib_deduction: acc.nib_deduction + curr.nib_deduction,
             other_deductions: acc.other_deductions + curr.other_deductions,
             net_pay: acc.net_pay + curr.net_pay,
-            pay_period_start: curr.pay_period_start,
-            pay_period_end: curr.pay_period_end
           }), {
             gross_pay: 0,
             nib_deduction: 0,
             other_deductions: 0,
             net_pay: 0,
-            pay_period_start: "",
-            pay_period_end: ""
           })
 
-          console.log("[PayrollSummary] Aggregated data:", aggregated)
-          setPayrollData(aggregated)
+          dataPoints.push({
+            date: format(currentDate, viewMode === "weekly" ? "MMM dd" : viewMode === "monthly" ? "MMM yyyy" : "MMM"),
+            gross_pay: aggregated.gross_pay,
+            net_pay: aggregated.net_pay,
+            nib_deduction: aggregated.nib_deduction,
+            other_deductions: aggregated.other_deductions,
+          })
         } else {
-          console.log("[PayrollSummary] No data or error in response")
-          setPayrollData(null)
+          dataPoints.push({
+            date: format(currentDate, viewMode === "weekly" ? "MMM dd" : viewMode === "monthly" ? "MMM yyyy" : "MMM"),
+            gross_pay: 0,
+            net_pay: 0,
+            nib_deduction: 0,
+            other_deductions: 0,
+          })
         }
-      } catch (error) {
-        console.error("[PayrollSummary] Error fetching payroll data:", error)
-        setPayrollData(null)
-      } finally {
-        console.log("[PayrollSummary] Setting loading to false")
-        setLoading(false)
-      }
-    }
 
-    fetchPayrollData()
+        // Move to next period
+        switch (viewMode) {
+          case "weekly":
+            currentDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+            break
+          case "monthly":
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+            break
+          case "yearly":
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+            break
+        }
+      }
+
+      setChartData(dataPoints)
+    } catch (error) {
+      console.error("[PayrollSummary] Error fetching payroll data:", error)
+      setChartData([])
+    } finally {
+      setLoading(false)
+    }
   }, [viewMode, selectedDate, getDateRange])
 
-  const handleProcessPayroll = () => {
-    // Navigate to payroll page with current date range
-    const { start, end } = getDateRange()
-    const dateFrom = format(start, "yyyy-MM-dd")
-    const dateTo = format(end, "yyyy-MM-dd")
-    
-    // Navigate to payroll page with query parameters
-    router.push(`/dashboard/payroll?dateFrom=${dateFrom}&dateTo=${dateTo}&periodType=${viewMode}`)
+  useEffect(() => {
+    generateTimeSeriesData()
+  }, [generateTimeSeriesData])
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-BS", {
+      style: "currency",
+      currency: "BSD",
+      minimumFractionDigits: 0,
+    }).format(value)
+  }
+
+  interface TooltipProps {
+    active?: boolean
+    payload?: Array<{
+      name: string
+      value: number
+      color: string
+    }>
+    label?: string
+  }
+
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+          <p className="font-medium text-sm">{label}</p>
+          {payload.map((entry, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {formatCurrency(entry.value)}
+            </p>
+          ))}
+        </div>
+      )
+    }
+    return null
+  }
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    if (onViewModeChange) {
+      onViewModeChange(mode)
+    }
   }
 
   if (loading) {
     return (
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
         <CardHeader className="pb-2">
           <div className="space-y-1">
             <div className="h-7 w-40 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
@@ -120,23 +192,15 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border p-3">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-              </div>
-            ))}
-            <div className="h-10 w-full animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-          </div>
+          <div className="h-64 w-full animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
         </CardContent>
       </Card>
     )
   }
 
-  if (!payrollData) {
+  if (chartData.length === 0) {
     return (
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
         <CardHeader className="pb-2">
           <div className="space-y-1">
             <CardTitle>Payroll Summary</CardTitle>
@@ -154,70 +218,89 @@ export function PayrollSummary({ viewMode, selectedDate }: PayrollSummaryProps) 
     )
   }
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "MMM d")
-  }
-
   const getPeriodDescription = () => {
     switch (viewMode) {
-      case "daily":
-        return "Today's"
       case "weekly":
-        return "This week's"
+        return "Weekly"
       case "monthly":
-        return "This month's"
+        return "Monthly"
+      case "yearly":
+        return "Yearly"
     }
   }
 
   return (
-    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+    <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none h-full">
       <CardHeader className="pb-2">
-        <div className="space-y-1">
-          <CardTitle>Payroll Summary</CardTitle>
-          <CardDescription>
-            {getPeriodDescription()} pay period ({formatDate(payrollData.pay_period_start)}-{formatDate(payrollData.pay_period_end)})
-          </CardDescription>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="font-medium">Payroll</CardTitle>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 shadow-none text-gray-600 hover:text-gray-700">
+                {getPeriodDescription()}
+                <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleViewModeChange("weekly")}>
+                Weekly
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleViewModeChange("monthly")}>
+                Monthly
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleViewModeChange("yearly")}>
+                Yearly
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
-            <div className="space-y-0.5">
-              <span className="text-sm font-medium text-muted-foreground">Gross Pay</span>
-              <p className="text-sm text-muted-foreground">Total earnings before deductions</p>
-            </div>
-            <span className="text-lg font-semibold">${payrollData.gross_pay.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
-            <div className="space-y-0.5">
-              <span className="text-sm font-medium text-muted-foreground">NIB Contributions</span>
-              <p className="text-sm text-muted-foreground">National Insurance Board deductions</p>
-            </div>
-            <span className="text-lg font-semibold">${payrollData.nib_deduction.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
-            <div className="space-y-0.5">
-              <span className="text-sm font-medium text-muted-foreground">Other Deductions</span>
-              <p className="text-sm text-muted-foreground">Additional deductions and withholdings</p>
-            </div>
-            <span className="text-lg font-semibold">${payrollData.other_deductions.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
-            <div className="space-y-0.5">
-              <span className="text-sm font-medium">Net Pay</span>
-              <p className="text-sm text-muted-foreground">Final amount after all deductions</p>
-            </div>
-            <span className="text-lg font-semibold">${payrollData.net_pay.toFixed(2)}</span>
-          </div>
+      <CardContent className="space-y-4 flex-1">
+        <div className="h-64 flex-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis 
+                dataKey="date" 
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+              />
+              <YAxis 
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+                tickFormatter={formatCurrency}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="gross_pay" 
+                stroke="hsl(var(--primary))" 
+                strokeWidth={2}
+                name="Gross Pay"
+                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="net_pay" 
+                stroke="hsl(var(--success))" 
+                strokeWidth={2}
+                name="Net Pay"
+                dot={{ fill: "hsl(var(--success))", strokeWidth: 2, r: 4 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="nib_deduction" 
+                stroke="hsl(var(--destructive))" 
+                strokeWidth={2}
+                name="NIB Deductions"
+                dot={{ fill: "hsl(var(--destructive))", strokeWidth: 2, r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-        <Button 
-          className="w-full gap-2 transition-colors hover:bg-primary/90"
-          onClick={handleProcessPayroll}
-        >
-          <DollarSign className="h-4 w-4" />
-          <span>Process Payroll</span>
-          <ArrowRight className="h-4 w-4" />
-        </Button>
       </CardContent>
     </Card>
   )

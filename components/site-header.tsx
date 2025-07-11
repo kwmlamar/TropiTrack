@@ -5,15 +5,18 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 
 import { DateRangePicker } from "@/components/date-range-picker";
+import { CompanyDropdown } from "@/components/company-dropdown";
 
 type SiteHeaderProps = {
   title?: string;
   children?: React.ReactNode;
+  hideDateRangePicker?: boolean;
 };
 
 export function SiteHeader({
   title = "Dashboard",
   children,
+  hideDateRangePicker = false,
 }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-sidebar transition-all duration-300">
@@ -27,11 +30,12 @@ export function SiteHeader({
 
         {/* Center Section - Date Range Picker */}
         <div className="flex-1 flex justify-center">
-          <DateRangePicker />
+          {!hideDateRangePicker && <DateRangePicker />}
         </div>
 
-        {/* Right Section - Custom Content */}
+        {/* Right Section - Company Dropdown & Custom Content */}
         <div className="flex items-center gap-2">
+          <CompanyDropdown />
           {children}
         </div>
       </div>

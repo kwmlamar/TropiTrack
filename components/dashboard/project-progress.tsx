@@ -32,7 +32,7 @@ export function ProjectProgress({ viewMode, selectedDate }: ProjectProgressProps
 
   if (loading) {
     return (
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
         <CardHeader className="pb-2">
           <CardTitle>Project Progress</CardTitle>
           <CardDescription>Loading...</CardDescription>
@@ -55,7 +55,7 @@ export function ProjectProgress({ viewMode, selectedDate }: ProjectProgressProps
   }
 
   return (
-    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+    <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
       <CardHeader className="pb-2">
         <CardTitle>Project Progress</CardTitle>
         <CardDescription>Track your project milestones</CardDescription>

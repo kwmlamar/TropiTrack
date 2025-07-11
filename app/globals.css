@@ -6,7 +6,7 @@
 
 :root {
   /* Core Background & Foreground - Modern and clean */
-  --background: oklch(0.998 0.003 250);
+  --background: #9ca1af0a;
   --foreground: #0D141C;
 
   /* Surface Colors - Subtle depth */
@@ -25,7 +25,7 @@
 
   /* Muted Colors - Improved readability */
   --muted: oklch(0.97 0.01 250);
-  --muted-foreground: #00ABC9;
+  --muted-foreground: #01a2be;
 
   /* Accent - Energetic blue */
   --accent: #E8EDF5;

@@ -32,7 +32,7 @@ export function RecentActivity({ viewMode, selectedDate }: RecentActivityProps) 
 
   if (loading) {
     return (
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
         <CardHeader className="pb-2">
           <CardTitle>Recent Activity</CardTitle>
           <CardDescription>Loading...</CardDescription>
@@ -55,7 +55,7 @@ export function RecentActivity({ viewMode, selectedDate }: RecentActivityProps) 
   }
 
   return (
-    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+    <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
       <CardHeader className="pb-2">
         <CardTitle>Recent Activity</CardTitle>
         <CardDescription>Latest actions from your team</CardDescription>

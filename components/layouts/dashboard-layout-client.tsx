@@ -16,6 +16,8 @@ type DashboardLayoutClientProps = {
 }
 
 export function DashboardLayoutClient({ children, title, profile }: DashboardLayoutClientProps) {
+  // Determine if this is the dashboard overview page
+  const isDashboard = title === "Dashboard";
   return (
     <SidebarProvider
       style={
@@ -27,7 +29,7 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
     >
       <AppSidebar profile={profile} variant="inset" />
       <SidebarInset>
-        <SiteHeader user={profile} title={title} />
+        <SiteHeader title={title} hideDateRangePicker={isDashboard} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

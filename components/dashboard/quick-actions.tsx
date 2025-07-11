@@ -35,7 +35,7 @@ export function QuickActions() {
 
   return (
     <>
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm shadow-sm">
+      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
         <CardHeader className="pb-2">
           <div className="space-y-1">
             <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
@@ -92,7 +92,7 @@ export function QuickActions() {
           </div>
           <Button 
             variant="ghost" 
-            className="mt-4 w-full justify-start text-muted-foreground transition-all duration-200 hover:text-foreground hover:shadow-sm"
+            className="mt-4 w-full justify-start text-muted-foreground transition-all duration-200 hover:text-foreground"
           >
             <Plus className="mr-2 h-4 w-4" />
             <span>More Actions</span>
