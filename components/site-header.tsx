@@ -3,7 +3,7 @@
 import type React from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, FileText, CheckCircle } from "lucide-react";
+import { ChevronDown, FileText, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -45,7 +45,7 @@ export function SiteHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
-                <Link href="/dashboard/approvals">
+                <Link href="/dashboard/time-logs">
                   <DropdownMenuItem className="cursor-pointer">
                     <FileText className="mr-2 h-4 w-4" />
                     Time Logs
@@ -55,6 +55,12 @@ export function SiteHeader({
                   <DropdownMenuItem className="cursor-pointer">
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Timesheets
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/dashboard/approvals">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Clock className="mr-2 h-4 w-4" />
+                    Approvals
                   </DropdownMenuItem>
                 </Link>
               </DropdownMenuContent>
