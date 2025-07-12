@@ -34,7 +34,8 @@ export function NavMain({ items }: NavMainProps) {
           {items.map((item) => {
           const isActive = item.url === "/dashboard" 
             ? pathname === "/dashboard" 
-            : pathname === item.url || pathname.startsWith(item.url + "/")
+            : pathname === item.url || pathname.startsWith(item.url + "/") || 
+              (item.title === "Time Tracking" && (pathname === "/dashboard/timesheets" || pathname === "/dashboard/approvals"))
 
           const menuButton = (
             <SidebarMenuButton

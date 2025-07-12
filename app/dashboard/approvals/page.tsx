@@ -1,5 +1,5 @@
 import DashboardLayout from "@/components/layouts/dashboard-layout";
-import { ApprovalsPage } from "@/components/timesheets/approvals-page";
+import { TimeLogsPage } from "@/components/timesheets/time-logs";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function Page() {
@@ -14,8 +14,8 @@ export default async function Page() {
   }
 
   return (
-    <DashboardLayout title="Approvals">
-      <ApprovalsPage user={user} />
+    <DashboardLayout title="Time Logs">
+      <TimeLogsPage user={user} />
     </DashboardLayout>
   );
 } 

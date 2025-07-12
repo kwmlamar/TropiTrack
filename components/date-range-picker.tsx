@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-import { format, startOfWeek, endOfWeek } from "date-fns";
+import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings";
+import { useDateRange } from "@/context/date-range-context";
 
 interface DateRangePickerProps {
   dateRange?: DateRange;
@@ -26,6 +27,7 @@ export function DateRangePicker({
   className,
 }: DateRangePickerProps) {
   const { paymentSchedule } = usePayrollSettings()
+  const { dateRange: contextDateRange, setDateRange: setContextDateRange } = useDateRange()
   
   // Get week start day from payment schedule, default to Saturday for construction industry
   const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
@@ -38,29 +40,12 @@ export function DateRangePicker({
     return 6 // Default to Saturday for construction industry
   }
 
-  // Get default date range based on payment schedule
-  const getDefaultDateRange = (): DateRange => {
-    const today = new Date()
-    const weekStartsOn = getWeekStartsOn()
-    return {
-      from: startOfWeek(today, { weekStartsOn }),
-      to: endOfWeek(today, { weekStartsOn }),
-    }
-  }
-
-  const [date, setDate] = React.useState<DateRange | undefined>(
-    dateRange || getDefaultDateRange()
-  );
-
-  React.useEffect(() => {
-    if (dateRange) {
-      setDate(dateRange);
-    }
-  }, [dateRange]);
+  // Use context date range if no props provided, otherwise use props
+  const currentDateRange = dateRange || contextDateRange
+  const setCurrentDateRange = onDateRangeChange || setContextDateRange
 
   const handleDateChange = (newDate: DateRange | undefined) => {
-    setDate(newDate);
-    onDateRangeChange?.(newDate);
+    setCurrentDateRange(newDate);
   };
 
   return (
@@ -72,18 +57,18 @@ export function DateRangePicker({
             variant={"outline"}
             className={cn(
               "w-[260px] justify-start text-left font-normal",
-              !date && "text-muted-foreground"
+              !currentDateRange && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
+            {currentDateRange?.from ? (
+              currentDateRange.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {format(currentDateRange.from, "LLL dd, y")} -{" "}
+                  {format(currentDateRange.to, "LLL dd, y")}
                 </>
               ) : (
-                format(date.from, "LLL dd, y")
+                format(currentDateRange.from, "LLL dd, y")
               )
             ) : (
               <span>Pick a date range</span>
@@ -94,8 +79,8 @@ export function DateRangePicker({
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={date?.from}
-            selected={date}
+            defaultMonth={currentDateRange?.from}
+            selected={currentDateRange}
             onSelect={handleDateChange}
             numberOfMonths={2}
             weekStartsOn={getWeekStartsOn()}

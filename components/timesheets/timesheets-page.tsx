@@ -475,7 +475,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
           <div className="flex items-center space-x-2">
             <div>
               <h2 className="text-lg font-medium mb-0">
-                {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet - <span className="text-gray-500">{format(selectedDate, "PPP")}</span>
+                {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet{" "}
+                {viewMode === "weekly" ? (
+                  <span className="text-gray-500">
+                    {format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM dd")} - {format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM dd")}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">{format(selectedDate, "PPP")}</span>
+                )}
               </h2>
             </div>
             <Button
@@ -779,8 +786,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
                             onClick={() => handlePageChange(page)}
                             className={`h-8 w-8 p-0 ${
                               currentPage === page 
-                                ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
-                                : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
+                                ? "bg-muted text-gray-800 border-muted dark:bg-gray-500 dark:text-gray-100 dark:border-gray-500" 
+                                : "hover:bg-muted dark:hover:bg-gray-600 dark:hover:text-gray-100"
                             }`}
                           >
                             {page}

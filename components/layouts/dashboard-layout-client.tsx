@@ -8,6 +8,7 @@ import { CompanySetupDialog } from "@/components/company-setup-dialog"
 import { PWAInstaller } from "@/components/pwa-installer"
 import { SafariInstallGuide } from "@/components/safari-install-guide"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
+import { DateRangeProvider } from "@/context/date-range-context"
 
 
 type DashboardLayoutClientProps = {
@@ -19,48 +20,51 @@ type DashboardLayoutClientProps = {
 export function DashboardLayoutClient({ children, title, profile }: DashboardLayoutClientProps) {
   // Determine if this is the dashboard overview page
   const isDashboard = title === "Dashboard";
-  // Determine if this is the timesheets or approvals page
+  // Determine if this is the timesheets, approvals, or time logs page
   const isTimesheets = title === "Timesheets";
   const isApprovals = title === "Approvals";
-  const showTimesheetsDropdown = isTimesheets || isApprovals;
+  const isTimeLogs = title === "Time Logs";
+  const showTimesheetsDropdown = isTimesheets || isApprovals || isTimeLogs;
 
 
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 64)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar profile={profile} variant="inset" />
-      <SidebarInset>
-        <SiteHeader 
-          title={title} 
-          hideDateRangePicker={isDashboard} 
-          showTimesheetsDropdown={showTimesheetsDropdown}
-        />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <div className="px-4 lg:px-6">
-                {children}
+    <DateRangeProvider>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 64)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar profile={profile} variant="inset" />
+        <SidebarInset>
+          <SiteHeader 
+            title={title} 
+            hideDateRangePicker={isDashboard} 
+            showTimesheetsDropdown={showTimesheetsDropdown}
+          />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                <div className="px-4 lg:px-6">
+                  {children}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </SidebarInset>
-      
-      {/* Company Setup Dialog */}
-      <CompanySetupDialog />
-      
-      {/* PWA Installer (Chrome/Edge/Firefox) */}
-      <PWAInstaller />
-      
-      {/* Safari Install Guide */}
-      <SafariInstallGuide />
-    </SidebarProvider>
+        </SidebarInset>
+        
+        {/* Company Setup Dialog */}
+        <CompanySetupDialog />
+        
+        {/* PWA Installer (Chrome/Edge/Firefox) */}
+        <PWAInstaller />
+        
+        {/* Safari Install Guide */}
+        <SafariInstallGuide />
+      </SidebarProvider>
+    </DateRangeProvider>
   )
 } 

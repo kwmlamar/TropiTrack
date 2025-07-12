@@ -51,8 +51,8 @@ const data = {
       description: "Overview and analytics",
     },
     {
-      title: "Timesheets",
-      url: "/dashboard/timesheets",
+      title: "Time Tracking",
+      url: "/dashboard/approvals",
       icon: FileText,
       badge: null,
       description: "Track work hours",
