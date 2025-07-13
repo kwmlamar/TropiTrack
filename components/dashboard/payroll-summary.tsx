@@ -4,20 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { DollarSign, ChevronDown } from "lucide-react"
 import { useEffect, useState, useCallback } from "react"
-import { getAggregatedPayrolls } from "@/lib/data/payroll"
+import { getPayrolls } from "@/lib/data/payroll"
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-type ViewMode = "weekly" | "monthly" | "yearly"
-
-interface PayrollSummaryProps {
-  viewMode: ViewMode
-  selectedDate: Date
-  onViewModeChange?: (mode: ViewMode) => void
-}
+type ViewMode = "weekly" | "monthly"
 
 interface ChartDataPoint {
   date: string
@@ -27,9 +21,10 @@ interface ChartDataPoint {
   other_deductions: number
 }
 
-export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: PayrollSummaryProps) {
+export function PayrollSummary() {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<ViewMode>("weekly")
   const { paymentSchedule } = usePayrollSettings()
 
   const getDateRange = useCallback(() => {
@@ -47,27 +42,49 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
     switch (viewMode) {
       case "weekly":
         return {
-          start: startOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() }),
-          end: endOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
+          start: startOfWeek(new Date(new Date().getTime() - 11 * 7 * 24 * 60 * 60 * 1000), { weekStartsOn: getWeekStartsOn() }), // 12 weeks ago
+          end: endOfWeek(new Date(), { weekStartsOn: getWeekStartsOn() })
         }
       case "monthly":
         return {
-          start: startOfMonth(selectedDate),
-          end: endOfMonth(selectedDate)
+          start: new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1), // 6 months ago
+          end: endOfMonth(new Date())
         }
-      case "yearly":
-        return {
-          start: new Date(selectedDate.getFullYear(), 0, 1),
-          end: new Date(selectedDate.getFullYear(), 11, 31)
-        }
+
     }
-  }, [viewMode, selectedDate, paymentSchedule])
+  }, [viewMode, paymentSchedule])
 
   const generateTimeSeriesData = useCallback(async () => {
     try {
       setLoading(true)
       const { start, end } = getDateRange()
       
+      // Get week start day from payment schedule, default to Saturday for construction industry
+      const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+        if (paymentSchedule?.period_start_type === "day_of_week") {
+          const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
+            1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
+          }
+          return dayMap[paymentSchedule.period_start_day] || 6
+        }
+        return 6 // Default to Saturday for construction industry
+      }
+
+      // Fetch all payroll data for the entire date range in one call
+      const response = await getPayrolls({
+        date_from: format(start, "yyyy-MM-dd"),
+        date_to: format(end, "yyyy-MM-dd")
+      })
+
+      console.log("[PayrollSummary] All payroll data:", response.data)
+      console.log("[PayrollSummary] Date range:", format(start, "yyyy-MM-dd"), "to", format(end, "yyyy-MM-dd"))
+      console.log("[PayrollSummary] Total payroll records:", response.data?.length || 0)
+
+      if (!response.success || !response.data) {
+        setChartData([])
+        return
+      }
+
       // Generate data points based on view mode
       const dataPoints: ChartDataPoint[] = []
       let currentDate = new Date(start)
@@ -76,46 +93,44 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
       while (currentDate <= endDate) {
         let periodStart: Date
         let periodEnd: Date
-        
-        // Get week start day from payment schedule, default to Saturday for construction industry
-        const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
-          if (paymentSchedule?.period_start_type === "day_of_week") {
-            const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
-              1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
-            }
-            return dayMap[paymentSchedule.period_start_day] || 6
-          }
-          return 6 // Default to Saturday for construction industry
-        }
+        let dateLabel: string
 
         switch (viewMode) {
           case "weekly":
             periodStart = startOfWeek(currentDate, { weekStartsOn: getWeekStartsOn() })
             periodEnd = endOfWeek(currentDate, { weekStartsOn: getWeekStartsOn() })
+            dateLabel = format(currentDate, "MMM dd")
             break
           case "monthly":
             periodStart = startOfMonth(currentDate)
             periodEnd = endOfMonth(currentDate)
-            break
-          case "yearly":
-            periodStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-            periodEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+            dateLabel = format(currentDate, "MMM yyyy")
             break
         }
 
-        const response = await getAggregatedPayrolls({
-          date_from: format(periodStart, "yyyy-MM-dd"),
-          date_to: format(periodEnd, "yyyy-MM-dd"),
-          target_period_type: viewMode === "yearly" ? "monthly" : viewMode
+        // Filter payroll data for this period - use created_at as fallback
+        const periodPayrolls = response.data.filter((payroll: unknown) => {
+          const payrollRecord = payroll as { pay_period_start?: string; created_at?: string }
+          const payrollDate = new Date(payrollRecord.pay_period_start || payrollRecord.created_at || new Date())
+          return payrollDate >= periodStart && payrollDate <= periodEnd
         })
 
-        if (response.success && response.data && response.data.length > 0) {
-          const aggregated = response.data.reduce((acc, curr) => ({
-            gross_pay: acc.gross_pay + curr.gross_pay,
-            nib_deduction: acc.nib_deduction + curr.nib_deduction,
-            other_deductions: acc.other_deductions + curr.other_deductions,
-            net_pay: acc.net_pay + curr.net_pay,
-          }), {
+        console.log(`[PayrollSummary] ${dateLabel} period:`, format(periodStart, "yyyy-MM-dd"), "to", format(periodEnd, "yyyy-MM-dd"))
+        console.log(`[PayrollSummary] ${dateLabel} period payrolls:`, periodPayrolls.length)
+        if (periodPayrolls.length > 0) {
+          console.log(`[PayrollSummary] ${dateLabel} sample payroll:`, periodPayrolls[0])
+        }
+
+        if (periodPayrolls.length > 0) {
+          const aggregated = periodPayrolls.reduce((sum: { gross_pay: number; nib_deduction: number; other_deductions: number; net_pay: number }, p: unknown) => {
+            const payrollRecord = p as { gross_pay: number; nib_deduction: number; other_deductions: number; net_pay: number }
+            return {
+              gross_pay: sum.gross_pay + payrollRecord.gross_pay,
+              nib_deduction: sum.nib_deduction + payrollRecord.nib_deduction,
+              other_deductions: sum.other_deductions + payrollRecord.other_deductions,
+              net_pay: sum.net_pay + payrollRecord.net_pay,
+            }
+          }, {
             gross_pay: 0,
             nib_deduction: 0,
             other_deductions: 0,
@@ -123,7 +138,7 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
           })
 
           dataPoints.push({
-            date: format(currentDate, viewMode === "weekly" ? "MMM dd" : viewMode === "monthly" ? "MMM yyyy" : "MMM"),
+            date: dateLabel,
             gross_pay: aggregated.gross_pay,
             net_pay: aggregated.net_pay,
             nib_deduction: aggregated.nib_deduction,
@@ -131,7 +146,7 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
           })
         } else {
           dataPoints.push({
-            date: format(currentDate, viewMode === "weekly" ? "MMM dd" : viewMode === "monthly" ? "MMM yyyy" : "MMM"),
+            date: dateLabel,
             gross_pay: 0,
             net_pay: 0,
             nib_deduction: 0,
@@ -147,20 +162,18 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
           case "monthly":
             currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
             break
-          case "yearly":
-            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
-            break
         }
       }
 
       setChartData(dataPoints)
+      console.log("[PayrollSummary] Chart data:", dataPoints)
     } catch (error) {
       console.error("[PayrollSummary] Error fetching payroll data:", error)
       setChartData([])
     } finally {
       setLoading(false)
     }
-  }, [viewMode, selectedDate, getDateRange, paymentSchedule])
+  }, [viewMode, getDateRange, paymentSchedule])
 
   useEffect(() => {
     generateTimeSeriesData()
@@ -200,10 +213,25 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
     return null
   }
 
+  const CustomLegend = (props: unknown) => {
+    const { payload } = props as { payload?: Array<{ value: string; color: string }> }
+    return (
+      <div className="flex justify-center gap-4 mt-2">
+        {payload?.map((entry: { value: string; color: string }, index: number) => (
+          <div key={index} className="flex items-center gap-2 text-gray-500">
+            <div 
+              className="w-3 h-0.5" 
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-sm">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const handleViewModeChange = (mode: ViewMode) => {
-    if (onViewModeChange) {
-      onViewModeChange(mode)
-    }
+    setViewMode(mode)
   }
 
   if (loading) {
@@ -248,8 +276,7 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
         return "Weekly"
       case "monthly":
         return "Monthly"
-      case "yearly":
-        return "Yearly"
+
     }
   }
 
@@ -274,9 +301,7 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
               <DropdownMenuItem onClick={() => handleViewModeChange("monthly")}>
                 Monthly
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleViewModeChange("yearly")}>
-                Yearly
-              </DropdownMenuItem>
+              
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -285,42 +310,42 @@ export function PayrollSummary({ viewMode, selectedDate, onViewModeChange }: Pay
         <div className="h-64 flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis 
                 dataKey="date" 
-                stroke="hsl(var(--muted-foreground))"
+                stroke="#64748b"
                 fontSize={12}
               />
               <YAxis 
-                stroke="hsl(var(--muted-foreground))"
+                stroke="#64748b"
                 fontSize={12}
                 tickFormatter={formatCurrency}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend />
+              <Legend content={<CustomLegend />} />
               <Line 
                 type="monotone" 
                 dataKey="gross_pay" 
-                stroke="hsl(var(--primary))" 
+                stroke="#3b82f6" 
                 strokeWidth={2}
                 name="Gross Pay"
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
               />
               <Line 
                 type="monotone" 
                 dataKey="net_pay" 
-                stroke="hsl(var(--success))" 
+                stroke="#10b981" 
                 strokeWidth={2}
                 name="Net Pay"
-                dot={{ fill: "hsl(var(--success))", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
               />
               <Line 
                 type="monotone" 
                 dataKey="nib_deduction" 
-                stroke="hsl(var(--destructive))" 
+                stroke="#ef4444" 
                 strokeWidth={2}
                 name="NIB Deductions"
-                dot={{ fill: "hsl(var(--destructive))", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#ef4444", strokeWidth: 2, r: 4 }}
               />
             </LineChart>
           </ResponsiveContainer>

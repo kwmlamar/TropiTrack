@@ -5,7 +5,8 @@ import { useEffect, useState, useCallback } from "react"
 import { getTimesheets } from "@/lib/data/timesheets"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import { createClient } from "@/utils/supabase/client"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+
 import { Button } from "@/components/ui/button"
 import { ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -13,29 +14,25 @@ import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
-interface WorkerAttendanceProps {
-  viewMode: ViewMode
-  selectedDate: Date
-  onViewModeChange?: (mode: ViewMode) => void
+interface AttendanceData {
+  present: number
+  late: number
+  absent: number
+  total: number
+  utilization: number
 }
 
-export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: WorkerAttendanceProps) {
-  const [attendanceData, setAttendanceData] = useState<{
-    present: number
-    late: number
-    absent: number
-    total: number
-    onSite: number
-    utilization: number
-  }>({
+export function WorkerAttendance({}: WorkerAttendanceProps) {
+  const [attendanceData, setAttendanceData] = useState<AttendanceData>({
     present: 0,
     late: 0,
     absent: 0,
     total: 0,
-    onSite: 0,
     utilization: 0
   })
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<ViewMode>("weekly")
+  const [selectedDate] = useState<Date>(new Date())
   const { paymentSchedule } = usePayrollSettings()
 
   const getDateRange = useCallback(() => {
@@ -79,6 +76,7 @@ export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: W
         if (!user) return
 
         const { start, end } = getDateRange()
+        console.log('Date range:', { start: format(start, "yyyy-MM-dd"), end: format(end, "yyyy-MM-dd") })
 
         // Fetch timesheets for the selected period
         const response = await getTimesheets(user.id, {
@@ -88,29 +86,47 @@ export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: W
 
         if (response.success && response.data) {
           const timesheets = response.data
+          console.log('Fetched timesheets:', timesheets.length)
           
-          // Count attendance status
-          const counts = timesheets.reduce((acc, ts) => {
-            if (ts.total_hours === 0) {
-              acc.absent++
-            } else if (ts.notes?.toLowerCase().includes("late")) {
-              acc.late++
-            } else {
-              acc.present++
+          // Group by worker to avoid duplicates and count attendance status
+          const workerAttendance = new Map<string, { present: boolean; late: boolean; hours: number }>()
+          
+          timesheets.forEach(ts => {
+            const workerId = ts.worker_id
+            const hours = ts.total_hours || 0
+            const isLate = ts.notes?.toLowerCase().includes("late") || false
+            const isPresent = hours > 0
+            
+            if (!workerAttendance.has(workerId)) {
+              workerAttendance.set(workerId, { present: isPresent, late: isLate, hours })
             }
-            return acc
-          }, { present: 0, late: 0, absent: 0 })
+          })
+          
+          const attendance = Array.from(workerAttendance.values())
+          const present = attendance.filter(a => a.present && !a.late).length
+          const late = attendance.filter(a => a.present && a.late).length
+          const absent = attendance.filter(a => !a.present).length
+          const total = present + late + absent
+          const utilization = total > 0 ? Math.round(((present + late) / total) * 100) : 0
 
-          // Calculate total and on-site workers
-          const total = counts.present + counts.late + counts.absent
-          const onSite = counts.present + counts.late
-          const utilization = total > 0 ? Math.round((onSite / total) * 100) : 0
+          console.log('Attendance data:', { present, late, absent, total, utilization })
 
           setAttendanceData({
-            ...counts,
+            present,
+            late,
+            absent,
             total,
-            onSite,
             utilization
+          })
+        } else {
+          console.log('No timesheet data available')
+          // Set default data to show empty chart
+          setAttendanceData({
+            present: 0,
+            late: 0,
+            absent: 0,
+            total: 0,
+            utilization: 0
           })
         }
       } catch (error) {
@@ -123,46 +139,10 @@ export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: W
     fetchAttendanceData()
   }, [viewMode, selectedDate, getDateRange])
 
-  const chartData = [
-    {
-      name: "Attendance",
-      present: attendanceData.present,
-      late: attendanceData.late,
-      absent: attendanceData.absent,
-      total: attendanceData.total
-    }
-  ]
 
-  interface TooltipProps {
-    active?: boolean
-    payload?: Array<{
-      name: string
-      value: number
-      color: string
-    }>
-    label?: string
-  }
-
-  const CustomTooltip = ({ active, payload }: TooltipProps) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium text-sm mb-2">Attendance Breakdown</p>
-          {payload.map((entry, index: number) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: {entry.value} workers
-            </p>
-          ))}
-        </div>
-      )
-    }
-    return null
-  }
 
   const handleViewModeChange = (mode: ViewMode) => {
-    if (onViewModeChange) {
-      onViewModeChange(mode)
-    }
+    setViewMode(mode)
   }
 
   const getPeriodDescription = () => {
@@ -229,28 +209,63 @@ export function WorkerAttendance({ viewMode, selectedDate, onViewModeChange }: W
         </div>
       </CardHeader>
       <CardContent className="flex-1">
-        <div className="h-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="horizontal">
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                type="number"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-              />
-              <YAxis 
-                type="category"
-                dataKey="name"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                width={80}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="present" stackId="a" fill="#10b981" name="Present" />
-              <Bar dataKey="late" stackId="a" fill="#f59e0b" name="Late" />
-              <Bar dataKey="absent" stackId="a" fill="#ef4444" name="Absent" />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="h-full min-h-[200px] flex flex-col">
+          {attendanceData.total === 0 ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="text-center">
+                <p className="font-medium">No attendance data</p>
+                <p className="text-sm">No timesheets found for the selected period</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col">
+              {/* Attendance Pie Chart */}
+              <div className="flex-1 h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Present", value: attendanceData.present, color: "#10b981" },
+                        { name: "Late", value: attendanceData.late, color: "#f59e0b" },
+                        { name: "Absent", value: attendanceData.absent, color: "#ef4444" }
+                      ].filter(item => item.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {[
+                        { name: "Present", value: attendanceData.present, color: "#10b981" },
+                        { name: "Late", value: attendanceData.late, color: "#f59e0b" },
+                        { name: "Absent", value: attendanceData.absent, color: "#ef4444" }
+                      ].filter(item => item.value > 0).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value, name) => [`${value} workers`, name]}
+                      contentStyle={{
+                        backgroundColor: "var(--background)",
+                        borderColor: "var(--border)",
+                        borderRadius: "0.5rem",
+                      }}
+                    />
+                    <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: "1rem" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              
+
+              
+              {/* Stats */}
+              <div className="mt-4 text-center">
+                <p className="text-lg font-semibold">{attendanceData.total} Total Workers</p>
+                <p className="text-sm text-gray-500">{attendanceData.utilization}% Utilization</p>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

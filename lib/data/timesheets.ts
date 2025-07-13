@@ -26,7 +26,12 @@ export async function getTimesheets(
         `
         *,
         worker:workers(id, name, role, position, department, hourly_rate),
-        project:projects(id, name, location)
+        project:projects(
+          id, 
+          name, 
+          location,
+          client:clients(id, name, company)
+        )
       `
       )
       .order("date", { ascending: false })
@@ -92,6 +97,17 @@ export async function getTimesheets(
 }
 
 /**
+ * Get unapproved timesheets for a user
+ */
+export async function getUnapprovedTimesheets(
+  userId: string
+): Promise<ApiResponse<TimesheetWithDetails[]>> {
+  return getTimesheets(userId, {
+    supervisor_approval: "pending"
+  });
+}
+
+/**
  * Get a single timesheet by ID
  */
 export async function getTimesheet(
@@ -104,7 +120,12 @@ export async function getTimesheet(
         `
         *,
         worker:workers(id, name, role, position, department, hourly_rate),
-        project:projects(id, name, location)
+        project:projects(
+          id, 
+          name, 
+          location,
+          client:clients(id, name, company)
+        )
       `
       )
       .eq("id", id)

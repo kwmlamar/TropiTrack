@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUnapprovedTimesheets } from "@/lib/data/approvals";
+import { getUnapprovedTimesheets } from "@/lib/data/timesheets";
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET() {

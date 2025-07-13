@@ -156,21 +156,21 @@ export function ApprovalsPage() {
       id: "select",
       header: ({ table }) => (
         <Checkbox
+          color="var(--muted-foreground)"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
-          className="!border-2 !border-border !bg-background hover:!bg-accent hover:!text-accent-foreground !focus-visible:ring-0 !focus-visible:ring-offset-0 data-[state=checked]:!bg-primary data-[state=checked]:!text-white !shadow-none hover:!shadow-sm data-[state=checked]:!shadow-sm"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
+          color="var(--muted-foreground)"
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
-          className="!border-2 !border-border !bg-background hover:!bg-accent hover:!text-accent-foreground !focus-visible:ring-0 !focus-visible:ring-offset-0 data-[state=checked]:!bg-primary data-[state=checked]:!text-white !shadow-none hover:!shadow-sm data-[state=checked]:!shadow-sm"
         />
       ),
       enableSorting: false,
@@ -265,7 +265,7 @@ export function ApprovalsPage() {
               variant="outline"
               onClick={() => handleReject(timesheet.id)}
               disabled={rejecting === timesheet.id}
-              className="h-8 w-8 p-0 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
+              className="h-8 w-8 p-0 bg-sidebar border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
             >
               {rejecting === timesheet.id ? (
                 <div className="h-3 w-3 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
@@ -275,14 +275,15 @@ export function ApprovalsPage() {
             </Button>
             <Button
               size="sm"
+              variant="outline"
               onClick={() => handleApprove(timesheet.id)}
               disabled={approving === timesheet.id}
-              className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white transition-colors"
+              className="h-8 w-8 p-0 bg-sidebar border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors"
             >
               {approving === timesheet.id ? (
-                <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
               ) : (
-                <Check className="h-3 w-3 text-primary" />
+                <Check className="h-3 w-3" />
               )}
             </Button>
           </div>
@@ -347,14 +348,14 @@ export function ApprovalsPage() {
 
   return (
     <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-medium mb-2">Pending Approvals</h2>
-          <p className="text-sm text-gray-500">
-            {timesheets.length} timesheet{timesheets.length !== 1 ? 's' : ''} pending approval
-          </p>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-medium">Pending Approvals</h2>
+          <span className="text-sm text-gray-500">
+            ({timesheets.length} timesheet{timesheets.length !== 1 ? 's' : ''} pending approval)
+          </span>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-6">
           {timesheets.length > 0 && (
             <Button
               variant="outline"
@@ -367,7 +368,7 @@ export function ApprovalsPage() {
           )}
           {timesheets.length > 0 && (
             <Button
-              className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+              className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors ml-4"
               onClick={async () => {
                 const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.id)
                 setApproving('bulk')

@@ -313,3 +313,95 @@ export async function getAvailableWorkers(companyId: string, projectId?: string)
     }
   }
 }
+
+/**
+ * Get workers created within a date range (for dashboard statistics)
+ */
+export async function getWorkersByDateRange(
+  companyId: string,
+  dateFrom: string,
+  dateTo: string
+): Promise<ApiResponse<WorkerWithDetails[]>> {
+  try {
+    const { data, error } = await supabase
+      .from("workers")
+      .select(`
+        *,
+        current_projects:project_assignments(
+          id,
+          project:projects(id, name),
+          role_on_project,
+          is_active
+        ),
+        _count:timesheets(count)
+      `)
+      .eq("company_id", companyId)
+      .gte("created_at", dateFrom)
+      .lte("created_at", dateTo)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching workers by date range:", error)
+      return { data: null, error: error.message, success: false }
+    }
+
+    return { data: data as WorkerWithDetails[], error: null, success: true }
+  } catch (error) {
+    console.error("Unexpected error fetching workers by date range:", error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    }
+  }
+}
+
+/**
+ * Get active workers count for a date range (for dashboard statistics)
+ * This counts workers who were active during the specified period
+ */
+export async function getActiveWorkersCount(
+  companyId: string,
+  dateFrom: string,
+  dateTo: string
+): Promise<ApiResponse<number>> {
+  try {
+    const { data, error } = await supabase
+      .from("workers")
+      .select("id, is_active, created_at, termination_date")
+      .eq("company_id", companyId)
+      .eq("is_active", true)
+      .or(`created_at.lte.${dateTo},termination_date.is.null`)
+      .or(`termination_date.gte.${dateFrom},termination_date.is.null`)
+
+    if (error) {
+      console.error("Error fetching active workers count:", error)
+      return { data: null, error: error.message, success: false }
+    }
+
+    // Filter workers who were active during the specified period
+    const activeWorkers = data?.filter(worker => {
+      const createdDate = new Date(worker.created_at)
+      const terminationDate = worker.termination_date ? new Date(worker.termination_date) : null
+      const periodStart = new Date(dateFrom)
+      const periodEnd = new Date(dateTo)
+
+      // Worker was created before or during the period
+      const wasCreatedBeforePeriod = createdDate <= periodEnd
+      
+      // Worker was not terminated before the period started
+      const wasNotTerminatedBeforePeriod = !terminationDate || terminationDate >= periodStart
+
+      return wasCreatedBeforePeriod && wasNotTerminatedBeforePeriod
+    }) || []
+
+    return { data: activeWorkers.length, error: null, success: true }
+  } catch (error) {
+    console.error("Unexpected error fetching active workers count:", error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    }
+  }
+}

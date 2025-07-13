@@ -76,6 +76,7 @@ export async function getPayrolls(
         projects!project_id(id, name)
       `)
       .eq("company_id", profile.company_id)
+      .in("status", ["confirmed", "paid"]) // Only include confirmed and paid payroll records
       .order("pay_period_start", { ascending: false });
 
     // Optimize date filtering - use proper date range logic

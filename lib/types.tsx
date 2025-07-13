@@ -91,6 +91,11 @@ export type TimesheetWithDetails = Timesheet & {
     id: string
     name: string
     location?: string
+    client?: {
+      id: string
+      name: string
+      company?: string
+    }
   }
 }
 

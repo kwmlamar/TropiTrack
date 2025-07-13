@@ -226,3 +226,110 @@ export async function deleteProject(
     };
   }
 }
+
+/**
+ * Get projects created within a date range (for dashboard statistics)
+ */
+export async function getProjectsByDateRange(
+  companyId: string,
+  dateFrom: string,
+  dateTo: string,
+  filters: ProjectFilters = {}
+): Promise<ApiResponse<ProjectWithDetails[]>> {
+  try {
+    let query = supabase
+      .from("projects")
+      .select(
+        `
+        *,
+        client:clients(id, name, company),
+        assigned_workers:project_assignments(
+          worker:workers(id, name, role)
+        ),
+        _count:timesheets(count)
+      `
+      )
+      .eq("company_id", companyId)
+      .gte("created_at", dateFrom)
+      .lte("created_at", dateTo)
+      .order("created_at", { ascending: false });
+
+    if (filters.status) {
+      query = query.eq("status", filters.status);
+    }
+
+    if (filters.is_active !== undefined) {
+      query = query.eq("is_active", filters.is_active);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching projects by date range:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: data as ProjectWithDetails[], error: null, success: true };
+  } catch (error) {
+    console.error("Unexpected error fetching projects by date range:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
+/**
+ * Get active projects count for a date range (for dashboard statistics)
+ * This counts projects that were active during the specified period
+ */
+export async function getActiveProjectsCount(
+  companyId: string,
+  dateFrom: string,
+  dateTo: string,
+  filters: ProjectFilters = {}
+): Promise<ApiResponse<number>> {
+  try {
+    let query = supabase
+      .from("projects")
+      .select("id, is_active, created_at, status")
+      .eq("company_id", companyId)
+      .eq("is_active", true)
+      .lte("created_at", dateTo)
+
+    if (filters.status) {
+      query = query.eq("status", filters.status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching active projects count:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    // Filter projects that were active during the specified period
+    const activeProjects = data?.filter(project => {
+      const createdDate = new Date(project.created_at)
+      const periodEnd = new Date(dateTo)
+
+      // Project was created before or during the period
+      const wasCreatedBeforePeriod = createdDate <= periodEnd
+      
+      // Project is still active (no end date or end date is after period start)
+      const isStillActive = project.status !== "completed" && project.status !== "cancelled"
+
+      return wasCreatedBeforePeriod && isStillActive
+    }) || []
+
+    return { data: activeProjects.length, error: null, success: true };
+  } catch (error) {
+    console.error("Unexpected error fetching active projects count:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}

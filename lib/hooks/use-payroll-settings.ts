@@ -4,6 +4,7 @@ import { getPayrollSettings } from "@/lib/data/payroll-settings"
 import { getDeductionRules } from "@/lib/data/payroll-settings"
 import type { PaymentSchedule, PayrollSettings, DeductionRule } from "@/lib/types/payroll-settings"
 import { toast } from "sonner"
+import type { ApiResponse } from "@/lib/types"
 
 // Cache for settings to avoid redundant API calls
 let settingsCache: {
@@ -17,6 +18,7 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export function usePayrollSettings() {
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule | null>(null)
   const [payrollSettings, setPayrollSettings] = useState<PayrollSettings | null>(null)
   const [deductionRules, setDeductionRules] = useState<DeductionRule[]>([])
@@ -28,21 +30,33 @@ export function usePayrollSettings() {
       setPayrollSettings(settingsCache.payrollSettings)
       setDeductionRules(settingsCache.deductionRules)
       setLoading(false)
+      setError(null)
       return
     }
 
     setLoading(true)
+    setError(null)
+    
     try {
-      // Load all settings in parallel
-      const [scheduleResult, settingsResult, deductionsResult] = await Promise.all([
+      // Load all settings in parallel with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Request timeout")), 10000)
+      )
+      
+      const settingsPromise = Promise.all([
         getPaymentSchedule(),
         getPayrollSettings(),
         getDeductionRules(),
       ])
 
+      const [scheduleResult, settingsResult, deductionsResult] = await Promise.race([
+        settingsPromise,
+        timeoutPromise
+      ]) as [ApiResponse<PaymentSchedule>, ApiResponse<PayrollSettings>, ApiResponse<DeductionRule[]>]
+
       const newPaymentSchedule = scheduleResult.success ? scheduleResult.data : null
       const newPayrollSettings = settingsResult.success ? settingsResult.data : null
-      const newDeductionRules = deductionsResult.success && deductionsResult.data ? deductionsResult.data.filter(rule => rule.is_active) : []
+      const newDeductionRules = deductionsResult.success && deductionsResult.data ? deductionsResult.data.filter((rule: DeductionRule) => rule.is_active) : []
 
       // Update state
       setPaymentSchedule(newPaymentSchedule)
@@ -58,7 +72,28 @@ export function usePayrollSettings() {
       }
     } catch (error) {
       console.error("Error loading payroll settings:", error)
-      toast.error("Failed to load payroll settings")
+      
+      // Provide more specific error messages
+      let errorMessage = "Failed to load payroll settings"
+      if (error instanceof Error) {
+        if (error.message.includes("timeout")) {
+          errorMessage = "Request timed out. Please check your internet connection."
+        } else if (error.message.includes("Load failed")) {
+          errorMessage = "Network error. Please check your connection and try again."
+        } else if (error.message.includes("User not found")) {
+          errorMessage = "Authentication error. Please log in again."
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      setError(errorMessage)
+      toast.error(errorMessage)
+      
+      // Set default values to prevent app crashes
+      setPaymentSchedule(null)
+      setPayrollSettings(null)
+      setDeductionRules([])
     } finally {
       setLoading(false)
     }
@@ -101,6 +136,7 @@ export function usePayrollSettings() {
 
   return {
     loading,
+    error,
     paymentSchedule,
     payrollSettings,
     deductionRules,

@@ -28,15 +28,25 @@ export async function getPayrollSettings(): Promise<ApiResponse<PayrollSettings>
       .single()
 
     if (error) {
+      console.error("Supabase error fetching payroll settings:", error)
       return { data: null, error: error.message, success: false }
     }
 
     return { data: data as PayrollSettings, error: null, success: true }
   } catch (error) {
     console.error("Error fetching payroll settings:", error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+    
+    // Provide more specific error messages
+    if (errorMessage.includes("User not found")) {
+      return { data: null, error: "Authentication error. Please log in again.", success: false }
+    } else if (errorMessage.includes("Load failed")) {
+      return { data: null, error: "Network error. Please check your connection.", success: false }
+    }
+    
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      error: errorMessage,
       success: false,
     }
   }

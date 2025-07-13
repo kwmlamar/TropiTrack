@@ -24,7 +24,7 @@ import { AddTimesheetDialog } from "./add-timesheet-dialog"
 
 type AttendanceStatus = "present" | "absent" | "late"
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 export default function TimesheetsPage({ user }: { user: User }) {
   // Updated state to use TimesheetWithDetails
