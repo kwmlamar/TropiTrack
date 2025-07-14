@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { createClient } from "@/utils/supabase/client"
 
 interface TimesheetWithDetails {
   id: string
@@ -67,17 +68,28 @@ export function ApprovalsPage() {
   const weekStartDay = 6 // Saturday
 
   useEffect(() => {
+    console.log('[Approvals] Component mounted, fetching data...')
     fetchUnapprovedTimesheets()
     // Get current user
     const getUser = async () => {
       try {
-        const response = await fetch('/api/auth/me')
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData.user)
+        console.log('[Approvals] Fetching user data...')
+        const supabase = createClient()
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError) {
+          console.error('[Approvals] Auth error:', authError)
+          return
+        }
+        
+        if (authUser) {
+          console.log('[Approvals] User data fetched:', authUser)
+          setUser(authUser)
+        } else {
+          console.error('[Approvals] No user found')
         }
       } catch (error) {
-        console.error('Error fetching user:', error)
+        console.error('[Approvals] Error fetching user:', error)
       }
     }
     getUser()
@@ -85,11 +97,14 @@ export function ApprovalsPage() {
 
   const fetchUnapprovedTimesheets = async () => {
     try {
+      console.log('[Approvals] Fetching unapproved timesheets...')
       setLoading(true)
       setError(null)
       
       const response = await fetch('/api/approvals')
+      console.log('[Approvals] API response status:', response.status)
       const result = await response.json()
+      console.log('[Approvals] API response result:', result)
       
       if (!response.ok) {
         throw new Error(result.message || 'Failed to fetch unapproved timesheets')
@@ -99,9 +114,10 @@ export function ApprovalsPage() {
         throw new Error(result.message || 'Failed to fetch unapproved timesheets')
       }
       
+      console.log('[Approvals] Setting timesheets:', result.data?.length || 0, 'timesheets')
       setTimesheets(result.data || [])
     } catch (err) {
-      console.error('Error fetching unapproved timesheets:', err)
+      console.error('[Approvals] Error fetching unapproved timesheets:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch unapproved timesheets')
     } finally {
       setLoading(false)
@@ -145,6 +161,13 @@ export function ApprovalsPage() {
   }
 
   const generatePayrollForWorkerAndPeriod = async (userId: string | null, workerId: string, weekStart: string, weekEnd: string) => {
+    console.log(`[Approvals] Calling generatePayrollForWorkerAndPeriod with:`, {
+      userId,
+      workerId,
+      weekStart,
+      weekEnd
+    })
+    
     const response = await fetch('/api/generate-payroll', {
       method: 'POST',
       headers: {
@@ -158,16 +181,21 @@ export function ApprovalsPage() {
       })
     })
     
+    console.log(`[Approvals] API response status:`, response.status)
     const result = await response.json()
+    console.log(`[Approvals] API response result:`, result)
     
     if (!response.ok) {
+      console.error(`[Approvals] API error:`, result)
       throw new Error(result.message || 'Failed to generate payroll')
     }
     
     if (!result.success) {
+      console.error(`[Approvals] API returned success: false:`, result)
       throw new Error(result.message || 'Failed to generate payroll')
     }
     
+    console.log(`[Approvals] Payroll generation successful:`, result)
     return result
   }
 
@@ -182,26 +210,26 @@ export function ApprovalsPage() {
       
       // Generate payroll for the approved timesheet
       const approvedTimesheet = timesheets.find(ts => ts.id === id)
-      if (approvedTimesheet) {
+      if (approvedTimesheet && user?.id) {
         console.log(`[Approvals] Found approved timesheet:`, approvedTimesheet)
         const weekStart = format(startOfWeek(parseISO(approvedTimesheet.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd')
         const weekEnd = format(endOfWeek(parseISO(approvedTimesheet.date), { weekStartsOn: weekStartDay }), 'yyyy-MM-dd')
         console.log(`[Approvals] Calculating pay period: ${weekStart} to ${weekEnd}`)
-        console.log(`[Approvals] User ID: ${user?.id}, Worker ID: ${approvedTimesheet.worker_id}`)
+        console.log(`[Approvals] User ID: ${user.id}, Worker ID: ${approvedTimesheet.worker_id}`)
         
         console.log(`[Approvals] Calling generatePayrollForWorkerAndPeriod...`)
-        const payrollResult = await generatePayrollForWorkerAndPeriod(user?.id || null, approvedTimesheet.worker_id, weekStart, weekEnd)
-        console.log(`[Approvals] Payroll generation result:`, payrollResult)
+        const result = await generatePayrollForWorkerAndPeriod(user.id, approvedTimesheet.worker_id, weekStart, weekEnd)
+        console.log(`[Approvals] Payroll generation result:`, result)
         
-        if (!payrollResult.success) {
-          console.error(`[Approvals] Payroll generation failed:`, payrollResult.error)
-          toast.error(`Timesheet approved but payroll generation failed: ${payrollResult.error}`)
+        if (!result.success) {
+          console.error(`[Approvals] Payroll generation failed:`, result.error)
+          toast.error(`Timesheet approved but payroll generation failed: ${result.error}`)
         } else {
-          console.log(`[Approvals] Payroll generated successfully:`, payrollResult.data)
+          console.log(`[Approvals] Payroll generated successfully:`, result.data)
           toast.success("Timesheet approved and payroll generated")
         }
       } else {
-        console.error(`[Approvals] Could not find approved timesheet with ID ${id}`)
+        console.error(`[Approvals] Could not find approved timesheet with ID ${id} or user is null`)
         toast.error("Timesheet approved but could not find timesheet data for payroll generation")
       }
       
@@ -263,12 +291,17 @@ export function ApprovalsPage() {
       })
 
       // Generate payroll for each unique worker-week combination
-      for (const { workerId, weekStart, weekEnd } of affectedWorkersAndWeeks.values()) {
-        console.log(`[Approvals] Generating payroll for worker ${workerId}, period ${weekStart} to ${weekEnd}`)
-        const result = await generatePayrollForWorkerAndPeriod(user?.id || null, workerId, weekStart, weekEnd)
-        console.log(`[Approvals] Payroll generation result:`, result)
-        if (!result.success) {
-          console.error(`[Approvals] Failed to generate payroll for worker ${workerId}:`, result.error)
+      if (user?.id) {
+        console.log(`[Approvals] Generating payroll for ${affectedWorkersAndWeeks.size} worker-week combinations`)
+        for (const { workerId, weekStart, weekEnd } of affectedWorkersAndWeeks.values()) {
+          console.log(`[Approvals] Generating payroll for worker ${workerId}, period ${weekStart} to ${weekEnd}`)
+          const result = await generatePayrollForWorkerAndPeriod(user.id, workerId, weekStart, weekEnd)
+          console.log(`[Approvals] Payroll generation result:`, result)
+          if (!result.success) {
+            console.error(`[Approvals] Failed to generate payroll for worker ${workerId}:`, result.error)
+          } else {
+            console.log(`[Approvals] Successfully generated payroll for worker ${workerId}`)
+          }
         }
       }
 
@@ -504,7 +537,7 @@ export function ApprovalsPage() {
             </Button>
           )}
           {timesheets.length > 0 && (
-          <Button
+            <Button
               className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors ml-4"
               onClick={async () => {
                 const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.id)
@@ -513,7 +546,7 @@ export function ApprovalsPage() {
               disabled={table.getSelectedRowModel().rows.length === 0 || isProcessing}
             >
               Approve Selected
-          </Button>
+            </Button>
           )}
         </div>
       </div>
@@ -526,52 +559,52 @@ export function ApprovalsPage() {
             <p className="text-muted-foreground">
               All timesheets have been approved or there are no pending submissions.
             </p>
-                          </CardContent>
-                        </Card>
+          </CardContent>
+        </Card>
       ) : (
-                <div className="rounded-md border bg-sidebar">
-              <Table>
-                <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} className="px-4">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+        <div className="rounded-md border bg-sidebar">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="px-4">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-                </TableHeader>
-                <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="px-4">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
                         )}
                       </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center px-4">
-                      No results.
-                    </TableCell>
+                    ))}
                   </TableRow>
-                )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center px-4">
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   )
 } 

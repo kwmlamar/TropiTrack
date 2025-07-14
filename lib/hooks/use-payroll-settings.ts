@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState, useCallback } from "react"
 import { getPaymentSchedule } from "@/lib/data/payroll-settings"
 import { getPayrollSettings } from "@/lib/data/payroll-settings"

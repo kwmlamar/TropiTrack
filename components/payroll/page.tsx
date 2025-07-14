@@ -10,26 +10,122 @@ import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown } from "lucide-react"
 import { updatePayrollStatus } from "@/lib/data/payroll"
 import { toast } from "sonner"
-import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+
 import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 
 import { Badge } from "@/components/ui/badge"
-import { PayrollTable } from "./payroll-table"
+
 import {
-  Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
-import { Skeleton } from "@/components/ui/skeleton"
+
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 const ITEMS_PER_PAGE = 20;
+
+// Loading Skeleton Component
+const PayrollSkeleton = () => {
+  return (
+    <div className="flex-1 space-y-6 p-6">
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        {/* Header Skeleton */}
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
+          <div className="flex items-center space-x-2">
+            <div>
+              <div className="h-6 w-32 bg-muted animate-pulse rounded"></div>
+            </div>
+            <div className="h-10 w-10 bg-muted animate-pulse rounded"></div>
+            <div className="h-10 w-10 bg-muted animate-pulse rounded"></div>
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="bg-sidebar border border-border/50 shadow-none">
+              <CardContent className="px-4 py-0">
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
+                  <div className="h-8 w-32 bg-muted animate-pulse rounded"></div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-12 bg-muted animate-pulse rounded"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Table Section Skeleton */}
+        <div className="">
+          <div className="space-y-2 overflow-x-auto">
+            {/* Filters Row Skeleton */}
+            <div className="flex items-center gap-4 p-4">
+              <div className="flex-1">
+                <div className="h-5 w-32 bg-muted animate-pulse rounded"></div>
+              </div>
+              <div className="h-10 w-24 bg-muted animate-pulse rounded"></div>
+              <div className="h-10 w-32 bg-muted animate-pulse rounded"></div>
+              <div className="h-10 w-28 bg-muted animate-pulse rounded"></div>
+            </div>
+
+            {/* Table Skeleton */}
+            <div className="rounded-md border bg-sidebar">
+              <div className="border-b">
+                <div className="grid grid-cols-9 gap-4 p-4">
+                  <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                </div>
+              </div>
+              
+              {/* Table Rows Skeleton */}
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="border-b last:border-b-0">
+                  <div className="grid grid-cols-9 gap-4 p-4">
+                    <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
+                    <div className="space-y-1">
+                      <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
+                      <div className="h-3 w-16 bg-muted animate-pulse rounded"></div>
+                    </div>
+                    <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-8 bg-muted animate-pulse rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function PayrollPage({ user }: { user: User }) {
   const searchParams = useSearchParams()
@@ -45,6 +141,7 @@ export default function PayrollPage({ user }: { user: User }) {
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [isLoading, setIsLoading] = useState(true)
 
+
   // Partial payments modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [modalPayroll, setModalPayroll] = useState<PayrollRecord | null>(null)
@@ -54,46 +151,45 @@ export default function PayrollPage({ user }: { user: User }) {
   const [adding, setAdding] = useState(false)
   const [paymentType, setPaymentType] = useState<"net" | "gross">("net")
 
+  // Table state for inline editing
+  const [editingPartialPay, setEditingPartialPay] = useState<string | null>(null)
+  const [partialPayValue, setPartialPayValue] = useState("")
+
+  // Previous period data for percentage calculations
+  const [previousPeriodData, setPreviousPeriodData] = useState({
+    totalPayroll: 0,
+    totalWorkers: 0,
+    totalNIB: 0,
+    totalUnpaid: 0
+  })
 
 
-  const {
-    loading: settingsLoading,
-    payrollSettings,
-    paymentSchedule,
-    calculateDeductions,
-  } = usePayrollSettings()
+
+
+  
+  // Hard-coded deduction calculation
+  const calculateDeductions = (grossPay: number) => {
+    const nibDeduction = grossPay * 0.0465 // 4.65% NIB rate
+    const otherDeductions = 0 // No other deductions for now
+    return { nibDeduction, otherDeductions }
+  }
 
   // Initialize week start day from payroll settings
   useEffect(() => {
-    if (!settingsLoading && paymentSchedule?.period_start_type === "day_of_week") {
-      const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
-        1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
-      }
-      const newWeekStartDay = dayMap[paymentSchedule.period_start_day] || 1
-      setWeekStartDay(newWeekStartDay)
-      
-
-      
-      // Set navigable date range to current week initially
-      setDateRange({
-        from: startOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
-        to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
-      })
-    } else if (!settingsLoading) {
-      // If no payment schedule, use default Saturday start for construction industry
-      const defaultWeekStart = 6;
-      setDateRange({
-        from: startOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
-        to: endOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
-      })
-    }
-  }, [paymentSchedule, settingsLoading])
+    // Hard-coded to Saturday start (6)
+    const weekStartDay = 6 // Saturday
+    setWeekStartDay(weekStartDay)
+    
+    // Set navigable date range to current week initially
+    setDateRange({
+      from: startOfWeek(new Date(), { weekStartsOn: weekStartDay }),
+      to: endOfWeek(new Date(), { weekStartsOn: weekStartDay }),
+    })
+  }, [])
 
   useEffect(() => {
-    if (!settingsLoading) {
-      setPayPeriodType("weekly")
-    }
-  }, [settingsLoading])
+    setPayPeriodType("weekly")
+  }, [])
 
   // Handle URL parameters for navigation from dashboard
   useEffect(() => {
@@ -155,20 +251,26 @@ export default function PayrollPage({ user }: { user: User }) {
         filters.date_to = format(dateRange.to, "yyyy-MM-dd")
       }
 
-      const response = await getAggregatedPayrolls(filters)
-      if (response.data) {
-        // Apply deductions based on settings - optimize by doing this in batch
-        const processedPayrolls = await Promise.all(response.data.map(async (payroll) => {
-          const overtimePay = payroll.overtime_hours * (payroll.hourly_rate * (payrollSettings?.overtime_rate || 1.5))
-          const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay, overtimePay)
+      // Load current period data
+      const currentResponse = await getAggregatedPayrolls(filters)
+
+      if (currentResponse.data) {
+        // Fetch all payments for all payrolls in a single batch
+        const allPayrollIds = currentResponse.data.map(payroll => payroll.id)
+        const allPayments = await Promise.all(
+          allPayrollIds.map(id => getPayrollPayments(id))
+        )
+
+        // Process payrolls with payment data
+        const processedPayrolls = currentResponse.data.map((payroll, index) => {
+          const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay)
           
-          // Get payments for this payroll
-          const payments = await getPayrollPayments(payroll.id)
+          // Get payments for this specific payroll
+          const payments = allPayments[index] || []
           const totalPaid = payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0)
           
-          // Calculate remaining balance based on net pay (standard approach)
+          // Calculate net pay and remaining balance
           const netPay = payroll.gross_pay - (nibDeduction + otherDeductions)
-          // If payroll is marked as paid, remaining balance should be 0
           const remainingBalance = payroll.status === "paid" ? 0 : Math.max(0, netPay - totalPaid)
           
           return {
@@ -180,13 +282,29 @@ export default function PayrollPage({ user }: { user: User }) {
             total_paid: totalPaid,
             remaining_balance: remainingBalance,
           }
-        }))
-        setPayrolls(processedPayrolls)
+        })
         
-
+        setPayrolls(processedPayrolls)
+      } else {
+        setPayrolls([])
+        // Reset previous period data if no current data
+        setPreviousPeriodData({
+          totalPayroll: 0,
+          totalWorkers: 0,
+          totalNIB: 0,
+          totalUnpaid: 0
+        })
       }
     } catch (error) {
       console.error('Failed to load payroll data:', error)
+      setPayrolls([])
+      // Reset previous period data on error
+      setPreviousPeriodData({
+        totalPayroll: 0,
+        totalWorkers: 0,
+        totalNIB: 0,
+        totalUnpaid: 0
+      })
     } finally {
       setIsLoading(false)
     }
@@ -369,6 +487,71 @@ export default function PayrollPage({ user }: { user: User }) {
     setAdding(false)
   }
 
+  // Inline editing functions
+  const handlePartialPayEdit = (payrollId: string, currentValue: string) => {
+    setEditingPartialPay(payrollId)
+    setPartialPayValue(currentValue)
+  }
+
+  const handlePartialPaySave = async (payrollId: string) => {
+    const amount = parseFloat(partialPayValue)
+    if (isNaN(amount) || amount < 0) {
+      toast.error("Please enter a valid amount")
+      return
+    }
+
+    try {
+      const res = await addPayrollPayment({
+        payroll_id: payrollId,
+        amount,
+        payment_date: new Date().toISOString().slice(0, 10),
+        status: "completed",
+        notes: "Partial payment added via inline edit",
+        created_by: user.id,
+      })
+
+      if (res.success) {
+        toast.success("Partial payment added successfully")
+        setEditingPartialPay(null)
+        setPartialPayValue("")
+        // Trigger a page refresh to update the data
+        window.location.reload()
+      } else {
+        toast.error(res.error || "Failed to add partial payment")
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred")
+      console.error("Error adding partial payment:", error)
+    }
+  }
+
+  const handlePartialPayCancel = () => {
+    setEditingPartialPay(null)
+    setPartialPayValue("")
+  }
+
+  // Calculate percentage change
+  const calculatePercentageChange = (current: number, previous: number): number => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  };
+
+  // Calculate current period totals with useMemo for performance
+  const currentPeriodData = useMemo(() => ({
+    totalPayroll: payrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0),
+    totalWorkers: payrolls.length,
+    totalNIB: payrolls.reduce((sum, payroll) => sum + payroll.nib_deduction, 0),
+    totalUnpaid: payrolls.reduce((sum, payroll) => sum + (payroll.remaining_balance || 0), 0)
+  }), [payrolls]);
+
+  // Calculate percentage changes with useMemo for performance
+  const percentageChanges = useMemo(() => ({
+    totalPayroll: calculatePercentageChange(currentPeriodData.totalPayroll, previousPeriodData.totalPayroll),
+    totalWorkers: calculatePercentageChange(currentPeriodData.totalWorkers, previousPeriodData.totalWorkers),
+    totalNIB: calculatePercentageChange(currentPeriodData.totalNIB, previousPeriodData.totalNIB),
+    totalUnpaid: calculatePercentageChange(currentPeriodData.totalUnpaid, previousPeriodData.totalUnpaid)
+  }), [currentPeriodData, previousPeriodData]);
+
   const getStatusBadge = (status: PayrollRecord['status']) => {
     const labels = {
       paid: "Paid",
@@ -380,15 +563,15 @@ export default function PayrollPage({ user }: { user: User }) {
     const getBadgeClassName = (status: PayrollRecord['status']) => {
       switch (status) {
         case "paid":
-          return "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/30 px-3 py-1 text-xs font-medium rounded-full";
+          return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "pending":
-          return "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800 dark:hover:bg-yellow-900/30 px-3 py-1 text-xs font-medium rounded-full";
+          return "bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30 dark:bg-yellow-400/20 dark:text-yellow-400 dark:border-yellow-400/30 dark:hover:bg-yellow-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "confirmed":
           return "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "void":
-          return "bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30 px-3 py-1 text-xs font-medium rounded-full";
+          return "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30 dark:bg-red-400/20 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         default:
-          return "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800 dark:hover:bg-gray-900/30 px-3 py-1 text-xs font-medium rounded-full";
+          return "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30 dark:bg-gray-400/20 dark:text-gray-400 dark:border-gray-400/30 dark:hover:bg-gray-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
       }
     };
 
@@ -399,153 +582,167 @@ export default function PayrollPage({ user }: { user: User }) {
     );
   };
 
+    if (isLoading) {
+    return (
+      <PayrollSkeleton />
+    )
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
-        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
-          <div className="flex items-center space-x-2">
-            <div>
-              <h2 className="text-lg font-medium mb-0">
-                Payroll{" "}
-                {dateRange?.from && dateRange?.to
-                  ? (
-                    <span className="text-gray-500">
-                      {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
-                    </span>
-                  )
-                  : (
-                    <span className="text-gray-500">Select a date range</span>
-                  )}
-              </h2>
+          <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
+            <div className="flex items-center space-x-2">
+              <div>
+                <h2 className="text-lg font-medium mb-0">
+                  Payroll{" "}
+                  {dateRange?.from && dateRange?.to
+                    ? (
+                      <span className="text-gray-500">
+                        {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
+                      </span>
+                    )
+                    : (
+                      <span className="text-gray-500">Select a date range</span>
+                    )}
+                </h2>
+              </div>
+              <Button
+                variant="outline"
+                size="default"
+                onClick={handlePreviousWeek}
+                className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="default"
+                onClick={handleNextWeek}
+                className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handlePreviousWeek}
-              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handleNextWeek}
-              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          </div>
+            </div>
 
-          {isLoading || settingsLoading ? (
-            <>
-
-                <div className="space-y-6">
-                  <div className="space-y-6 overflow-x-auto">
-                    {/* Search, Filters, and Actions Row Skeleton */}
-                    <div className="flex items-center gap-4 p-4">
-                      {/* Navigation Buttons Skeleton */}
-                      <div className="flex items-center space-x-2">
-                        <Skeleton className="h-10 w-10" />
-                        <Skeleton className="h-10 w-10" />
-                      </div>
-
-                      {/* Search Bar Skeleton */}
-                      <div className="flex-1">
-                        <Skeleton className="h-10 w-full" />
-                      </div>
-
-                      {/* Filters Button Skeleton */}
-                      <Skeleton className="h-10 w-24" />
-
-                      {/* Action Buttons Skeleton */}
-                      <Skeleton className="h-10 w-32" />
-                      <Skeleton className="h-10 w-28" />
-                    </div>
-
-                    {/* Payments Table Skeleton */}
-                    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                      <CardContent className="px-6">
-                        <div className="overflow-x-auto">
-                          <TableComponent className="min-w-full">
-                            <TableHeader>
-                              <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left w-[100px]">
-                                  <Skeleton className="h-4 w-4" />
-                                </TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                                  <Skeleton className="h-4 w-16" />
-                                </TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                                  <Skeleton className="h-4 w-16" />
-                                </TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                                  <Skeleton className="h-4 w-16" />
-                                </TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                                  <Skeleton className="h-4 w-20" />
-                                </TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                                  <Skeleton className="h-4 w-24" />
-                                </TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                                  <Skeleton className="h-4 w-20" />
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                                <TableRow key={i} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
-                                  <TableCell className="py-4 px-6 w-[100px]">
-                                    <Skeleton className="h-4 w-4" />
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Skeleton className="h-4 w-24" />
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Skeleton className="h-4 w-20" />
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Skeleton className="h-6 w-16 rounded-full" />
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Skeleton className="h-4 w-20" />
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Skeleton className="h-4 w-20" />
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Skeleton className="h-4 w-20" />
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </TableComponent>
-                        </div>
-
-                        {/* Pagination Controls Skeleton */}
-                        <div className="flex items-center justify-between px-6 py-4">
-                          <Skeleton className="h-4 w-48" />
-                          <div className="flex items-center space-x-2">
-                            <Skeleton className="h-8 w-8" />
-                            <div className="flex items-center space-x-1">
-                              {[1, 2, 3].map((i) => (
-                                <Skeleton key={i} className="h-8 w-8" />
-                              ))}
-                            </div>
-                            <Skeleton className="h-8 w-8" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            <Card className="bg-sidebar border border-border/50 shadow-none">
+              <CardContent className="px-4 py-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Total Payroll</p>
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                      minimumFractionDigits: 2,
+                    }).format(currentPeriodData.totalPayroll)}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {percentageChanges.totalPayroll >= 0 ? (
+                      <TrendingUp className="text-green-600 dark:text-green-600 h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="text-red-600 dark:text-red-600 h-4 w-4" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      percentageChanges.totalPayroll >= 0 
+                        ? "text-green-600 dark:text-green-600" 
+                        : "text-red-600 dark:text-red-600"
+                    }`}>
+                      {percentageChanges.totalPayroll >= 0 ? "+" : ""}{percentageChanges.totalPayroll}%
+                    </span>
                   </div>
                 </div>
-            </>
-          ) : (
-            <>
+              </CardContent>
+            </Card>
 
-            <div className="">
-              <div className="space-y-2 overflow-x-auto">
+            <Card className="bg-sidebar border border-border/50 shadow-none">
+              <CardContent className="px-4 py-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Total Workers</p>
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                    {currentPeriodData.totalWorkers}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {percentageChanges.totalWorkers >= 0 ? (
+                      <TrendingUp className="text-green-600 dark:text-green-600 h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="text-red-600 dark:text-red-600 h-4 w-4" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      percentageChanges.totalWorkers >= 0 
+                        ? "text-green-600 dark:text-green-600" 
+                        : "text-red-600 dark:text-red-600"
+                    }`}>
+                      {percentageChanges.totalWorkers >= 0 ? "+" : ""}{percentageChanges.totalWorkers}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-sidebar border border-border/50 shadow-none">
+              <CardContent className="px-4 py-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">NIB Remittance</p>
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                      minimumFractionDigits: 2,
+                    }).format(currentPeriodData.totalNIB)}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {percentageChanges.totalNIB >= 0 ? (
+                      <TrendingUp className="text-green-600 dark:text-green-600 h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="text-red-600 dark:text-red-600 h-4 w-4" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      percentageChanges.totalNIB >= 0 
+                        ? "text-green-600 dark:text-green-600" 
+                        : "text-red-600 dark:text-red-600"
+                    }`}>
+                      {percentageChanges.totalNIB >= 0 ? "+" : ""}{percentageChanges.totalNIB}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-sidebar border border-border/50 shadow-none">
+              <CardContent className="px-4 py-0">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Unpaid Balance</p>
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                      minimumFractionDigits: 2,
+                    }).format(currentPeriodData.totalUnpaid)}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    {percentageChanges.totalUnpaid >= 0 ? (
+                      <TrendingUp className="text-green-600 dark:text-green-600 h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="text-red-600 dark:text-red-600 h-4 w-4" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      percentageChanges.totalUnpaid >= 0 
+                        ? "text-green-600 dark:text-green-600" 
+                        : "text-red-600 dark:text-red-600"
+                    }`}>
+                      {percentageChanges.totalUnpaid >= 0 ? "+" : ""}{percentageChanges.totalUnpaid}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="">
+            <div className="space-y-2 overflow-x-auto">
                     {/* Search, Filters, and Actions Row */}
                     <div className="flex items-center gap-4 p-4">
                   {/* Payroll Details Section */}
@@ -615,7 +812,6 @@ export default function PayrollPage({ user }: { user: User }) {
                           payrolls.find(payroll => payroll.id === id)?.status === "pending"
                         )}
                       >
-                        <CheckCircle className="mr-2 h-4 w-4" />
                         Confirm Payroll
                       </Button>
 
@@ -632,26 +828,242 @@ export default function PayrollPage({ user }: { user: User }) {
                       </Button>
                     </div>
 
-                <PayrollTable
-                  data={paginatedPayrolls}
-                  selectedPayrollIds={selectedPayrollIds}
-                  onSelectAll={handleSelectAll}
-                  onSelectPayroll={handleSelectPayroll}
-                  onOpenPaymentsModal={openPaymentsModal}
-                  getStatusBadge={getStatusBadge}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  startIndex={startIndex}
-                  endIndex={endIndex}
-                  totalRecords={filteredPayrolls.length}
-                  itemsPerPage={ITEMS_PER_PAGE}
-                />
-                                    </div>
+                {/* Inline Payroll Table */}
+                <div className="rounded-md border bg-sidebar">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="px-4 text-gray-500">
+                          <Checkbox
+                            color="var(--muted-foreground)"
+                            checked={selectedPayrollIds.size === paginatedPayrolls.length && paginatedPayrolls.length > 0}
+                            onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                            aria-label="Select all"
+                          />
+                        </TableHead>
+                        <TableHead className="px-4 text-gray-500">Worker</TableHead>
+                        <TableHead className="px-4 text-gray-500">Hourly Rate</TableHead>
+                        <TableHead className="px-4 text-gray-500">Gross Pay</TableHead>
+                        <TableHead className="px-4 text-gray-500">NIB Deduction</TableHead>
+                        <TableHead className="px-4 text-gray-500">Net Pay</TableHead>
+                        <TableHead className="px-4 text-gray-500">Partial Pay</TableHead>
+                        <TableHead className="px-4 text-gray-500">Status</TableHead>
+                        <TableHead className="px-4 text-gray-500 w-16">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedPayrolls.length ? (
+                        paginatedPayrolls.map((payroll) => (
+                          <TableRow key={payroll.id}>
+                            <TableCell className="px-4">
+                              <Checkbox
+                                color="var(--muted-foreground)"
+                                checked={selectedPayrollIds.has(payroll.id)}
+                                onCheckedChange={(checked) => handleSelectPayroll(payroll.id, checked === true)}
+                                aria-label="Select payroll"
+                              />
+                            </TableCell>
+                            <TableCell className="px-4">
+                              <div>
+                                <div className="font-medium">{payroll.worker_name}</div>
+                                <div className="text-sm text-muted-foreground">{payroll.position}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4">
+                              <div className="font-medium text-gray-500">
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(payroll.hourly_rate)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4">
+                              <div className="font-medium text-gray-500">
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(payroll.gross_pay)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4">
+                              <div className="font-medium text-gray-500">
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(payroll.nib_deduction)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4">
+                              <div className="font-medium text-gray-500">
+                                {new Intl.NumberFormat("en-BS", {
+                                  style: "currency",
+                                  currency: "BSD",
+                                  minimumFractionDigits: 2,
+                                }).format(payroll.net_pay)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4">
+                              {(() => {
+                                const totalPaid = payroll.total_paid || 0
+                                const isEditing = editingPartialPay === payroll.id
+
+                                if (isEditing) {
+                                  return (
+                                    <div className="space-y-2">
+                                      <Input
+                                        type="number"
+                                        value={partialPayValue}
+                                        onChange={(e) => setPartialPayValue(e.target.value)}
+                                        className="w-20 h-8 text-center text-sm border-muted/50 focus:border-primary"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="0.00"
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            handlePartialPaySave(payroll.id)
+                                          } else if (e.key === "Escape") {
+                                            handlePartialPayCancel()
+                                          }
+                                        }}
+                                        autoFocus
+                                      />
+                                      <div className="flex gap-1">
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => handlePartialPaySave(payroll.id)}
+                                          className="h-6 px-2 text-xs"
+                                        >
+                                          Save
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={handlePartialPayCancel}
+                                          className="h-6 px-2 text-xs"
+                                        >
+                                          Cancel
+                                        </Button>
                                       </div>
-            </>
-          )}
-      </div>
+                                    </div>
+                                  )
+                                }
+
+                                return (
+                                  <div>
+                                    {totalPaid === 0 ? (
+                                      <button
+                                        onClick={() => handlePartialPayEdit(payroll.id, "0")}
+                                        className="font-medium text-gray-500 hover:text-foreground cursor-pointer text-center w-full"
+                                      >
+                                        -
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => handlePartialPayEdit(payroll.id, totalPaid.toString())}
+                                        className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
+                                      >
+                                        {new Intl.NumberFormat("en-BS", {
+                                          style: "currency",
+                                          currency: "BSD",
+                                          minimumFractionDigits: 2,
+                                        }).format(totalPaid)}
+                                      </button>
+                                    )}
+                                  </div>
+                                )
+                              })()}
+                            </TableCell>
+                            <TableCell className="px-4">
+                              <div className="font-medium text-gray-500">
+                                {getStatusBadge(payroll.status)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4 w-16">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-muted"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                    <span className="sr-only">Open menu</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem
+                                    onClick={() => openPaymentsModal(payroll)}
+                                  >
+                                    Partial Payments
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={8} className="h-24 text-center px-4">
+                            No results.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                  {/* Pagination Controls */}
+                  {filteredPayrolls.length > ITEMS_PER_PAGE && (
+                    <div className="flex items-center justify-between px-6 py-4">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {startIndex + 1} to {Math.min(endIndex, filteredPayrolls.length)} of {filteredPayrolls.length} payroll records
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+
+                        <div className="flex items-center space-x-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(page)}
+                              className={`h-8 w-8 p-0 ${currentPage === page
+                                  ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary"
+                                  : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
+                                }`}
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
 
       {/* Partial Payments Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>

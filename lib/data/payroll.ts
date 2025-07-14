@@ -76,7 +76,8 @@ export async function getPayrolls(
         projects!project_id(id, name)
       `)
       .eq("company_id", profile.company_id)
-      .in("status", ["confirmed", "paid"]) // Only include confirmed and paid payroll records
+      // Include all statuses for now to debug
+      // .in("status", ["confirmed", "paid"]) // Only include confirmed and paid payroll records
       .order("pay_period_start", { ascending: false });
 
     // Optimize date filtering - use proper date range logic
@@ -133,12 +134,16 @@ export async function getPayroll(id: string): Promise<ApiResponse<PayrollRecord>
 
 export async function createPayroll(input: CreatePayrollInput): Promise<ApiResponse<PayrollRecord>> {
   try {
+    console.log("[PayrollCreate] Creating payroll with data:", input);
     const { data, error } = await supabase.from("payroll").insert({ ...input, created_by: input.created_by }).select().single();
     if (error) {
+      console.error("[PayrollCreate] Error creating payroll:", error);
       return { data: null, error: error.message, success: false };
     }
+    console.log("[PayrollCreate] Successfully created payroll:", data);
     return { data: data as PayrollRecord, error: null, success: true };
   } catch (error) {
+    console.error("[PayrollCreate] Exception creating payroll:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
@@ -458,6 +463,7 @@ export async function generatePayrollForWorkerAndPeriod(
     }
 
     console.log(`[PayrollGen] Payroll ${existingPayroll ? 'updated' : 'created'} successfully. Result:`, result.data);
+    console.log(`[PayrollGen] Returning success response with data:`, result.data);
     return { data: result.data, error: null, success: true };
 
   } catch (error) {
