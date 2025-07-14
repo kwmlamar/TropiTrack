@@ -1,28 +1,27 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { PayrollHeader } from "@/components/payroll/payroll-header"
 
-import { PayrollReports } from "@/components/payroll/payroll-reports"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
+
 import { getAggregatedPayrolls, getPayrollPayments, addPayrollPayment } from "@/lib/data/payroll"
 import type { PayrollRecord, PayrollPayment } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
+import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
 import { updatePayrollStatus } from "@/lib/data/payroll"
 import { toast } from "sonner"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
+
 import { Badge } from "@/components/ui/badge"
+import { PayrollTable } from "./payroll-table"
 import {
   Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
@@ -35,11 +34,11 @@ const ITEMS_PER_PAGE = 20;
 export default function PayrollPage({ user }: { user: User }) {
   const searchParams = useSearchParams()
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
-  const [allPayrolls, setAllPayrolls] = useState<PayrollRecord[]>([]) // Store all payroll data for reports
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
-  const [searchTerm, setSearchTerm] = useState("")
+
   const [currentPage, setCurrentPage] = useState(1)
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
 
@@ -55,8 +54,7 @@ export default function PayrollPage({ user }: { user: User }) {
   const [adding, setAdding] = useState(false)
   const [paymentType, setPaymentType] = useState<"net" | "gross">("net")
 
-  // Current week date range for overview (always stays current)
-  const [currentWeekRange, setCurrentWeekRange] = useState<DateRange | undefined>()
+
 
   const {
     loading: settingsLoading,
@@ -74,11 +72,7 @@ export default function PayrollPage({ user }: { user: User }) {
       const newWeekStartDay = dayMap[paymentSchedule.period_start_day] || 1
       setWeekStartDay(newWeekStartDay)
       
-      // Set current week range for overview (always current)
-      setCurrentWeekRange({
-        from: startOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
-        to: endOfWeek(new Date(), { weekStartsOn: newWeekStartDay }),
-      })
+
       
       // Set navigable date range to current week initially
       setDateRange({
@@ -88,10 +82,6 @@ export default function PayrollPage({ user }: { user: User }) {
     } else if (!settingsLoading) {
       // If no payment schedule, use default Saturday start for construction industry
       const defaultWeekStart = 6;
-      setCurrentWeekRange({
-        from: startOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
-        to: endOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
-      })
       setDateRange({
         from: startOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
         to: endOfWeek(new Date(), { weekStartsOn: defaultWeekStart }),
@@ -134,7 +124,7 @@ export default function PayrollPage({ user }: { user: User }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, dateRange, payPeriodType])
 
-  // Filter payrolls based on search term using useMemo
+  // Filter payrolls based on status using useMemo
   const filteredPayrolls = useMemo(() => {
     let filtered = payrolls;
     
@@ -143,25 +133,13 @@ export default function PayrollPage({ user }: { user: User }) {
       filtered = filtered.filter(payroll => payroll.status === selectedStatus);
     }
     
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(payroll => {
-        return (
-          payroll.worker_name?.toLowerCase().includes(searchLower) ||
-          payroll.position?.toLowerCase().includes(searchLower) ||
-          payroll.status?.toLowerCase().includes(searchLower)
-        );
-      });
-    }
-    
     return filtered;
-  }, [payrolls, selectedStatus, searchTerm]);
+  }, [payrolls, selectedStatus]);
 
-  // Reset to first page when search term changes
+  // Reset to first page when status changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus]);
+  }, [selectedStatus]);
 
   const loadPayroll = async () => {
     setIsLoading(true)
@@ -205,34 +183,7 @@ export default function PayrollPage({ user }: { user: User }) {
         }))
         setPayrolls(processedPayrolls)
         
-        // Also load all payroll data for reports (without date filtering)
-        const allPayrollsResponse = await getAggregatedPayrolls({ target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly" })
-        if (allPayrollsResponse.data) {
-          const processedAllPayrolls = await Promise.all(allPayrollsResponse.data.map(async (payroll) => {
-            const overtimePay = payroll.overtime_hours * (payroll.hourly_rate * (payrollSettings?.overtime_rate || 1.5))
-            const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay, overtimePay)
-            
-            // Get payments for this payroll
-            const payments = await getPayrollPayments(payroll.id)
-            const totalPaid = payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0)
-            
-            // Calculate remaining balance based on net pay (standard approach)
-            const netPay = payroll.gross_pay - (nibDeduction + otherDeductions)
-            // If payroll is marked as paid, remaining balance should be 0
-            const remainingBalance = payroll.status === "paid" ? 0 : Math.max(0, netPay - totalPaid)
-            
-            return {
-              ...payroll,
-              nib_deduction: nibDeduction,
-              other_deductions: otherDeductions,
-              total_deductions: nibDeduction + otherDeductions,
-              net_pay: netPay,
-              total_paid: totalPaid,
-              remaining_balance: remainingBalance,
-            }
-          }))
-          setAllPayrolls(processedAllPayrolls)
-        }
+
       }
     } catch (error) {
       console.error('Failed to load payroll data:', error)
@@ -272,16 +223,7 @@ export default function PayrollPage({ user }: { user: User }) {
   };
 
   // Calculate summary data from payrolls for current period
-  const currentPeriodPayrolls = payrolls.filter(payroll => {
-    if (!currentWeekRange?.from || !currentWeekRange?.to) return false;
-    const payrollDate = new Date(payroll.created_at);
-    return payrollDate >= currentWeekRange.from && payrollDate <= currentWeekRange.to;
-  });
 
-  // Calculate total unpaid balance across all payrolls
-  const totalUnpaidBalance = payrolls.reduce((total, payroll) => {
-    return total + (payroll.remaining_balance || 0);
-  }, 0);
 
   // These variables are calculated for potential future use in reports or analytics
   // const totalGrossPay = payrolls.reduce((total, payroll) => total + payroll.gross_pay, 0);
@@ -438,15 +380,15 @@ export default function PayrollPage({ user }: { user: User }) {
     const getBadgeClassName = (status: PayrollRecord['status']) => {
       switch (status) {
         case "paid":
-          return "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-6 py-1 text-sm font-medium";
+          return "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/30 px-3 py-1 text-xs font-medium rounded-full";
         case "pending":
-          return "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-6 py-1 text-sm font-medium";
+          return "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800 dark:hover:bg-yellow-900/30 px-3 py-1 text-xs font-medium rounded-full";
         case "confirmed":
-          return "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-6 py-1 text-sm font-medium";
+          return "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "void":
-          return "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-6 py-1 text-sm font-medium";
+          return "bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30 px-3 py-1 text-xs font-medium rounded-full";
         default:
-          return "px-6 py-1 text-sm font-medium";
+          return "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800 dark:hover:bg-gray-900/30 px-3 py-1 text-xs font-medium rounded-full";
       }
     };
 
@@ -460,135 +402,43 @@ export default function PayrollPage({ user }: { user: User }) {
   return (
     <div className="flex-1 space-y-6 p-6">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
-        <PayrollHeader />
-
-        <Tabs defaultValue="overview" className="w-full">
-          <div className="border-b border-muted">
-            <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
-              <TabsTrigger
-                value="overview"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-              >
-                Overview
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="payments"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-              >
-                Payments
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="reports"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-              >
-                Reports
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-              </TabsTrigger>
-            </TabsList>
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
+          <div className="flex items-center space-x-2">
+            <div>
+              <h2 className="text-lg font-medium mb-0">
+                Payroll{" "}
+                {dateRange?.from && dateRange?.to
+                  ? (
+                    <span className="text-gray-500">
+                      {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
+                    </span>
+                  )
+                  : (
+                    <span className="text-gray-500">Select a date range</span>
+                  )}
+              </h2>
+            </div>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handlePreviousWeek}
+              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleNextWeek}
+              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
           </div>
 
           {isLoading || settingsLoading ? (
             <>
-              <TabsContent value="overview" className="space-y-6">
-                {/* Payroll Overview Header */}
-                <div className="space-y-4 mt-4">
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Payroll Overview
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Current Week Summary:
-                    {currentWeekRange?.from && currentWeekRange?.to
-                      ? ` ${format(currentWeekRange.from, "MMM d")}-${format(currentWeekRange.to, "MMM d, yyyy")}`
-                      : " Loading..."}
-                  </p>
-                </div>
-
-                {/* Stats Cards Skeleton */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {[1, 2, 3].map((i) => (
-                    <Card key={i} className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                      <CardContent className="px-6 py-4">
-                        <div className="space-y-3">
-                          <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                          <div className="h-8 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Recent Payments Table Skeleton */}
-                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                  <CardHeader>
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-4 w-64" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <TableComponent className="min-w-full">
-                        <TableHeader>
-                          <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                              <Skeleton className="h-4 w-16" />
-                            </TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                              <Skeleton className="h-4 w-16" />
-                            </TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                              <Skeleton className="h-4 w-16" />
-                            </TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                              <Skeleton className="h-4 w-16" />
-                            </TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">
-                              <Skeleton className="h-4 w-16" />
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <TableRow key={i} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
-                              <TableCell className="py-4 px-6">
-                                <Skeleton className="h-4 w-24" />
-                              </TableCell>
-                              <TableCell className="py-4 px-6">
-                                <Skeleton className="h-4 w-20" />
-                              </TableCell>
-                              <TableCell className="py-4 px-6">
-                                <Skeleton className="h-6 w-16 rounded-full" />
-                              </TableCell>
-                              <TableCell className="py-4 px-6">
-                                <Skeleton className="h-4 w-20" />
-                              </TableCell>
-                              <TableCell className="py-4 px-6">
-                                <Skeleton className="h-4 w-20" />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </TableComponent>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="payments" className="space-y-6">
-                {/* Payments Header */}
-                <div className="space-y-4 mt-4">
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Payments
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Pay Period:
-                    {dateRange?.from && dateRange?.to
-                      ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
-                      : " Select a date range"}
-                  </p>
-                </div>
 
                 <div className="space-y-6">
                   <div className="space-y-6 overflow-x-auto">
@@ -690,227 +540,17 @@ export default function PayrollPage({ user }: { user: User }) {
                     </Card>
                   </div>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="reports" className="space-y-6">
-                {/* Reports Skeleton */}
-                <div className="space-y-4">
-                  <Skeleton className="h-8 w-32" />
-                  <Skeleton className="h-4 w-64" />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <Card key={i} className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                      <CardHeader>
-                        <Skeleton className="h-6 w-32" />
-                      </CardHeader>
-                      <CardContent>
-                        <Skeleton className="h-32 w-full" />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
             </>
           ) : (
             <>
-              <TabsContent value="overview" className="space-y-6">
-                {/* Payroll Overview Header */}
-                <div className="space-y-4 mt-4">
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Payroll Overview
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Current Week Summary:
-                    {currentWeekRange?.from && currentWeekRange?.to
-                      ? ` ${format(currentWeekRange.from, "MMM d")}-${format(currentWeekRange.to, "MMM d, yyyy")}`
-                      : " Loading..."}
-                  </p>
-                </div>
 
-                {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                    <CardContent className="px-6 py-4">
-                      <div className="space-y-2">
-                        <p className="text-base font-medium text-primary dark:text-foreground">Total Payroll</p>
-                        <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
-                          {new Intl.NumberFormat("en-BS", {
-                            style: "currency",
-                            currency: "BSD",
-                            minimumFractionDigits: 2,
-                          }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.gross_pay, 0))}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                    <CardContent className="px-6 py-4">
-                      <div className="space-y-2">
-                        <p className="text-base font-medium text-primary dark:text-foreground">Total Workers</p>
-                        <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
-                          {currentPeriodPayrolls.length}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                    <CardContent className="px-6 py-4">
-                      <div className="space-y-2">
-                        <p className="text-base font-medium text-primary dark:text-foreground">NIB Remittance</p>
-                        <p className="text-3xl font-bold tracking-tight text-primary dark:text-foreground">
-                          {new Intl.NumberFormat("en-BS", {
-                            style: "currency",
-                            currency: "BSD",
-                            minimumFractionDigits: 2,
-                          }).format(currentPeriodPayrolls.reduce((sum, record) => sum + record.nib_deduction, 0))}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="group border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
-                    <CardContent className="px-6 py-4">
-                      <div className="space-y-2">
-                        <p className="text-base font-medium text-primary dark:text-foreground">Unpaid Balance</p>
-                        <p className={`text-3xl font-bold tracking-tight ${totalUnpaidBalance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                          {new Intl.NumberFormat("en-BS", {
-                            style: "currency",
-                            currency: "BSD",
-                            minimumFractionDigits: 2,
-                          }).format(totalUnpaidBalance)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Recent Payments Table */}
-                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Recent Payments</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Latest payroll payments processed in the system.
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <TableComponent className="min-w-full">
-                        <TableHeader>
-                          <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
-                            <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {currentPeriodPayrolls
-                            .filter(payroll => payroll.status === "paid")
-                            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                            .slice(0, 5)
-                            .map((payroll) => (
-                              <TableRow 
-                                key={payroll.id} 
-                                className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
-                              >
-                                <TableCell className="py-4 px-6">
-                                  <div className="font-bold">{payroll.worker_name}</div>
-                                </TableCell>
-                                <TableCell className="py-4 px-6">
-                                  <div className="text-sm text-muted-foreground">{payroll.position}</div>
-                                </TableCell>
-                                <TableCell className="py-4 px-6">
-                                  {getStatusBadge(payroll.status)}
-                                </TableCell>
-                                <TableCell className="py-4 px-6">
-                                  {new Intl.NumberFormat("en-BS", {
-                                    style: "currency",
-                                    currency: "BSD",
-                                    minimumFractionDigits: 2,
-                                  }).format(payroll.net_pay)}
-                                </TableCell>
-                                <TableCell className="py-4 px-6">
-                                  <div className="text-sm text-muted-foreground">
-                                    {format(new Date(payroll.created_at), "MMM d, yyyy")}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </TableComponent>
-                      
-                      {/* Empty State */}
-                      {currentPeriodPayrolls.filter(payroll => payroll.status === "paid").length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 px-6">
-                          <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
-                            <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                            </svg>
-                          </div>
-                          <h3 className="text-lg font-semibold text-muted-foreground mb-2">No recent payments</h3>
-                          <p className="text-sm text-muted-foreground text-center max-w-sm">
-                            No payroll payments have been processed yet. Payments will appear here once they are marked as paid.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="payments" className="space-y-6">
-                {/* Payments Header */}
-                <div className="space-y-4 mt-4">
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Payments
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {payPeriodType.charAt(0).toUpperCase() + payPeriodType.slice(1)} Pay Period:
-                    {dateRange?.from && dateRange?.to
-                      ? ` ${format(dateRange.from, "MMM d")}-${format(dateRange.to, "MMM d, yyyy")}`
-                      : " Select a date range"}
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-6 overflow-x-auto">
+            <div className="">
+              <div className="space-y-2 overflow-x-auto">
                     {/* Search, Filters, and Actions Row */}
                     <div className="flex items-center gap-4 p-4">
-                      {/* Navigation Buttons */}
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="default"
-                          onClick={handlePreviousWeek}
-                          className="h-10 w-10 p-0"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="default"
-                          onClick={handleNextWeek}
-                          className="h-10 w-10 p-0"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      {/* Search Bar */}
+                  {/* Payroll Details Section */}
                       <div className="flex-1">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Search payroll records..."
-                            className="pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                          />
-                        </div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-900">Payroll Details</h3>
                       </div>
 
                       {/* Filters Button */}
@@ -931,23 +571,6 @@ export default function PayrollPage({ user }: { user: User }) {
                             Filter Payroll
                           </DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          
-                          {/* Pay Period Type Filter */}
-                          <div className="space-y-3 py-2">
-                            <Label className="text-sm font-medium">Pay Period Type</Label>
-                            <Select value={payPeriodType} onValueChange={setPayPeriodType}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select pay period" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="weekly">Weekly</SelectItem>
-                                <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
-                                <SelectItem value="monthly">Monthly</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <Separator />
 
                           {/* Status Filter */}
                           <div className="space-y-3 py-2">
@@ -964,8 +587,6 @@ export default function PayrollPage({ user }: { user: User }) {
                               </SelectContent>
                             </Select>
                           </div>
-
-                          <Separator />
 
                           {/* Clear Filters */}
                           {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
@@ -989,7 +610,6 @@ export default function PayrollPage({ user }: { user: User }) {
                       {/* Preview and Confirm Button */}
                       <Button
                         variant="outline"
-                        className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary border-[#E8EDF5] shadow-lg"
                         onClick={handlePreviewAndConfirm}
                         disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
                           payrolls.find(payroll => payroll.id === id)?.status === "pending"
@@ -1005,185 +625,32 @@ export default function PayrollPage({ user }: { user: User }) {
                         disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
                           payrolls.find(payroll => payroll.id === id)?.status === "confirmed"
                         )}
-                        className="bg-primary hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground shadow-lg transition-colors"
+                    className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Run Payroll
                       </Button>
                     </div>
 
-                    <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                      <CardContent className="px-6">
-                        <div className="overflow-x-auto">
-                          <TableComponent className="min-w-full">
-                            <TableHeader>
-                              <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left w-[100px]">
-                                  <Checkbox
-                                    checked={selectedPayrollIds.size === paginatedPayrolls.length && paginatedPayrolls.length > 0}
-                                    onCheckedChange={(checked) => handleSelectAll(checked === true)}
-                                    aria-label="Select all"
-                                  />
-                                </TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker</TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">NIB Deduction</TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Unpaid Balance</TableHead>
-                                <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Actions</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {paginatedPayrolls.map((payroll) => (
-                                <TableRow 
-                                  key={payroll.id} 
-                                  className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group"
-                                >
-                                  <TableCell className="py-4 px-6 w-[100px]">
-                                    <Checkbox
-                                      checked={selectedPayrollIds.has(payroll.id)}
-                                      onCheckedChange={(checked) => handleSelectPayroll(payroll.id, checked === true)}
-                                      aria-label="Select payroll"
-                                    />
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <div className="font-bold">{payroll.worker_name}</div>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <div className="text-sm text-muted-foreground">{payroll.position}</div>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    {getStatusBadge(payroll.status)}
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    {new Intl.NumberFormat("en-BS", {
-                                      style: "currency",
-                                      currency: "BSD",
-                                      minimumFractionDigits: 2,
-                                    }).format(payroll.gross_pay)}
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    {new Intl.NumberFormat("en-BS", {
-                                      style: "currency",
-                                      currency: "BSD",
-                                      minimumFractionDigits: 2,
-                                    }).format(payroll.nib_deduction)}
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    {new Intl.NumberFormat("en-BS", {
-                                      style: "currency",
-                                      currency: "BSD",
-                                      minimumFractionDigits: 2,
-                                    }).format(payroll.net_pay)}
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <div className={`font-medium ${payroll.remaining_balance && payroll.remaining_balance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                                      {new Intl.NumberFormat("en-BS", {
-                                        style: "currency",
-                                        currency: "BSD",
-                                        minimumFractionDigits: 2,
-                                      }).format(payroll.remaining_balance || 0)}
+                <PayrollTable
+                  data={paginatedPayrolls}
+                  selectedPayrollIds={selectedPayrollIds}
+                  onSelectAll={handleSelectAll}
+                  onSelectPayroll={handleSelectPayroll}
+                  onOpenPaymentsModal={openPaymentsModal}
+                  getStatusBadge={getStatusBadge}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  totalRecords={filteredPayrolls.length}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
                                     </div>
-                                    {payroll.total_paid && payroll.total_paid > 0 && (
-                                      <div className="text-xs text-muted-foreground">
-                                        Paid: {new Intl.NumberFormat("en-BS", {
-                                          style: "currency",
-                                          currency: "BSD",
-                                        }).format(payroll.total_paid)}
                                       </div>
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      onClick={() => openPaymentsModal(payroll)}
-                                    >
-                                      Partial Payments
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </TableComponent>
-                          
-                          {/* Empty State */}
-                          {paginatedPayrolls.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-12 px-6">
-                              <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
-                                <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                </svg>
-                              </div>
-                              <h3 className="text-lg font-semibold text-muted-foreground mb-2">No payroll records found</h3>
-                              <p className="text-sm text-muted-foreground text-center max-w-sm">
-                                No payroll records match your current filters. Try adjusting your search or date range.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Pagination Controls */}
-                        {filteredPayrolls.length > ITEMS_PER_PAGE && (
-                          <div className="flex items-center justify-between px-6 py-4">
-                            <div className="text-sm text-muted-foreground">
-                              Showing {startIndex + 1} to {Math.min(endIndex, filteredPayrolls.length)} of {filteredPayrolls.length} payroll records
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="h-8 w-8 p-0"
-                              >
-                                <ChevronLeft className="h-4 w-4" />
-                              </Button>
-                              
-                              <div className="flex items-center space-x-1">
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                  <Button
-                                    key={page}
-                                    variant={currentPage === page ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => handlePageChange(page)}
-                                    className={`h-8 w-8 p-0 ${
-                                      currentPage === page 
-                                        ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
-                                        : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
-                                    }`}
-                                  >
-                                    {page}
-                                  </Button>
-                                ))}
-                              </div>
-                              
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="h-8 w-8 p-0"
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="reports" className="space-y-6">
-                <PayrollReports payrolls={allPayrolls} />
-              </TabsContent>
             </>
           )}
-        </Tabs>
       </div>
 
       {/* Partial Payments Modal */}
