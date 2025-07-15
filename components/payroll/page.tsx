@@ -257,6 +257,62 @@ export default function PayrollPage({ user }: { user: User }) {
       // Load current period data
       const currentResponse = await getAggregatedPayrolls(filters)
 
+      // Calculate previous period dates
+      let previousPeriodStart: Date | null = null
+      let previousPeriodEnd: Date | null = null
+      
+      if (dateRange?.from && dateRange?.to) {
+        const currentPeriodDuration = dateRange.to.getTime() - dateRange.from.getTime()
+        const oneDay = 24 * 60 * 60 * 1000
+        const daysDifference = Math.round(currentPeriodDuration / oneDay)
+        
+        previousPeriodEnd = new Date(dateRange.from)
+        previousPeriodEnd.setDate(previousPeriodEnd.getDate() - 1)
+        previousPeriodStart = new Date(previousPeriodEnd)
+        previousPeriodStart.setDate(previousPeriodStart.getDate() - daysDifference + 1)
+      }
+
+      // Load previous period data
+      let previousPeriodData = {
+        totalPayroll: 0,
+        totalWorkers: 0,
+        totalNIB: 0,
+        totalUnpaid: 0
+      }
+
+      if (previousPeriodStart && previousPeriodEnd) {
+        const previousFilters = {
+          ...filters,
+          date_from: format(previousPeriodStart, "yyyy-MM-dd"),
+          date_to: format(previousPeriodEnd, "yyyy-MM-dd")
+        }
+
+        try {
+          const previousResponse = await getAggregatedPayrolls(previousFilters)
+          if (previousResponse.data && previousResponse.data.length > 0) {
+            // Calculate previous period totals
+            previousPeriodData = {
+              totalPayroll: previousResponse.data.reduce((sum, payroll) => sum + payroll.gross_pay, 0),
+              totalWorkers: previousResponse.data.length,
+              totalNIB: previousResponse.data.reduce((sum, payroll) => {
+                const { nibDeduction } = calculateDeductions(payroll.gross_pay)
+                return sum + nibDeduction
+              }, 0),
+              totalUnpaid: previousResponse.data.reduce((sum, payroll) => {
+                const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay)
+                const netPay = payroll.gross_pay - (nibDeduction + otherDeductions)
+                return sum + Math.max(0, netPay)
+              }, 0)
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load previous period data:', error)
+          // Continue with default values if previous period fails to load
+        }
+      }
+
+      setPreviousPeriodData(previousPeriodData)
+
       if (currentResponse.data) {
         // Fetch all payments for all payrolls in a single batch
         const allPayrollIds = currentResponse.data.map(payroll => payroll.id)
@@ -290,13 +346,6 @@ export default function PayrollPage({ user }: { user: User }) {
         setPayrolls(processedPayrolls)
       } else {
         setPayrolls([])
-        // Reset previous period data if no current data
-        setPreviousPeriodData({
-          totalPayroll: 0,
-          totalWorkers: 0,
-          totalNIB: 0,
-          totalUnpaid: 0
-        })
       }
     } catch (error) {
       console.error('Failed to load payroll data:', error)
@@ -643,7 +692,7 @@ export default function PayrollPage({ user }: { user: User }) {
         case "paid":
           return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "pending":
-          return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30 dark:hover:bg-amber-900/30 px-3 py-1 text-xs font-medium rounded-2xl";
+          return "bg-orange-600/20 text-orange-600 border-orange-600/30 hover:bg-orange-600/30 dark:bg-orange-600/20 dark:text-orange-600 dark:border-orange-600/30 dark:hover:bg-orange-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "confirmed":
           return "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "void":
@@ -772,17 +821,19 @@ export default function PayrollPage({ user }: { user: User }) {
                     }).format(currentPeriodData.totalNIB)}
                   </p>
                   <div className="flex items-center gap-1">
-                    {percentageChanges.totalNIB >= 0 ? (
+                    {typeof percentageChanges.totalNIB === 'number' && percentageChanges.totalNIB >= 0 ? (
                       <TrendingUp className="text-green-600 dark:text-green-600 h-4 w-4" />
                     ) : (
                       <TrendingDown className="text-red-600 dark:text-red-600 h-4 w-4" />
                     )}
                     <span className={`text-sm font-medium ${
-                      percentageChanges.totalNIB >= 0 
-                        ? "text-green-600 dark:text-green-600" 
+                      typeof percentageChanges.totalNIB === 'number' && percentageChanges.totalNIB >= 0
+                        ? "text-green-600 dark:text-green-600"
                         : "text-red-600 dark:text-red-600"
                     }`}>
-                      {percentageChanges.totalNIB >= 0 ? "+" : ""}{percentageChanges.totalNIB}%
+                      {typeof percentageChanges.totalNIB === 'number'
+                        ? `${percentageChanges.totalNIB >= 0 ? '+' : ''}${percentageChanges.totalNIB}%`
+                        : '--%'}
                     </span>
                   </div>
                 </div>
@@ -801,17 +852,19 @@ export default function PayrollPage({ user }: { user: User }) {
                     }).format(currentPeriodData.totalUnpaid)}
                   </p>
                   <div className="flex items-center gap-1">
-                    {percentageChanges.totalUnpaid >= 0 ? (
+                    {typeof percentageChanges.totalUnpaid === 'number' && percentageChanges.totalUnpaid >= 0 ? (
                       <TrendingUp className="text-green-600 dark:text-green-600 h-4 w-4" />
                     ) : (
                       <TrendingDown className="text-red-600 dark:text-red-600 h-4 w-4" />
                     )}
                     <span className={`text-sm font-medium ${
-                      percentageChanges.totalUnpaid >= 0 
-                        ? "text-green-600 dark:text-green-600" 
+                      typeof percentageChanges.totalUnpaid === 'number' && percentageChanges.totalUnpaid >= 0
+                        ? "text-green-600 dark:text-green-600"
                         : "text-red-600 dark:text-red-600"
                     }`}>
-                      {percentageChanges.totalUnpaid >= 0 ? "+" : ""}{percentageChanges.totalUnpaid}%
+                      {typeof percentageChanges.totalUnpaid === 'number'
+                        ? `${percentageChanges.totalUnpaid >= 0 ? '+' : ''}${percentageChanges.totalUnpaid}%`
+                        : '--%'}
                     </span>
                   </div>
                 </div>

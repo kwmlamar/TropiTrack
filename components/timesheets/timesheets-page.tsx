@@ -353,12 +353,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
 
   const getStatusBadge = (status: AttendanceStatus) => {
-    const variants = {
-      present: "default",
-      absent: "destructive",
-      late: "secondary",
-    } as const
-
     const labels = {
       present: "Present",
       absent: "Absent",
@@ -368,18 +362,45 @@ export default function TimesheetsPage({ user }: { user: User }) {
     const getBadgeClassName = (status: AttendanceStatus) => {
       switch (status) {
         case "present":
-          return "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 text-xs font-medium";
+          return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "absent":
-          return "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 text-xs font-medium";
+          return "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30 dark:bg-red-400/20 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "late":
-          return "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 text-xs font-medium";
+          return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30 dark:hover:bg-amber-900/30 px-3 py-1 text-xs font-medium rounded-2xl";
         default:
-          return "text-xs font-medium";
+          return "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30 dark:bg-gray-400/20 dark:text-gray-400 dark:border-gray-400/30 dark:hover:bg-gray-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
       }
     }
 
     return (
-      <Badge variant={variants[status]} className={getBadgeClassName(status)}>
+      <Badge className={getBadgeClassName(status)}>
+        {labels[status]}
+      </Badge>
+    )
+  }
+
+  const getApprovalStatusBadge = (status: "pending" | "approved" | "rejected") => {
+    const labels = {
+      pending: "Pending",
+      approved: "Approved",
+      rejected: "Rejected",
+    }
+
+    const getBadgeClassName = (status: "pending" | "approved" | "rejected") => {
+      switch (status) {
+        case "approved":
+          return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
+        case "pending":
+          return "bg-orange-600/20 text-orange-600 border-orange-600/30 hover:bg-orange-600/30 dark:bg-orange-600/20 dark:text-orange-600 dark:border-orange-600/30 dark:hover:bg-orange-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
+        case "rejected":
+          return "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30 dark:bg-red-400/20 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
+        default:
+          return "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30 dark:bg-gray-400/20 dark:text-gray-400 dark:border-gray-400/30 dark:hover:bg-gray-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
+      }
+    }
+
+    return (
+      <Badge className={getBadgeClassName(status)}>
         {labels[status]}
       </Badge>
     )
@@ -454,7 +475,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
           </div>
 
           {/* Table Skeleton */}
-          <Card className="border-0 bg-sidebar overflow-hidden">
+          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
             <CardContent className="px-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -591,8 +612,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
 
             {/* Timesheet Table */}
-            <Card className="border-0 bg-sidebar overflow-hidden ">
-              <CardContent className="px-0 ">
+            <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+              <CardContent className="px-0">
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
@@ -638,7 +659,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                 <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
                               </td>
                               <td className="p-4">
-                                <div className="text-sm">
+                                <div className="text-sm text-gray-500">
                                   {Array.from(
                                     new Set(
                                       timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
@@ -692,22 +713,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                 )
                               })}
                               <td className="p-4 text-center">
-                                <div className="font-medium text-sm">{weekTotalHours}h</div>
+                                <div className="font-medium text-sm text-gray-500">{weekTotalHours}h</div>
                                 {weekOvertimeHours > 0 && (
                                   <div className="text-xs text-orange-600 font-medium">+{weekOvertimeHours}h OT</div>
                                 )}
                               </td>
                               <td className="p-4 pr-6 text-center">
                                 {timesheetsInWeek.length > 0 && (
-                                  isWeekApproved ? (
-                                    <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 text-xs font-medium">
-                                      Approved
-                                    </Badge>
-                                  ) : (
-                                    <Badge className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 text-xs font-medium">
-                                      Pending
-                                    </Badge>
-                                  )
+                                  getApprovalStatusBadge(isWeekApproved ? "approved" : "pending")
                                 )}
                               </td>
                             </tr>
@@ -733,7 +746,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                     <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
                                   </td>
                                   <td className="p-4">
-                                    <div className="text-sm">
+                                    <div className="text-sm text-gray-500">
                                       {Array.from(
                                         new Set(
                                           timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
@@ -787,22 +800,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                     )
                                   })}
                                   <td className="p-4 text-center">
-                                    <div className="font-medium text-sm">{weekTotalHours}h</div>
+                                    <div className="font-medium text-sm text-gray-500">{weekTotalHours}h</div>
                                     {weekOvertimeHours > 0 && (
                                       <div className="text-xs text-orange-600 font-medium">+{weekOvertimeHours}h OT</div>
                                     )}
                                   </td>
                                   <td className="p-4 text-center">
                                     {timesheetsInWeek.length > 0 && (
-                                      isWeekApproved ? (
-                                        <Badge className="bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 text-xs font-medium">
-                                          Approved
-                                        </Badge>
-                                      ) : (
-                                        <Badge className="bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 text-xs font-medium">
-                                          Pending
-                                        </Badge>
-                                      )
+                                      getApprovalStatusBadge(isWeekApproved ? "approved" : "pending")
                                     )}
                                   </td>
                                 </tr>
