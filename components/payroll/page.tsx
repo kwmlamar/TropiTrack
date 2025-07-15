@@ -643,7 +643,7 @@ export default function PayrollPage({ user }: { user: User }) {
         case "paid":
           return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "pending":
-          return "bg-yellow-500/20 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/30 dark:bg-yellow-400/20 dark:text-yellow-400 dark:border-yellow-400/30 dark:hover:bg-yellow-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
+          return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30 dark:hover:bg-amber-900/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "confirmed":
           return "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "void":

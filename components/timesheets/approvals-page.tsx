@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { format, startOfWeek, endOfWeek, parseISO } from "date-fns"
-import { Check, X, Clock, User, Building2, Calendar, AlertCircle } from "lucide-react"
+import { Check, X, Clock, User, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -233,11 +233,8 @@ export function ApprovalsPage() {
         toast.error("Timesheet approved but could not find timesheet data for payroll generation")
       }
       
-      // Update local state
-      const updatedTimesheets = timesheets.map(ts => 
-        ts.id === id ? { ...ts, supervisor_approval: "approved" as const } : ts
-      )
-      setTimesheets(updatedTimesheets)
+      // Refresh the data to load new unapproved timesheets
+      await fetchUnapprovedTimesheets()
       
     } catch (error) {
       console.error('[Approvals] Error in approval process:', error)
@@ -252,11 +249,8 @@ export function ApprovalsPage() {
       setIsProcessing(true)
       await onReject(id)
       
-      // Update local state
-      const updatedTimesheets = timesheets.map(ts => 
-        ts.id === id ? { ...ts, supervisor_approval: "rejected" as const } : ts
-      )
-      setTimesheets(updatedTimesheets)
+      // Refresh the data to load new unapproved timesheets
+      await fetchUnapprovedTimesheets()
       
       toast.success("Timesheet rejected")
     } catch (error) {
@@ -372,10 +366,7 @@ export function ApprovalsPage() {
       cell: ({ row }) => {
         const timesheet = row.original
         return (
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-            <span>{timesheet.project?.name || 'Unknown Project'}</span>
-          </div>
+          <span className="text-gray-500">{timesheet.project?.name || 'Unknown Project'}</span>
         )
       },
     },
@@ -385,10 +376,7 @@ export function ApprovalsPage() {
       cell: ({ row }) => {
         const timesheet = row.original
         return (
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span>{format(new Date(timesheet.date), 'MMM d, yyyy')}</span>
-          </div>
+          <span className="text-gray-500">{format(new Date(timesheet.date), 'MMM d, yyyy')}</span>
         )
       },
     },
@@ -398,8 +386,7 @@ export function ApprovalsPage() {
       cell: ({ row }) => {
         const timesheet = row.original
         return (
-          <div className="space-y-1">
-            <p className="font-medium">{timesheet.total_hours}h</p>
+          <div>
             <p className="text-sm text-gray-500">
               {timesheet.regular_hours}h regular, {timesheet.overtime_hours}h overtime
             </p>
@@ -413,7 +400,7 @@ export function ApprovalsPage() {
       cell: ({ row }) => {
         const timesheet = row.original
         return (
-          <span>${timesheet.total_pay.toFixed(2)}</span>
+          <span className="text-gray-500">${timesheet.total_pay.toFixed(2)}</span>
         )
       },
     },
@@ -605,7 +592,7 @@ export function ApprovalsPage() {
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="px-4">
+                    <TableHead key={header.id} className="px-4 text-gray-500">
                       {header.isPlaceholder
                         ? null
                         : flexRender(

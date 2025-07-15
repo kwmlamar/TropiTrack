@@ -8,10 +8,10 @@ import {
   DollarSign,
   Users,
   Briefcase,
-  FileText,
   Book,
   QrCode,
   BarChart3,
+  Clock,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -54,7 +54,7 @@ const data = {
     {
       title: "Time Tracking",
       url: "/dashboard/time-logs",
-      icon: FileText,
+      icon: Clock,
       badge: null,
       description: "Track work hours",
     },
