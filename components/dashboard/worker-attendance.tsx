@@ -22,6 +22,11 @@ interface AttendanceData {
   utilization: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface WorkerAttendanceProps {
+  // Props can be added here in the future if needed
+}
+
 export function WorkerAttendance({}: WorkerAttendanceProps) {
   const [attendanceData, setAttendanceData] = useState<AttendanceData>({
     present: 0,
@@ -158,22 +163,49 @@ export function WorkerAttendance({}: WorkerAttendanceProps) {
 
   if (loading) {
     return (
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none h-full">
         <CardHeader className="pb-2">
-          <div className="space-y-1">
-            <div className="h-7 w-40 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-            <div className="h-4 w-60 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="h-6 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+            </div>
+            <div className="h-8 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="h-[200px] animate-pulse rounded-lg bg-muted-foreground/20 dark:bg-muted/50" />
-          <div className="mt-4 grid grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg border p-3">
-                <div className="h-4 w-16 mx-auto mb-2 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-6 w-12 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+        <CardContent className="flex-1">
+          <div className="h-full min-h-[200px] flex flex-col">
+            {/* Pie Chart Skeleton */}
+            <div className="flex-1 h-full flex items-center justify-center">
+              <div className="relative">
+                {/* Outer circle */}
+                <div className="w-32 h-32 rounded-full border-8 border-muted-foreground/20 dark:border-muted/50 animate-pulse"></div>
+                {/* Inner circle */}
+                <div className="absolute inset-4 w-24 h-24 rounded-full bg-muted-foreground/20 dark:bg-muted/50 animate-pulse"></div>
+                {/* Center text */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="h-4 w-12 mx-auto mb-1 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50"></div>
+                    <div className="h-3 w-8 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50"></div>
+                  </div>
+                </div>
               </div>
-            ))}
+            </div>
+            
+            {/* Legend Skeleton */}
+            <div className="mt-4 flex justify-center gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-muted-foreground/20 dark:bg-muted/50 animate-pulse"></div>
+                  <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50"></div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Stats Skeleton */}
+            <div className="mt-4 text-center">
+              <div className="h-6 w-32 mx-auto mb-1 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50"></div>
+              <div className="h-4 w-24 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50"></div>
+            </div>
           </div>
         </CardContent>
       </Card>

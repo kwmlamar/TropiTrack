@@ -93,7 +93,7 @@ export default function TestPayrollPage() {
                 <li>Viewing payroll records in the table</li>
                 <li>Confirming payroll entries</li>
                 <li>Marking payroll as paid</li>
-                <li>Adding partial payments</li>
+                <li>Adding payment amounts</li>
                 <li>Filtering by status</li>
               </ul>
             </div>

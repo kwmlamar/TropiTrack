@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 
 import { Card, CardContent } from "@/components/ui/card"
 
-import { getAggregatedPayrolls, getPayrollPayments, addPayrollPayment } from "@/lib/data/payroll"
+import { getAggregatedPayrolls, getPayrollPayments, addPayrollPayment, setPayrollPaymentAmount, deletePayroll } from "@/lib/data/payroll"
 import type { PayrollRecord, PayrollPayment } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
@@ -142,18 +142,21 @@ export default function PayrollPage({ user }: { user: User }) {
   const [isLoading, setIsLoading] = useState(true)
 
 
-  // Partial payments modal state
+  // Payment modal state
   const [modalOpen, setModalOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [modalPayroll, setModalPayroll] = useState<PayrollRecord | null>(null)
   const [payments, setPayments] = useState<PayrollPayment[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingPayments, setLoadingPayments] = useState(false)
   const [newAmount, setNewAmount] = useState("")
   const [adding, setAdding] = useState(false)
   const [paymentType, setPaymentType] = useState<"net" | "gross">("net")
 
   // Table state for inline editing
-  const [editingPartialPay, setEditingPartialPay] = useState<string | null>(null)
-  const [partialPayValue, setPartialPayValue] = useState("")
+  const [editingPaymentAmount, setEditingPaymentAmount] = useState<string | null>(null)
+  const [paymentAmountValue, setPaymentAmountValue] = useState("")
+  const [savingPaymentAmount, setSavingPaymentAmount] = useState<string | null>(null)
 
   // Previous period data for percentage calculations
   const [previousPeriodData, setPreviousPeriodData] = useState({
@@ -402,6 +405,37 @@ export default function PayrollPage({ user }: { user: User }) {
       return
     }
 
+    // Check for payrolls with remaining balance and ask user what to do
+    const payrollsWithBalance = selectedPayrolls.filter(payroll => (payroll.remaining_balance || 0) > 0)
+    
+    if (payrollsWithBalance.length > 0) {
+      const totalRemaining = payrollsWithBalance.reduce((sum, payroll) => sum + (payroll.remaining_balance || 0), 0)
+      const shouldAutoComplete = confirm(
+        `${payrollsWithBalance.length} payroll(s) have remaining balance of $${totalRemaining.toFixed(2)}. ` +
+        "Would you like to automatically add the remaining balance as final payments before marking as paid?"
+      )
+      
+      if (shouldAutoComplete) {
+        // Add final payments for remaining balances
+        for (const payroll of payrollsWithBalance) {
+          const remainingBalance = payroll.remaining_balance || 0
+          if (remainingBalance > 0) {
+            const res = await setPayrollPaymentAmount(payroll.id, (payroll.total_paid || 0) + remainingBalance, user.id)
+            if (!res.success) {
+              toast.error(`Failed to add final payment for ${payroll.worker_name}`)
+              return
+            }
+          }
+        }
+        toast.success("Final payments added for remaining balances")
+        // Refresh payroll data to show updated payment amounts
+        await loadPayroll()
+      } else {
+        // User chose not to auto-complete, so we'll proceed with current balances
+        toast.info("Proceeding with current payment amounts")
+      }
+    }
+
     const payrollIdsToUpdate = Array.from(selectedPayrollIds)
     const result = await updatePayrollStatus(payrollIdsToUpdate, "paid")
 
@@ -437,15 +471,15 @@ export default function PayrollPage({ user }: { user: User }) {
     });
   };
 
-  // Partial payments functions
-  const openPaymentsModal = async (payroll: PayrollRecord) => {
-    setModalPayroll(payroll)
-    setModalOpen(true)
-    setLoadingPayments(true)
-    const result = await getPayrollPayments(payroll.id)
-    setPayments(result)
-    setLoadingPayments(false)
-  }
+  // Payment functions - commented out as it's not currently used
+  // const openPaymentsModal = async (payroll: PayrollRecord) => {
+  //   setModalPayroll(payroll)
+  //   setModalOpen(true)
+  //   setLoadingPayments(true)
+  //   const result = await getPayrollPayments(payroll.id)
+  //   setPayments(result)
+  //   setLoadingPayments(false)
+  // }
 
   const handleAddPayment = async () => {
     if (!modalPayroll || !newAmount) return
@@ -472,7 +506,7 @@ export default function PayrollPage({ user }: { user: User }) {
       amount,
       payment_date: new Date().toISOString().slice(0, 10),
       status: "completed",
-      notes: `Partial payment (${paymentType} pay)`,
+              notes: `Payment (${paymentType} pay)`,
       created_by: undefined,
     })
     if (res.success) {
@@ -488,46 +522,90 @@ export default function PayrollPage({ user }: { user: User }) {
   }
 
   // Inline editing functions
-  const handlePartialPayEdit = (payrollId: string, currentValue: string) => {
-    setEditingPartialPay(payrollId)
-    setPartialPayValue(currentValue)
+  const handlePaymentAmountEdit = (payrollId: string, currentValue: string) => {
+    setEditingPaymentAmount(payrollId)
+    setPaymentAmountValue(currentValue)
   }
 
-  const handlePartialPaySave = async (payrollId: string) => {
-    const amount = parseFloat(partialPayValue)
+  const handlePaymentAmountSave = async (payrollId: string) => {
+    const amount = parseFloat(paymentAmountValue)
     if (isNaN(amount) || amount < 0) {
       toast.error("Please enter a valid amount")
       return
     }
 
+    setSavingPaymentAmount(payrollId)
+
+    // Update local state immediately for better UX
+    setPayrolls(prevPayrolls => 
+      prevPayrolls.map(payroll => 
+        payroll.id === payrollId 
+          ? { ...payroll, total_paid: amount, remaining_balance: Math.max(0, payroll.net_pay - amount) }
+          : payroll
+      )
+    )
+    
+    setEditingPaymentAmount(null)
+    setPaymentAmountValue("")
+
     try {
-      const res = await addPayrollPayment({
-        payroll_id: payrollId,
-        amount,
-        payment_date: new Date().toISOString().slice(0, 10),
-        status: "completed",
-        notes: "Partial payment added via inline edit",
-        created_by: user.id,
-      })
+      const res = await setPayrollPaymentAmount(payrollId, amount, user.id)
 
       if (res.success) {
-        toast.success("Partial payment added successfully")
-        setEditingPartialPay(null)
-        setPartialPayValue("")
-        // Trigger a page refresh to update the data
-        window.location.reload()
+        toast.success("Payment amount updated successfully")
       } else {
-        toast.error(res.error || "Failed to add partial payment")
+        toast.error(res.error || "Failed to update payment amount")
+        // Revert local state if the API call failed
+        setPayrolls(prevPayrolls => 
+          prevPayrolls.map(payroll => 
+            payroll.id === payrollId 
+              ? { ...payroll, total_paid: payroll.total_paid || 0, remaining_balance: Math.max(0, payroll.net_pay - (payroll.total_paid || 0)) }
+              : payroll
+          )
+        )
       }
     } catch (error) {
       toast.error("An unexpected error occurred")
-      console.error("Error adding partial payment:", error)
+      console.error("Error updating payment amount:", error)
+      // Revert local state if there was an error
+      setPayrolls(prevPayrolls => 
+        prevPayrolls.map(payroll => 
+          payroll.id === payrollId 
+            ? { ...payroll, total_paid: payroll.total_paid || 0, remaining_balance: Math.max(0, payroll.net_pay - (payroll.total_paid || 0)) }
+            : payroll
+        )
+      )
+    } finally {
+      setSavingPaymentAmount(null)
     }
   }
 
-  const handlePartialPayCancel = () => {
-    setEditingPartialPay(null)
-    setPartialPayValue("")
+  const handlePaymentAmountCancel = () => {
+    setEditingPaymentAmount(null)
+    setPaymentAmountValue("")
+  }
+
+  const handleDeletePayroll = async (payrollId: string) => {
+    if (!confirm("Are you sure you want to delete this payroll record? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      const result = await deletePayroll(payrollId)
+      
+      if (result.success) {
+        toast.success("Payroll record deleted successfully")
+        // Remove the deleted payroll from local state
+        setPayrolls(prevPayrolls => prevPayrolls.filter(payroll => payroll.id !== payrollId))
+      } else {
+        toast.error("Failed to delete payroll record", {
+          description: result.error || "An unknown error occurred.",
+        })
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred while deleting the payroll record")
+      console.error("Error deleting payroll:", error)
+    }
   }
 
   // Calculate percentage change
@@ -846,7 +924,7 @@ export default function PayrollPage({ user }: { user: User }) {
                         <TableHead className="px-4 text-gray-500">Gross Pay</TableHead>
                         <TableHead className="px-4 text-gray-500">NIB Deduction</TableHead>
                         <TableHead className="px-4 text-gray-500">Net Pay</TableHead>
-                        <TableHead className="px-4 text-gray-500">Partial Pay</TableHead>
+                        <TableHead className="px-4 text-gray-500">Payment Amount</TableHead>
                         <TableHead className="px-4 text-gray-500">Status</TableHead>
                         <TableHead className="px-4 text-gray-500 w-16">Actions</TableHead>
                       </TableRow>
@@ -908,42 +986,49 @@ export default function PayrollPage({ user }: { user: User }) {
                             <TableCell className="px-4">
                               {(() => {
                                 const totalPaid = payroll.total_paid || 0
-                                const isEditing = editingPartialPay === payroll.id
+                                const isEditing = editingPaymentAmount === payroll.id
 
                                 if (isEditing) {
                                   return (
                                     <div className="space-y-2">
                                       <Input
                                         type="number"
-                                        value={partialPayValue}
-                                        onChange={(e) => setPartialPayValue(e.target.value)}
+                                        value={paymentAmountValue}
+                                        onChange={(e) => setPaymentAmountValue(e.target.value)}
                                         className="w-20 h-8 text-center text-sm border-muted/50 focus:border-primary"
-                                        step="0.01"
+                                        step="1"
                                         min="0"
-                                        placeholder="0.00"
+                                        placeholder=""
                                         onKeyDown={(e) => {
                                           if (e.key === "Enter") {
-                                            handlePartialPaySave(payroll.id)
+                                            handlePaymentAmountSave(payroll.id)
                                           } else if (e.key === "Escape") {
-                                            handlePartialPayCancel()
+                                            handlePaymentAmountCancel()
                                           }
                                         }}
                                         autoFocus
+                                        disabled={savingPaymentAmount === payroll.id}
                                       />
                                       <div className="flex gap-1">
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          onClick={() => handlePartialPaySave(payroll.id)}
+                                          onClick={() => handlePaymentAmountSave(payroll.id)}
                                           className="h-6 px-2 text-xs"
+                                          disabled={savingPaymentAmount === payroll.id}
                                         >
-                                          Save
+                                          {savingPaymentAmount === payroll.id ? (
+                                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                          ) : (
+                                            "Save"
+                                          )}
                                         </Button>
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          onClick={handlePartialPayCancel}
+                                          onClick={handlePaymentAmountCancel}
                                           className="h-6 px-2 text-xs"
+                                          disabled={savingPaymentAmount === payroll.id}
                                         >
                                           Cancel
                                         </Button>
@@ -954,24 +1039,38 @@ export default function PayrollPage({ user }: { user: User }) {
 
                                 return (
                                   <div>
-                                    {totalPaid === 0 ? (
-                                      <button
-                                        onClick={() => handlePartialPayEdit(payroll.id, "0")}
-                                        className="font-medium text-gray-500 hover:text-foreground cursor-pointer text-center w-full"
-                                      >
-                                        -
-                                      </button>
+                                    {payroll.status === "confirmed" ? (
+                                      totalPaid === 0 ? (
+                                        <button
+                                          onClick={() => handlePaymentAmountEdit(payroll.id, "0")}
+                                          className="font-medium text-gray-500 hover:text-foreground cursor-pointer text-center w-full"
+                                        >
+                                          -
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handlePaymentAmountEdit(payroll.id, totalPaid.toString())}
+                                          className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
+                                        >
+                                          {new Intl.NumberFormat("en-BS", {
+                                            style: "currency",
+                                            currency: "BSD",
+                                            minimumFractionDigits: 2,
+                                          }).format(totalPaid)}
+                                        </button>
+                                      )
                                     ) : (
-                                      <button
-                                        onClick={() => handlePartialPayEdit(payroll.id, totalPaid.toString())}
-                                        className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
-                                      >
-                                        {new Intl.NumberFormat("en-BS", {
-                                          style: "currency",
-                                          currency: "BSD",
-                                          minimumFractionDigits: 2,
-                                        }).format(totalPaid)}
-                                      </button>
+                                      <span className="font-medium text-gray-400">
+                                        {totalPaid === 0 ? (
+                                          "-"
+                                        ) : (
+                                          new Intl.NumberFormat("en-BS", {
+                                            style: "currency",
+                                            currency: "BSD",
+                                            minimumFractionDigits: 2,
+                                          }).format(totalPaid)
+                                        )}
+                                      </span>
                                     )}
                                   </div>
                                 )
@@ -988,7 +1087,7 @@ export default function PayrollPage({ user }: { user: User }) {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 hover:bg-muted"
+                                    className="h-8 w-8 hover:bg-muted text-gray-500"
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                     <span className="sr-only">Open menu</span>
@@ -996,9 +1095,10 @@ export default function PayrollPage({ user }: { user: User }) {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-40">
                                   <DropdownMenuItem
-                                    onClick={() => openPaymentsModal(payroll)}
+                                    onClick={() => handleDeletePayroll(payroll.id)}
+                                    className="text-red-600 focus:text-red-600"
                                   >
-                                    Partial Payments
+                                    Delete Payroll
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -1065,15 +1165,15 @@ export default function PayrollPage({ user }: { user: User }) {
             </div>
           </div>
 
-      {/* Partial Payments Modal */}
+              {/* Payment History Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span>Partial Payments</span>
+                              <span>Payment History</span>
             </DialogTitle>
             <DialogDescription>
-              Manage partial payments for {modalPayroll?.worker_name}
+                              Manage payment history for {modalPayroll?.worker_name}
             </DialogDescription>
           </DialogHeader>
           {modalPayroll && (

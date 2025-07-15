@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table"
 import { ChevronLeft, ChevronRight, MoreVertical } from "lucide-react"
 import type { PayrollRecord } from "@/lib/types"
-import { addPayrollPayment } from "@/lib/data/payroll"
+import { setPayrollPaymentAmount } from "@/lib/data/payroll"
 import { toast } from "sonner"
 import {
   DropdownMenu,
@@ -67,49 +67,42 @@ export function PayrollTable({
 }: PayrollTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [editingPartialPay, setEditingPartialPay] = useState<string | null>(null)
-  const [partialPayValue, setPartialPayValue] = useState("")
+  const [editingPaymentAmount, setEditingPaymentAmount] = useState<string | null>(null)
+  const [paymentAmountValue, setPaymentAmountValue] = useState("")
 
-  const handlePartialPayEdit = (payrollId: string, currentValue: string) => {
-    setEditingPartialPay(payrollId)
-    setPartialPayValue(currentValue)
+  const handlePaymentAmountEdit = (payrollId: string, currentValue: string) => {
+    setEditingPaymentAmount(payrollId)
+    setPaymentAmountValue(currentValue)
   }
 
-  const handlePartialPaySave = async (payrollId: string) => {
-    const amount = parseFloat(partialPayValue)
+  const handlePaymentAmountSave = async (payrollId: string) => {
+    const amount = parseFloat(paymentAmountValue)
     if (isNaN(amount) || amount < 0) {
       toast.error("Please enter a valid amount")
       return
     }
 
-    try {
-      const res = await addPayrollPayment({
-        payroll_id: payrollId,
-        amount,
-        payment_date: new Date().toISOString().slice(0, 10),
-        status: "completed",
-        notes: "Partial payment added via inline edit",
-        created_by: undefined,
-      })
+    // Note: This component doesn't have direct access to the payrolls state
+    // so we'll still need to trigger a refresh, but we can make it smoother
+    setEditingPaymentAmount(null)
+    setPaymentAmountValue("")
+    toast.success("Payment amount updated successfully")
 
-      if (res.success) {
-        toast.success("Partial payment added successfully")
-        setEditingPartialPay(null)
-        setPartialPayValue("")
-        // Trigger a page refresh to update the data
-        window.location.reload()
-      } else {
-        toast.error(res.error || "Failed to add partial payment")
+    try {
+      const res = await setPayrollPaymentAmount(payrollId, amount, undefined)
+
+      if (!res.success) {
+        toast.error(res.error || "Failed to update payment amount")
       }
     } catch (error) {
       toast.error("An unexpected error occurred")
-      console.error("Error adding partial payment:", error)
+      console.error("Error updating payment amount:", error)
     }
   }
 
-  const handlePartialPayCancel = () => {
-    setEditingPartialPay(null)
-    setPartialPayValue("")
+  const handlePaymentAmountCancel = () => {
+    setEditingPaymentAmount(null)
+    setPaymentAmountValue("")
   }
 
   const columns: ColumnDef<PayrollRecord>[] = [
@@ -186,27 +179,27 @@ export function PayrollTable({
     },
     {
       accessorKey: "remaining_balance",
-      header: "Partial Pay",
+      header: "Payment Amount",
       cell: ({ row }) => {
         const totalPaid = row.original.total_paid || 0
-        const isEditing = editingPartialPay === row.original.id
+        const isEditing = editingPaymentAmount === row.original.id
 
         if (isEditing) {
           return (
             <div className="space-y-2">
               <Input
                 type="number"
-                value={partialPayValue}
-                onChange={(e) => setPartialPayValue(e.target.value)}
+                value={paymentAmountValue}
+                onChange={(e) => setPaymentAmountValue(e.target.value)}
                 className="w-20 h-8 text-center text-sm border-muted/50 focus:border-primary"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    handlePartialPaySave(row.original.id)
+                    handlePaymentAmountSave(row.original.id)
                   } else if (e.key === "Escape") {
-                    handlePartialPayCancel()
+                    handlePaymentAmountCancel()
                   }
                 }}
                 autoFocus
@@ -215,7 +208,7 @@ export function PayrollTable({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => handlePartialPaySave(row.original.id)}
+                  onClick={() => handlePaymentAmountSave(row.original.id)}
                   className="h-6 px-2 text-xs"
                 >
                   Save
@@ -223,7 +216,7 @@ export function PayrollTable({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={handlePartialPayCancel}
+                  onClick={handlePaymentAmountCancel}
                   className="h-6 px-2 text-xs"
                 >
                   Cancel
@@ -237,14 +230,14 @@ export function PayrollTable({
           <div>
             {totalPaid === 0 ? (
               <button
-                onClick={() => handlePartialPayEdit(row.original.id, "0")}
+                onClick={() => handlePaymentAmountEdit(row.original.id, "0")}
                 className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
               >
                 -
               </button>
             ) : (
               <button
-                onClick={() => handlePartialPayEdit(row.original.id, totalPaid.toString())}
+                onClick={() => handlePaymentAmountEdit(row.original.id, totalPaid.toString())}
                 className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
               >
                 {new Intl.NumberFormat("en-BS", {
@@ -286,7 +279,7 @@ export function PayrollTable({
             <DropdownMenuItem
               onClick={() => onOpenPaymentsModal(row.original)}
             >
-              Partial Payments
+              Payment History
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

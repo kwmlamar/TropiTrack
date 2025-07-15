@@ -175,19 +175,38 @@ export async function updatePayrollStatus(
   status: PayrollRecord["status"]
 ): Promise<ApiResponse<PayrollRecord[]>> {
   try {
-    const { data, error } = await supabase
-      .from("payroll")
-      .update({ status: status })
-      .in("id", payrollIds)
-      .select();
+    console.log(`[UpdatePayrollStatus] Updating ${payrollIds.length} payroll records to status: ${status}`);
+    
+    // Update each payroll individually to avoid potential batch update issues
+    const updatedPayrolls: PayrollRecord[] = [];
+    
+    for (const payrollId of payrollIds) {
+      console.log(`[UpdatePayrollStatus] Updating payroll ${payrollId} to status ${status}`);
+      
+      const { data, error } = await supabase
+        .from("payroll")
+        .update({ 
+          status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", payrollId)
+        .select()
+        .single();
 
-    if (error) {
-      return { data: null, error: error.message, success: false };
+      if (error) {
+        console.error(`[UpdatePayrollStatus] Error updating payroll ${payrollId}:`, error);
+        return { data: null, error: `Failed to update payroll ${payrollId}: ${error.message}`, success: false };
+      }
+
+      if (data) {
+        updatedPayrolls.push(data as PayrollRecord);
+      }
     }
 
-    return { data: data as PayrollRecord[], error: null, success: true };
+    console.log(`[UpdatePayrollStatus] Successfully updated ${updatedPayrolls.length} payroll records`);
+    return { data: updatedPayrolls, error: null, success: true };
   } catch (error) {
-    console.error("Error updating payroll status:", error);
+    console.error("[UpdatePayrollStatus] Unexpected error:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",
@@ -637,7 +656,7 @@ export async function getPayrollPayments(payrollId: string): Promise<PayrollPaym
   return data || [];
 }
 
-// Add a new partial payment
+// Add a new payment
 export async function addPayrollPayment(input: Omit<PayrollPayment, "id" | "created_at" | "updated_at">): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase
     .from("payroll_payments")
@@ -646,6 +665,70 @@ export async function addPayrollPayment(input: Omit<PayrollPayment, "id" | "crea
     return { success: false, error: error.message };
   }
   return { success: true };
+}
+
+// Update an existing payroll payment
+export async function updatePayrollPayment(
+  paymentId: string, 
+  updates: Partial<Omit<PayrollPayment, "id" | "created_at" | "updated_at">>
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from("payroll_payments")
+    .update(updates)
+    .eq("id", paymentId);
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+// Delete all payments for a payroll record
+export async function deletePayrollPayments(payrollId: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from("payroll_payments")
+    .delete()
+    .eq("payroll_id", payrollId);
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+// Set total payment amount for a payroll (clears existing payments and adds one new payment)
+export async function setPayrollPaymentAmount(
+  payrollId: string,
+  amount: number,
+  userId?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // First delete all existing payments for this payroll
+    const deleteResult = await deletePayrollPayments(payrollId);
+    if (!deleteResult.success) {
+      return deleteResult;
+    }
+
+    // If amount is 0, we're done (all payments deleted)
+    if (amount === 0) {
+      return { success: true };
+    }
+
+    // Add a single payment with the total amount
+    const addResult = await addPayrollPayment({
+      payroll_id: payrollId,
+      amount,
+      payment_date: new Date().toISOString().slice(0, 10),
+      status: "completed",
+      notes: "Total payment amount set via inline edit",
+      created_by: userId,
+    });
+
+    return addResult;
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "An unexpected error occurred" 
+    };
+  }
 }
 
 // Update getPayrolls to include payments, total_paid, and remaining_balance

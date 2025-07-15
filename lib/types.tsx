@@ -134,7 +134,7 @@ export type PayrollRecord = {
   pay_period_start: string;
   pay_period_end: string;
   created_by?: string;
-  // Partial payments
+  // Payment history
   payments?: PayrollPayment[];
   total_paid?: number;
   remaining_balance?: number;

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
+
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -315,6 +315,9 @@ export function ApprovalsPage() {
       setRowSelection({})
       
       toast.success(`Approved ${timesheetIds.length} timesheets and generated payroll`)
+      
+      // Refresh the data to load new unapproved timesheets
+      await fetchUnapprovedTimesheets()
     } catch (error) {
       console.error('Error in batch approval process:', error)
       toast.error("Failed to approve timesheets or generate payroll")
@@ -477,26 +480,60 @@ export function ApprovalsPage() {
   if (loading) {
     return (
       <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
-        <div>
-          <h2 className="text-lg font-medium mb-2">Pending Approvals</h2>
-        </div>
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-48" />
-                  </div>
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+              <div className="h-4 w-48 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
             </div>
-          </CardContent>
-        </Card>
-          ))}
+            <div className="flex items-center space-x-6">
+              <div className="h-9 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+              <div className="h-9 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+            </div>
+          </div>
+
+          {/* Table Skeleton */}
+          <div className="rounded-md border bg-sidebar">
+            <div className="border-b">
+              <div className="grid grid-cols-7 gap-4 p-4">
+                <div className="h-4 w-4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+              </div>
+            </div>
+            
+            {/* Table Rows Skeleton */}
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="border-b last:border-b-0">
+                <div className="grid grid-cols-7 gap-4 p-4">
+                  <div className="h-4 w-4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 bg-muted-foreground/20 dark:bg-muted/50 rounded-full animate-pulse" />
+                    <div className="space-y-1">
+                      <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      <div className="h-3 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                    <div className="h-3 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  </div>
+                  <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  <div className="h-6 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  <div className="flex items-center gap-2 justify-end">
+                    <div className="h-8 w-8 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                    <div className="h-8 w-8 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )

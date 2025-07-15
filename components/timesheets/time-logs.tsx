@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { useDateRange } from "@/context/date-range-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { TrendingUp, TrendingDown, Loader2 } from "lucide-react"
+import { TrendingUp, TrendingDown } from "lucide-react"
 import { getTimeLogs, type TimeLogsData } from "@/lib/data/time-logs"
 import { toast } from "sonner"
 import { User } from "@supabase/supabase-js"
@@ -14,6 +14,110 @@ interface TimeLogsPageProps {
   onApprove?: (id: string) => Promise<void>
   onReject?: (id: string) => Promise<void>
   user: User
+}
+
+// Loading Skeleton Component
+const TimeLogsSkeleton = () => {
+  return (
+    <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        {/* Header Skeleton */}
+        <div>
+          <div className="h-6 w-48 bg-muted animate-pulse rounded mb-4"></div>
+        </div>
+        
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="bg-sidebar border border-border/50 shadow-none">
+              <CardContent className="px-4 py-0">
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
+                  <div className="h-8 w-32 bg-muted animate-pulse rounded"></div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 w-12 bg-muted animate-pulse rounded"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Worker Details Section Skeleton */}
+        <div className="mt-6">
+          <div className="h-5 w-32 bg-muted animate-pulse rounded mb-4"></div>
+          
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div 
+                key={i} 
+                className="group rounded-lg border p-4 transition-all hover:border-border/80 bg-sidebar relative"
+              >
+                <div className="absolute left-0 top-1 bottom-1 w-1 bg-red-500 rounded-l-lg"></div>
+                
+                {/* Three Column Layout */}
+                <div className="flex items-center">
+                  {/* Worker Name Column */}
+                  <div className="flex items-center gap-3 w-60 mb-8">
+                    <div className="h-10 w-10 bg-muted animate-pulse rounded-full"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
+                      <div className="h-3 w-32 bg-muted animate-pulse rounded"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Approved Time Column */}
+                  <div className="text-left flex-1">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="h-4 w-48 bg-muted animate-pulse rounded"></div>
+                    </div>
+                    <div className="flex gap-4 mt-2">
+                      <div className="text-left flex-1">
+                        <div className="h-3 w-24 bg-muted animate-pulse rounded mb-1"></div>
+                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                      </div>
+                      <div className="text-left w-20">
+                        <div className="h-3 w-16 bg-muted animate-pulse rounded mb-1"></div>
+                        <div className="h-4 w-12 bg-muted animate-pulse rounded"></div>
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="h-3 w-28 bg-muted animate-pulse rounded mb-1"></div>
+                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Unapproved Time Column */}
+                  <div className="text-left flex-1">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="h-4 w-52 bg-muted animate-pulse rounded"></div>
+                    </div>
+                    <div className="flex gap-4 mt-2">
+                      <div className="text-left flex-1">
+                        <div className="h-3 w-24 bg-muted animate-pulse rounded mb-1"></div>
+                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                      </div>
+                      <div className="text-left w-20">
+                        <div className="h-3 w-16 bg-muted animate-pulse rounded mb-1"></div>
+                        <div className="h-4 w-12 bg-muted animate-pulse rounded"></div>
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="h-3 w-28 bg-muted animate-pulse rounded mb-1"></div>
+                        <div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function TimeLogsPage({ user }: TimeLogsPageProps) {
@@ -55,31 +159,7 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
   }, [user.id, dateRange?.from, dateRange?.to])
 
   if (loading) {
-    return (
-      <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
-        <div>
-          <h2 className="text-lg font-medium mb-4">
-            Logged Time{" "}
-            <span className="text-gray-500 font-normal">
-              {dateRange?.from && dateRange?.to ? (
-                <>
-                  {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
-                </>
-              ) : (
-                format(new Date(), "MMM dd")
-              )}
-            </span>
-          </h2>
-        </div>
-        
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm text-muted-foreground">Loading time logs...</span>
-          </div>
-        </div>
-      </div>
-    )
+    return <TimeLogsSkeleton />
   }
 
   if (error) {

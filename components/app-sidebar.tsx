@@ -11,6 +11,7 @@ import {
   FileText,
   Book,
   QrCode,
+  BarChart3,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -98,6 +99,13 @@ const data = {
       icon: QrCode,
       badge: null,
       description: "Manage clock in/out QR codes",
+    },
+    {
+      title: "Reports",
+      url: "/dashboard/reports",
+      icon: BarChart3,
+      badge: null,
+      description: "Analytics and reporting",
     },
   ],
 

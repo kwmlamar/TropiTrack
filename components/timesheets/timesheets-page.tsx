@@ -437,12 +437,87 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // Show loading state
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading timesheets...</p>
+      <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+          {/* Header Skeleton */}
+          <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
+            <div className="flex items-center space-x-2">
+              <div>
+                <div className="h-6 w-48 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50 mb-2" />
+              </div>
+              <div className="h-10 w-10 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+              <div className="h-10 w-10 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="h-9 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+            </div>
           </div>
+
+          {/* Table Skeleton */}
+          <Card className="border-0 bg-sidebar overflow-hidden">
+            <CardContent className="px-0">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-4 pl-6 font-medium text-sm text-gray-500">
+                        <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-left p-4 font-medium text-sm text-gray-500">
+                        <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      {Array.from({ length: 7 }).map((_, i) => (
+                        <th key={i} className="text-center p-4 font-medium text-sm text-gray-500 min-w-[100px]">
+                          <div className="space-y-1">
+                            <div className="h-3 w-8 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-4 w-12 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                          </div>
+                        </th>
+                      ))}
+                      <th className="text-center p-4 font-medium text-sm text-gray-500">
+                        <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-center p-4 font-medium text-sm text-gray-500">
+                        <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 5 }).map((_, rowIndex) => (
+                      <tr key={rowIndex} className="border-b border-muted/20 last:border-b-0">
+                        <td className="p-4 pl-6">
+                          <div className="space-y-1">
+                            <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-3 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                        </td>
+                        {Array.from({ length: 7 }).map((_, colIndex) => (
+                          <td key={colIndex} className="p-4 text-center">
+                            <div className="space-y-2">
+                              <div className="h-8 w-16 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                              <div className="h-5 w-12 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            </div>
+                          </td>
+                        ))}
+                        <td className="p-4 text-center">
+                          <div className="space-y-1">
+                            <div className="h-4 w-12 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-3 w-8 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                          </div>
+                        </td>
+                        <td className="p-4 pr-6 text-center">
+                          <div className="h-6 w-16 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
