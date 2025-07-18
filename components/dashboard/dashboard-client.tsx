@@ -7,6 +7,7 @@ import { RecentTimesheets } from "@/components/dashboard/recent-timesheets"
 import { WorkerAttendance } from "@/components/dashboard/worker-attendance"
 import { PayrollSummary } from "@/components/dashboard/payroll-summary"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { getCurrentLocalDate } from "@/lib/utils"
 
 // Dashboard Loading Skeleton Component
 const DashboardSkeleton = () => {
@@ -131,7 +132,9 @@ const DashboardSkeleton = () => {
 }
 
 export function DashboardClient() {
-  const [selectedDate] = useState<Date>(new Date())
+  // Create a date that represents the current day in the user's local timezone
+  // This ensures we're working with the correct day regardless of server timezone
+  const [selectedDate] = useState<Date>(getCurrentLocalDate())
 
   return (
     <div className="container mx-auto p-6 space-y-6">

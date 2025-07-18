@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+import { getCurrentLocalDate } from "@/lib/utils"
 
 type ViewMode = "daily" | "weekly" | "monthly"
 
@@ -37,7 +38,9 @@ export function WorkerAttendance({}: WorkerAttendanceProps) {
   })
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>("weekly")
-  const [selectedDate] = useState<Date>(new Date())
+  // Create a date that represents the current day in the user's local timezone
+  // This ensures we're working with the correct day regardless of server timezone
+  const [selectedDate] = useState<Date>(getCurrentLocalDate())
   const { paymentSchedule } = usePayrollSettings()
 
   const getDateRange = useCallback(() => {

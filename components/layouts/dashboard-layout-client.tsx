@@ -5,7 +5,6 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 
 import { CompanySetupDialog } from "@/components/company-setup-dialog"
-import { SafariInstallGuide } from "@/components/safari-install-guide"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
 
@@ -57,9 +56,6 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
         
         {/* Company Setup Dialog */}
         <CompanySetupDialog />
-        
-        {/* Safari Install Guide */}
-        <SafariInstallGuide />
       </SidebarProvider>
     </DateRangeProvider>
   )

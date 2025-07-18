@@ -21,6 +21,7 @@ import type { Table } from "@tanstack/react-table"
 import type { PayrollRecord } from "@/lib/types"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
 import { updatePayrollSettings } from "@/lib/data/payroll-settings"
+import { getCurrentLocalDate } from "@/lib/utils"
 
 type PayPeriodType = "weekly" | "bi-weekly" | "monthly" | "custom"
 
@@ -68,7 +69,9 @@ export function PayrollFilters({
   }, [paymentSchedule])
 
   useEffect(() => {
-    const today = new Date()
+    // Create a date that represents the current day in the user's local timezone
+    // This ensures we're working with the correct day regardless of server timezone
+    const today = getCurrentLocalDate()
     let newDateRange: DateRange | undefined
 
     if (payPeriod === 'custom') {

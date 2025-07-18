@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { getTimesheets } from "@/lib/data/timesheets"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, subDays } from "date-fns"
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, subDays, parseISO } from "date-fns"
 import type { TimesheetWithDetails } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Filter, Download, User, Circle } from "lucide-react"
@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { getCurrentLocalDate } from "@/lib/utils"
 
 interface RecentTimesheetsProps {
   selectedDate: Date
@@ -65,23 +66,40 @@ export function RecentTimesheets({ selectedDate }: RecentTimesheetsProps) {
         return 6 // Default to Saturday for construction industry
       }
 
+      // Create a date that represents the current day in the user's local timezone
+      // This ensures we're working with the correct day regardless of server timezone
+      const userLocalDate = getCurrentLocalDate()
+      
+      // Use the selected date if provided, otherwise use today's date
+      const effectiveDate = selectedDate || userLocalDate
+
       // Calculate date range directly within the function
       let start: Date, end: Date
       switch (selectedTimePeriod) {
         case "today":
-          start = startOfDay(selectedDate)
-          end = endOfDay(selectedDate)
+          start = startOfDay(effectiveDate)
+          end = endOfDay(effectiveDate)
           break
         case "week":
-          start = startOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
-          end = endOfWeek(selectedDate, { weekStartsOn: getWeekStartsOn() })
+          start = startOfWeek(effectiveDate, { weekStartsOn: getWeekStartsOn() })
+          end = endOfWeek(effectiveDate, { weekStartsOn: getWeekStartsOn() })
           break
         case "month":
           // Use rolling 30-day window instead of calendar month
-          end = endOfDay(selectedDate)
-          start = startOfDay(subDays(selectedDate, 29)) // 30 days including today
+          end = endOfDay(effectiveDate)
+          start = startOfDay(subDays(effectiveDate, 29)) // 30 days including today
           break
       }
+
+      console.log('Recent timesheets date range:', {
+        selectedDate: selectedDate?.toISOString(),
+        effectiveDate: effectiveDate.toISOString(),
+        start: start.toISOString(),
+        end: end.toISOString(),
+        startFormatted: format(start, 'yyyy-MM-dd'),
+        endFormatted: format(end, 'yyyy-MM-dd'),
+        userLocalDate: userLocalDate.toISOString()
+      })
 
       const result = await getTimesheets(profile.id, {
         limit: 25, // Show recent 25 timesheets for dashboard overview
@@ -179,7 +197,7 @@ export function RecentTimesheets({ selectedDate }: RecentTimesheetsProps) {
         const timesheet = row.original
         return (
           <div className="text-sm">
-            <p className="font-medium text-gray-500">{format(new Date(timesheet.date), "EEE d MMM")}</p>
+            <p className="font-medium text-gray-500">{format(parseISO(timesheet.date), "EEE d MMM")}</p>
           </div>
         )
       },

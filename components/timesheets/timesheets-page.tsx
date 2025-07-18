@@ -21,6 +21,7 @@ import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
 import { AddTimesheetDialog } from "./add-timesheet-dialog"
+import { getCurrentLocalDate } from "@/lib/utils"
 
 type AttendanceStatus = "present" | "absent" | "late"
 
@@ -33,7 +34,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  // Create a date that represents the current day in the user's local timezone
+  // This ensures we're working with the correct day regardless of server timezone
+  const [selectedDate, setSelectedDate] = useState<Date>(getCurrentLocalDate())
   const [selectedWorker] = useState<string>("all")
   const [selectedProject] = useState<string>("all")
   const [viewMode] = useState<"daily" | "weekly">("weekly")
@@ -391,7 +394,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
         case "approved":
           return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "pending":
-          return "bg-orange-600/20 text-orange-600 border-orange-600/30 hover:bg-orange-600/30 dark:bg-orange-600/20 dark:text-orange-600 dark:border-orange-600/30 dark:hover:bg-orange-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
+          return "bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30 dark:bg-orange-500/20 dark:text-orange-500 dark:border-orange-500/30 dark:hover:bg-orange-500/30 px-3 py-1 text-xs font-medium rounded-2xl";
         case "rejected":
           return "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30 dark:bg-red-400/20 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
         default:

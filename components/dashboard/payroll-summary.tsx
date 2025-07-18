@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from "react"
 import { getPayrolls } from "@/lib/data/payroll"
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+import { getCurrentLocalDate } from "@/lib/utils"
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -41,14 +42,19 @@ export function PayrollSummary() {
 
     switch (viewMode) {
       case "weekly":
+        // Create a date that represents the current day in the user's local timezone
+        // This ensures we're working with the correct day regardless of server timezone
+        const userLocalDate = getCurrentLocalDate()
         return {
-          start: startOfWeek(new Date(new Date().getTime() - 11 * 7 * 24 * 60 * 60 * 1000), { weekStartsOn: getWeekStartsOn() }), // 12 weeks ago
-          end: endOfWeek(new Date(), { weekStartsOn: getWeekStartsOn() })
+          start: startOfWeek(new Date(userLocalDate.getTime() - 11 * 7 * 24 * 60 * 60 * 1000), { weekStartsOn: getWeekStartsOn() }), // 12 weeks ago
+          end: endOfWeek(userLocalDate, { weekStartsOn: getWeekStartsOn() })
         }
       case "monthly":
+        // Create a date that represents the current day in the user's local timezone
+        const localDate = getCurrentLocalDate()
         return {
-          start: new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1), // 6 months ago
-          end: endOfMonth(new Date())
+          start: new Date(localDate.getFullYear(), localDate.getMonth() - 5, 1), // 6 months ago
+          end: endOfMonth(localDate)
         }
 
     }

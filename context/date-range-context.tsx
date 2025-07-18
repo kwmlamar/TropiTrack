@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, ReactNode } from "react"
 import { DateRange } from "react-day-picker"
 import { startOfWeek, endOfWeek } from "date-fns"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings"
+import { getCurrentLocalDate } from "@/lib/utils"
 
 interface DateRangeContextType {
   dateRange: DateRange | undefined
@@ -28,11 +29,13 @@ export function DateRangeProvider({ children }: { children: ReactNode }) {
 
   // Get default date range based on payment schedule
   const getDefaultDateRange = (): DateRange => {
-    const today = new Date()
+    // Create a date that represents the current day in the user's local timezone
+    // This ensures we're working with the correct day regardless of server timezone
+    const userLocalDate = getCurrentLocalDate()
     const weekStartsOn = getWeekStartsOn()
     return {
-      from: startOfWeek(today, { weekStartsOn }),
-      to: endOfWeek(today, { weekStartsOn }),
+      from: startOfWeek(userLocalDate, { weekStartsOn }),
+      to: endOfWeek(userLocalDate, { weekStartsOn }),
     }
   }
 
