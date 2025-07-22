@@ -5,11 +5,15 @@ import { User } from "@supabase/supabase-js";
 
 // PROFILE INFO
 export async function getProfile(userId: string) {
+  console.log("getProfile called with userId:", userId);
+  
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", userId)
     .single();
+
+  console.log("Profile query result:", { profile, profileError });
 
   if (profileError || !profile) {
     throw new Error(
@@ -25,16 +29,45 @@ export async function getProfile(userId: string) {
 // Get all workers
 
 export async function fetchWorkersForCompany(userId: string) {
+  console.log("fetchWorkersForCompany called with userId:", userId);
+  
   const profile = await getProfile(userId);
+  console.log("Profile data:", profile);
+  console.log("Profile company_id:", profile.company_id);
 
-  const { data, error } = await supabase
+  // Test the query without RLS to see if there are workers
+  const { data: allWorkers, error: allWorkersError } = await supabase
+    .from("workers")
+    .select("*");
+  
+  console.log("All workers (no RLS):", { allWorkers, allWorkersError });
+
+  // Test the RLS function directly
+  const { data: rlsTest, error: rlsError } = await supabase
+    .rpc('get_user_company_id');
+
+  console.log("RLS function test:", { rlsTest, rlsError });
+
+  // Test RLS-only query (should work if RLS is working)
+  const { data: rlsQuery, error: rlsQueryError } = await supabase
+    .from("workers")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  console.log("RLS-only query result:", { rlsQuery, rlsQueryError });
+
+  // Test manual filtering (current approach)
+  const { data: manualQuery, error: manualError } = await supabase
     .from("workers")
     .select("*")
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error("Failed to fetch worker: " + error.message);
-  return data ?? [];
+  console.log("Manual filtering result:", { manualQuery, manualError });
+
+  // Use the manual approach for now since RLS isn't working
+  if (manualError) throw new Error("Failed to fetch worker: " + manualError.message);
+  return manualQuery ?? [];
 }
 
 // Add new employee

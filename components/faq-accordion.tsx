@@ -37,7 +37,7 @@ export function FaqAccordion() {
       <AccordionItem value="item-5">
         <AccordionTrigger className="text-left">Is there a free trial available?</AccordionTrigger>
         <AccordionContent>
-          Yes, we offer a 1 month free trial with full access to all features. No credit card required to start. You can
+          Yes, we offer a 2 week free trial with full access to all features. No credit card required to start. You can
           upgrade to a paid plan at any time during or after your trial period.
         </AccordionContent>
       </AccordionItem>

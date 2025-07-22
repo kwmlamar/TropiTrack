@@ -11,6 +11,7 @@ LANGUAGE SQL
 SECURITY DEFINER
 STABLE
 AS $$
+  -- Use SECURITY DEFINER to bypass RLS when querying profiles
   SELECT company_id FROM profiles WHERE id = auth.uid();
 $$;
 

@@ -34,6 +34,8 @@ import {
 import { EditWorkerDialog } from "@/components/forms/worker-form";
 import { useRouter } from "next/navigation";
 import { AddWorkerDialog } from "./add-worker-dialog";
+import { FeatureGate } from "@/components/subscription/feature-gate";
+import { UsageLimit } from "@/components/subscription/usage-limit";
 
 const columns = ["Name", "Pay Rate", "Status"];
 const ITEMS_PER_PAGE = 10;
@@ -58,7 +60,9 @@ export default function WorkersTable({ user }: { user: User }) {
   const loadWorkers = async () => {
     setLoading(true);
     try {
+      console.log("Loading workers for user:", user.id);
       const data = await fetchWorkersForCompany(user.id);
+      console.log("Workers data:", data);
       setWorkers(data);
     } catch (error) {
       console.log("Failed to fetch Workers:", error);
@@ -123,11 +127,13 @@ export default function WorkersTable({ user }: { user: User }) {
         </div>
         <div className="flex items-center justify-between">
           
-          <Button 
-            onClick={() => setAddWorkerDialogOpen(true)}
-          >
-            Add Worker
-          </Button>
+          <FeatureGate feature="can_add_workers">
+            <Button 
+              onClick={() => setAddWorkerDialogOpen(true)}
+            >
+              Add Worker
+            </Button>
+          </FeatureGate>
         </div>
         <AddWorkerDialog
           userId={user.id}
@@ -148,8 +154,9 @@ export default function WorkersTable({ user }: { user: User }) {
       </div>
 
       {/* Workers Table */}
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-        <CardContent className="p-0">
+      <UsageLimit feature="workers_limit" currentUsage={workers.length} title="Workers">
+        <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+          <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
             {columns.map((col) => (
@@ -183,13 +190,15 @@ export default function WorkersTable({ user }: { user: User }) {
                 You haven&apos;t added any workers yet. Add your first worker to
                 get started with team management.
               </p>
-              <Button 
-                className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
-                onClick={() => setAddWorkerDialogOpen(true)}
-              >
-                <UserCheck className="mr-2 h-4 w-4" />
-                Add Your First Worker
-              </Button>
+              <FeatureGate feature="can_add_workers">
+                <Button 
+                  className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
+                  onClick={() => setAddWorkerDialogOpen(true)}
+                >
+                  <UserCheck className="mr-2 h-4 w-4" />
+                  Add Your First Worker
+                </Button>
+              </FeatureGate>
             </div>
           ) : (
             <div className="divide-y divide-border/50">
@@ -313,7 +322,8 @@ export default function WorkersTable({ user }: { user: User }) {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </UsageLimit>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

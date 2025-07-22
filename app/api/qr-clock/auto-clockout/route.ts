@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Get user profile to determine company
     const { data: profile, error: profileError } = await supabase
-      .from("user_profiles")
+      .from("profiles")
       .select("company_id")
       .eq("id", user.id)
       .single()
@@ -99,7 +99,7 @@ export async function GET() {
 
     // Get user profile to determine company
     const { data: profile, error: profileError } = await supabase
-      .from("user_profiles")
+      .from("profiles")
       .select("company_id")
       .eq("id", user.id)
       .single()

@@ -54,6 +54,8 @@ import { AddProjectDialog } from "@/components/projects/add-project-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
+import { FeatureGate } from "@/components/subscription/feature-gate";
+import { UsageLimit } from "@/components/subscription/usage-limit";
 
 const columns = [
   "Project",
@@ -243,11 +245,13 @@ export default function ProjectsTable({ user }: { user: User }) {
             Manage your construction projects and track progress.
           </p>
         </div>
-        <Button 
-          onClick={() => setIsAddProjectDialogOpen(true)}
-        >
-          Add Project
-        </Button>
+        <FeatureGate feature="can_create_projects">
+          <Button 
+            onClick={() => setIsAddProjectDialogOpen(true)}
+          >
+            Add Project
+          </Button>
+        </FeatureGate>
       </div>
 
       {/* Add Project Dialog */}
@@ -352,8 +356,9 @@ export default function ProjectsTable({ user }: { user: User }) {
       </div>
 
       {/* Projects Table */}
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-        <CardContent className="p-0">
+      <UsageLimit feature="projects_limit" currentUsage={projects.length} title="Projects">
+        <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+          <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
             {columns.map((col) => (
@@ -388,11 +393,13 @@ export default function ProjectsTable({ user }: { user: User }) {
                   ? "No projects match your current filters. Try adjusting your search criteria."
                   : "You haven't added any projects yet. Add your first project to start building your portfolio."}
               </p>
-              <Button 
-                onClick={() => setIsAddProjectDialogOpen(true)}
-              >
-                Add Your First Project
-              </Button>
+              <FeatureGate feature="can_create_projects">
+                <Button 
+                  onClick={() => setIsAddProjectDialogOpen(true)}
+                >
+                  Add Your First Project
+                </Button>
+              </FeatureGate>
             </div>
           ) : (
             <>
@@ -507,7 +514,8 @@ export default function ProjectsTable({ user }: { user: User }) {
             </>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </UsageLimit>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

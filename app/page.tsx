@@ -92,7 +92,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
-                  1 month free trial
+                  2 weeks free trial
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
@@ -284,7 +284,7 @@ export default function Home() {
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">Simple, transparent pricing</h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Choose the plan that works best for your construction business. All plans include our 1-month free trial.
+                Choose the plan that works best for your construction business. All plans include our 2-week free trial.
               </p>
             </div>
 
@@ -470,7 +470,7 @@ export default function Home() {
                 </Button>
               </div>
               <p className="text-sm text-gray-400">
-                No credit card required • 1 month free trial • Cancel anytime
+                No credit card required • 2 weeks free trial • Cancel anytime
               </p>
             </div>
           </div>
