@@ -4,13 +4,15 @@ import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { useSidebar } from "@/components/ui/sidebar"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, LogOut } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import Link from "next/link"
 
 interface SidebarUserInfoProps {
   profile: UserProfileWithCompany
@@ -86,16 +88,24 @@ export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuItem>
-          Profile Settings
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings/profile">
+            Profile Settings
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          Account Settings
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings/account">
+            Account Settings
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          Company Settings
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings/company">
+            Company Settings
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-red-600 focus:text-red-600">
+          <LogOut className="h-4 w-4 mr-2" />
           Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>

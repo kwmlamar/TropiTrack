@@ -128,7 +128,7 @@ export function PayrollActions() {
 
         <div className="pt-3 border-t">
           <Button variant="ghost" size="sm" className="w-full" asChild>
-            <Link href="/dashboard/settings/payroll">
+            <Link href="/dashboard/settings/company">
             <Settings className="mr-2 h-4 w-4" />
             Payroll Settings
             </Link>

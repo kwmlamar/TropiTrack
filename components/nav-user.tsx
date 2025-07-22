@@ -143,7 +143,7 @@ export function NavUser({ user }: NavUserProps) {
                 Notifications
               </DropdownMenuItem>
             </Link>
-            <Link href="/dashboard/settings">
+            <Link href="/dashboard/settings/profile">
               <DropdownMenuItem className="gap-2 cursor-pointer">
                 <IconSettings className="h-4 w-4" />
                 Settings

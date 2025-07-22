@@ -1,3 +1,4 @@
+import DashboardLayout from "@/components/layouts/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PayrollSettingsForm } from "@/components/settings/payroll/payroll-settings-form"
@@ -6,13 +7,14 @@ import { DeductionRulesForm } from "@/components/settings/payroll/deduction-rule
 
 export default function PayrollSettingsPage() {
   return (
-    <div className="container mx-auto py-6 space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Payroll Settings</h2>
-        <p className="text-muted-foreground">
-          Configure your payroll settings, payment schedules, and deduction rules
-        </p>
-      </div>
+    <DashboardLayout title="Payroll Settings">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Payroll Settings</h2>
+          <p className="text-muted-foreground">
+            Configure your payroll settings, payment schedules, and deduction rules
+          </p>
+        </div>
 
       <Tabs defaultValue="general" className="space-y-6">
         <TabsList>
@@ -63,6 +65,7 @@ export default function PayrollSettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DashboardLayout>
   )
 } 

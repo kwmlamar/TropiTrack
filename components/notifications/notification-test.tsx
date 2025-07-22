@@ -82,7 +82,7 @@ export function NotificationTest() {
             userId: user.id,
             companyId: companyId,
             message: 'Scheduled maintenance will occur on Sunday at 2 AM EST. Service may be temporarily unavailable.',
-            actionUrl: '/dashboard/settings'
+            actionUrl: '/dashboard/settings/profile'
           })
           break
         case 'custom':
