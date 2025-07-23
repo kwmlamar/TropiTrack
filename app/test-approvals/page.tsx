@@ -36,7 +36,7 @@ export default function TestApprovalsPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold mb-2">Test Approvals</h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Generate sample unapproved timesheets to test the approvals functionality.
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function TestApprovalsPage() {
             <CardTitle>Generate Sample Data</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               This will create sample timesheets with pending approval status for testing the approvals page.
             </p>
             <Button

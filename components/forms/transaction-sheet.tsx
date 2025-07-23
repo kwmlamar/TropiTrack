@@ -61,7 +61,7 @@ export function TransactionSheet({
           <SheetTitle className="text-xl font-semibold">
             {transaction ? "Edit Transaction" : "New Transaction"}
           </SheetTitle>
-          <SheetDescription className="text-muted-foreground">
+          <SheetDescription className="text-gray-500">
             {transaction 
               ? "Update the transaction details and information." 
               : "Create a new transaction and add it to your records."}

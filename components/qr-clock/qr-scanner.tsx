@@ -166,16 +166,16 @@ export function QRScanner({ worker, project, onScanSuccess, onScanError }: QRSca
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Worker</p>
+              <p className="text-sm font-medium text-gray-500">Worker</p>
               <p className="font-semibold">{worker.name}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Project</p>
+              <p className="text-sm font-medium text-gray-500">Project</p>
               <p className="font-semibold">{project.name}</p>
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Current Status</p>
+            <p className="text-sm font-medium text-gray-500">Current Status</p>
             <div className="mt-1">
               {getStatusBadge(workerStatus)}
             </div>
@@ -195,9 +195,9 @@ export function QRScanner({ worker, project, onScanSuccess, onScanError }: QRSca
           {!scanning ? (
             <div className="text-center space-y-4">
               <div className="mx-auto w-32 h-32 bg-muted rounded-lg flex items-center justify-center">
-                <Camera className="h-16 w-16 text-muted-foreground" />
+                <Camera className="h-16 w-16 text-gray-500" />
               </div>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Click the button below to start scanning QR codes
               </p>
               <Button onClick={startScanning} className="w-full">
@@ -251,7 +251,7 @@ export function QRScanner({ worker, project, onScanSuccess, onScanError }: QRSca
               <AlertDescription>
                 <div className="space-y-2">
                   <p className="font-medium">{lastScanResult.message}</p>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-gray-500">
                     <p>Time: {lastScanResult.event?.event_time ? new Date(lastScanResult.event.event_time).toLocaleString() : 'Unknown'}</p>
                     <p>Location: {lastScanResult.event?.project_location?.name || "Unknown"}</p>
                   </div>

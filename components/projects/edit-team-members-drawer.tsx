@@ -178,8 +178,8 @@ export function EditTeamMembersDrawer({
                 <ScrollArea className="h-[300px] w-full rounded-md border p-4">
                   {teamMembers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <Users className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">No team members assigned</p>
+                      <Users className="h-8 w-8 text-gray-500 mb-2" />
+                      <p className="text-sm text-gray-500">No team members assigned</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -197,7 +197,7 @@ export function EditTeamMembersDrawer({
                             >
                               {member.name}
                             </Label>
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-xs text-gray-500 truncate">
                               {member.position} • ${member.hourlyRate}/hr
                             </p>
                           </div>
@@ -227,8 +227,8 @@ export function EditTeamMembersDrawer({
                 <ScrollArea className="h-[300px] w-full rounded-md border p-4">
                   {availableWorkers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <Users className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">All workers are already assigned</p>
+                      <Users className="h-8 w-8 text-gray-500 mb-2" />
+                      <p className="text-sm text-gray-500">All workers are already assigned</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -246,7 +246,7 @@ export function EditTeamMembersDrawer({
                             >
                               {worker.name}
                             </Label>
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-xs text-gray-500 truncate">
                               {worker.position} • ${worker.hourly_rate}/hr
                             </p>
                           </div>
@@ -260,7 +260,7 @@ export function EditTeamMembersDrawer({
 
             {(selectedWorkers.length > 0 || workersToRemove.length > 0) && (
               <div className="mt-4 p-3 bg-muted/50 rounded-md">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   {selectedWorkers.length > 0 && `${selectedWorkers.length} worker${selectedWorkers.length > 1 ? 's' : ''} to add`}
                   {selectedWorkers.length > 0 && workersToRemove.length > 0 && " • "}
                   {workersToRemove.length > 0 && `${workersToRemove.length} member${workersToRemove.length > 1 ? 's' : ''} to remove`}

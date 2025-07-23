@@ -70,8 +70,8 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
       <div className="flex-1 space-y-6 p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Loading bulk timesheet form...</p>
+            <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
+            <p className="text-gray-500">Loading bulk timesheet form...</p>
           </div>
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
             <Clock className="h-5 w-5" />
             Create Timesheet Entries
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-gray-500 mt-1">
             Select a project, individual dates, and workers to create multiple timesheet entries at once. 
             Use the quick templates or pick specific dates to match your construction schedule.
           </p>

@@ -549,8 +549,8 @@ export async function getFeatureFlags(): Promise<ApiResponse<FeatureFlags>> {
     const limits = plan.limits;
 
     const featureFlags: FeatureFlags = {
-      can_add_workers: (limits.workers || 0) > 0,
-      can_create_projects: (limits.projects || 0) > 0,
+      can_add_workers: (limits.workers || 0) > 0 || limits.workers === -1,
+      can_create_projects: (limits.projects || 0) > 0 || limits.projects === -1,
       can_use_biometrics: plan.slug !== 'starter',
       can_use_api: plan.slug === 'enterprise' || plan.slug === 'family',
       can_use_advanced_analytics: plan.slug !== 'starter',

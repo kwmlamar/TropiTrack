@@ -134,7 +134,7 @@ export function PayrollTable({
       cell: ({ row }) => (
         <div>
           <div className="font-medium">{row.getValue("worker_name")}</div>
-          <div className="text-sm text-muted-foreground">{row.original.position}</div>
+          <div className="text-sm text-gray-500">{row.original.position}</div>
         </div>
       ),
     },
@@ -351,7 +351,7 @@ export function PayrollTable({
       {/* Pagination Controls */}
       {totalRecords > itemsPerPage && (
         <div className="flex items-center justify-between px-6 py-4">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-500">
             Showing {startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} payroll records
           </div>
           <div className="flex items-center space-x-2">

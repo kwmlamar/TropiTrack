@@ -211,7 +211,7 @@ export function PayrollFilters({
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-1 text-muted-foreground">
+            <Button variant="outline" size="sm" className="h-9 gap-1 text-gray-500">
               <CalendarIcon className="h-4 w-4" />
               <span>{payPeriod === "custom" ? "Custom Range" : "Calendar"}</span>
             </Button>

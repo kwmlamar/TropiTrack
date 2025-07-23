@@ -80,7 +80,7 @@ export function TimesheetDialog({
           <DialogTitle className="text-xl font-semibold">
             {timesheet ? "Edit Timesheet" : "Create Timesheet"}
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
+          <DialogDescription className="text-gray-500">
             {timesheet
               ? "Update timesheet entry details"
               : "Create a new timesheet entry"}
@@ -153,7 +153,7 @@ export function BulkTimesheetDialog({
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col border-border/50 bg-card/50 backdrop-blur-sm">
         <DialogHeader className="sr-only">
           <DialogTitle className="text-xl font-semibold">Bulk Timesheet Entry</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
+          <DialogDescription className="text-gray-500">
             Create multiple timesheet entries for the same project and date
           </DialogDescription>
         </DialogHeader>
@@ -227,7 +227,7 @@ export function ProjectDialog({
           <DialogTitle className="text-xl font-semibold">
             {project ? "Edit Project" : "New Project"}
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
+          <DialogDescription className="text-gray-500">
             {project
               ? "Update the project details and assigned workers."
               : "Create a new project and assign team members."}
@@ -304,7 +304,7 @@ export function ClientDialog({
           <DialogTitle className="text-xl font-semibold">
             {client ? "Edit Client" : "New Client"}
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
+          <DialogDescription className="text-gray-500">
             {client
               ? "Update client information"
               : "Add a new client to your company"}

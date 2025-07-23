@@ -134,7 +134,7 @@ export default async function ProjectPage({
     <DashboardLayout title={project.name}>
       <div className="container mx-auto space-y-6 p-6">
         {/* Breadcrumb Navigation */}
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <div className="flex items-center space-x-2 text-sm text-gray-500">
           <Link href="/dashboard/projects" className="hover:text-foreground transition-colors">
             Projects
           </Link>
@@ -149,7 +149,7 @@ export default async function ProjectPage({
               <h1 className="text-3xl font-bold tracking-tight text-foreground">
                 {project.name}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Created on {format(new Date(project.created_at), "MMMM d, yyyy")}
               </p>
             </div>
@@ -162,7 +162,7 @@ export default async function ProjectPage({
               <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
                 <TabsTrigger
                   value="overview"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
                   Overview
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -170,7 +170,7 @@ export default async function ProjectPage({
 
                 <TabsTrigger
                   value="budget"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
                   Budget
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -178,7 +178,7 @@ export default async function ProjectPage({
 
                 <TabsTrigger
                   value="payroll"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
                   Payroll
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -186,7 +186,7 @@ export default async function ProjectPage({
 
                 <TabsTrigger
                   value="documents"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
                   Documents
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -194,7 +194,7 @@ export default async function ProjectPage({
 
                 <TabsTrigger
                   value="locations"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
                   Location
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -211,14 +211,14 @@ export default async function ProjectPage({
                     <h3 className="text-lg font-semibold">
                       Total Budget vs Actual Spend
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Track overall project spending against budget
                     </p>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Budget Utilization</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-gray-500">
                         {totalBudgetPercentage.toFixed(1)}%
                       </span>
                     </div>
@@ -229,8 +229,8 @@ export default async function ProjectPage({
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Actual: ${actualTotalCost.toFixed(2)}</span>
-                      <span className="text-muted-foreground">Budget: ${totalBudget.toFixed(2)}</span>
+                      <span className="text-gray-500">Actual: ${actualTotalCost.toFixed(2)}</span>
+                      <span className="text-gray-500">Budget: ${totalBudget.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -241,14 +241,14 @@ export default async function ProjectPage({
                     <h3 className="text-lg font-semibold">
                       Payroll Budget vs Actual
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Track labor costs against payroll budget
                     </p>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Payroll Utilization</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-gray-500">
                         {payrollBudgetPercentage.toFixed(1)}%
                       </span>
                     </div>
@@ -259,8 +259,8 @@ export default async function ProjectPage({
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Actual: ${actualPayrollCost.toFixed(2)}</span>
-                      <span className="text-muted-foreground">Budget: ${payrollBudget.toFixed(2)}</span>
+                      <span className="text-gray-500">Actual: ${actualPayrollCost.toFixed(2)}</span>
+                      <span className="text-gray-500">Budget: ${payrollBudget.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Status</span>
@@ -295,14 +295,14 @@ export default async function ProjectPage({
               <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Project Budget</CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     Track budget allocation, expenses, and financial performance.
                   </p>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-64">
                     <div className="text-center">
-                      <p className="text-muted-foreground">Budget tracking features coming soon...</p>
+                      <p className="text-gray-500">Budget tracking features coming soon...</p>
                     </div>
                   </div>
                 </CardContent>
@@ -313,14 +313,14 @@ export default async function ProjectPage({
               <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Project Payroll</CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     View payroll data and labor costs for this project.
                   </p>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-64">
                     <div className="text-center">
-                      <p className="text-muted-foreground">Project payroll features coming soon...</p>
+                      <p className="text-gray-500">Project payroll features coming soon...</p>
                     </div>
                   </div>
                 </CardContent>

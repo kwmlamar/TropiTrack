@@ -59,15 +59,15 @@ export default function CompanySettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Industry</span>
-                <span className="text-sm text-muted-foreground">{company.industry}</span>
+                <span className="text-sm text-gray-500">{company.industry}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Company Size</span>
-                <span className="text-sm text-muted-foreground">{company.size}</span>
+                <span className="text-sm text-gray-500">{company.size}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Founded</span>
-                <span className="text-sm text-muted-foreground">{company.founded}</span>
+                <span className="text-sm text-gray-500">{company.founded}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Status</span>
@@ -140,28 +140,28 @@ export default function CompanySettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Business Address</label>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
                         <MapPin className="h-4 w-4" />
                         123 Construction Ave, Miami, FL 33101
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Phone Number</label>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
                         <Phone className="h-4 w-4" />
                         +1 (305) 555-0123
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Email</label>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
                         <Mail className="h-4 w-4" />
                         info@tropitech.com
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Business Hours</label>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
                         <Calendar className="h-4 w-4" />
                         Mon-Fri 8AM-6PM
                       </div>
@@ -184,21 +184,21 @@ export default function CompanySettingsPage() {
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Business License</p>
-                      <p className="text-sm text-muted-foreground">Expires: Dec 31, 2024</p>
+                      <p className="text-sm text-gray-500">Expires: Dec 31, 2024</p>
                     </div>
                     <Badge variant="default">Valid</Badge>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Insurance Certificate</p>
-                      <p className="text-sm text-muted-foreground">Expires: Mar 15, 2025</p>
+                      <p className="text-sm text-gray-500">Expires: Mar 15, 2025</p>
                     </div>
                     <Badge variant="default">Valid</Badge>
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Tax ID Certificate</p>
-                      <p className="text-sm text-muted-foreground">Expires: Never</p>
+                      <p className="text-sm text-gray-500">Expires: Never</p>
                     </div>
                     <Badge variant="default">Valid</Badge>
                   </div>
@@ -274,19 +274,19 @@ export default function CompanySettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Default Pay Rate</label>
-                      <div className="text-sm text-muted-foreground">$25.00/hour</div>
+                      <div className="text-sm text-gray-500">$25.00/hour</div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Overtime Rate</label>
-                      <div className="text-sm text-muted-foreground">1.5x after 40 hours</div>
+                      <div className="text-sm text-gray-500">1.5x after 40 hours</div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Time Tracking</label>
-                      <div className="text-sm text-muted-foreground">QR Code + Biometric</div>
+                      <div className="text-sm text-gray-500">QR Code + Biometric</div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Approval Required</label>
-                      <div className="text-sm text-muted-foreground">Yes</div>
+                      <div className="text-sm text-gray-500">Yes</div>
                     </div>
                   </div>
                 </CardContent>
@@ -303,7 +303,7 @@ export default function CompanySettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Departments</p>
-                      <p className="text-sm text-muted-foreground">5 departments configured</p>
+                      <p className="text-sm text-gray-500">5 departments configured</p>
                     </div>
                     <Button variant="outline" size="sm">
                       Manage
@@ -312,7 +312,7 @@ export default function CompanySettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Job Positions</p>
-                      <p className="text-sm text-muted-foreground">12 positions defined</p>
+                      <p className="text-sm text-gray-500">12 positions defined</p>
                     </div>
                     <Button variant="outline" size="sm">
                       Manage
@@ -340,15 +340,15 @@ export default function CompanySettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="text-center p-4 border rounded-lg">
                       <div className="text-2xl font-bold text-green-600">98%</div>
-                      <div className="text-sm text-muted-foreground">Overall Score</div>
+                      <div className="text-sm text-gray-500">Overall Score</div>
                     </div>
                     <div className="text-center p-4 border rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">15</div>
-                      <div className="text-sm text-muted-foreground">Requirements Met</div>
+                      <div className="text-sm text-gray-500">Requirements Met</div>
                     </div>
                     <div className="text-center p-4 border rounded-lg">
                       <div className="text-2xl font-bold text-yellow-600">1</div>
-                      <div className="text-sm text-muted-foreground">Pending Review</div>
+                      <div className="text-sm text-gray-500">Pending Review</div>
                     </div>
                   </div>
 
@@ -360,7 +360,7 @@ export default function CompanySettingsPage() {
                         <CheckCircle className="h-5 w-5 text-green-500" />
                         <div>
                           <p className="font-medium">OSHA Compliance</p>
-                          <p className="text-sm text-muted-foreground">Last updated: 2 days ago</p>
+                          <p className="text-sm text-gray-500">Last updated: 2 days ago</p>
                         </div>
                       </div>
                       <Badge variant="default">Compliant</Badge>
@@ -371,7 +371,7 @@ export default function CompanySettingsPage() {
                         <CheckCircle className="h-5 w-5 text-green-500" />
                         <div>
                           <p className="font-medium">Labor Law Compliance</p>
-                          <p className="text-sm text-muted-foreground">Last updated: 1 week ago</p>
+                          <p className="text-sm text-gray-500">Last updated: 1 week ago</p>
                         </div>
                       </div>
                       <Badge variant="default">Compliant</Badge>
@@ -382,7 +382,7 @@ export default function CompanySettingsPage() {
                         <AlertTriangle className="h-5 w-5 text-yellow-500" />
                         <div>
                           <p className="font-medium">Tax Filing</p>
-                          <p className="text-sm text-muted-foreground">Due: March 15, 2024</p>
+                          <p className="text-sm text-gray-500">Due: March 15, 2024</p>
                         </div>
                       </div>
                       <Badge variant="secondary">Pending</Badge>

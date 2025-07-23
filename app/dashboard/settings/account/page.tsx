@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,15 +16,22 @@ import {
   EyeOff,
   CheckCircle,
   AlertTriangle,
-  Lock,
   Settings,
   UserX,
-  Download
+  Download,
+  Loader2
 } from "lucide-react"
 import Link from "next/link"
+import { useUser } from "@/lib/hooks/use-user"
+import { getCompanySubscription } from "@/lib/data/subscriptions"
+import { changePassword } from "@/app/actions/auth"
+import type { CompanySubscriptionWithPlan } from "@/lib/types/subscription"
 
 export default function AccountSettingsPage() {
+  const { user, loading: userLoading } = useUser()
   const [loading, setLoading] = useState(false)
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false)
+  const [subscription, setSubscription] = useState<CompanySubscriptionWithPlan | null>(null)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -33,45 +40,115 @@ export default function AccountSettingsPage() {
     new: "",
     confirm: ""
   })
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const [subscription] = useState({
-    plan: "Professional",
-    status: "active",
-    nextBilling: "2024-02-15",
-    amount: "$29.99"
-  })
+  // Load subscription data
+  useEffect(() => {
+    const loadSubscription = async () => {
+      if (!user?.company?.id) return
+      
+      setSubscriptionLoading(true)
+      try {
+        const response = await getCompanySubscription()
+        if (response.success && response.data) {
+          setSubscription(response.data)
+        }
+      } catch (error) {
+        console.error("Error loading subscription:", error)
+      } finally {
+        setSubscriptionLoading(false)
+      }
+    }
+
+    loadSubscription()
+  }, [user?.company?.id])
 
   const handlePasswordChange = async () => {
+    if (passwords.new !== passwords.confirm) {
+      setMessage({ type: 'error', text: 'New passwords do not match' })
+      return
+    }
+
     setLoading(true)
+    setMessage(null)
+
     try {
-      // TODO: Implement password change logic
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      console.log("Password changed")
-      setPasswords({ current: "", new: "", confirm: "" })
+      const result = await changePassword(passwords.current, passwords.new)
+      
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Password updated successfully' })
+        setPasswords({ current: "", new: "", confirm: "" })
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Failed to update password' })
+      }
     } catch (error) {
       console.error("Error changing password:", error)
+      setMessage({ type: 'error', text: 'Failed to update password. Please try again.' })
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeleteAccount = async () => {
+    if (!user) return
+    
     if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
       setLoading(true)
       try {
-        // TODO: Implement account deletion logic
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        console.log("Account deleted")
+        const response = await fetch('/api/account/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          // Redirect to login page
+          window.location.href = '/login'
+        } else {
+          setMessage({ type: 'error', text: data.error || 'Failed to delete account' })
+        }
       } catch (error) {
         console.error("Error deleting account:", error)
+        setMessage({ type: 'error', text: 'Failed to delete account. Please try again.' })
       } finally {
         setLoading(false)
       }
     }
   }
 
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount / 100) // Convert cents to dollars
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {message && (
+        <Alert variant={message.type === 'success' ? 'default' : 'destructive'}>
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -171,7 +248,7 @@ export default function AccountSettingsPage() {
                 <Button 
                   onClick={handlePasswordChange}
                   disabled={loading || !passwords.current || !passwords.new || !passwords.confirm}
-                  className="w-full"
+                  className="w-full bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors"
                 >
                   <Key className="h-4 w-4 mr-2" />
                   {loading ? "Changing Password..." : "Change Password"}
@@ -180,49 +257,25 @@ export default function AccountSettingsPage() {
 
               <Separator />
 
-              {/* Two-Factor Authentication */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">Two-Factor Authentication</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Add an extra layer of security to your account
-                    </p>
-                  </div>
-                  <Badge variant="secondary">Not Enabled</Badge>
-                </div>
-                <Button variant="outline" className="w-full">
-                  <Lock className="h-4 w-4 mr-2" />
-                  Enable Two-Factor Authentication
-                </Button>
-              </div>
 
-              <Separator />
 
               {/* Login Sessions */}
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium">Active Sessions</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     Manage your active login sessions
                   </p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
-                      <p className="font-medium">Chrome on Windows</p>
-                      <p className="text-sm text-muted-foreground">New York, NY • 2 hours ago</p>
+                      <p className="font-medium">Current Session</p>
+                      <p className="text-sm text-gray-500">
+                        {user?.email} • {user?.created_at ? formatDate(user.created_at) : 'Unknown'}
+                      </p>
                     </div>
-                    <Badge variant="default">Current</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Safari on iPhone</p>
-                      <p className="text-sm text-muted-foreground">Miami, FL • 1 day ago</p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Revoke
-                    </Button>
+                    <Badge className="bg-muted-foreground">Current</Badge>
                   </div>
                 </div>
               </div>
@@ -241,33 +294,58 @@ export default function AccountSettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Current Plan */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">{subscription.plan} Plan</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Next billing: {subscription.nextBilling}
-                  </p>
+              {subscriptionLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">{subscription.amount}/month</p>
-                  <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>
-                    {subscription.status}
-                  </Badge>
-                </div>
-              </div>
+              ) : subscription ? (
+                <>
+                  {/* Current Plan */}
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{subscription.plan.name} Plan</h4>
+                      <p className="text-sm text-gray-500">
+                        Next billing: {formatDate(subscription.current_period_end)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        {formatCurrency(
+                          subscription.billing_cycle === 'monthly' 
+                            ? subscription.plan.price_monthly 
+                            : subscription.plan.price_yearly,
+                          subscription.plan.currency
+                        )}
+                        /{subscription.billing_cycle === 'monthly' ? 'month' : 'year'}
+                      </p>
+                      <Badge className="bg-muted-foreground">
+                        {subscription.status}
+                      </Badge>
+                    </div>
+                  </div>
 
-              <div className="flex gap-3">
-                <Button asChild>
-                  <Link href="/dashboard/settings/subscription">
-                    Manage Subscription
-                  </Link>
-                </Button>
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Invoices
-                </Button>
-              </div>
+                  <div className="flex gap-3">
+                    <Button asChild className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                      <Link href="/dashboard/settings/subscription">
+                        Manage Subscription
+                      </Link>
+                    </Button>
+                    <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Invoices
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No active subscription found</p>
+                  <Button asChild className="mt-4 bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                    <Link href="/dashboard/settings/subscription">
+                      View Subscription Options
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -287,11 +365,11 @@ export default function AccountSettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Export Your Data</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Download a copy of your data
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button size="sm" className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
                     <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>
@@ -300,15 +378,15 @@ export default function AccountSettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Delete Account</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Permanently delete your account and all data
                     </p>
                   </div>
                   <Button 
-                    variant="destructive" 
                     size="sm"
                     onClick={handleDeleteAccount}
                     disabled={loading}
+                    className="bg-transparent border-0 ring-2 ring-red-500 text-red-500 hover:bg-red-500 hover:!text-white transition-colors"
                   >
                     <UserX className="h-4 w-4 mr-2" />
                     Delete Account
@@ -337,8 +415,43 @@ export default function AccountSettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Last Login</span>
-                <span className="text-sm text-muted-foreground">2 hours ago</span>
+                <span className="text-sm text-gray-500">
+                  {user?.updated_at ? formatDate(user.updated_at) : 'Unknown'}
+                </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Member Since</span>
+                <span className="text-sm text-gray-500">
+                  {user?.created_at ? formatDate(user.created_at) : 'Unknown'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* User Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Name</Label>
+                <p className="text-sm text-gray-500">{user?.name || 'Not set'}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Email</Label>
+                <p className="text-sm text-gray-500">{user?.email}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Role</Label>
+                <p className="text-sm text-gray-500">{user?.role || 'User'}</p>
+              </div>
+              {user?.company && (
+                <div>
+                  <Label className="text-sm font-medium">Company</Label>
+                  <p className="text-sm text-gray-500">{user.company.name}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

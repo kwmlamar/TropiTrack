@@ -103,7 +103,7 @@ export default function ProfileSettingsPage() {
                     <Upload className="h-4 w-4 mr-2" />
                     Upload Photo
                   </Button>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     JPG, PNG or GIF. Max size 2MB.
                   </p>
                 </div>
@@ -211,7 +211,7 @@ export default function ProfileSettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Last Login</span>
-                <span className="text-sm text-muted-foreground">2 hours ago</span>
+                <span className="text-sm text-gray-500">2 hours ago</span>
               </div>
             </CardContent>
           </Card>

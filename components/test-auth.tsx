@@ -141,7 +141,7 @@ export default function TestAuth() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">Biometric Authentication Test</h1>
-        <p className="text-muted-foreground">
+        <p className="text-gray-500">
           Test both WebAuthn and cross-device biometric authentication systems
         </p>
       </div>
@@ -425,7 +425,7 @@ export default function TestAuth() {
                 <div key={enrollment.id} className="flex items-center justify-between p-3 border rounded">
                   <div>
                     <div className="font-medium">{enrollment.enrollment_type}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-gray-500">
                       Device: {enrollment.device_id} | 
                       Date: {new Date(enrollment.enrollment_date).toLocaleDateString()} |
                       Status: {enrollment.is_active ? 'Active' : 'Inactive'}

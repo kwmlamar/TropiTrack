@@ -439,7 +439,7 @@ export function TimesheetForm({
                               <Building2 className="h-4 w-4" />
                               <span>{project.name}</span>
                               {project.location && (
-                                <span className="text-muted-foreground">
+                                <span className="text-gray-500">
                                   ({project.location})
                                 </span>
                               )}
@@ -467,7 +467,7 @@ export function TimesheetForm({
                               variant="outline"
                               className={cn(
                                 "w-full justify-start text-left font-normal",
-                                !field.value?.from && "text-muted-foreground"
+                                !field.value?.from && "text-gray-500"
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -634,7 +634,7 @@ export function TimesheetForm({
                                         <div className="flex items-center gap-2">
                                           <User className="h-4 w-4" />
                                           <span>{worker.name}</span>
-                                          <span className="text-muted-foreground">({worker.role})</span>
+                                          <span className="text-gray-500">({worker.role})</span>
                                         </div>
                                       </SelectItem>
                                     ))}
@@ -821,7 +821,7 @@ export function TimesheetForm({
 
               {fields.length === 0 && (
                 <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-gray-500 mb-4">
                     No worker entries added yet
                   </p>
                   <Button type="button" variant="outline" onClick={addRow}>
@@ -836,22 +836,22 @@ export function TimesheetForm({
             {/* Summary */}
             <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-muted-foreground" />
+                <Calculator className="h-5 w-5 text-gray-500" />
                 <span className="text-sm font-medium">Summary:</span>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 <div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-500">
                     Workers:
                   </span>{" "}
                   <span className="font-medium">{totals.workers}</span>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Days:</span>{" "}
+                  <span className="text-sm text-gray-500">Days:</span>{" "}
                   <span className="font-medium">{totals.days}</span>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-500">
                     Total Entries:
                   </span>{" "}
                   <span className="font-medium">
@@ -859,13 +859,13 @@ export function TimesheetForm({
                   </span>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-500">
                     Total Hours:
                   </span>{" "}
                   <span className="font-medium">{totals.hours}h</span>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-500">
                     Total Cost:
                   </span>{" "}
                   <span className="font-medium text-green-600">

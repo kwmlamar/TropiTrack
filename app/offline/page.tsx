@@ -22,7 +22,7 @@ export default function OfflinePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-500">
             <p>You can still access:</p>
             <ul className="mt-2 space-y-1">
               <li>• Previously viewed timesheets</li>

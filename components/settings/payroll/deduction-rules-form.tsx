@@ -180,7 +180,7 @@ export function DeductionRulesForm() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-6">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
       </div>
     )
   }
@@ -355,7 +355,7 @@ export function DeductionRulesForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             {deductionRules.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
+              <div className="text-center py-6 text-gray-500">
                 No deduction rules configured yet
               </div>
             ) : (
@@ -368,11 +368,11 @@ export function DeductionRulesForm() {
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{rule.name}</p>
                       {!rule.is_active && (
-                        <span className="text-xs text-muted-foreground">(Inactive)</span>
+                        <span className="text-xs text-gray-500">(Inactive)</span>
                       )}
                     </div>
                     {rule.description && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-gray-500">
                         {rule.description}
                       </p>
                     )}
@@ -383,7 +383,7 @@ export function DeductionRulesForm() {
                           : `$${rule.value.toFixed(2)}`}
                       </span>
                       {rule.applies_to_overtime && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-gray-500">
                           (Includes overtime)
                         </span>
                       )}

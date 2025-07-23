@@ -68,7 +68,7 @@ export function MultiDatePicker({
         className={cn(
           "h-8 w-8 p-0 font-normal",
           isSelected && "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-          isDisabled && "text-muted-foreground opacity-50 cursor-not-allowed",
+          isDisabled && "text-gray-500 opacity-50 cursor-not-allowed",
           !isDisabled && !isSelected && "hover:bg-accent hover:text-accent-foreground"
         )}
         disabled={isDisabled}
@@ -93,7 +93,7 @@ export function MultiDatePicker({
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal",
-              !selectedDates.length && "text-muted-foreground"
+              !selectedDates.length && "text-gray-500"
             )}
             disabled={disabled}
           >
@@ -125,7 +125,7 @@ export function MultiDatePicker({
 
       {/* Max Dates Warning */}
       {maxDates && selectedDates.length >= maxDates && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-500">
           Maximum {maxDates} date{maxDates !== 1 ? 's' : ''} allowed
         </p>
       )}

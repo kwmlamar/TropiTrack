@@ -158,7 +158,7 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
               {getStatusIcon()}
               <div>
                 <p className="font-medium">Enrollment Status</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   {isEnrolled ? 'Biometric verification enabled' : 'Biometric verification not set up'}
                 </p>
               </div>
@@ -174,7 +174,7 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
                   {getBiometricTypeIcon()}
                   <span className="font-medium">Enrollment Type</span>
                 </div>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-gray-500">
                   {getBiometricTypeLabel()}
                 </span>
               </div>
@@ -185,7 +185,7 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
                     <Clock className="h-4 w-4" />
                     <span className="font-medium">Enrollment Date</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-500">
                     {format(parseISO(enrollmentData.enrollments[0].created_at), "PPP")}
                   </span>
                 </div>
@@ -197,7 +197,7 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
                     <Shield className="h-4 w-4" />
                     <span className="font-medium">Device ID</span>
                   </div>
-                  <span className="text-sm text-muted-foreground font-mono">
+                  <span className="text-sm text-gray-500 font-mono">
                     {enrollmentData.enrollments[0].device_id.slice(0, 8)}...
                   </span>
                 </div>
@@ -208,7 +208,7 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
                   <Shield className="h-4 w-4" />
                   <span className="font-medium">Enrollment ID</span>
                 </div>
-                <span className="text-sm text-muted-foreground font-mono">
+                <span className="text-sm text-gray-500 font-mono">
                   {enrollmentData.enrollments[0].id.slice(0, 8)}...
                 </span>
               </div>

@@ -53,7 +53,7 @@ export default function VerifyEmailPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-4">
-              <div className="text-center text-sm text-muted-foreground">
+              <div className="text-center text-sm text-gray-500">
                 <p className="mb-2">
                   Please check your email inbox and click the verification link to complete your registration.
                 </p>

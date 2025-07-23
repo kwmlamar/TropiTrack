@@ -54,7 +54,7 @@ export default function SubscriptionPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Subscription Management</h1>
-        <p className="text-muted-foreground">
+        <p className="text-gray-500">
           Manage your subscription and billing settings
         </p>
       </div>
@@ -73,7 +73,7 @@ export default function SubscriptionPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-semibold">{subscription.plan.name}</h3>
-                  <p className="text-muted-foreground">{subscription.plan.description}</p>
+                  <p className="text-gray-500">{subscription.plan.description}</p>
                 </div>
                 <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>
                   {subscription.status}
@@ -83,11 +83,11 @@ export default function SubscriptionPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium">Billing Cycle</p>
-                  <p className="text-sm text-muted-foreground capitalize">{subscription.billing_cycle}</p>
+                  <p className="text-sm text-gray-500 capitalize">{subscription.billing_cycle}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Next Billing</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     {new Date(subscription.current_period_end).toLocaleDateString()}
                   </p>
                 </div>
@@ -189,7 +189,7 @@ function FeatureFlagItem({ title, enabled, limit }: { title: string; enabled: bo
       <div className="flex-1">
         <p className="text-sm font-medium">{title}</p>
         {limit !== undefined && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-500">
             {limit === -1 ? 'Unlimited' : `Limit: ${limit}`}
           </p>
         )}

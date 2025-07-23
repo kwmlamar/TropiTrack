@@ -105,7 +105,7 @@ export function LoginForm({
           <h1 className="text-2xl font-semibold tracking-tight">
             Welcome back
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Sign in to your account to continue
           </p>
         </div>
@@ -120,7 +120,7 @@ export function LoginForm({
                 Email address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="email"
                   name="email"
@@ -159,7 +159,7 @@ export function LoginForm({
                 </button>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="password"
                   name="password"
@@ -174,7 +174,7 @@ export function LoginForm({
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-3 h-4 w-4 text-gray-500 hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -198,7 +198,7 @@ export function LoginForm({
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
+                  <span className="bg-background px-2 text-gray-500">
                     Or continue with
                   </span>
                 </div>
@@ -238,7 +238,7 @@ export function LoginForm({
             </div>
 
             {/* Sign up link */}
-            <div className="text-center text-sm text-muted-foreground pt-4">
+            <div className="text-center text-sm text-gray-500 pt-4">
               Don&apos;t have an account?{" "}
               <a
                 href="/signup"

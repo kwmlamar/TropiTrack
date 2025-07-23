@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Download, Trash2, FileText, Calendar, User, Search, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,7 +25,7 @@ export function ProjectFilesList({ projectId, refreshTrigger }: ProjectFilesList
   const [selectedCategory, setSelectedCategory] = useState<FileCategory | 'all'>('all')
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
 
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     try {
       setLoading(true)
       const projectFiles = await getProjectFiles(projectId)
@@ -36,11 +36,11 @@ export function ProjectFilesList({ projectId, refreshTrigger }: ProjectFilesList
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId])
 
   useEffect(() => {
     loadFiles()
-  }, [projectId, refreshTrigger])
+  }, [projectId, refreshTrigger, loadFiles])
 
   const handleDelete = async (fileId: string) => {
     try {
@@ -134,7 +134,7 @@ export function ProjectFilesList({ projectId, refreshTrigger }: ProjectFilesList
       {/* Header */}
       <div>
         <h3 className="text-lg font-semibold mb-2">Project Files</h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-500">
           {files.length} file{files.length !== 1 ? 's' : ''} uploaded
         </p>
       </div>
@@ -142,7 +142,7 @@ export function ProjectFilesList({ projectId, refreshTrigger }: ProjectFilesList
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Search files..."
             value={searchTerm}
@@ -171,9 +171,9 @@ export function ProjectFilesList({ projectId, refreshTrigger }: ProjectFilesList
         <CardContent className="p-6">
           {filteredFiles.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <FileText className="h-12 w-12 text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No files found</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 {searchTerm || selectedCategory !== 'all' 
                   ? 'Try adjusting your search or filter criteria'
                   : 'Upload your first document to get started'
@@ -202,7 +202,7 @@ export function ProjectFilesList({ projectId, refreshTrigger }: ProjectFilesList
                       </Badge>
                     </div>
                     
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <span>{formatFileSize(file.file_size)}</span>
                       </div>
@@ -217,7 +217,7 @@ export function ProjectFilesList({ projectId, refreshTrigger }: ProjectFilesList
                     </div>
                     
                     {file.description && (
-                      <p className="text-sm text-muted-foreground mt-1 truncate">
+                      <p className="text-sm text-gray-500 mt-1 truncate">
                         {file.description}
                       </p>
                     )}

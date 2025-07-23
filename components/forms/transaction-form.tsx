@@ -153,7 +153,7 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Transactio
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !form.watch("date") && "text-muted-foreground"
+                  !form.watch("date") && "text-gray-500"
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />

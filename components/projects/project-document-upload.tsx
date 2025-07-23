@@ -203,7 +203,7 @@ export function ProjectDocumentUpload({ projectId, onUploadComplete }: ProjectDo
           
           <div className="space-y-4">
             <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-              <Upload className="h-8 w-8 text-muted-foreground" />
+              <Upload className="h-8 w-8 text-gray-500" />
             </div>
             
             <div>
@@ -215,7 +215,7 @@ export function ProjectDocumentUpload({ projectId, onUploadComplete }: ProjectDo
                     : 'Drag & drop a file here'
                 }
               </p>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-gray-500 mb-4">
                 or click to browse files
               </p>
               
@@ -228,7 +228,7 @@ export function ProjectDocumentUpload({ projectId, onUploadComplete }: ProjectDo
               </Button>
             </div>
             
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-gray-500">
               <p>Supported formats: PDF, PNG, JPG, DOCX, XLSX, PPTX</p>
               <p>Maximum file size: 50MB</p>
             </div>
@@ -253,7 +253,7 @@ export function ProjectDocumentUpload({ projectId, onUploadComplete }: ProjectDo
                 <div className="text-3xl">{getFileIcon(uploadData.file.type)}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{uploadData.file.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     {formatFileSize(uploadData.file.size)} • {uploadData.file.type}
                   </p>
                 </div>

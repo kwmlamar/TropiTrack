@@ -73,7 +73,7 @@ export function MigratePayrollTransactions() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-gray-500">
           <p>This will:</p>
           <ul className="list-disc list-inside mt-2 space-y-1">
             <li>Create liability transactions for all existing payrolls</li>

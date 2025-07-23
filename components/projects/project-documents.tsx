@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -67,30 +67,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
     file: null
   })
 
-  // Load documents on component mount
-  useEffect(() => {
-    loadDocuments()
-  }, [projectId])
-
-  // Filter documents when search term or category changes
-  useEffect(() => {
-    let filtered = documents
-
-    if (searchTerm) {
-      filtered = filtered.filter(doc => 
-        doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter(doc => doc.category === selectedCategory)
-    }
-
-    setFilteredDocuments(filtered)
-  }, [documents, searchTerm, selectedCategory])
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     setLoading(true)
     try {
       const [documentsResponse, statsResponse] = await Promise.all([
@@ -113,7 +90,30 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId, userId])
+
+  // Load documents on component mount
+  useEffect(() => {
+    loadDocuments()
+  }, [loadDocuments])
+
+  // Filter documents when search term or category changes
+  useEffect(() => {
+    let filtered = documents
+
+    if (searchTerm) {
+      filtered = filtered.filter(doc => 
+        doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(doc => doc.category === selectedCategory)
+    }
+
+    setFilteredDocuments(filtered)
+  }, [documents, searchTerm, selectedCategory])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -269,7 +269,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Project Documents</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Manage contracts, plans, permits, and other project documents
           </p>
         </div>
@@ -363,9 +363,9 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
           <Card className="border-border/50 bg-gradient-to-b from-[#E8EDF5] to-[#E8EDF5]/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                <FolderOpen className="h-4 w-4 text-gray-500" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Documents</p>
+                  <p className="text-sm text-gray-500">Total Documents</p>
                   <p className="text-2xl font-bold text-primary dark:text-foreground">{stats.total}</p>
                 </div>
               </div>
@@ -377,7 +377,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 rounded-full bg-primary/20" />
                   <div>
-                    <p className="text-sm text-muted-foreground">{category.label}</p>
+                    <p className="text-sm text-gray-500">{category.label}</p>
                     <p className="text-2xl font-bold text-primary dark:text-foreground">{stats.byCategory[category.value] || 0}</p>
                   </div>
                 </div>
@@ -390,7 +390,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Search documents..."
             value={searchTerm}
@@ -418,9 +418,9 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
       {filteredDocuments.length === 0 ? (
         <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <FileText className="h-12 w-12 text-gray-500 mb-4" />
             <h3 className="text-lg font-semibold mb-2">No documents found</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <p className="text-gray-500 text-center mb-4">
               {searchTerm || selectedCategory !== "all" 
                 ? "Try adjusting your search or filter criteria"
                 : "Upload your first document to get started"
@@ -441,12 +441,12 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border/50">
-                    <th className="text-left p-4 font-medium text-muted-foreground">Document</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">Category</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">Size</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">Uploaded By</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">Date</th>
-                    <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
+                    <th className="text-left p-4 font-medium text-gray-500">Document</th>
+                    <th className="text-left p-4 font-medium text-gray-500">Category</th>
+                    <th className="text-left p-4 font-medium text-gray-500">Size</th>
+                    <th className="text-left p-4 font-medium text-gray-500">Uploaded By</th>
+                    <th className="text-left p-4 font-medium text-gray-500">Date</th>
+                    <th className="text-right p-4 font-medium text-gray-500">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -507,7 +507,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                               {document.name}
                             </h4>
                             {document.description && (
-                              <p className="text-sm text-muted-foreground truncate">
+                              <p className="text-sm text-gray-500 truncate">
                                 {document.description}
                               </p>
                             )}
@@ -522,13 +522,13 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                           {DOCUMENT_CATEGORIES.find(c => c.value === document.category)?.label}
                         </Badge>
                       </td>
-                      <td className="p-4 text-sm text-muted-foreground">
+                      <td className="p-4 text-sm text-gray-500">
                         {formatFileSize(document.file_size)}
                       </td>
-                      <td className="p-4 text-sm text-muted-foreground">
+                      <td className="p-4 text-sm text-gray-500">
                         {document.uploaded_by_profile?.name || "Unknown"}
                       </td>
-                      <td className="p-4 text-sm text-muted-foreground">
+                      <td className="p-4 text-sm text-gray-500">
                         {format(new Date(document.created_at), "MMM d, yyyy")}
                       </td>
                       <td className="p-4">
@@ -618,7 +618,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
           </DialogHeader>
           {previewDocument && (
             <div className="space-y-4">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center gap-2">
                   <Badge 
                     variant="secondary" 
@@ -661,7 +661,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                          <p className="text-muted-foreground">Loading PDF...</p>
+                          <p className="text-gray-500">Loading PDF...</p>
                         </div>
                       </div>
                     ) : (
@@ -671,21 +671,21 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                             <span className="text-red-600 dark:text-red-400 text-4xl font-bold">PDF</span>
                           </div>
                           <h3 className="text-lg font-semibold mb-2">{previewDocument.name}</h3>
-                          <p className="text-muted-foreground mb-4">
+                          <p className="text-gray-500 mb-4">
                             PDF Document • {formatFileSize(previewDocument.file_size)}
                           </p>
                           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Pages:</span>
+                                <span className="text-gray-500">Pages:</span>
                                 <span>Estimated {Math.ceil(previewDocument.file_size / 5000)} pages</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Type:</span>
+                                <span className="text-gray-500">Type:</span>
                                 <span>Portable Document Format</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Category:</span>
+                                <span className="text-gray-500">Category:</span>
                                 <span>{DOCUMENT_CATEGORIES.find(c => c.value === previewDocument.category)?.label}</span>
                               </div>
                             </div>
@@ -702,17 +702,17 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                           <span className="text-blue-600 dark:text-blue-400 text-4xl font-bold">DOC</span>
                         </div>
                         <h3 className="text-lg font-semibold mb-2">{previewDocument.name}</h3>
-                        <p className="text-muted-foreground mb-4">
+                        <p className="text-gray-500 mb-4">
                           Microsoft Word Document • {formatFileSize(previewDocument.file_size)}
                         </p>
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Type:</span>
+                              <span className="text-gray-500">Type:</span>
                               <span>Word Document</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Category:</span>
+                              <span className="text-gray-500">Category:</span>
                               <span>{DOCUMENT_CATEGORIES.find(c => c.value === previewDocument.category)?.label}</span>
                             </div>
                           </div>
@@ -728,17 +728,17 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                           <span className="text-green-600 dark:text-green-400 text-4xl font-bold">XLS</span>
                         </div>
                         <h3 className="text-lg font-semibold mb-2">{previewDocument.name}</h3>
-                        <p className="text-muted-foreground mb-4">
+                        <p className="text-gray-500 mb-4">
                           Microsoft Excel Spreadsheet • {formatFileSize(previewDocument.file_size)}
                         </p>
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Type:</span>
+                              <span className="text-gray-500">Type:</span>
                               <span>Excel Spreadsheet</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Category:</span>
+                              <span className="text-gray-500">Category:</span>
                               <span>{DOCUMENT_CATEGORIES.find(c => c.value === previewDocument.category)?.label}</span>
                             </div>
                           </div>
@@ -752,7 +752,7 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                          <p className="text-muted-foreground">Loading document...</p>
+                          <p className="text-gray-500">Loading document...</p>
                         </div>
                       </div>
                     ) : documentContent ? (
@@ -768,17 +768,17 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                             <span className="text-gray-600 dark:text-gray-400 text-4xl font-bold">FILE</span>
                           </div>
                           <h3 className="text-lg font-semibold mb-2">{previewDocument.name}</h3>
-                          <p className="text-muted-foreground mb-4">
+                          <p className="text-gray-500 mb-4">
                             {previewDocument.file_type} • {formatFileSize(previewDocument.file_size)}
                           </p>
                           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Type:</span>
+                                <span className="text-gray-500">Type:</span>
                                 <span>{previewDocument.file_type}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Category:</span>
+                                <span className="text-gray-500">Category:</span>
                                 <span>{DOCUMENT_CATEGORIES.find(c => c.value === previewDocument.category)?.label}</span>
                               </div>
                             </div>

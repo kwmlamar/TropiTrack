@@ -119,3 +119,33 @@ export async function signUpWithGoogle(): Promise<{ url: string } | { error: str
   return { url: data.url };
 }
 
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  try {
+    // First verify the current password by attempting to sign in
+    const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+      email: (await supabase.auth.getUser()).data.user?.email || '',
+      password: currentPassword,
+    });
+
+    if (signInError || !user) {
+      return { success: false, error: "Current password is incorrect" };
+    }
+
+    // Update the password
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (updateError) {
+      return { success: false, error: updateError.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error changing password:", error);
+    return { success: false, error: "Failed to update password. Please try again." };
+  }
+}
+

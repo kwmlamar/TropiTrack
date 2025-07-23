@@ -352,7 +352,7 @@ export function ApprovalsPage() {
         const timesheet = row.original
         return (
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className="h-4 w-4 text-gray-500" />
             <div>
               <p className="font-medium">{timesheet.worker?.name || 'Unknown Worker'}</p>
             </div>
@@ -562,7 +562,7 @@ export function ApprovalsPage() {
           )}
           {timesheets.length > 0 && (
             <Button
-              className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors ml-4"
+              className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors ml-4"
               onClick={async () => {
                 const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.id)
                 await handleBatchApprove(selectedIds)
@@ -578,9 +578,9 @@ export function ApprovalsPage() {
       {timesheets.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <Clock className="h-12 w-12 text-gray-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">No unapproved timesheets</h3>
-            <p className="text-muted-foreground">
+            <p className="text-gray-500">
               All timesheets have been approved or there are no pending submissions.
             </p>
           </CardContent>

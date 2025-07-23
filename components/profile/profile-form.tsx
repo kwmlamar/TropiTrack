@@ -113,37 +113,37 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3 text-sm">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{initialProfile.email}</span>
+              <Mail className="h-4 w-4 text-gray-500" />
+              <span className="text-gray-500">{initialProfile.email}</span>
             </div>
             {initialProfile.phone && (
               <div className="flex items-center gap-3 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{initialProfile.phone}</span>
+                <Phone className="h-4 w-4 text-gray-500" />
+                <span className="text-gray-500">{initialProfile.phone}</span>
               </div>
             )}
             {initialProfile.location && (
               <div className="flex items-center gap-3 text-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{initialProfile.location}</span>
+                <MapPin className="h-4 w-4 text-gray-500" />
+                <span className="text-gray-500">{initialProfile.location}</span>
               </div>
             )}
             {initialProfile.website && (
               <div className="flex items-center gap-3 text-sm">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{initialProfile.website}</span>
+                <Globe className="h-4 w-4 text-gray-500" />
+                <span className="text-gray-500">{initialProfile.website}</span>
               </div>
             )}
             <Separator />
             <div className="flex items-center gap-3 text-sm">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">
+              <Building2 className="h-4 w-4 text-gray-500" />
+              <span className="text-gray-500">
                 {initialProfile.company?.name || "Company not set"}
               </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <span className="text-gray-500">
                 Member since {new Date().toLocaleDateString()}
               </span>
             </div>
@@ -321,7 +321,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium">Change Password</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Update your account password
                 </p>
               </div>
@@ -333,7 +333,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium">Two-Factor Authentication</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Add an extra layer of security to your account
                 </p>
               </div>
@@ -345,7 +345,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium">Account Deletion</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Permanently delete your account and all data
                 </p>
               </div>

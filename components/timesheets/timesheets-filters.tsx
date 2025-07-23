@@ -77,7 +77,7 @@ export function TimesheetsFilters({
               className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
                 viewMode === "daily"
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
+                  : "bg-background text-gray-500 border-border hover:bg-muted/50 hover:text-foreground"
               }`}
             >
               <CalendarDays className="h-4 w-4" />
@@ -88,7 +88,7 @@ export function TimesheetsFilters({
               className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
                 viewMode === "weekly"
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
+                  : "bg-background text-gray-500 border-border hover:bg-muted/50 hover:text-foreground"
               }`}
             >
               <CalendarDays className="h-4 w-4" />
@@ -173,7 +173,7 @@ export function TimesheetsFilters({
                 setSelectedProject("all");
                 setViewMode("weekly");
               }}
-              className="w-full justify-start text-muted-foreground hover:text-foreground"
+              className="w-full justify-start text-gray-500 hover:text-foreground"
             >
               Clear all filters
             </Button>

@@ -130,7 +130,7 @@ export function InvitesList({userId}: InvitesListProps) {
   }
 
   if (invites.length === 0) {
-    return <div className="text-center py-8 text-muted-foreground">No invites found. Create one to get started.</div>
+    return <div className="text-center py-8 text-gray-500">No invites found. Create one to get started.</div>
   }
 
   return (

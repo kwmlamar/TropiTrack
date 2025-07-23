@@ -246,7 +246,7 @@ export function WorkerAttendance({}: WorkerAttendanceProps) {
       <CardContent className="flex-1">
         <div className="h-full min-h-[200px] flex flex-col">
           {attendanceData.total === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
+            <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
                 <p className="font-medium">No attendance data</p>
                 <p className="text-sm">No timesheets found for the selected period</p>

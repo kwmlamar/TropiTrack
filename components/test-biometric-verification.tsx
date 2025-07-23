@@ -184,7 +184,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
             <div className="text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-blue-600" />
               <h3 className="text-lg font-semibold">Device Compatibility Check</h3>
-              <p className="text-muted-foreground">Checking WebAuthn biometric support...</p>
+              <p className="text-gray-500">Checking WebAuthn biometric support...</p>
             </div>
             
             <div className="space-y-3">
@@ -245,7 +245,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
             <div className="text-center">
               <Zap className="h-12 w-12 mx-auto mb-4 text-blue-600" />
               <h3 className="text-lg font-semibold">Real WebAuthn Enrollment</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 This will use your device&apos;s actual biometric sensors (fingerprint, face, etc.)
               </p>
             </div>
@@ -261,7 +261,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
                   <Fingerprint className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-medium">Fingerprint Enrollment</div>
-                    <div className="text-sm text-muted-foreground">Use your device&apos;s fingerprint sensor</div>
+                    <div className="text-sm text-gray-500">Use your device&apos;s fingerprint sensor</div>
                   </div>
                 </Button>
                 
@@ -274,7 +274,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
                   <User className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-medium">Face Recognition Enrollment</div>
-                    <div className="text-sm text-muted-foreground">Use your device&apos;s camera</div>
+                    <div className="text-sm text-gray-500">Use your device&apos;s camera</div>
                   </div>
                 </Button>
               </div>
@@ -282,7 +282,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
               {isProcessing && (
                 <div className="space-y-3">
                   <Progress value={progress} className="w-full" />
-                  <div className="text-center text-sm text-muted-foreground">
+                  <div className="text-center text-sm text-gray-500">
                     {progress < 40 && 'Preparing enrollment...'}
                     {progress >= 40 && progress < 80 && 'Follow device prompts for biometric capture'}
                     {progress >= 80 && 'Storing enrollment data...'}
@@ -314,7 +314,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
             <div className="text-center">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
               <h3 className="text-lg font-semibold">Enrollment Complete!</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Now let&apos;s test the verification with real biometric authentication
               </p>
             </div>
@@ -333,7 +333,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
             {isProcessing && (
               <div className="space-y-3">
                 <Progress value={progress} className="w-full" />
-                <div className="text-center text-sm text-muted-foreground">
+                <div className="text-center text-sm text-gray-500">
                   {progress < 50 && 'Preparing verification...'}
                   {progress >= 50 && progress < 80 && 'Follow device prompts for biometric verification'}
                   {progress >= 80 && 'Processing verification...'}
@@ -364,7 +364,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
             <div className="text-center">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
               <h3 className="text-lg font-semibold">Test Complete!</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Real WebAuthn biometric authentication is working successfully
               </p>
             </div>

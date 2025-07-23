@@ -156,7 +156,7 @@ export function RecentTimesheets({ selectedDate }: RecentTimesheetsProps) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-medium text-sm truncate">{timesheet.worker?.name || "Unknown Worker"}</p>
-              <p className="text-xs text-muted-foreground truncate">{timesheet.worker?.position || "Worker"}</p>
+              <p className="text-xs text-gray-500 truncate">{timesheet.worker?.position || "Worker"}</p>
             </div>
           </div>
         )
@@ -171,7 +171,7 @@ export function RecentTimesheets({ selectedDate }: RecentTimesheetsProps) {
         return (
           <div className="min-w-0">
             <p className="font-medium text-sm truncate">{timesheet.project?.client?.name || "Unknown Client"}</p>
-            <p className="text-xs text-muted-foreground truncate">{timesheet.project?.client?.company || "No company"}</p>
+            <p className="text-xs text-gray-500 truncate">{timesheet.project?.client?.company || "No company"}</p>
           </div>
         )
       },
@@ -401,10 +401,10 @@ export function RecentTimesheets({ selectedDate }: RecentTimesheetsProps) {
           {error ? (
             <div className="flex flex-col items-center justify-center py-8 text-destructive">
               <p className="font-medium">Failed to load timesheets</p>
-              <p className="text-sm text-muted-foreground mt-1">{error}</p>
+              <p className="text-sm text-gray-500 mt-1">{error}</p>
             </div>
           ) : filteredData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
               <p className="font-medium">No timesheets found</p>
               <p className="text-sm mt-1">No timesheets match the selected filter</p>
             </div>

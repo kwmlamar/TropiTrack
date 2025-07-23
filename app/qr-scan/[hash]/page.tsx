@@ -353,7 +353,7 @@ export default function QRScanPage({ params }: QRScanPageProps) {
           <CardContent className="text-center py-16">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-6 text-primary" />
             <h2 className="text-2xl font-semibold mb-2">{t.loading}</h2>
-            <p className="text-muted-foreground">{t.loadingSubtitle}</p>
+            <p className="text-gray-500">{t.loadingSubtitle}</p>
           </CardContent>
         </Card>
       </div>
@@ -367,7 +367,7 @@ export default function QRScanPage({ params }: QRScanPageProps) {
           <CardContent className="text-center py-16">
             <XCircle className="h-16 w-16 mx-auto mb-6 text-destructive" />
             <h1 className="text-2xl font-bold mb-4">{t.invalidQR}</h1>
-            <p className="text-muted-foreground mb-8">{error}</p>
+            <p className="text-gray-500 mb-8">{error}</p>
             <Link href="/dashboard">
               <Button className="w-full">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -471,14 +471,14 @@ export default function QRScanPage({ params }: QRScanPageProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <MapPin className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <div>
                   <span className="font-medium">Project:</span>
                   <span className="ml-2">{qrCode.project_location?.project?.name || 'Unknown Project'}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <MapPin className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <div>
                   <span className="font-medium">Location:</span>
                   <span className="ml-2">{qrCode.project_location?.name || 'Unknown Location'}</span>
@@ -525,9 +525,9 @@ export default function QRScanPage({ params }: QRScanPageProps) {
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <User className="h-16 w-16 mx-auto text-muted-foreground mb-6" />
+                  <User className="h-16 w-16 mx-auto text-gray-500 mb-6" />
                   <h3 className="text-xl font-medium mb-4">{t.noWorkersTitle}</h3>
-                  <p className="text-muted-foreground mb-8">
+                  <p className="text-gray-500 mb-8">
                     {t.noWorkersMessage}
                   </p>
                   <Link href="/dashboard/workers">
@@ -552,7 +552,7 @@ export default function QRScanPage({ params }: QRScanPageProps) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <p className="text-muted-foreground mb-6">
+                <p className="text-gray-500 mb-6">
                   {t.verifyIdentity}
                 </p>
               </div>
@@ -582,7 +582,7 @@ export default function QRScanPage({ params }: QRScanPageProps) {
               {scanning && (
                 <div className="text-center py-6">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-                  <p className="text-muted-foreground">{t.verifyingIdentity}</p>
+                  <p className="text-gray-500">{t.verifyingIdentity}</p>
                 </div>
               )}
 
@@ -660,7 +660,7 @@ export default function QRScanPage({ params }: QRScanPageProps) {
                   <h3 className="text-xl font-semibold mb-2">
                     {scanResult.success ? t.success : t.error}
                   </h3>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-gray-500 mb-6">
                     {scanResult.message}
                   </p>
                   <Button onClick={resetFlow} variant="outline">

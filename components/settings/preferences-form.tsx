@@ -78,7 +78,7 @@ export function PreferencesForm() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="email_notifications">Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Receive notifications via email
                 </p>
               </div>
@@ -92,7 +92,7 @@ export function PreferencesForm() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="push_notifications">Push Notifications</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Receive push notifications in your browser
                 </p>
               </div>
@@ -106,7 +106,7 @@ export function PreferencesForm() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="weekly_reports">Weekly Reports</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Receive weekly summary reports
                 </p>
               </div>
@@ -136,7 +136,7 @@ export function PreferencesForm() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="auto_logout">Auto Logout</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Automatically log out after inactivity
                 </p>
               </div>
@@ -150,7 +150,7 @@ export function PreferencesForm() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="dark_mode">Dark Mode</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Use dark theme for the application
                 </p>
               </div>

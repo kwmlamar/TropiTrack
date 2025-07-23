@@ -223,7 +223,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
             <div className="text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-blue-600" />
               <h3 className="text-lg font-semibold">Device Compatibility Check</h3>
-              <p className="text-muted-foreground">Checking if your device supports biometric authentication...</p>
+              <p className="text-gray-500">Checking if your device supports biometric authentication...</p>
             </div>
             
             <div className="space-y-3">
@@ -285,7 +285,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
           <div className="space-y-4">
             <div className="text-center">
               <h3 className="text-lg font-semibold">Choose Biometric Method</h3>
-              <p className="text-muted-foreground">Select how you&apos;d like to authenticate</p>
+              <p className="text-gray-500">Select how you&apos;d like to authenticate</p>
             </div>
             
             <div className="grid gap-3">
@@ -298,7 +298,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
                   <Fingerprint className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-medium">Fingerprint</div>
-                    <div className="text-sm text-muted-foreground">Use your fingerprint to clock in/out</div>
+                    <div className="text-sm text-gray-500">Use your fingerprint to clock in/out</div>
                   </div>
                 </Button>
               )}
@@ -312,7 +312,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
                   <User className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-medium">Face Recognition</div>
-                    <div className="text-sm text-muted-foreground">Use your face to clock in/out</div>
+                    <div className="text-sm text-gray-500">Use your face to clock in/out</div>
                   </div>
                 </Button>
               )}
@@ -329,7 +329,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
                   </div>
                   <div className="text-left">
                     <div className="font-medium">Both Methods</div>
-                    <div className="text-sm text-muted-foreground">Use either fingerprint or face recognition</div>
+                    <div className="text-sm text-gray-500">Use either fingerprint or face recognition</div>
                   </div>
                 </Button>
               )}
@@ -352,7 +352,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
             <div className="text-center">
               {getCaptureIcon()}
               <h3 className="text-lg font-semibold mt-4">Biometric Enrollment</h3>
-              <p className="text-muted-foreground">{getCaptureInstructions()}</p>
+              <p className="text-gray-500">{getCaptureInstructions()}</p>
             </div>
             
             <div className="space-y-4">
@@ -415,7 +415,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
             <div className="text-center">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
               <h3 className="text-lg font-semibold">Testing Verification</h3>
-              <p className="text-muted-foreground">Testing the biometric enrollment with a verification attempt...</p>
+              <p className="text-gray-500">Testing the biometric enrollment with a verification attempt...</p>
             </div>
             
             <div className="space-y-4">
@@ -437,7 +437,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
             <div className="text-center">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
               <h3 className="text-lg font-semibold">Enrollment Complete!</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 {workerName} has been successfully enrolled for {selectedType} authentication.
               </p>
             </div>

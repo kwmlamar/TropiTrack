@@ -110,7 +110,7 @@ export default function ClientTable({ user }: { user: User }) {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="space-y-4 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Management</h1>
-          <p className="text-muted-foreground">Manage your construction clients and project relationships</p>
+          <p className="text-gray-500">Manage your construction clients and project relationships</p>
         </div>
         <Button 
           onClick={() => setClientDialogOpen(true)}
@@ -145,7 +145,7 @@ export default function ClientTable({ user }: { user: User }) {
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_2fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
             {columns.map((col) => (
-              <div key={col} className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              <div key={col} className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                 {col}
               </div>
             ))}
@@ -155,7 +155,7 @@ export default function ClientTable({ user }: { user: User }) {
           {/* Data Rows */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-2 text-muted-foreground">
+              <div className="flex items-center space-x-2 text-gray-500">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm">Loading clients...</span>
               </div>
@@ -163,10 +163,10 @@ export default function ClientTable({ user }: { user: User }) {
           ) : filteredClients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                <UserX className="h-8 w-8 text-muted-foreground" />
+                <UserX className="h-8 w-8 text-gray-500" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">No clients found</h3>
-              <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
+              <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
                 You haven&apos;t added any clients yet. Add your first client to start building your project portfolio.
               </p>
               <Button 
@@ -187,7 +187,7 @@ export default function ClientTable({ user }: { user: User }) {
                   <div className="flex items-center space-x-3">
                     <div>
                       <p className="font-semibold text-foreground">{client.name}</p>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
                         {client.phone && (
                           <div className="flex items-center space-x-1">
                             <span>{client.phone}</span>
@@ -242,7 +242,7 @@ export default function ClientTable({ user }: { user: User }) {
           {/* Pagination Controls */}
           {filteredClients.length > ITEMS_PER_PAGE && (
             <div className="flex items-center justify-between px-6 py-4">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-gray-500">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredClients.length)} of {filteredClients.length} clients
               </div>
               <div className="flex items-center space-x-2">

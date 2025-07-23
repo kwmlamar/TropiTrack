@@ -57,7 +57,7 @@ export default function TestTimeLogsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-4">Time Logs Testing</h1>
-        <p className="text-muted-foreground mb-8">
+        <p className="text-gray-500 mb-8">
           Test the time logs functionality and generate sample data
         </p>
       </div>
@@ -68,7 +68,7 @@ export default function TestTimeLogsPage() {
             <CardTitle>Generate Sample Data</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               Create sample timesheets for the last 7 days to test the time logs functionality.
             </p>
             <Button 
@@ -86,7 +86,7 @@ export default function TestTimeLogsPage() {
             <CardTitle>Test Time Logs API</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               Test the time logs API endpoint to verify it&apos;s working correctly.
             </p>
             <Button 
@@ -109,7 +109,7 @@ export default function TestTimeLogsPage() {
           <div className="space-y-4">
             <div>
               <h3 className="font-semibold mb-2">1. Generate Sample Data</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Click &quot;Generate Sample Data&quot; to create sample timesheets for testing. 
                 This will create timesheets for the last 7 days with a mix of approved and pending statuses.
               </p>
@@ -117,7 +117,7 @@ export default function TestTimeLogsPage() {
             
             <div>
               <h3 className="font-semibold mb-2">2. Test the API</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Click &quot;Test API&quot; to verify that the time logs API is working correctly. 
                 Check the browser console for the returned data.
               </p>
@@ -125,7 +125,7 @@ export default function TestTimeLogsPage() {
             
             <div>
               <h3 className="font-semibold mb-2">3. View Time Logs</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Navigate to <code className="bg-muted px-1 rounded">/dashboard/time-logs</code> to see the time logs page with real data.
               </p>
             </div>

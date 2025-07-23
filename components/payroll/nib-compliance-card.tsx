@@ -43,19 +43,19 @@ export function NibComplianceCard({
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Employee Rate</span>
+            <span className="text-sm text-gray-500">Employee Rate</span>
             <span className="font-medium">{EMPLOYEE_NIB_RATE}%</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Employee Contributions</span>
+            <span className="text-sm text-gray-500">Employee Contributions</span>
             <span className="font-medium">{formatCurrency(totalNibContributions)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Employer Rate</span>
+            <span className="text-sm text-gray-500">Employer Rate</span>
             <span className="font-medium">{EMPLOYER_NIB_RATE}%</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Employer Contributions</span>
+            <span className="text-sm text-gray-500">Employer Contributions</span>
             <span className="font-medium">{formatCurrency(employerContribution)}</span>
           </div>
           <div className="border-t pt-3">
@@ -65,7 +65,7 @@ export function NibComplianceCard({
                 {formatCurrency(totalContributions)}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Due by 15th of following month</p>
+            <p className="text-xs text-gray-500 mt-1">Due by 15th of following month</p>
           </div>
         </div>
       </CardContent>

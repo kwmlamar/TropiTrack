@@ -57,7 +57,7 @@ import {
               role="combobox"
               className={cn(
                 "w-full justify-between",
-                !value.length && "text-muted-foreground"
+                !value.length && "text-gray-500"
               )}
             >
               {selectedLabels || placeholder}

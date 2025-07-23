@@ -110,7 +110,7 @@ export default function WorkerDetails() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading worker details...</p>
+          <p className="text-gray-500">Loading worker details...</p>
         </div>
       </div>
     );
@@ -153,7 +153,7 @@ export default function WorkerDetails() {
             </Avatar>
             <div className="space-y-2 ml-4">
               <h1 className="text-3xl font-bold tracking-tight">{worker.name}</h1>
-              <p className="text-xl text-muted-foreground">{worker.position}</p>
+              <p className="text-xl text-gray-500">{worker.position}</p>
               <div className="flex items-center space-x-2">
                 <Badge
                   variant={worker.is_active ? "default" : "secondary"}
@@ -165,8 +165,8 @@ export default function WorkerDetails() {
                 >
                   {worker.is_active ? "Active" : "Inactive"}
                 </Badge>
-                <span className="text-sm text-muted-foreground">•</span>
-                <span className="text-sm text-muted-foreground">${worker.hourly_rate}/hr</span>
+                <span className="text-sm text-gray-500">•</span>
+                <span className="text-sm text-gray-500">${worker.hourly_rate}/hr</span>
               </div>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function WorkerDetails() {
               <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
                 <TabsTrigger
                   value="details"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
                 >
                   Details
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -213,7 +213,7 @@ export default function WorkerDetails() {
 
                 <TabsTrigger
                   value="timecards"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
                 >
                   Timecards
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -221,7 +221,7 @@ export default function WorkerDetails() {
 
                 <TabsTrigger
                   value="documents"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
                 >
                   Documents
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -229,7 +229,7 @@ export default function WorkerDetails() {
 
                 <TabsTrigger
                   value="notes"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
                 >
                   Notes
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -237,7 +237,7 @@ export default function WorkerDetails() {
 
                 <TabsTrigger
                   value="biometrics"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
                 >
                   Biometrics
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -257,19 +257,19 @@ export default function WorkerDetails() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Email</div>
+                      <div className="text-sm text-gray-500">Email</div>
                       <p className="font-medium">{worker.email || "Not provided"}</p>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Phone</div>
+                      <div className="text-sm text-gray-500">Phone</div>
                       <p className="font-medium">{worker.phone || "Not provided"}</p>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Address</div>
+                      <div className="text-sm text-gray-500">Address</div>
                       <p className="font-medium">{worker.address || "Not provided"}</p>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">NIB Number</div>
+                      <div className="text-sm text-gray-500">NIB Number</div>
                       <p className="font-medium">{worker.nib_number || "Not provided"}</p>
                     </div>
                   </CardContent>
@@ -285,19 +285,19 @@ export default function WorkerDetails() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Hourly Rate</div>
+                      <div className="text-sm text-gray-500">Hourly Rate</div>
                       <p className="font-medium">${worker.hourly_rate}/hr</p>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Hire Date</div>
+                      <div className="text-sm text-gray-500">Hire Date</div>
                       <p className="font-medium">{format(parseISO(worker.hire_date), "PPP")}</p>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Department</div>
+                      <div className="text-sm text-gray-500">Department</div>
                       <p className="font-medium">{worker.department || "Not specified"}</p>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Status</div>
+                      <div className="text-sm text-gray-500">Status</div>
                       <Badge
                         variant={worker.is_active ? "default" : "secondary"}
                         className={
@@ -328,7 +328,7 @@ export default function WorkerDetails() {
                             </Badge>
                           ))
                         ) : (
-                          <p className="text-muted-foreground">No skills listed</p>
+                          <p className="text-gray-500">No skills listed</p>
                         )}
                       </div>
                     </div>
@@ -342,7 +342,7 @@ export default function WorkerDetails() {
                             </Badge>
                           ))
                         ) : (
-                          <p className="text-muted-foreground">No certifications listed</p>
+                          <p className="text-gray-500">No certifications listed</p>
                         )}
                       </div>
                     </div>
@@ -356,11 +356,11 @@ export default function WorkerDetails() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Contact Name</div>
+                      <div className="text-sm text-gray-500">Contact Name</div>
                       <p className="font-medium">{worker.emergency_contact || "Not provided"}</p>
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">Contact Phone</div>
+                      <div className="text-sm text-gray-500">Contact Phone</div>
                       <p className="font-medium">{worker.emergency_phone || "Not provided"}</p>
                     </div>
                   </CardContent>
@@ -383,16 +383,16 @@ export default function WorkerDetails() {
                         .map((assignment: { project: { id: string; name: string }; role_on_project?: string; id?: string }, index: number) => (
                         <Card key={`${assignment.project.id}-${assignment.id || index}`} className="p-4 border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                           <div className="space-y-2">
-                            <div className="text-sm text-muted-foreground">Project</div>
+                            <div className="text-sm text-gray-500">Project</div>
                             <p className="font-medium">{assignment.project.name}</p>
-                            <div className="text-sm text-muted-foreground">Role</div>
+                            <div className="text-sm text-gray-500">Role</div>
                             <p className="font-medium">{assignment.role_on_project || "Not specified"}</p>
                           </div>
                         </Card>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No current projects</p>
+                    <p className="text-gray-500">No current projects</p>
                   )}
                 </CardContent>
               </Card>
@@ -413,19 +413,19 @@ export default function WorkerDetails() {
                         <Card key={timesheet.id} className="p-4 border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                           <div className="grid gap-4 md:grid-cols-4">
                             <div>
-                              <p className="text-sm text-muted-foreground">Date</p>
+                              <p className="text-sm text-gray-500">Date</p>
                               <p className="font-medium">{format(parseISO(timesheet.date), "PPP")}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Project</p>
+                              <p className="text-sm text-gray-500">Project</p>
                               <p className="font-medium">{timesheet.project?.name || "Unknown Project"}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Hours</p>
+                              <p className="text-sm text-gray-500">Hours</p>
                               <p className="font-medium">{timesheet.total_hours}h ({timesheet.regular_hours}h regular, {timesheet.overtime_hours}h overtime)</p>
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Status</p>
+                              <p className="text-sm text-gray-500">Status</p>
                               <Badge
                                 variant={
                                   timesheet.supervisor_approval === "approved"
@@ -443,7 +443,7 @@ export default function WorkerDetails() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No timecards found</p>
+                    <p className="text-gray-500">No timecards found</p>
                   )}
                 </CardContent>
               </Card>
@@ -458,10 +458,10 @@ export default function WorkerDetails() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-500">
                     Document management functionality will be implemented here. This will include:
                   </p>
-                  <ul className="mt-4 space-y-2 text-muted-foreground">
+                  <ul className="mt-4 space-y-2 text-gray-500">
                     <li>• Employment contracts</li>
                     <li>• Identification documents</li>
                     <li>• Certifications and licenses</li>
@@ -488,7 +488,7 @@ export default function WorkerDetails() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No notes available for this worker.</p>
+                    <p className="text-gray-500">No notes available for this worker.</p>
                   )}
                 </CardContent>
               </Card>

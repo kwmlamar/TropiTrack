@@ -12,7 +12,7 @@ export default function ReportsPage() {
             <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none max-w-md">
               <CardContent className="p-12 text-center">
                 <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Construction className="h-10 w-10 text-muted-foreground" />
+                  <Construction className="h-10 w-10 text-gray-500" />
                 </div>
                 <h1 className="text-4xl font-bold text-gray-500 dark:text-gray-500 mb-4">
                   Coming Soon
@@ -23,7 +23,7 @@ export default function ReportsPage() {
                 <p className="text-sm text-gray-500 dark:text-gray-500">
                   🚧 Under Construction 🚧
                 </p>
-                <p className="text-sm text-muted-foreground mt-4">
+                <p className="text-sm text-gray-500 mt-4">
                   We&apos;re working hard to bring you comprehensive reporting and analytics features.
                 </p>
               </CardContent>

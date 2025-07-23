@@ -22,7 +22,7 @@ export function OnboardingHeader() {
       </div>
 
       {/* Tagline */}
-      <p className="text-sm text-muted-foreground">Construction Time Tracking Made Simple</p>
+      <p className="text-sm text-gray-500">Construction Time Tracking Made Simple</p>
     </div>
   )
 }

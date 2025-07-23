@@ -11,7 +11,7 @@ export default function PayrollSettingsPage() {
       <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Payroll Settings</h2>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Configure your payroll settings, payment schedules, and deduction rules
           </p>
         </div>

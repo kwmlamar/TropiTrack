@@ -241,7 +241,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       <div className="flex items-center justify-between">
         <div className='space-y-4'>
           <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Manage your construction projects and track progress.
           </p>
         </div>
@@ -364,7 +364,7 @@ export default function ProjectsTable({ user }: { user: User }) {
             {columns.map((col) => (
               <div
                 key={col}
-                className="text-sm font-semibold text-muted-foreground uppercase tracking-wide"
+                className="text-sm font-semibold text-gray-500 uppercase tracking-wide"
               >
                 {col}
               </div>
@@ -375,7 +375,7 @@ export default function ProjectsTable({ user }: { user: User }) {
           {/* Data Rows */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-2 text-muted-foreground">
+              <div className="flex items-center space-x-2 text-gray-500">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm">Loading projects...</span>
               </div>
@@ -383,12 +383,12 @@ export default function ProjectsTable({ user }: { user: User }) {
           ) : paginatedProjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                <Building2 className="h-8 w-8 text-muted-foreground" />
+                <Building2 className="h-8 w-8 text-gray-500" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 No projects found
               </h3>
-              <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
+              <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
                 {statusFilter !== "all" || selectedClient
                   ? "No projects match your current filters. Try adjusting your search criteria."
                   : "You haven't added any projects yet. Add your first project to start building your portfolio."}
@@ -416,7 +416,7 @@ export default function ProjectsTable({ user }: { user: User }) {
                     >
                       <div>
                         <p className="font-semibold text-foreground">{project.name}</p>
-                        <p className="text-sm text-muted-foreground">{project.location || "Location TBD"}</p>
+                        <p className="text-sm text-gray-500">{project.location || "Location TBD"}</p>
                       </div>
                       <div className="text-foreground">
                         {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
@@ -467,7 +467,7 @@ export default function ProjectsTable({ user }: { user: User }) {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-gray-500">
                     Showing {startIndex + 1} to {Math.min(endIndex, filteredProjects.length)} of {filteredProjects.length} projects
                   </div>
                   <div className="flex items-center space-x-2">

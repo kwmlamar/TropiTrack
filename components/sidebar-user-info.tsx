@@ -49,6 +49,26 @@ export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
     })
   }
 
+  const handleSignOut = async () => {
+    try {
+      const res = await fetch("/auth/signout", {
+        method: "POST",
+      });
+
+      // Optional: redirect manually if the server didn't do it
+      if (res.redirected) {
+        window.location.href = res.url;
+      } else {
+        // Fallback redirect to login page
+        window.location.href = "/login";
+      }
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Fallback redirect to login page
+      window.location.href = "/login";
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -104,7 +124,10 @@ export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-red-600 focus:text-red-600">
+        <DropdownMenuItem 
+          onClick={handleSignOut}
+          className="text-red-600 focus:text-red-600 cursor-pointer"
+        >
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out
         </DropdownMenuItem>

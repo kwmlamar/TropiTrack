@@ -207,7 +207,7 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="flex items-center space-x-2 text-muted-foreground">
+        <div className="flex items-center space-x-2 text-gray-500">
           <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Loading location...</span>
         </div>
@@ -221,7 +221,7 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Project Location</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Click on the map to select a location, then click &quot;Set Location&quot; to configure it
           </p>
         </div>
@@ -267,32 +267,32 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Location Name</Label>
+                <Label className="text-sm font-medium text-gray-500">Location Name</Label>
                 <p className="text-sm mt-1">{location.name}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Scan Range</Label>
+                <Label className="text-sm font-medium text-gray-500">Scan Range</Label>
                 <p className="text-sm mt-1">{location.radius_meters || 50}m radius</p>
               </div>
             </div>
             
             {location.description && (
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Description</Label>
+                <Label className="text-sm font-medium text-gray-500">Description</Label>
                 <p className="text-sm mt-1">{location.description}</p>
               </div>
             )}
             
             {location.address && (
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Address</Label>
+                <Label className="text-sm font-medium text-gray-500">Address</Label>
                 <p className="text-sm mt-1">{location.address}</p>
               </div>
             )}
             
             {location.latitude && location.longitude && (
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Coordinates</Label>
+                <Label className="text-sm font-medium text-gray-500">Coordinates</Label>
                 <p className="text-sm mt-1">{location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}</p>
               </div>
             )}
@@ -304,9 +304,9 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
       {!location && (
         <Card>
           <CardContent className="text-center py-12">
-            <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <MapPin className="h-12 w-12 mx-auto text-gray-500 mb-4" />
             <h3 className="text-lg font-medium mb-2">No project location set</h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-gray-500 mb-4">
               Click on the map above to select a location, then click &quot;Set Location&quot; to configure it
             </p>
           </CardContent>
@@ -371,7 +371,7 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
             </div>
 
             {selectedCoordinates && (
-              <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+              <div className="text-sm text-gray-500 bg-muted/50 p-2 rounded">
                 <strong>Selected coordinates:</strong> {selectedCoordinates.lat.toFixed(6)}, {selectedCoordinates.lng.toFixed(6)}
               </div>
             )}

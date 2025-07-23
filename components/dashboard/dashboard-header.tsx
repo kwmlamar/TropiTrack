@@ -31,7 +31,7 @@ export function DashboardHeader({
       <div className="space-y-4 mb-4">
         <h1 className="text-4xl font-bold text-foreground">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Welcome back, <span className="font-medium text-foreground">{profile?.name || 'User'}</span>
           </p>
         </div>

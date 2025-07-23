@@ -46,7 +46,7 @@ export function TeamMembersSection({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">Team Members</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               Workers assigned to this project and their performance metrics.
             </p>
           </div>
@@ -65,12 +65,12 @@ export function TeamMembersSection({
             {teamMembers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                  <Users className="h-8 w-8 text-muted-foreground" />
+                  <Users className="h-8 w-8 text-gray-500" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   No team members assigned
                 </h3>
-                <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
+                <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
                   No workers have been assigned to this project yet.
                 </p>
                 <Button
@@ -86,19 +86,19 @@ export function TeamMembersSection({
               <div className="space-y-0">
                 {/* Column Headers */}
                 <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
-                  <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                     Name
                   </div>
-                  <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                     Position
                   </div>
-                  <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                     Hourly Rate
                   </div>
-                  <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                     Total Hours
                   </div>
-                  <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                     Total Pay
                   </div>
                 </div>

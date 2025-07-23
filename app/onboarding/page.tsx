@@ -105,7 +105,7 @@ export default function OnboardingPage() {
             <div className="text-center mb-6">
               <Building2 className="h-12 w-12 mx-auto mb-4 text-primary" />
               <h2 className="text-2xl font-bold">Tell us about your company</h2>
-              <p className="text-muted-foreground">Let&apos;s get your business set up</p>
+              <p className="text-gray-500">Let&apos;s get your business set up</p>
             </div>
             
             <FormField
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
             <div className="text-center mb-6">
               <Users className="h-12 w-12 mx-auto mb-4 text-primary" />
               <h2 className="text-2xl font-bold">How big is your team?</h2>
-              <p className="text-muted-foreground">This helps us customize your experience</p>
+              <p className="text-gray-500">This helps us customize your experience</p>
             </div>
             
             <FormField
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
             <div className="text-center mb-6">
               <Clock className="h-12 w-12 mx-auto mb-4 text-primary" />
               <h2 className="text-2xl font-bold">Set your preferences</h2>
-              <p className="text-muted-foreground">Configure your workflow settings</p>
+              <p className="text-gray-500">Configure your workflow settings</p>
             </div>
             
             <FormField
@@ -270,7 +270,7 @@ export default function OnboardingPage() {
             <Building2 className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">TropiTrack</span>
           </div>
-          <p className="text-muted-foreground">Let&apos;s get you set up in minutes</p>
+          <p className="text-gray-500">Let&apos;s get you set up in minutes</p>
         </div>
 
         {/* Progress */}
@@ -359,7 +359,7 @@ export default function OnboardingPage() {
           <Button
             variant="ghost"
             onClick={() => router.push("/dashboard")}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-gray-500 hover:text-foreground"
           >
             Skip for now
           </Button>

@@ -170,7 +170,7 @@ export default function AccountingTransactions() {
       },
       cancelled: {
         label: "Cancelled",
-        className: "bg-muted/10 text-muted-foreground border-muted/20 hover:bg-muted/20 dark:bg-muted/20 dark:text-muted-foreground dark:border-muted/30 px-3 py-1 text-xs font-medium",
+        className: "bg-muted/10 text-gray-500 border-muted/20 hover:bg-muted/20 dark:bg-muted/20 dark:text-gray-500 dark:border-muted/30 px-3 py-1 text-xs font-medium",
       },
     };
 
@@ -212,7 +212,7 @@ export default function AccountingTransactions() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Transactions</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             {transactions.length} total transactions
           </p>
         </div>
@@ -230,7 +230,7 @@ export default function AccountingTransactions() {
         {/* Search */}
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Search transactions..."
               value={searchTerm}
@@ -289,15 +289,15 @@ export default function AccountingTransactions() {
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6">Transaction ID</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6">Date</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6">Description</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6">Category</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6 text-right">Amount</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6">Status</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6">Account</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6">Reference</TableHead>
-                  <TableHead className="font-semibold text-sm text-muted-foreground py-4 px-6 w-12"></TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6">Transaction ID</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6">Date</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6">Description</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6">Category</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6 text-right">Amount</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6">Status</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6">Account</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6">Reference</TableHead>
+                  <TableHead className="font-semibold text-sm text-gray-500 py-4 px-6 w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -313,7 +313,7 @@ export default function AccountingTransactions() {
                     </TableCell>
                     <TableCell className="text-sm py-4 px-6">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <Calendar className="h-3 w-3 text-gray-500" />
                         {formatDate(transaction.date)}
                       </div>
                     </TableCell>
@@ -341,11 +341,11 @@ export default function AccountingTransactions() {
                       {getStatusBadge(transaction.status)}
                     </TableCell>
                     <TableCell className="text-sm py-4 px-6">
-                      <span className="text-muted-foreground">{transaction.account}</span>
+                      <span className="text-gray-500">{transaction.account}</span>
                     </TableCell>
                     <TableCell className="py-4 px-6">
                       {transaction.reference && (
-                        <span className="font-mono text-xs bg-muted/30 px-2 py-1 rounded text-muted-foreground">
+                        <span className="font-mono text-xs bg-muted/30 px-2 py-1 rounded text-gray-500">
                           {transaction.reference}
                         </span>
                       )}
@@ -391,10 +391,10 @@ export default function AccountingTransactions() {
           {filteredTransactions.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 px-6">
               <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
-                <DollarSign className="h-8 w-8 text-muted-foreground" />
+                <DollarSign className="h-8 w-8 text-gray-500" />
               </div>
-              <h3 className="text-lg font-semibold text-muted-foreground mb-2">No transactions found</h3>
-              <p className="text-sm text-muted-foreground text-center max-w-sm">
+              <h3 className="text-lg font-semibold text-gray-500 mb-2">No transactions found</h3>
+              <p className="text-sm text-gray-500 text-center max-w-sm">
                 {searchTerm || selectedCategory !== "All Categories" || selectedStatus !== "All Statuses" || selectedType !== "all"
                   ? "Try adjusting your filters or search terms"
                   : "Get started by creating your first transaction"
@@ -406,7 +406,7 @@ export default function AccountingTransactions() {
           {/* Pagination Controls */}
           {filteredTransactions.length > ITEMS_PER_PAGE && (
             <div className="flex items-center justify-between px-6 py-4">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-gray-500">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredTransactions.length)} of {filteredTransactions.length} transactions
               </div>
               <div className="flex items-center space-x-2">

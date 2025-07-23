@@ -42,7 +42,7 @@ export function SearchableCombobox<T extends { id: string }>({
         <Button variant="outline"
           className={cn(
             "flex w-[240px] justify-between items-center rounded-md border px-4 py-2 text-left text-sm shadow-sm",
-            !selectedItem && "text-muted-foreground"
+            !selectedItem && "text-gray-500"
           )}
         >
           {selectedItem ? getLabel(selectedItem) : placeholder}

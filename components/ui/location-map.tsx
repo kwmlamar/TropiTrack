@@ -167,9 +167,9 @@ export function LocationMap({
                       <MapPin className="h-4 w-4 mx-auto mb-1 text-blue-600" />
                       <p className="text-sm font-medium">{location.name}</p>
                       {location.description && (
-                        <p className="text-xs text-muted-foreground mb-1">{location.description}</p>
+                        <p className="text-xs text-gray-500 mb-1">{location.description}</p>
                       )}
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500">
                         {location.radius_meters || 50}m radius
                       </p>
                     </div>
@@ -203,7 +203,7 @@ export function LocationMap({
                 <div className="text-center">
                   <MapPin className="h-4 w-4 mx-auto mb-1 text-red-500" />
                   <p className="text-sm font-medium">Selected Location</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-500">
                     {position[0].toFixed(6)}, {position[1].toFixed(6)}
                   </p>
                 </div>

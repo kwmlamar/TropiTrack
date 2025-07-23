@@ -498,7 +498,7 @@ export function BulkTimesheetForm({
                   </PopoverTrigger>
                   <PopoverContent className="w-[320px] p-0" align="end">
                     <Command className="rounded-lg">
-                      <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">
+                      <CommandEmpty className="py-4 text-center text-sm text-gray-500">
                         No workers found.
                       </CommandEmpty>
                       <CommandGroup className="max-h-[200px] overflow-y-auto">
@@ -540,7 +540,7 @@ export function BulkTimesheetForm({
                                 <div className="font-medium text-sm truncate group-hover:text-secondary transition-colors">
                                   {worker.name}
                                 </div>
-                                <div className="text-xs text-muted-foreground truncate">
+                                <div className="text-xs text-gray-500 truncate">
                                   {worker.position}
                                 </div>
                               </div>
@@ -795,7 +795,7 @@ export function BulkTimesheetForm({
 
               {fields.length === 0 && (
                 <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-gray-500 mb-4">
                     No worker entries added yet
                   </p>
                   <Button type="button" variant="outline" onClick={addRow}>
@@ -825,22 +825,22 @@ export function BulkTimesheetForm({
         {/* Summary */}
         <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-muted-foreground" />
+            <Calculator className="h-5 w-5 text-gray-500" />
             <span className="text-sm font-medium">Summary:</span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             <div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 Workers:
               </span>{" "}
               <span className="font-medium">{totals.workers}</span>
             </div>
             <div>
-              <span className="text-sm text-muted-foreground">Days:</span>{" "}
+              <span className="text-sm text-gray-500">Days:</span>{" "}
               <span className="font-medium">{totals.days}</span>
             </div>
             <div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 Total Entries:
               </span>{" "}
               <span className="font-medium">
@@ -848,13 +848,13 @@ export function BulkTimesheetForm({
               </span>
             </div>
             <div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 Total Hours:
               </span>{" "}
               <span className="font-medium">{totals.hours}h</span>
             </div>
             <div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 Total Cost:
               </span>{" "}
               <span className="font-medium text-green-600">

@@ -15,7 +15,7 @@ export default function TestTimesheetPage() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Timesheet and Time Restriction Tests</h1>
-      <p className="text-muted-foreground mb-4">
+      <p className="text-gray-500 mb-4">
         Check the browser console to see the test results for timesheet calculations, time restrictions, and automatic clock-out functionality.
       </p>
       

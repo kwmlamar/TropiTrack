@@ -235,7 +235,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
             <div className="text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-blue-600" />
               <h3 className="text-lg font-semibold">Checking Device Compatibility</h3>
-              <p className="text-muted-foreground">Verifying biometric authentication support...</p>
+              <p className="text-gray-500">Verifying biometric authentication support...</p>
             </div>
             
             <div className="flex justify-center">
@@ -249,7 +249,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
           <div className="space-y-4">
             <div className="text-center">
               <h3 className="text-lg font-semibold">Choose Verification Method</h3>
-              <p className="text-muted-foreground">Select how you&apos;d like to verify your identity</p>
+              <p className="text-gray-500">Select how you&apos;d like to verify your identity</p>
             </div>
             
             <div className="grid gap-3">
@@ -262,7 +262,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
                   <Fingerprint className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-medium">Fingerprint</div>
-                    <div className="text-sm text-muted-foreground">Use your fingerprint to verify</div>
+                    <div className="text-sm text-gray-500">Use your fingerprint to verify</div>
                   </div>
                 </Button>
               )}
@@ -276,7 +276,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
                   <User className="h-5 w-5 mr-3" />
                   <div className="text-left">
                     <div className="font-medium">Face Recognition</div>
-                    <div className="text-sm text-muted-foreground">Use your face to verify</div>
+                    <div className="text-sm text-gray-500">Use your face to verify</div>
                   </div>
                 </Button>
               )}
@@ -293,7 +293,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
                   </div>
                   <div className="text-left">
                     <div className="font-medium">Either Method</div>
-                    <div className="text-sm text-muted-foreground">Use fingerprint or face recognition</div>
+                    <div className="text-sm text-gray-500">Use fingerprint or face recognition</div>
                   </div>
                 </Button>
               )}
@@ -307,7 +307,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
             <div className="text-center">
               {getVerificationIcon()}
               <h3 className="text-lg font-semibold mt-4">Biometric Verification</h3>
-              <p className="text-muted-foreground">{getVerificationInstructions()}</p>
+              <p className="text-gray-500">{getVerificationInstructions()}</p>
             </div>
             
             <div className="space-y-4">
@@ -370,7 +370,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
             <div className="text-center">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
               <h3 className="text-lg font-semibold">Verification Successful!</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Welcome, {worker?.name || 'Worker'}! Your identity has been verified.
               </p>
             </div>
@@ -390,7 +390,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
             <div className="text-center">
               <XCircle className="h-12 w-12 mx-auto mb-4 text-red-600" />
               <h3 className="text-lg font-semibold">Verification Failed</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 {error || 'An error occurred during verification'}
               </p>
             </div>
@@ -452,10 +452,10 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">{worker?.name || 'Unknown Worker'}</p>
-              <p className="text-sm text-muted-foreground">Worker ID: {worker?.id ? `${worker.id.slice(0, 8)}...` : 'Unknown'}</p>
+              <p className="text-sm text-gray-500">Worker ID: {worker?.id ? `${worker.id.slice(0, 8)}...` : 'Unknown'}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Status</p>
+              <p className="text-sm text-gray-500">Status</p>
               {getStatusBadge(workerStatus)}
             </div>
           </div>

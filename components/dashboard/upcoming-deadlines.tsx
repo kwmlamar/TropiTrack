@@ -63,7 +63,7 @@ export function UpcomingDeadlines({ viewMode, selectedDate }: UpcomingDeadlinesP
       <CardContent>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <p className="mt-4 text-lg font-medium">Coming Soon</p>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-gray-500">
             We&apos;re working on bringing you important deadlines and reminders.
           </p>
         </div>

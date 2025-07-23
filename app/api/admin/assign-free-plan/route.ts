@@ -41,22 +41,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Family plan not found" }, { status: 404 });
     }
 
-    // Check if user already has a subscription
+    // Get user's profile to get company_id
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile?.company_id) {
+      return NextResponse.json({ error: "User profile or company not found" }, { status: 400 });
+    }
+
+    // Check if company already has a subscription
     const { data: existingSubscription } = await supabase
       .from('company_subscriptions')
       .select('*')
-      .eq('company_id', user.id)
+      .eq('company_id', profile.company_id)
       .single();
 
     if (existingSubscription) {
-      return NextResponse.json({ error: "User already has a subscription" }, { status: 400 });
+      return NextResponse.json({ error: "Company already has a subscription" }, { status: 400 });
     }
 
     // Create a free subscription
     const { data: subscription, error: subError } = await supabase
       .from('company_subscriptions')
       .insert({
-        company_id: user.id,
+        company_id: profile.company_id,
         plan_id: familyPlan.id,
         status: 'active',
         billing_cycle: 'monthly',

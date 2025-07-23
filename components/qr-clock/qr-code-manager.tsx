@@ -319,7 +319,7 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="flex items-center space-x-2 text-muted-foreground">
+        <div className="flex items-center space-x-2 text-gray-500">
           <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Loading QR codes...</span>
         </div>
@@ -333,7 +333,7 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
       <div className="flex items-center justify-between">
         <div className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight">QR Code Management</h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Create QR codes for workers to clock in/out at project locations
           </p>
         </div>
@@ -425,13 +425,13 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CardTitle className={`text-lg ${!qrCode.is_active ? 'text-muted-foreground' : ''}`}>
+                  <CardTitle className={`text-lg ${!qrCode.is_active ? 'text-gray-500' : ''}`}>
                     {qrCode.name}
                   </CardTitle>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Active</span>
+                    <span className="text-sm text-gray-500">Active</span>
                     <Switch
                       checked={qrCode.is_active}
                       onCheckedChange={(checked) => handleToggleActive(qrCode, checked)}
@@ -465,13 +465,13 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
                   <div className={`w-32 h-32 border rounded-lg flex items-center justify-center bg-muted ${
                     !qrCode.is_active ? 'opacity-50' : ''
                   }`}>
-                    <QrCode className="h-8 w-8 text-muted-foreground" />
+                    <QrCode className="h-8 w-8 text-gray-500" />
                   </div>
                 )}
               </div>
 
               {qrCode.description && (
-                <p className="text-sm text-muted-foreground">{qrCode.description}</p>
+                <p className="text-sm text-gray-500">{qrCode.description}</p>
               )}
               
               <div className="space-y-2">
@@ -528,9 +528,9 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
       {qrCodes.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
-            <QrCode className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <QrCode className="h-12 w-12 mx-auto text-gray-500 mb-4" />
             <h3 className="text-lg font-medium mb-2">No QR codes yet</h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-gray-500 mb-4">
               Create your first QR code to enable simple clock in/out for workers
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
@@ -565,7 +565,7 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
                 />
               ) : (
                 <div className="w-64 h-64 border rounded-lg flex items-center justify-center bg-muted">
-                  <QrCode className="h-8 w-8 text-muted-foreground" />
+                  <QrCode className="h-8 w-8 text-gray-500" />
                 </div>
               )}
             </div>
@@ -636,7 +636,7 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="edit-active">Active Status</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   {editFormData.is_active ? "QR code is active and can be scanned" : "QR code is inactive and cannot be scanned"}
                 </p>
               </div>

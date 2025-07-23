@@ -223,7 +223,7 @@ export function ProjectForm({
               <Building2 className="h-5 w-5" />
               {isEditing ? "Edit Project" : "New Project"}
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-gray-500">
               {isEditing
                 ? "Update project information"
                 : "Create a new construction project"}
@@ -272,7 +272,7 @@ export function ProjectForm({
                               <User className="h-4 w-4" />
                               <span>{client.name}</span>
                               {client.company && (
-                                <span className="text-muted-foreground">
+                                <span className="text-gray-500">
                                   ({client.company})
                                 </span>
                               )}
@@ -313,7 +313,7 @@ export function ProjectForm({
                   <FormLabel>Location (Optional)</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                       <Input
                         placeholder="Nassau, Bahamas"
                         className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -343,7 +343,7 @@ export function ProjectForm({
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-muted/50",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-gray-500"
                             )}
                           >
                             {field.value ? (
@@ -388,7 +388,7 @@ export function ProjectForm({
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-muted/50",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-gray-500"
                             )}
                           >
                             {field.value ? (
@@ -433,7 +433,7 @@ export function ProjectForm({
                     <FormLabel>Budget (Optional)</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input
                           type="number"
                           min="0"
@@ -465,7 +465,7 @@ export function ProjectForm({
                     <FormLabel>Payroll Budget (Optional)</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input
                           type="number"
                           min="0"
@@ -530,7 +530,7 @@ export function ProjectForm({
                 <h4 className="text-sm font-medium mb-2">
                   Assign Workers (Optional)
                 </h4>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-gray-500 mb-4">
                   Select workers to assign to this project
                 </p>
               </div>
@@ -549,7 +549,7 @@ export function ProjectForm({
                   >
                     <div className="flex-1">
                       <p className="text-sm font-medium">{worker.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500">
                         {worker.position}
                       </p>
                     </div>
@@ -563,7 +563,7 @@ export function ProjectForm({
               </div>
 
               {selectedWorkers.length > 0 && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-gray-500">
                   {selectedWorkers.length} worker
                   {selectedWorkers.length !== 1 ? "s" : ""} selected
                 </div>

@@ -97,7 +97,7 @@ export default function TestAutoClockOutPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-2">Automatic Clock-Out Test</h1>
-        <p className="text-muted-foreground">
+        <p className="text-gray-500">
           Test the automatic clock-out functionality for workers who forgot to clock out
         </p>
       </div>
@@ -221,7 +221,7 @@ export default function TestAutoClockOutPage() {
         </CardHeader>
         <CardContent>
           {clockedInWorkers.length === 0 ? (
-            <p className="text-muted-foreground">
+            <p className="text-gray-500">
               No workers are currently clocked in.
             </p>
           ) : (
@@ -231,7 +231,7 @@ export default function TestAutoClockOutPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h4 className="font-semibold">{worker.worker_name}</h4>
-                      <p className="text-sm text-muted-foreground">{worker.project_name}</p>
+                      <p className="text-sm text-gray-500">{worker.project_name}</p>
                     </div>
                     <Badge variant="outline">Clocked In</Badge>
                   </div>
@@ -241,13 +241,13 @@ export default function TestAutoClockOutPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Clock In Time:</span>
-                      <p className="text-muted-foreground">
+                      <p className="text-gray-500">
                         {formatTime(worker.last_clock_in)}
                       </p>
                     </div>
                     <div>
                       <span className="font-medium">Event ID:</span>
-                      <p className="text-muted-foreground font-mono text-xs">
+                      <p className="text-gray-500 font-mono text-xs">
                         {worker.clock_in_event_id}
                       </p>
                     </div>

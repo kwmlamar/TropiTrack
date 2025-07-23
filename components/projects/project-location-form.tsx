@@ -82,7 +82,7 @@ export function ProjectLocationForm({
       <div>
         <Label htmlFor="address">Address (Optional)</Label>
         <div className="relative">
-          <Navigation className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Navigation className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
           <Input
             id="address"
             value={formData.address}
@@ -102,7 +102,7 @@ export function ProjectLocationForm({
           initialLng={formData.longitude || undefined}
           className="h-80 w-full"
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           Click on the map to set the exact location, or use the &quot;Use Current&quot; button
         </p>
       </div>
@@ -110,7 +110,7 @@ export function ProjectLocationForm({
       <div>
         <Label htmlFor="radius_meters">Scan Range (meters)</Label>
         <div className="relative">
-          <QrCode className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <QrCode className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
           <Input
             id="radius_meters"
             type="number"
@@ -122,7 +122,7 @@ export function ProjectLocationForm({
             className="pl-10"
           />
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           Workers must be within this distance to successfully scan the QR code
         </p>
       </div>

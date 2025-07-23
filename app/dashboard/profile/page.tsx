@@ -16,7 +16,7 @@ export default async function ProfilePage() {
         {/* Header */}
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Manage your personal information and account settings.
           </p>
         </div>

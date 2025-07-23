@@ -109,7 +109,7 @@ export default function AccountingOverview() {
                 <div className="text-xl font-semibold">Cash Flow</div>
                 <div className="text-2xl font-bold mt-1">{formatCurrency(stats.netAmount)}</div>
                 <div className="text-sm font-normal mt-1">
-                  <span className="text-muted-foreground">This year </span>
+                  <span className="text-gray-500">This year </span>
                   <span className={stats.netAmount >= 0 ? "text-green-600" : "text-red-600"}>
                     {stats.netAmount >= 0 ? "+" : ""}{((stats.netAmount / (stats.totalIncome || 1)) * 100).toFixed(1)}%
                   </span>
@@ -138,13 +138,13 @@ export default function AccountingOverview() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                   <XAxis 
                     dataKey="month" 
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-gray-500"
                     tick={{ fill: 'var(--primary)', fontSize: 12 }}
                     axisLine={{ stroke: 'var(--border)' }}
                     tickLine={{ stroke: 'var(--border)' }}
                   />
                   <YAxis 
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-gray-500"
                     tick={{ fill: 'var(--primary)', fontSize: 12 }}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                     axisLine={{ stroke: 'var(--border)' }}
@@ -211,7 +211,7 @@ export default function AccountingOverview() {
                 <div className="text-lg font-semibold">Expenses by Category</div>
                 <div className="text-2xl font-bold mt-1">{formatCurrency(stats.totalExpenses)}</div>
                 <div className="text-sm font-normal mt-1">
-                  <span className="text-muted-foreground">This year </span>
+                  <span className="text-gray-500">This year </span>
                   <span className="text-red-600">-{((stats.totalExpenses / (stats.totalIncome || 1)) * 100).toFixed(1)}%</span>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function AccountingOverview() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                   <XAxis 
                     dataKey="category" 
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-gray-500"
                     tick={{ fill: 'var(--primary)', fontSize: 10 }}
                     angle={-45}
                     textAnchor="end"
@@ -233,7 +233,7 @@ export default function AccountingOverview() {
                     tickLine={{ stroke: 'var(--border)' }}
                   />
                   <YAxis 
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-gray-500"
                     tick={{ fill: 'var(--primary)', fontSize: 11 }}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                     axisLine={{ stroke: 'var(--border)' }}
@@ -275,7 +275,7 @@ export default function AccountingOverview() {
                 <div className="text-lg font-semibold">Invoices</div>
                 <div className="text-2xl font-bold mt-1">{formatCurrency(stats.totalIncome)}</div>
                 <div className="text-sm font-normal mt-1">
-                  <span className="text-muted-foreground">This year </span>
+                  <span className="text-gray-500">This year </span>
                   <span className="text-green-600">+{((stats.totalIncome / (stats.totalIncome + stats.totalExpenses || 1)) * 100).toFixed(1)}%</span>
                 </div>
               </div>
@@ -288,13 +288,13 @@ export default function AccountingOverview() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                   <XAxis 
                     dataKey="status" 
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-gray-500"
                     tick={{ fill: 'var(--primary)', fontSize: 12 }}
                     axisLine={{ stroke: 'var(--border)' }}
                     tickLine={{ stroke: 'var(--border)' }}
                   />
                   <YAxis 
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-gray-500"
                     tick={{ fill: 'var(--primary)', fontSize: 11 }}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                     axisLine={{ stroke: 'var(--border)' }}

@@ -21,7 +21,7 @@ function ErrorContent() {
           <CardTitle className="text-xl">Authentication Error</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-muted-foreground">
+          <p className="text-center text-gray-500">
             {message === 'Authentication failed' 
               ? 'There was an issue with the authentication process. This might be due to a configuration error.'
               : message
@@ -63,7 +63,7 @@ export default function ErrorPage() {
             <CardTitle className="text-xl">Authentication Error</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-center text-muted-foreground">
+            <p className="text-center text-gray-500">
               Loading...
             </p>
           </CardContent>

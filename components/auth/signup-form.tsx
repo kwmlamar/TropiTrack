@@ -59,7 +59,7 @@ function PasswordStrengthIndicator({ password }: { password: string }) {
 
   return (
     <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
-      <p className="text-xs font-medium text-muted-foreground">
+      <p className="text-xs font-medium text-gray-500">
         Password requirements:
       </p>
       <div className="space-y-1">
@@ -70,10 +70,10 @@ function PasswordStrengthIndicator({ password }: { password: string }) {
               {isValid ? (
                 <Check className="h-3 w-3 text-green-600" />
               ) : (
-                <X className="h-3 w-3 text-muted-foreground" />
+                <X className="h-3 w-3 text-gray-500" />
               )}
               <span
-                className={isValid ? "text-green-600" : "text-muted-foreground"}
+                className={isValid ? "text-green-600" : "text-gray-500"}
               >
                 {req.label}
               </span>
@@ -151,7 +151,7 @@ export function SignupForm({
           <h1 className="text-2xl font-semibold tracking-tight">
             Create your account
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Start tracking construction time in minutes
           </p>
         </div>
@@ -166,7 +166,7 @@ export function SignupForm({
                 Full name
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="name"
                   name="name"
@@ -191,7 +191,7 @@ export function SignupForm({
                 Email address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="email"
                   name="email"
@@ -216,7 +216,7 @@ export function SignupForm({
                 Company name
               </Label>
               <div className="relative">
-                <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Building className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="company_name"
                   name="company_name"
@@ -243,7 +243,7 @@ export function SignupForm({
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="password"
                   name="password"
@@ -260,7 +260,7 @@ export function SignupForm({
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-3 h-4 w-4 text-gray-500 hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -277,7 +277,7 @@ export function SignupForm({
             </div>
 
             {/* Terms and Privacy */}
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-gray-500">
               By creating an account, you agree to our{" "}
               <a
                 href="/terms"
@@ -304,7 +304,7 @@ export function SignupForm({
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
+                  <span className="bg-background px-2 text-gray-500">
                     Or continue with
                   </span>
                 </div>
@@ -344,7 +344,7 @@ export function SignupForm({
             </div>
 
             {/* Login link */}
-            <div className="text-center text-sm text-muted-foreground pt-4">
+            <div className="text-center text-sm text-gray-500 pt-4">
               Already have an account?{" "}
               <a
                 href="/login"

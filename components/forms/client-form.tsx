@@ -102,7 +102,7 @@ export function ClientForm({ client, userId, onSuccess, onCancel }: ClientFormPr
                     <FormLabel>Company (Optional)</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input placeholder="ABC Construction Corp" className="pl-10" {...field} />
                       </div>
                     </FormControl>
@@ -138,7 +138,7 @@ export function ClientForm({ client, userId, onSuccess, onCancel }: ClientFormPr
                     <FormLabel>Email (Optional)</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input placeholder="john@example.com" className="pl-10" {...field} />
                       </div>
                     </FormControl>
@@ -155,7 +155,7 @@ export function ClientForm({ client, userId, onSuccess, onCancel }: ClientFormPr
                     <FormLabel>Phone (Optional)</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input placeholder="+1 (555) 123-4567" className="pl-10" {...field} />
                       </div>
                     </FormControl>
@@ -173,7 +173,7 @@ export function ClientForm({ client, userId, onSuccess, onCancel }: ClientFormPr
                   <FormLabel>Address (Optional)</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                       <Input placeholder="123 Main St, City, State 12345" className="pl-10" {...field} />
                     </div>
                   </FormControl>

@@ -266,7 +266,7 @@ export function PayrollSummary() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center py-8 text-gray-500">
             <DollarSign className="h-8 w-8 mb-2 opacity-50" />
             <p className="font-medium">No Payroll Data</p>
             <p className="text-sm mt-1">No payroll data available for the selected period</p>

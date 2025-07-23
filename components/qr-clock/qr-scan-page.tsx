@@ -87,7 +87,7 @@ export function QRScanPage({ qrCode, workers, projects }: QRScanPageProps) {
             {getQRTypeIcon(qrCode.qr_type)}
             <h1 className="text-3xl font-bold">QR Code Scanner</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Scan this QR code to {getQRTypeLabel(qrCode.qr_type).toLowerCase()}
           </p>
         </div>
@@ -103,11 +103,11 @@ export function QRScanPage({ qrCode, workers, projects }: QRScanPageProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="text-sm font-medium text-gray-500">Name</p>
                 <p className="font-semibold">{qrCode.name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Type</p>
+                <p className="text-sm font-medium text-gray-500">Type</p>
                 <div className="flex items-center gap-2">
                   {getQRTypeIcon(qrCode.qr_type)}
                   <span className="font-semibold">{getQRTypeLabel(qrCode.qr_type)}</span>
@@ -115,14 +115,14 @@ export function QRScanPage({ qrCode, workers, projects }: QRScanPageProps) {
               </div>
               {qrCode.description && (
                 <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-muted-foreground">Description</p>
+                  <p className="text-sm font-medium text-gray-500">Description</p>
                   <p className="text-sm">{qrCode.description}</p>
                 </div>
               )}
               {qrCode.project_location && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Location:</span>
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-500">Location:</span>
                   <span className="font-medium">{qrCode.project_location.name}</span>
                 </div>
               )}
@@ -238,7 +238,7 @@ export function QRScanPage({ qrCode, workers, projects }: QRScanPageProps) {
                   <div className="space-y-2">
                     <p className="font-medium">{lastScanResult.message}</p>
                     {lastScanResult.success && lastScanResult.event && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-gray-500">
                         <p>Time: {new Date(lastScanResult.event.event_time).toLocaleString()}</p>
                         <p>Worker: {lastScanResult.event.worker?.name}</p>
                         <p>Project: {lastScanResult.event.project?.name}</p>
@@ -266,7 +266,7 @@ export function QRScanPage({ qrCode, workers, projects }: QRScanPageProps) {
               </div>
               <div>
                 <p className="font-medium">Select Worker and Project</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Choose your name from the worker list and select the project you&apos;re working on
                 </p>
               </div>
@@ -277,7 +277,7 @@ export function QRScanPage({ qrCode, workers, projects }: QRScanPageProps) {
               </div>
               <div>
                 <p className="font-medium">Start Scanning</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Click &quot;Start Scanning&quot; to activate your device&apos;s camera
                 </p>
               </div>
@@ -288,7 +288,7 @@ export function QRScanPage({ qrCode, workers, projects }: QRScanPageProps) {
               </div>
               <div>
                 <p className="font-medium">Scan QR Code</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Point your camera at the QR code to automatically clock in/out
                 </p>
               </div>

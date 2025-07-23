@@ -250,7 +250,7 @@ export function EditWorkerDialog({
                       <FormLabel>Hourly Rate ($) *</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                           <Input
                             type="number"
                             min="0"
@@ -282,7 +282,7 @@ export function EditWorkerDialog({
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 inset-y-0 my-auto h-4 w-4 text-muted-foreground" />
+                          <Mail className="absolute left-3 inset-y-0 my-auto h-4 w-4 text-gray-500" />
                           <Input
                             placeholder="john@example.com"
                             className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -304,7 +304,7 @@ export function EditWorkerDialog({
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                           <Input
                             placeholder="+1 (555) 123-4567"
                             className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -326,7 +326,7 @@ export function EditWorkerDialog({
                     <FormLabel>Address</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input
                           placeholder="123 Main St, City, State 12345"
                           className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
@@ -354,7 +354,7 @@ export function EditWorkerDialog({
                               variant="outline"
                               className={cn(
                                 "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-muted/50",
-                                !field.value && "text-muted-foreground"
+                                !field.value && "text-gray-500"
                               )}
                             >
                               {field.value ? (
@@ -403,7 +403,7 @@ export function EditWorkerDialog({
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>Active Employee</FormLabel>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-gray-500">
                             Worker is currently active and available for assignments
                           </p>
                         </div>
@@ -417,7 +417,7 @@ export function EditWorkerDialog({
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium mb-2">Skills & Certifications</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-gray-500 mb-4">
                     Manage worker skills and professional certifications
                   </p>
                 </div>
@@ -453,7 +453,7 @@ export function EditWorkerDialog({
                       </Badge>
                     ))}
                     {skills.length === 0 && (
-                      <p className="text-sm text-muted-foreground">No skills added</p>
+                      <p className="text-sm text-gray-500">No skills added</p>
                     )}
                   </div>
                 </div>
@@ -489,7 +489,7 @@ export function EditWorkerDialog({
                       </Badge>
                     ))}
                     {certifications.length === 0 && (
-                      <p className="text-sm text-muted-foreground">No certifications added</p>
+                      <p className="text-sm text-gray-500">No certifications added</p>
                     )}
                   </div>
                 </div>
@@ -499,7 +499,7 @@ export function EditWorkerDialog({
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium mb-2">Emergency Contact</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-gray-500 mb-4">
                     Contact information for emergency situations
                   </p>
                 </div>
@@ -530,7 +530,7 @@ export function EditWorkerDialog({
                         <FormLabel>Contact Phone</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                             <Input
                               placeholder="+1 (555) 987-6543"
                               className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"

@@ -68,7 +68,7 @@ export default function DebugOAuthPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               Environment Variables:
             </p>
             <div className="text-xs bg-muted p-2 rounded">
@@ -109,7 +109,7 @@ export default function DebugOAuthPage() {
             </div>
           )}
 
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-gray-500">
             Check the browser console for detailed logs.
           </div>
         </CardContent>

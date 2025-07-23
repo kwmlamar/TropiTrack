@@ -176,7 +176,7 @@ export function GenerateTimesheetsDialog({
                           variant={"outline"}
                           className={cn(
                             "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                            !field.value && "text-gray-500"
                           )}
                         >
                           {field.value ? (
@@ -284,7 +284,7 @@ export function GenerateTimesheetsDialog({
                       <SelectItem value="no_rounding">No Rounding</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-500">
                     {field.value === "standard" && "Rounds to 8 hours if within 9 minutes, otherwise to nearest 15 minutes"}
                     {field.value === "exact" && "Rounds to nearest minute for precise time tracking"}
                     {field.value === "quarter_hour" && "Rounds to nearest 15-minute increment"}
@@ -302,7 +302,7 @@ export function GenerateTimesheetsDialog({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Round to Standard 8-Hour Day</FormLabel>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Automatically adjust hours to 8 hours when close to standard work day
                     </p>
                   </div>

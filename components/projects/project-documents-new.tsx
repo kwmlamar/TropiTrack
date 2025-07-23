@@ -84,7 +84,7 @@ export function ProjectDocumentsNew({ projectId }: ProjectDocumentsNewProps) {
       {/* Security Info */}
       <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
             <ShieldCheck className="h-4 w-4" />
             <span>
               Files are stored securely with encrypted access. Only project members can view and download files.

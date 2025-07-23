@@ -126,7 +126,7 @@ export function SecurityMonitor() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="flex items-center space-x-2 text-muted-foreground">
+        <div className="flex items-center space-x-2 text-gray-500">
           <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Loading security data...</span>
         </div>
@@ -140,7 +140,7 @@ export function SecurityMonitor() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Security Monitor</h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Monitor and manage security violations and potential buddy punching
           </p>
         </div>
@@ -157,7 +157,7 @@ export function SecurityMonitor() {
             <div className="flex items-center space-x-2">
               <Shield className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Violations</p>
+                <p className="text-sm font-medium text-gray-500">Total Violations</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
             </div>
@@ -169,7 +169,7 @@ export function SecurityMonitor() {
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Resolved</p>
+                <p className="text-sm font-medium text-gray-500">Resolved</p>
                 <p className="text-2xl font-bold">{stats.resolved}</p>
               </div>
             </div>
@@ -181,7 +181,7 @@ export function SecurityMonitor() {
             <div className="flex items-center space-x-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                <p className="text-sm font-medium text-gray-500">Pending</p>
                 <p className="text-2xl font-bold">{stats.pending}</p>
               </div>
             </div>
@@ -193,7 +193,7 @@ export function SecurityMonitor() {
             <div className="flex items-center space-x-2">
               <Clock className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Today</p>
+                <p className="text-sm font-medium text-gray-500">Today</p>
                 <p className="text-2xl font-bold">{stats.today}</p>
               </div>
             </div>
@@ -209,9 +209,9 @@ export function SecurityMonitor() {
         <CardContent>
           {violations.length === 0 ? (
             <div className="text-center py-8">
-              <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <Shield className="h-12 w-12 mx-auto text-gray-500 mb-4" />
               <h3 className="text-lg font-medium mb-2">No security violations</h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 All systems are secure and no violations have been detected
               </p>
             </div>

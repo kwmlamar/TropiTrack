@@ -31,7 +31,7 @@ export function NextPayDates({ schedule }: NextPayDatesProps) {
               key={date.toISOString()}
               className="flex items-center justify-between py-1"
             >
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 {index === 0 ? "Next" : index === 1 ? "Following" : "Third"} Pay Date
               </span>
               <span className="font-medium">
@@ -39,7 +39,7 @@ export function NextPayDates({ schedule }: NextPayDatesProps) {
               </span>
             </div>
           ))}
-          <div className="mt-4 pt-3 border-t text-sm text-muted-foreground">
+          <div className="mt-4 pt-3 border-t text-sm text-gray-500">
             Payments scheduled for{" "}
             {schedule.pay_day_type === "day_of_month"
               ? `the ${formatPayDay(schedule.pay_day, "day_of_month")} of each month`

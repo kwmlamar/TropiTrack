@@ -82,7 +82,7 @@ export function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Manage your notifications and stay updated
           </p>
         </div>
@@ -156,11 +156,11 @@ export function NotificationsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-gray-500">
               Loading notifications...
             </div>
           ) : filteredNotifications.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-gray-500">
               No notifications found
             </div>
           ) : (
@@ -192,16 +192,16 @@ export function NotificationsPage() {
                             {notification.category}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-3">
+                        <p className="text-sm text-gray-500 mb-3">
                           {notification.message}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm text-gray-500">
                             {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                           </span>
                           <div className="flex items-center gap-2">
                             {notification.action_url && (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1 text-sm text-gray-500">
                                 <ExternalLink className="h-3 w-3" />
                                 <span>Click to view</span>
                               </div>

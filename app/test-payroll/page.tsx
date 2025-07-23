@@ -37,7 +37,7 @@ export default function TestPayrollPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-4">Payroll Testing</h1>
-        <p className="text-muted-foreground mb-8">
+        <p className="text-gray-500 mb-8">
           Generate sample payroll data to test the payroll functionality
         </p>
       </div>
@@ -48,7 +48,7 @@ export default function TestPayrollPage() {
             <CardTitle>Generate Sample Payroll Data</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               This will create sample approved timesheets and generate payroll records for the current week.
               This will populate the payroll page with test data.
             </p>
@@ -71,7 +71,7 @@ export default function TestPayrollPage() {
           <div className="space-y-4">
             <div>
               <h3 className="font-semibold mb-2">1. Generate Sample Data</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Click &quot;Generate Sample Payroll Data&quot; to create sample approved timesheets and payroll records.
                 This will create data for the current week that should appear on the payroll page.
               </p>
@@ -79,17 +79,17 @@ export default function TestPayrollPage() {
             
             <div>
               <h3 className="font-semibold mb-2">2. View Payroll Page</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Navigate to <code className="bg-muted px-1 rounded">/dashboard/payroll</code> to see the payroll page with the generated data.
               </p>
             </div>
             
             <div>
               <h3 className="font-semibold mb-2">3. Test Payroll Features</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Once the data is generated, you can test:
               </p>
-              <ul className="text-sm text-muted-foreground list-disc list-inside mt-2 space-y-1">
+              <ul className="text-sm text-gray-500 list-disc list-inside mt-2 space-y-1">
                 <li>Viewing payroll records in the table</li>
                 <li>Confirming payroll entries</li>
                 <li>Marking payroll as paid</li>

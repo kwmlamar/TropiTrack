@@ -70,7 +70,7 @@ export function DebugPayrollSettings() {
               <p><strong>Company Name:</strong> {profileInfo.company?.name || "N/A"}</p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Loading profile...</p>
+            <p className="text-sm text-gray-500">Loading profile...</p>
           )}
         </div>
 

@@ -51,9 +51,9 @@ export function SettingsNav() {
                 <item.icon className="h-5 w-5" />
                 <h3 className="font-semibold">{item.title}</h3>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {item.description}
-              </p>
+                                        <p className="text-sm text-gray-500">
+                            {item.description}
+                          </p>
             </Link>
           )
         })}

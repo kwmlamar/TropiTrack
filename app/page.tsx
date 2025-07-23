@@ -122,8 +122,8 @@ export default function Home() {
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <p className="text-lg text-muted-foreground mb-4">Designed specifically for construction companies in the Bahamas</p>
-              <div className="flex items-center justify-center gap-8 text-muted-foreground">
+              <p className="text-lg text-gray-500 mb-4">Designed specifically for construction companies in the Bahamas</p>
+              <div className="flex items-center justify-center gap-8 text-gray-500">
                 <div className="flex items-center gap-2">
                   <div className="flex text-primary">
                     {[...Array(5)].map((_, i) => (
@@ -144,7 +144,7 @@ export default function Home() {
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
                 Why construction companies choose TropiTrack
               </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-xl text-gray-500 max-w-3xl mx-auto">
                 Built specifically for the unique needs of construction teams in the Bahamas
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function Home() {
                   <Zap className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4">Save 10+ Hours Weekly</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">
+                <p className="text-gray-500 text-lg leading-relaxed">
                   Automate time tracking and payroll processing. No more manual calculations or chasing down timesheets.
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function Home() {
                   <Shield className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4">Bahamas Compliant</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">
+                <p className="text-gray-500 text-lg leading-relaxed">
                   Built-in NIB calculations, overtime rules, and local tax requirements. Stay compliant without the headache.
                 </p>
               </div>
@@ -175,7 +175,7 @@ export default function Home() {
                   <Globe className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4">Works Offline</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">
+                <p className="text-gray-500 text-lg leading-relaxed">
                   Perfect for remote job sites. Workers can clock in/out without internet and sync when back online.
                 </p>
               </div>
@@ -190,7 +190,7 @@ export default function Home() {
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
                 Everything you need to run your construction business
               </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-xl text-gray-500 max-w-3xl mx-auto">
                 Powerful features designed to streamline your operations and boost productivity
               </p>
             </div>
@@ -202,7 +202,7 @@ export default function Home() {
                     <Clock className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold mb-4">Smart Time Tracking</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <p className="text-gray-500 text-lg leading-relaxed">
                     GPS-verified clock in/out, project assignment, and automatic overtime calculations. 
                     Workers can use any device - mobile or desktop.
                   </p>
@@ -215,7 +215,7 @@ export default function Home() {
                     <CreditCard className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold mb-4">Automated Payroll</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <p className="text-gray-500 text-lg leading-relaxed">
                     Calculate regular pay, overtime, holiday pay, and NIB deductions automatically. 
                     Export payroll data ready for your accounting system.
                   </p>
@@ -228,7 +228,7 @@ export default function Home() {
                     <Users className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold mb-4">Worker Management</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <p className="text-gray-500 text-lg leading-relaxed">
                     Track skills, certifications, availability, and performance. 
                     Assign workers to projects and manage their schedules efficiently.
                   </p>
@@ -241,7 +241,7 @@ export default function Home() {
                     <Building2 className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold mb-4">Project Tracking</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <p className="text-gray-500 text-lg leading-relaxed">
                     Monitor project progress, track costs, and generate reports. 
                     Keep your projects on time and within budget.
                   </p>
@@ -254,7 +254,7 @@ export default function Home() {
                     <Smartphone className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold mb-4">Mobile First</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <p className="text-gray-500 text-lg leading-relaxed">
                     Works perfectly on phones, tablets, and computers. 
                     Offline capability ensures work never stops, even without internet.
                   </p>
@@ -267,7 +267,7 @@ export default function Home() {
                     <Shield className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold mb-4">Secure & Reliable</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <p className="text-gray-500 text-lg leading-relaxed">
                     Enterprise-grade security with automatic backups. 
                     Your data is safe, secure, and always accessible.
                   </p>
@@ -283,7 +283,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">Simple, transparent pricing</h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-xl text-gray-500 max-w-3xl mx-auto">
                 Choose the plan that works best for your construction business. All plans include our 2-week free trial.
               </p>
             </div>
@@ -293,10 +293,10 @@ export default function Home() {
                 <CardContent className="p-8">
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold mb-2">Starter</h3>
-                    <p className="text-muted-foreground mb-4">Perfect for small crews</p>
+                    <p className="text-gray-500 mb-4">Perfect for small crews</p>
                     <div className="mb-6">
                       <span className="text-4xl font-bold">$39</span>
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-gray-500">/month</span>
                     </div>
                   </div>
                   <ul className="mb-8 space-y-4">
@@ -340,10 +340,10 @@ export default function Home() {
                 <CardContent className="p-8">
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold mb-2">Professional</h3>
-                    <p className="text-muted-foreground mb-4">For growing companies</p>
+                    <p className="text-gray-500 mb-4">For growing companies</p>
                     <div className="mb-6">
                       <span className="text-4xl font-bold">$89</span>
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-gray-500">/month</span>
                     </div>
                   </div>
                   <ul className="mb-8 space-y-4">
@@ -382,10 +382,10 @@ export default function Home() {
                 <CardContent className="p-8">
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
-                    <p className="text-muted-foreground mb-4">For large operations</p>
+                    <p className="text-gray-500 mb-4">For large operations</p>
                     <div className="mb-6">
                       <span className="text-4xl font-bold">$179</span>
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-gray-500">/month</span>
                     </div>
                   </div>
                   <ul className="mb-8 space-y-4">
@@ -426,7 +426,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">Frequently asked questions</h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-xl text-gray-500 max-w-3xl mx-auto">
                 Everything you need to know about TropiTrack
               </p>
             </div>
@@ -481,7 +481,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-3xl text-center">
               <h2 className="text-4xl font-bold tracking-tight mb-6">Stay updated with TropiTrack</h2>
-              <p className="text-xl text-muted-foreground mb-8">
+              <p className="text-xl text-gray-500 mb-8">
                 Get the latest features, construction tips, and industry insights delivered to your inbox.
               </p>
               <div className="flex justify-center">
@@ -500,7 +500,7 @@ export default function Home() {
               <div className="flex items-center gap-2 mb-6">
                 <span className="text-xl font-bold tracking-tight">TropiTrack</span>
               </div>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-gray-500 mb-6">
                 Modern time tracking and payroll management for construction companies in the Bahamas.
               </p>
               <div className="flex space-x-4">
@@ -563,22 +563,22 @@ export default function Home() {
               <h3 className="font-semibold mb-6">Product</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#features" className="text-gray-500 hover:text-foreground transition-colors">
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#pricing" className="text-gray-500 hover:text-foreground transition-colors">
                     Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#" className="text-gray-500 hover:text-foreground transition-colors">
                     Integrations
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#" className="text-gray-500 hover:text-foreground transition-colors">
                     Security
                   </Link>
                 </li>
@@ -588,22 +588,22 @@ export default function Home() {
               <h3 className="font-semibold mb-6">Company</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#" className="text-gray-500 hover:text-foreground transition-colors">
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#" className="text-gray-500 hover:text-foreground transition-colors">
                     Support
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#" className="text-gray-500 hover:text-foreground transition-colors">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#" className="text-gray-500 hover:text-foreground transition-colors">
                     Terms of Service
                   </Link>
                 </li>
@@ -613,22 +613,22 @@ export default function Home() {
               <h3 className="font-semibold mb-6">Contact</h3>
               <ul className="space-y-3">
                 <li>
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-500">
                     Email: <a href="mailto:lamar@tropitech.org" className="hover:text-foreground transition-colors">lamar@tropitech.org</a>
                   </p>
                 </li>
                 <li>
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-500">
                     Phone: <a href="tel:+13349130982" className="hover:text-foreground transition-colors">+1 (334) 913-0982</a>
                   </p>
                 </li>
                 <li>
-                  <p className="text-muted-foreground">Address: Eleuthera, Bahamas</p>
+                  <p className="text-gray-500">Address: Eleuthera, Bahamas</p>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
+          <div className="mt-12 pt-8 border-t text-center text-sm text-gray-500">
             © {new Date().getFullYear()} TropiTrack. All rights reserved.
           </div>
         </div>

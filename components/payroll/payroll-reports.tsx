@@ -232,7 +232,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
     return (
       <div className="flex items-center justify-between px-6 py-4">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-gray-500">
           Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} records
         </div>
         <div className="flex items-center space-x-2">
@@ -287,19 +287,19 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <h2 className="text-2xl font-bold tracking-tight text-foreground">
               Payroll Reports
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-gray-500">
               Generate detailed reports and analyze payroll data across different dimensions.
             </p>
           </div>
           <div className="text-right">
-            <div className="text-sm text-muted-foreground">Total Unpaid Balance</div>
+            <div className="text-sm text-gray-500">Total Unpaid Balance</div>
             <div className={`text-2xl font-bold ${totalUnpaidBalance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
               {new Intl.NumberFormat("en-BS", {
                 style: "currency",
                 currency: "BSD",
               }).format(totalUnpaidBalance)}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-gray-500">
               {filteredPayrolls.length} payroll records
             </div>
           </div>
@@ -312,7 +312,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="text-xl font-semibold text-foreground">Detailed Reports</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               {(() => {
                 const { from, to } = getDateRange(dateRange)
                 if (!from || !to) return "Select a date range"
@@ -321,7 +321,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-muted-foreground">Date Range:</span>
+            <span className="text-sm font-medium text-gray-500">Date Range:</span>
             <Select value={dateRange} onValueChange={handleDateRangeChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select date range" />
@@ -341,7 +341,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                     variant="outline"
                     className={cn(
                       "w-[180px] justify-start text-left font-normal",
-                      !customDateRange && "text-muted-foreground"
+                      !customDateRange && "text-gray-500"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -380,7 +380,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
               <TabsTrigger
                 value="payroll-summary"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
               >
                 Payroll Summary
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -388,7 +388,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
               <TabsTrigger
                 value="worker-detail"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
               >
                 Worker Detail
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -396,7 +396,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
               <TabsTrigger
                 value="nib-compliance"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
               >
                 NIB Compliance
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -404,7 +404,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
               <TabsTrigger
                 value="overtime-analysis"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
               >
                 Overtime Analysis
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -412,7 +412,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
               <TabsTrigger
                 value="project-allocation"
-                className="group relative px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
+                className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
               >
                 Project Allocation
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
@@ -425,7 +425,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Payroll Summary Report</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Overview of payroll totals by status and period
                 </p>
               </CardHeader>
@@ -434,14 +434,14 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                   <TableComponent className="min-w-full">
                     <TableHeader>
                       <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Period</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Workers</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Total Hours</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">NIB Deductions</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Unpaid Balance</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Period</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Status</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Workers</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Total Hours</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Gross Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">NIB Deductions</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Net Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Unpaid Balance</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -553,7 +553,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Worker Detail Report</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Individual worker payroll breakdown and performance metrics
                 </p>
               </CardHeader>
@@ -562,15 +562,15 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                   <TableComponent className="min-w-full">
                     <TableHeader>
                       <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker Name</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Hourly Rate</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Regular Hours</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Overtime Hours</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Total Hours</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Worker Name</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Position</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Hourly Rate</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Regular Hours</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Overtime Hours</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Total Hours</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Gross Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Net Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -581,7 +581,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                             {paginatedData.map((payroll) => (
                               <TableRow key={payroll.worker_id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
                                 <TableCell className="py-4 px-6 font-medium">{payroll.worker_name}</TableCell>
-                                <TableCell className="py-4 px-6 text-sm text-muted-foreground">{payroll.position}</TableCell>
+                                <TableCell className="py-4 px-6 text-sm text-gray-500">{payroll.position}</TableCell>
                                 <TableCell className="py-4 px-6">
                                   {new Intl.NumberFormat("en-BS", {
                                     style: "currency",
@@ -629,7 +629,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">NIB Compliance Report</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   National Insurance Board contributions and compliance tracking (Employee: 4.65%, Employer: 6.65%)
                 </p>
               </CardHeader>
@@ -638,14 +638,14 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                   <TableComponent className="min-w-full">
                     <TableHeader>
                       <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker Name</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Employee NIB (4.65%)</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Employer NIB (6.65%)</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Total NIB</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Compliance</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Worker Name</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Gross Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Employee NIB (4.65%)</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Employer NIB (6.65%)</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Total NIB</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Net Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Status</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Compliance</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -732,7 +732,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Overtime Analysis Report</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Overtime hours tracking and cost analysis
                 </p>
               </CardHeader>
@@ -741,14 +741,14 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                   <TableComponent className="min-w-full">
                     <TableHeader>
                       <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker Name</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Regular Hours</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Overtime Hours</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Overtime %</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Regular Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Overtime Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Total Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Worker Name</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Regular Hours</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Overtime Hours</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Overtime %</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Regular Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Overtime Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Total Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -821,7 +821,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Project Allocation Report</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Payroll costs allocated by project and worker
                 </p>
               </CardHeader>
@@ -830,14 +830,14 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                   <TableComponent className="min-w-full">
                     <TableHeader>
                       <TableRow className="border-b border-muted/30 bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Project</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Worker Name</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Position</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Hours</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Hourly Rate</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Gross Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Net Pay</TableHead>
-                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-left">Status</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Project</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Worker Name</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Position</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Hours</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Hourly Rate</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Gross Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Net Pay</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-gray-500 text-left">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -851,7 +851,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                                   {payroll.project_name || "Unassigned"}
                                 </TableCell>
                                 <TableCell className="py-4 px-6 font-medium">{payroll.worker_name}</TableCell>
-                                <TableCell className="py-4 px-6 text-sm text-muted-foreground">{payroll.position}</TableCell>
+                                <TableCell className="py-4 px-6 text-sm text-gray-500">{payroll.position}</TableCell>
                                 <TableCell className="py-4 px-6">{payroll.total_hours.toFixed(1)}</TableCell>
                                 <TableCell className="py-4 px-6">
                                   {new Intl.NumberFormat("en-BS", {
@@ -912,7 +912,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                     }).format(aggregatedPayrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0))}
                   </div>
                   <div className="text-sm font-normal mt-1">
-                    <span className="text-muted-foreground">Total gross pay across </span>
+                    <span className="text-gray-500">Total gross pay across </span>
                     <span className="text-primary font-medium">{aggregatedPayrolls.length} workers</span>
                   </div>
                 </div>

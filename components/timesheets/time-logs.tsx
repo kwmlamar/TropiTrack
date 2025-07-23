@@ -182,7 +182,7 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
         
         <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
           <CardContent>
-            <div className="text-center py-6 text-muted-foreground">
+            <div className="text-center py-6 text-gray-500">
               <p className="text-red-600 mb-2">Error loading time logs</p>
               <p className="text-sm">{error}</p>
               <button 
@@ -218,7 +218,7 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
         
         <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
           <CardContent>
-            <div className="text-center py-6 text-muted-foreground">
+            <div className="text-center py-6 text-gray-500">
               No time logs data available
             </div>
           </CardContent>
@@ -348,7 +348,7 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
         {workers.length === 0 ? (
           <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
             <CardContent>
-              <div className="text-center py-6 text-muted-foreground">
+              <div className="text-center py-6 text-gray-500">
                 No worker time logs found for the selected period
               </div>
             </CardContent>

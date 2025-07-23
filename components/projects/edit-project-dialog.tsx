@@ -254,7 +254,7 @@ export function EditProjectDialog({
                   <FormLabel>Location</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                       <Input placeholder="Nassau, Bahamas" className="pl-10" {...field} />
                     </div>
                   </FormControl>
@@ -278,7 +278,7 @@ export function EditProjectDialog({
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-gray-500"
                             )}
                           >
                             {field.value ? (
@@ -328,7 +328,7 @@ export function EditProjectDialog({
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-gray-500"
                             )}
                           >
                             {field.value ? (
@@ -381,7 +381,7 @@ export function EditProjectDialog({
                     <FormLabel>Budget</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input
                           type="number"
                           min="0"
@@ -409,7 +409,7 @@ export function EditProjectDialog({
                     <FormLabel>Payroll Budget</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                         <Input
                           type="number"
                           min="0"

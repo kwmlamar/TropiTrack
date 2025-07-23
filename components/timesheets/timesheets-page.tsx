@@ -604,7 +604,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
           <div className="flex items-center space-x-2">
                           {/* Create Timesheets Button */}
               <Link href="/dashboard/timesheets/bulk">
-                <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
+                <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
                   Create Timesheets
                 </Button>
               </Link>
@@ -659,7 +659,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
                               <td className="p-4 pl-6">
                                 <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
-                                <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
+                                <div className="text-xs text-gray-500">{worker?.position || "Worker"}</div>
                               </td>
                               <td className="p-4">
                                 <div className="text-sm text-gray-500">
@@ -706,7 +706,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                           e.preventDefault();
                                           handleCellClick(day, workerId);
                                         }}
-                                        className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                        className="w-full h-8 text-gray-500 text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
                                         title="Click to add timesheet entry"
                                       >
                                         +
@@ -746,7 +746,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
                                   <td className="p-4">
                                     <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
-                                    <div className="text-xs text-muted-foreground">{worker?.position || "Worker"}</div>
+                                    <div className="text-xs text-gray-500">{worker?.position || "Worker"}</div>
                                   </td>
                                   <td className="p-4">
                                     <div className="text-sm text-gray-500">
@@ -793,7 +793,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                               e.preventDefault();
                                               handleCellClick(day, workerId);
                                             }}
-                                            className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                            className="w-full h-8 text-gray-500 text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
                                             title="Click to add timesheet entry"
                                           >
                                             +
@@ -827,10 +827,10 @@ export default function TimesheetsPage({ user }: { user: User }) {
                   (viewMode === "daily" && paginatedTimesheets.length === 0)) && (
                   <div className="flex flex-col items-center justify-center py-12 px-6">
                     <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
-                      <CalendarDays className="h-8 w-8 text-muted-foreground" />
+                      <CalendarDays className="h-8 w-8 text-gray-500" />
                     </div>
-                    <h3 className="text-lg font-semibold text-muted-foreground mb-2">No timesheets found</h3>
-                    <p className="text-sm text-muted-foreground text-center max-w-sm">
+                    <h3 className="text-lg font-semibold text-gray-500 mb-2">No timesheets found</h3>
+                    <p className="text-sm text-gray-500 text-center max-w-sm">
                       {selectedWorker !== "all" || selectedProject !== "all" || viewMode !== "weekly"
                         ? "Try adjusting your filters"
                         : "Get started by creating your first timesheet"
@@ -843,7 +843,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                 {((viewMode === "weekly" && weeklyWorkerEntries.length > ITEMS_PER_PAGE) || 
                   (viewMode === "daily" && filteredTimesheets.length > ITEMS_PER_PAGE)) && (
                   <div className="flex items-center justify-between px-6 py-4">
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-gray-500">
                       {viewMode === "weekly" 
                         ? `Showing ${weeklyStartIndex + 1} to ${Math.min(weeklyEndIndex, weeklyWorkerEntries.length)} of ${weeklyWorkerEntries.length} workers`
                         : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTimesheets.length)} of ${filteredTimesheets.length} timesheets`

@@ -128,9 +128,9 @@ function DragHandle({ id }: { id: number }) {
       {...listeners}
       variant="ghost"
       size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
+      className="text-gray-500 size-7 hover:bg-transparent"
     >
-      <IconGripVertical className="text-muted-foreground size-3" />
+      <IconGripVertical className="text-gray-500 size-3" />
       <span className="sr-only">Drag to reorder</span>
     </Button>
   )
@@ -181,7 +181,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     header: "Section Type",
     cell: ({ row }) => (
       <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
+        <Badge variant="outline" className="text-gray-500 px-1.5">
           {row.original.type}
         </Badge>
       </div>
@@ -191,7 +191,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
+      <Badge variant="outline" className="text-gray-500 px-1.5">
         {row.original.status === "Done" ? (
           <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
         ) : (
@@ -292,7 +292,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+            className="data-[state=open]:bg-muted text-gray-500 flex size-8"
             size="icon"
           >
             <IconDotsVertical />
@@ -531,7 +531,7 @@ export function DataTable({
           </DndContext>
         </div>
         <div className="flex items-center justify-between px-4">
-          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+          <div className="text-gray-500 hidden flex-1 text-sm lg:flex">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
@@ -713,7 +713,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                   Trending up by 5.2% this month{" "}
                   <IconTrendingUp className="size-4" />
                 </div>
-                <div className="text-muted-foreground">
+                <div className="text-gray-500">
                   Showing total visitors for the last 6 months. This is just
                   some random text to test the layout. It spans multiple lines
                   and should wrap around.

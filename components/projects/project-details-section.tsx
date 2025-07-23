@@ -71,7 +71,7 @@ export function ProjectDetailsSection({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">Project Details</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               Key information and details about this project.
             </p>
           </div>
@@ -89,15 +89,15 @@ export function ProjectDetailsSection({
         <div className="space-y-4">
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground">Project Name</h4>
+              <h4 className="font-medium text-sm text-gray-500">Project Name</h4>
               <p className="text-sm mt-1">{project.name}</p>
             </div>
             {project.client && (
               <div>
-                <h4 className="font-medium text-sm text-muted-foreground">Client</h4>
+                <h4 className="font-medium text-sm text-gray-500">Client</h4>
                 <p className="text-sm mt-1">{project.client.name}</p>
                 {project.client.company && (
-                  <p className="text-sm text-muted-foreground">{project.client.company}</p>
+                  <p className="text-sm text-gray-500">{project.client.company}</p>
                 )}
               </div>
             )}
@@ -105,13 +105,13 @@ export function ProjectDetailsSection({
           <Separator />
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground">Status</h4>
+              <h4 className="font-medium text-sm text-gray-500">Status</h4>
               <div className="mt-1">
                 {getStatusBadge(project.status)}
               </div>
             </div>
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground">Start Date</h4>
+              <h4 className="font-medium text-sm text-gray-500">Start Date</h4>
               <p className="text-sm mt-1">
                 {project.start_date ? format(new Date(project.start_date), "MMM d, yyyy") : "Not started"}
               </p>
@@ -120,13 +120,13 @@ export function ProjectDetailsSection({
           <Separator />
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground">End Date</h4>
+              <h4 className="font-medium text-sm text-gray-500">End Date</h4>
               <p className="text-sm mt-1">
                 {project.end_date ? format(new Date(project.end_date), "MMM d, yyyy") : "No end date"}
               </p>
             </div>
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground">Location</h4>
+              <h4 className="font-medium text-sm text-gray-500">Location</h4>
               <p className="text-sm mt-1">{project.location || "No location specified"}</p>
             </div>
           </div>

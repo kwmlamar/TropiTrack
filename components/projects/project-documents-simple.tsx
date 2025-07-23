@@ -30,7 +30,7 @@ export function ProjectDocumentsSimple({ projectId, userId }: ProjectDocumentsSi
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Project Documents</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Manage contracts, plans, permits, and other project documents
           </p>
         </div>
@@ -45,9 +45,9 @@ export function ProjectDocumentsSimple({ projectId, userId }: ProjectDocumentsSi
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <FileText className="h-12 w-12 text-gray-500 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Documents Feature</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <p className="text-gray-500 text-center mb-4">
               Document management functionality is ready to be implemented.
             </p>
             <Button onClick={handleTest} disabled={loading}>

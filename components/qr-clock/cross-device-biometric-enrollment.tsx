@@ -331,7 +331,7 @@ export default function CrossDeviceBiometricEnrollment({
                 <Fingerprint className="h-6 w-6" />
                 <span>Fingerprint</span>
                 {!deviceCapabilities.fingerprint && (
-                  <span className="text-xs text-muted-foreground">Not Available</span>
+                  <span className="text-xs text-gray-500">Not Available</span>
                 )}
                 {!workerId && (
                   <span className="text-xs text-red-500">No Worker ID</span>
@@ -350,7 +350,7 @@ export default function CrossDeviceBiometricEnrollment({
                 <Camera className="h-6 w-6" />
                 <span>Face Recognition</span>
                 {!deviceCapabilities.face && (
-                  <span className="text-xs text-muted-foreground">Not Available</span>
+                  <span className="text-xs text-gray-500">Not Available</span>
                 )}
                 {!workerId && (
                   <span className="text-xs text-red-500">No Worker ID</span>
@@ -365,7 +365,7 @@ export default function CrossDeviceBiometricEnrollment({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium">Enrollment Progress</h4>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 Step {currentStep + 1} of {enrollmentSteps.length}
               </span>
             </div>
@@ -380,7 +380,7 @@ export default function CrossDeviceBiometricEnrollment({
                     <div className={`font-medium ${getStepStatusColor(step)}`}>
                       {step.title}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-gray-500">
                       {step.description}
                     </div>
                     {step.error && (

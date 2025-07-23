@@ -19,7 +19,7 @@
   --primary-foreground: oklch(1.0 0 0);
 
   /* Secondary Colors - Subtle gray with hint of blue */
-  --secondary: #4A739C;
+  --secondary: #9c9c9c;
   --secondary-foreground: oklch(1.0 0 0);
 
   /* Muted Colors - Improved readability */

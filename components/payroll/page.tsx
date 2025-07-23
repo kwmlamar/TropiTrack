@@ -926,7 +926,7 @@ export default function PayrollPage({ user }: { user: User }) {
                                   setPayPeriodType("weekly");
                                   setSelectedStatus("all");
                                 }}
-                                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                                className="w-full justify-start text-gray-500 hover:text-foreground"
                               >
                                 Clear filters
                               </Button>
@@ -952,7 +952,7 @@ export default function PayrollPage({ user }: { user: User }) {
                         disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
                           payrolls.find(payroll => payroll.id === id)?.status === "confirmed"
                         )}
-                    className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+                    className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors"
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Run Payroll
@@ -997,7 +997,7 @@ export default function PayrollPage({ user }: { user: User }) {
                             <TableCell className="px-4">
                               <div>
                                 <div className="font-medium">{payroll.worker_name}</div>
-                                <div className="text-sm text-muted-foreground">{payroll.position}</div>
+                                <div className="text-sm text-gray-500">{payroll.position}</div>
                               </div>
                             </TableCell>
                             <TableCell className="px-4">
@@ -1170,7 +1170,7 @@ export default function PayrollPage({ user }: { user: User }) {
                   {/* Pagination Controls */}
                   {filteredPayrolls.length > ITEMS_PER_PAGE && (
                     <div className="flex items-center justify-between px-6 py-4">
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-gray-500">
                         Showing {startIndex + 1} to {Math.min(endIndex, filteredPayrolls.length)} of {filteredPayrolls.length} payroll records
                       </div>
                       <div className="flex items-center space-x-2">
@@ -1234,7 +1234,7 @@ export default function PayrollPage({ user }: { user: User }) {
               {/* Payment Summary */}
               <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
                 <div className="text-center">
-                  <div className="text-sm font-medium text-muted-foreground">Gross Pay</div>
+                  <div className="text-sm font-medium text-gray-500">Gross Pay</div>
                   <div className="text-lg font-bold">
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
@@ -1243,7 +1243,7 @@ export default function PayrollPage({ user }: { user: User }) {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-medium text-muted-foreground">Net Pay</div>
+                  <div className="text-sm font-medium text-gray-500">Net Pay</div>
                   <div className="text-lg font-bold">
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
@@ -1252,7 +1252,7 @@ export default function PayrollPage({ user }: { user: User }) {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-medium text-muted-foreground">Total Paid</div>
+                  <div className="text-sm font-medium text-gray-500">Total Paid</div>
                   <div className="text-lg font-bold text-green-600">
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
@@ -1261,7 +1261,7 @@ export default function PayrollPage({ user }: { user: User }) {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-medium text-muted-foreground">Remaining</div>
+                  <div className="text-sm font-medium text-gray-500">Remaining</div>
                   <div className="text-lg font-bold text-orange-600">
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
@@ -1275,9 +1275,9 @@ export default function PayrollPage({ user }: { user: User }) {
               <div>
                 <div className="font-semibold mb-3">Payment History</div>
                 {loadingPayments ? (
-                  <div className="text-center py-4 text-muted-foreground">Loading payments...</div>
+                  <div className="text-center py-4 text-gray-500">Loading payments...</div>
                 ) : payments.length === 0 ? (
-                  <div className="text-center py-6 text-muted-foreground border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                  <div className="text-center py-6 text-gray-500 border-2 border-dashed border-muted-foreground/20 rounded-lg">
                     No payments yet
                   </div>
                 ) : (
@@ -1291,7 +1291,7 @@ export default function PayrollPage({ user }: { user: User }) {
                               currency: "BSD",
                             }).format(Number(payment.amount))}
                           </div>
-                          <div className="text-sm text-muted-foreground">{payment.payment_date}</div>
+                          <div className="text-sm text-gray-500">{payment.payment_date}</div>
                         </div>
                         <Badge variant={payment.status === "completed" ? "default" : "secondary"} className="text-xs">
                           {payment.status}
