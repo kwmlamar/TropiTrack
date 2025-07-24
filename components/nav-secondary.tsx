@@ -73,7 +73,7 @@ export function NavSecondary({ items, className }: NavSecondaryProps) {
                   <TooltipTrigger asChild>{menuButton}</TooltipTrigger>
                   <TooltipContent side="right" className="flex flex-col gap-1">
                     <span className="font-medium">{item.title}</span>
-                    {item.description && <span className="text-xs text-gray-500">{item.description}</span>}
+                    {item.description && <span className="text-xs text-muted-foreground">{item.description}</span>}
                     {item.shortcut && (
                       <Badge variant="outline" className="w-fit text-xs">
                         {item.shortcut}

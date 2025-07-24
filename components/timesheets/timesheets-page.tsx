@@ -604,7 +604,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
           <div className="flex items-center space-x-2">
                           {/* Create Timesheets Button */}
               <Link href="/dashboard/timesheets/bulk">
-                <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
                   Create Timesheets
                 </Button>
               </Link>
@@ -706,7 +706,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                           e.preventDefault();
                                           handleCellClick(day, workerId);
                                         }}
-                                        className="w-full h-8 text-gray-500 text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                        className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
                                         title="Click to add timesheet entry"
                                       >
                                         +
@@ -793,7 +793,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                               e.preventDefault();
                                               handleCellClick(day, workerId);
                                             }}
-                                            className="w-full h-8 text-gray-500 text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                            className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
                                             title="Click to add timesheet entry"
                                           >
                                             +

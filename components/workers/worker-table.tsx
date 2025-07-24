@@ -121,7 +121,7 @@ export default function WorkersTable({ user }: { user: User }) {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Team Management
           </h1>
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Manage your construction team and track worker information
           </p>
         </div>
@@ -162,7 +162,7 @@ export default function WorkersTable({ user }: { user: User }) {
             {columns.map((col) => (
               <div
                 key={col}
-                className="text-sm font-semibold text-gray-500 uppercase tracking-wide"
+                className="text-sm font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 {col}
               </div>
@@ -173,7 +173,7 @@ export default function WorkersTable({ user }: { user: User }) {
           {/* Data Rows */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-2 text-gray-500">
+              <div className="flex items-center space-x-2 text-muted-foreground">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm">Loading workers...</span>
               </div>
@@ -181,12 +181,12 @@ export default function WorkersTable({ user }: { user: User }) {
           ) : filteredWorkers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                <UserX className="h-8 w-8 text-gray-500" />
+                <UserX className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 No workers found
               </h3>
-              <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
+              <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
                 You haven&apos;t added any workers yet. Add your first worker to
                 get started with team management.
               </p>
@@ -213,7 +213,7 @@ export default function WorkersTable({ user }: { user: User }) {
                       <p className="font-semibold text-foreground">
                         {worker.name}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {worker.position || "Construction Worker"}
                       </p>
                     </div>
@@ -221,7 +221,7 @@ export default function WorkersTable({ user }: { user: User }) {
 
                   <div className="font-medium text-foreground">
                     <span className="text-lg">${worker.hourly_rate}</span>
-                    <span className="text-sm text-gray-500">/hr</span>
+                    <span className="text-sm text-muted-foreground">/hr</span>
                   </div>
 
                   <div>
@@ -277,7 +277,7 @@ export default function WorkersTable({ user }: { user: User }) {
           {/* Pagination Controls */}
           {filteredWorkers.length > ITEMS_PER_PAGE && (
             <div className="flex items-center justify-between px-6 py-4">
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredWorkers.length)} of {filteredWorkers.length} workers
               </div>
               <div className="flex items-center space-x-2">

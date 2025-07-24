@@ -115,11 +115,11 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         <CardContent className="p-0">
           <ScrollArea className="h-96">
             {loading ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-muted-foreground">
                 Loading notifications...
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-muted-foreground">
                 No notifications
               </div>
             ) : (
@@ -148,16 +148,16 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                             {notification.message}
                           </p>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                             </span>
                             <div className="flex items-center gap-1">
                               {notification.action_url && (
-                                <ExternalLink className="h-3 w-3 text-gray-500" />
+                                <ExternalLink className="h-3 w-3 text-muted-foreground" />
                               )}
                             </div>
                           </div>

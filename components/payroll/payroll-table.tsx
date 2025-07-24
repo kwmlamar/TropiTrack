@@ -134,7 +134,7 @@ export function PayrollTable({
       cell: ({ row }) => (
         <div>
           <div className="font-medium">{row.getValue("worker_name")}</div>
-          <div className="text-sm text-gray-500">{row.original.position}</div>
+                          <div className="text-sm text-muted-foreground">{row.original.position}</div>
         </div>
       ),
     },
@@ -142,7 +142,7 @@ export function PayrollTable({
       accessorKey: "gross_pay",
       header: "Gross Pay",
       cell: ({ row }) => (
-        <div className="font-medium text-gray-500">
+        <div className="font-medium text-muted-foreground">
           {new Intl.NumberFormat("en-BS", {
             style: "currency",
             currency: "BSD",
@@ -155,7 +155,7 @@ export function PayrollTable({
       accessorKey: "nib_deduction",
       header: "NIB Deduction",
       cell: ({ row }) => (
-        <div className="font-medium text-gray-500">
+        <div className="font-medium text-muted-foreground">
           {new Intl.NumberFormat("en-BS", {
             style: "currency",
             currency: "BSD",
@@ -168,7 +168,7 @@ export function PayrollTable({
       accessorKey: "net_pay",
       header: "Net Pay",
       cell: ({ row }) => (
-        <div className="font-medium text-gray-500">
+        <div className="font-medium text-muted-foreground">
           {new Intl.NumberFormat("en-BS", {
             style: "currency",
             currency: "BSD",
@@ -231,14 +231,14 @@ export function PayrollTable({
             {totalPaid === 0 ? (
               <button
                 onClick={() => handlePaymentAmountEdit(row.original.id, "0")}
-                className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
+                className="font-medium text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 -
               </button>
             ) : (
               <button
                 onClick={() => handlePaymentAmountEdit(row.original.id, totalPaid.toString())}
-                className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
+                className="font-medium text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 {new Intl.NumberFormat("en-BS", {
                   style: "currency",
@@ -313,7 +313,7 @@ export function PayrollTable({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="px-4 text-gray-500">
+                <TableHead key={header.id} className="px-4 text-muted-foreground">
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -351,7 +351,7 @@ export function PayrollTable({
       {/* Pagination Controls */}
       {totalRecords > itemsPerPage && (
         <div className="flex items-center justify-between px-6 py-4">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             Showing {startIndex + 1} to {Math.min(endIndex, totalRecords)} of {totalRecords} payroll records
           </div>
           <div className="flex items-center space-x-2">

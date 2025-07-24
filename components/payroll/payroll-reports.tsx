@@ -232,7 +232,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
 
     return (
       <div className="flex items-center justify-between px-6 py-4">
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-muted-foreground">
           Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} records
         </div>
         <div className="flex items-center space-x-2">
@@ -287,19 +287,19 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             <h2 className="text-2xl font-bold tracking-tight text-foreground">
               Payroll Reports
             </h2>
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               Generate detailed reports and analyze payroll data across different dimensions.
             </p>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-500">Total Unpaid Balance</div>
+            <div className="text-sm text-muted-foreground">Total Unpaid Balance</div>
             <div className={`text-2xl font-bold ${totalUnpaidBalance > 0 ? 'text-orange-600' : 'text-green-600'}`}>
               {new Intl.NumberFormat("en-BS", {
                 style: "currency",
                 currency: "BSD",
               }).format(totalUnpaidBalance)}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {filteredPayrolls.length} payroll records
             </div>
           </div>
@@ -312,7 +312,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="text-xl font-semibold text-foreground">Detailed Reports</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {(() => {
                 const { from, to } = getDateRange(dateRange)
                 if (!from || !to) return "Select a date range"
@@ -321,7 +321,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-500">Date Range:</span>
+            <span className="text-sm font-medium text-muted-foreground">Date Range:</span>
             <Select value={dateRange} onValueChange={handleDateRangeChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select date range" />

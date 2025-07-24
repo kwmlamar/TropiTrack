@@ -248,7 +248,7 @@ export default function AccountSettingsPage() {
                 <Button 
                   onClick={handlePasswordChange}
                   disabled={loading || !passwords.current || !passwords.new || !passwords.confirm}
-                  className="w-full bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors"
+                  className="w-full bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
                 >
                   <Key className="h-4 w-4 mr-2" />
                   {loading ? "Changing Password..." : "Change Password"}
@@ -263,7 +263,7 @@ export default function AccountSettingsPage() {
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium">Active Sessions</h4>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Manage your active login sessions
                   </p>
                 </div>
@@ -271,7 +271,7 @@ export default function AccountSettingsPage() {
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">Current Session</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {user?.email} • {user?.created_at ? formatDate(user.created_at) : 'Unknown'}
                       </p>
                     </div>
@@ -304,7 +304,7 @@ export default function AccountSettingsPage() {
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h4 className="font-medium">{subscription.plan.name} Plan</h4>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         Next billing: {formatDate(subscription.current_period_end)}
                       </p>
                     </div>
@@ -325,12 +325,12 @@ export default function AccountSettingsPage() {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button asChild className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                    <Button asChild className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
                       <Link href="/dashboard/settings/subscription">
                         Manage Subscription
                       </Link>
                     </Button>
-                    <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                    <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
                       <Download className="h-4 w-4 mr-2" />
                       Download Invoices
                     </Button>
@@ -338,8 +338,8 @@ export default function AccountSettingsPage() {
                 </>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No active subscription found</p>
-                  <Button asChild className="mt-4 bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                  <p className="text-muted-foreground">No active subscription found</p>
+                  <Button asChild className="mt-4 bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
                     <Link href="/dashboard/settings/subscription">
                       View Subscription Options
                     </Link>
@@ -365,11 +365,11 @@ export default function AccountSettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Export Your Data</h4>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Download a copy of your data
                     </p>
                   </div>
-                  <Button size="sm" className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors">
+                  <Button size="sm" className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
                     <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>
@@ -378,7 +378,7 @@ export default function AccountSettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Delete Account</h4>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Permanently delete your account and all data
                     </p>
                   </div>
@@ -415,13 +415,13 @@ export default function AccountSettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Last Login</span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {user?.updated_at ? formatDate(user.updated_at) : 'Unknown'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Member Since</span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {user?.created_at ? formatDate(user.created_at) : 'Unknown'}
                 </span>
               </div>
@@ -436,20 +436,20 @@ export default function AccountSettingsPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label className="text-sm font-medium">Name</Label>
-                <p className="text-sm text-gray-500">{user?.name || 'Not set'}</p>
+                <p className="text-sm text-muted-foreground">{user?.name || 'Not set'}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium">Email</Label>
-                <p className="text-sm text-gray-500">{user?.email}</p>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium">Role</Label>
-                <p className="text-sm text-gray-500">{user?.role || 'User'}</p>
+                <p className="text-sm text-muted-foreground">{user?.role || 'User'}</p>
               </div>
               {user?.company && (
                 <div>
                   <Label className="text-sm font-medium">Company</Label>
-                  <p className="text-sm text-gray-500">{user.company.name}</p>
+                  <p className="text-sm text-muted-foreground">{user.company.name}</p>
                 </div>
               )}
             </CardContent>

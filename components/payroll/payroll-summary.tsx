@@ -62,7 +62,7 @@ export function PayrollSummary({ data }: PayrollSummaryProps) {
                 <item.icon className={`h-5 w-5 ${item.color}`} />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">{item.title}</p>
+                <p className="text-sm text-muted-foreground">{item.title}</p>
                 <p className="text-lg font-semibold">{item.value}</p>
               </div>
             </div>
@@ -79,21 +79,21 @@ export function PayrollSummary({ data }: PayrollSummaryProps) {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Gross Pay</span>
+              <span className="text-sm text-muted-foreground">Gross Pay</span>
               <span className="font-sans font-medium">{formatCurrency(data.totalGrossPay)}</span>
             </div>
             <div className="border-l-2 border-blue-200 pl-3 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">NIB Contributions</span>
+                <span className="text-sm text-muted-foreground">NIB Contributions</span>
                 <span className="font-sans text-[var(--info)]">-{formatCurrency(data.totalNibDeductions)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Other Deductions</span>
+                <span className="text-sm text-muted-foreground">Other Deductions</span>
                 <span className="font-sans text-[var(--destructive)]">-{formatCurrency(data.totalOtherDeductions)}</span>
               </div>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">Total Deductions</span>
+              <span className="text-muted-foreground">Total Deductions</span>
               <span className="font-sans text-[var(--destructive)]">-{formatCurrency(data.totalDeductions)}</span>
             </div>
             <div className="border-t pt-3">

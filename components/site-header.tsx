@@ -53,13 +53,13 @@ export function SiteHeader({
                 </Link>
                 <Link href="/dashboard/timesheets">
                   <DropdownMenuItem className="cursor-pointer">
-                    <CheckCircle className="mr-2 h-4 w-4" />
+                    <Clock className="mr-2 h-4 w-4" />
                     Timesheets
                   </DropdownMenuItem>
                 </Link>
                 <Link href="/dashboard/approvals">
                   <DropdownMenuItem className="cursor-pointer">
-                    <Clock className="mr-2 h-4 w-4" />
+                    <CheckCircle className="mr-2 h-4 w-4" />
                     Approvals
                   </DropdownMenuItem>
                 </Link>

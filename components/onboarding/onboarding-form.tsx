@@ -161,7 +161,7 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
               </Badge>
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CheckCircle className="h-4 w-4 text-green-500" />
             Valid Invite
           </div>
@@ -221,7 +221,7 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
                   <FormLabel>Password</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a secure password"
@@ -236,9 +236,9 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-500" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <Eye className="h-4 w-4 text-gray-500" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         )}
                       </Button>
                     </div>
@@ -256,7 +256,7 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
@@ -273,9 +273,9 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
                         }
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-500" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <Eye className="h-4 w-4 text-gray-500" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         )}
                       </Button>
                     </div>
@@ -301,7 +301,7 @@ const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
           </form>
         </Form>
 
-        <div className="mt-6 text-center text-xs text-gray-500">
+        <div className="mt-6 text-center text-xs text-muted-foreground">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </div>
       </CardContent>

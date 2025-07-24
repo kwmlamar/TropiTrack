@@ -952,7 +952,7 @@ export default function PayrollPage({ user }: { user: User }) {
                         disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
                           payrolls.find(payroll => payroll.id === id)?.status === "confirmed"
                         )}
-                    className="bg-transparent border-0 ring-2 ring-muted-foreground text-gray-500 hover:bg-muted-foreground hover:!text-white transition-colors"
+                    className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Run Payroll

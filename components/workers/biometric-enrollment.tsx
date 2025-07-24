@@ -223,7 +223,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
             <div className="text-center">
               <Shield className="h-12 w-12 mx-auto mb-4 text-blue-600" />
               <h3 className="text-lg font-semibold">Device Compatibility Check</h3>
-              <p className="text-gray-500">Checking if your device supports biometric authentication...</p>
+              <p className="text-muted-foreground">Checking if your device supports biometric authentication...</p>
             </div>
             
             <div className="space-y-3">
@@ -285,7 +285,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
           <div className="space-y-4">
             <div className="text-center">
               <h3 className="text-lg font-semibold">Choose Biometric Method</h3>
-              <p className="text-gray-500">Select how you&apos;d like to authenticate</p>
+              <p className="text-muted-foreground">Select how you&apos;d like to authenticate</p>
             </div>
             
             <div className="grid gap-3">
