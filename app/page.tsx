@@ -19,10 +19,10 @@ export default function Home() {
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm font-medium transition-colors hover:text-primary">
-              Features
+              Features 
             </Link>
             <Link href="#pricing" className="text-sm font-medium transition-colors hover:text-primary">
-              Pricing
+              Pricing (Coming Soon)
             </Link>
             <Link href="#faq" className="text-sm font-medium transition-colors hover:text-primary">
               FAQ
