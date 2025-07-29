@@ -16,11 +16,29 @@ export async function login(formData: FormData): Promise<LoginResult> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     console.error("Login failed:", error.message);
     return { error: error.message, field: "email" }; // Optional: field-specific error
+  }
+
+  // Update last_login_at if login was successful
+  if (data?.user) {
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', data.user.id)
+
+      if (updateError) {
+        console.error('Error updating last_login_at:', updateError)
+        // Don't fail the login for this error
+      }
+    } catch (err) {
+      console.error('Unexpected error updating last_login_at:', err)
+      // Don't fail the login for this error
+    }
   }
 
   return { success: true };

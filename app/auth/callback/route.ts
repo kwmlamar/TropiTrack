@@ -108,6 +108,24 @@ export async function GET(request: Request) {
         console.log('Profile already exists for user:', data.user.id)
       }
 
+      // Update last_login_at timestamp
+      try {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ last_login_at: new Date().toISOString() })
+          .eq('id', data.user.id)
+
+        if (updateError) {
+          console.error('Error updating last_login_at:', updateError)
+          // Don't fail the login for this error
+        } else {
+          console.log('Updated last_login_at for user:', data.user.id)
+        }
+      } catch (err) {
+        console.error('Unexpected error updating last_login_at:', err)
+        // Don't fail the login for this error
+      }
+
       console.log('Authentication successful, redirecting to:', next)
       return NextResponse.redirect(`${origin}${next}`)
     } catch (err) {

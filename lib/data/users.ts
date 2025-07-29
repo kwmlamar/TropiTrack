@@ -172,7 +172,7 @@ export async function deleteUser(companyId: string, id: string): Promise<ApiResp
 export async function updateUserLastLogin(id: string): Promise<ApiResponse<User>> {
   try {
     const { data, error } = await supabase
-      .from("users")
+      .from("profiles")
       .update({ last_login_at: new Date().toISOString() })
       .eq("id", id)
       .select()
