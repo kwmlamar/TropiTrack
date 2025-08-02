@@ -519,11 +519,11 @@ export async function getFeatureFlags(): Promise<ApiResponse<FeatureFlags>> {
   try {
     const subscription = await getCompanySubscription();
     if (!subscription.success || !subscription.data) {
-      // Return default flags for no subscription
+      // Return default flags for no subscription - allow basic features with limits
       return {
         data: {
-          can_add_workers: false,
-          can_create_projects: false,
+          can_add_workers: true,
+          can_create_projects: true,
           can_use_biometrics: false,
           can_use_api: false,
           can_use_advanced_analytics: false,
@@ -535,10 +535,10 @@ export async function getFeatureFlags(): Promise<ApiResponse<FeatureFlags>> {
           can_use_advanced_payroll: false,
           can_use_unlimited_projects: false,
           can_use_dedicated_support: false,
-          storage_limit_gb: 0,
-          api_calls_limit: 0,
-          workers_limit: 0,
-          projects_limit: 0,
+          storage_limit_gb: 1,
+          api_calls_limit: 100,
+          workers_limit: 3,
+          projects_limit: 2,
         },
         error: null,
         success: true,

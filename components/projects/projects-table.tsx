@@ -54,8 +54,8 @@ import { AddProjectDialog } from "@/components/projects/add-project-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import { FeatureGate } from "@/components/subscription/feature-gate";
-import { UsageLimit } from "@/components/subscription/usage-limit";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { toast } from "sonner";
 
 const columns = [
   "Project",
@@ -66,6 +66,7 @@ const columns = [
 ];
 
 export default function ProjectsTable({ user }: { user: User }) {
+  const { getLimit } = useFeatureFlags();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [projectAssignments, setProjectAssignments] = useState<
@@ -82,6 +83,10 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const rowsPerPage = 10;
+
+  // Check if user has reached project limit
+  const projectLimit = getLimit("projects_limit");
+  const hasReachedLimit = projectLimit !== -1 && projects.length >= projectLimit;
 
   useEffect(() => {
     loadProjects();
@@ -206,7 +211,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       },
       in_progress: {
         label: "In Progress",
-        className: "bg-info/10 text-info border-info/20 hover:bg-info/20 dark:bg-info/20 dark:text-info-foreground dark:border-info/30 px-4 py-1.5 text-sm font-medium",
+        className: "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl",
       },
       paused: {
         label: "Paused",
@@ -214,7 +219,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       },
       completed: {
         label: "Completed",
-        className: "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-4 py-1.5 text-sm font-medium",
+        className: "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl",
       },
       cancelled: {
         label: "Cancelled",
@@ -245,13 +250,18 @@ export default function ProjectsTable({ user }: { user: User }) {
             Manage your construction projects and track progress.
           </p>
         </div>
-        <FeatureGate feature="can_create_projects">
-          <Button 
-            onClick={() => setIsAddProjectDialogOpen(true)}
-          >
-            Add Project
-          </Button>
-        </FeatureGate>
+        <Button 
+          onClick={() => {
+            if (hasReachedLimit) {
+              toast.error(`You've reached your limit of ${projectLimit} projects. Upgrade your plan to add more.`);
+            } else {
+              setIsAddProjectDialogOpen(true);
+            }
+          }}
+          className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+        >
+          Add Project
+        </Button>
       </div>
 
       {/* Add Project Dialog */}
@@ -356,8 +366,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       </div>
 
       {/* Projects Table */}
-      <UsageLimit feature="projects_limit" currentUsage={projects.length} title="Projects">
-        <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl">
           <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
@@ -393,13 +402,17 @@ export default function ProjectsTable({ user }: { user: User }) {
                   ? "No projects match your current filters. Try adjusting your search criteria."
                   : "You haven't added any projects yet. Add your first project to start building your portfolio."}
               </p>
-              <FeatureGate feature="can_create_projects">
-                <Button 
-                  onClick={() => setIsAddProjectDialogOpen(true)}
-                >
-                  Add Your First Project
-                </Button>
-              </FeatureGate>
+              <Button 
+                onClick={() => {
+                  if (hasReachedLimit) {
+                    toast.error(`You've reached your limit of ${projectLimit} projects. Upgrade your plan to add more.`);
+                  } else {
+                    setIsAddProjectDialogOpen(true);
+                  }
+                }}
+              >
+                Add Your First Project
+              </Button>
             </div>
           ) : (
             <>
@@ -418,14 +431,14 @@ export default function ProjectsTable({ user }: { user: User }) {
                         <p className="font-semibold text-foreground">{project.name}</p>
                         <p className="text-sm text-gray-500">{project.location || "Location TBD"}</p>
                       </div>
-                      <div className="text-foreground">
+                      <div className="text-gray-500">
                         {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
                       </div>
-                      <div className="text-foreground">
+                      <div className="text-gray-500">
                         {project.start_date ? format(parseISO(project.start_date), "MMM d, yyyy") : "Not started"}
                       </div>
                       <div>{getStatusBadge(project.status)}</div>
-                      <div className="text-foreground">
+                      <div className="text-gray-500">
                         {assignmentCounts.get(project.id) || 0}{(assignmentCounts.get(project.id) || 0) === 1 ? " worker" : " workers"}
                       </div>
                     </Link>
@@ -515,7 +528,6 @@ export default function ProjectsTable({ user }: { user: User }) {
           )}
         </CardContent>
         </Card>
-      </UsageLimit>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

@@ -24,7 +24,7 @@ export function SearchForm({ placeholder = "Search...", value, onChange, ...prop
           <SidebarInput
             id="search"
             placeholder={placeholder}
-            className="pl-8 bg-white dark:bg-transparent"
+            className="pl-8 bg-sidebar backdrop-blur-xl"
             value={value}
             onChange={onChange}
           />
