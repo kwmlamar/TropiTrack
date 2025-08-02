@@ -13,8 +13,10 @@ export default async function ClientPage() {
 
     return (
         <DashboardLayout title='Clients' >
-            <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
-                <ClientTable user={user}/>
+            <div className="container mx-auto p-6">
+                <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
+                    <ClientTable user={user}/>
+                </div>
             </div>
         </DashboardLayout>
     )

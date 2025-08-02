@@ -105,17 +105,19 @@ export default function ClientTable({ user }: { user: User }) {
   }, [searchTerm]);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="space-y-4 pb-4">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Management</h1>
-          <p className="text-gray-500">Manage your construction clients and project relationships</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className='space-y-4'>
+          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
+          <p className="text-gray-500">
+            Manage your construction clients and project relationships.
+          </p>
         </div>
         <Button 
           onClick={() => setClientDialogOpen(true)}
+          className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
         >
-          <UserCheck className="mr-2 h-4 w-4" />
           Add Client
         </Button>
       </div>
@@ -130,17 +132,19 @@ export default function ClientTable({ user }: { user: User }) {
       />
 
       {/* Search Section */}
-      <div className="w-full">
-        <SearchForm
-          placeholder="Search clients..."
-          className="w-full"
-          value={searchTerm}
-          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
-        />
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <SearchForm
+            placeholder="Search clients..."
+            className="w-full"
+            value={searchTerm}
+            onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
+          />
+        </div>
       </div>
 
       {/* Clients Table */}
-      <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl">
         <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_2fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
@@ -170,10 +174,8 @@ export default function ClientTable({ user }: { user: User }) {
                 You haven&apos;t added any clients yet. Add your first client to start building your project portfolio.
               </p>
               <Button 
-                className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
                 onClick={() => setClientDialogOpen(true)}
               >
-                <UserCheck className="mr-2 h-4 w-4" />
                 Add Your First Client
               </Button>
             </div>
@@ -203,7 +205,7 @@ export default function ClientTable({ user }: { user: User }) {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className="text-foreground">{client.email}</span>
+                    <span className="text-gray-500">{client.email}</span>
                   </div>
 
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
