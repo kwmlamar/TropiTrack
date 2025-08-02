@@ -245,7 +245,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className='space-y-4'>
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Project Management</h1>
           <p className="text-gray-500">
             Manage your construction projects and track progress.
           </p>

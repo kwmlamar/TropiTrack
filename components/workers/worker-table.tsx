@@ -15,7 +15,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import {
   MoreVertical,
-  UserCheck,
   UserX,
   ChevronLeft,
   ChevronRight,
@@ -34,11 +33,9 @@ import {
 import { EditWorkerDialog } from "@/components/forms/worker-form";
 import { useRouter } from "next/navigation";
 import { AddWorkerDialog } from "./add-worker-dialog";
-import { FeatureGate } from "@/components/subscription/feature-gate";
-import { UsageLimit } from "@/components/subscription/usage-limit";
 
 const columns = ["Name", "Pay Rate", "Status"];
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 export default function WorkersTable({ user }: { user: User }) {
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -114,55 +111,52 @@ export default function WorkersTable({ user }: { user: User }) {
   }, [searchTerm]);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="space-y-4 pb-4">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Team Management
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your construction team and track worker information
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className='space-y-4'>
+          <h1 className="text-3xl font-bold tracking-tight">Team Management</h1>
+          <p className="text-gray-500">
+            Manage your construction team and track worker information.
           </p>
         </div>
-        <div className="flex items-center justify-between">
-          
-          <FeatureGate feature="can_add_workers">
-            <Button 
-              onClick={() => setAddWorkerDialogOpen(true)}
-            >
-              Add Worker
-            </Button>
-          </FeatureGate>
-        </div>
-        <AddWorkerDialog
-          userId={user.id}
-          onSuccess={loadWorkers}
-          open={addWorkerDialogOpen}
-          onOpenChange={setAddWorkerDialogOpen}
-        />
+        <Button 
+          onClick={() => setAddWorkerDialogOpen(true)}
+          className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+        >
+          Add Worker
+        </Button>
       </div>
 
+      {/* Add Worker Dialog */}
+      <AddWorkerDialog
+        userId={user.id}
+        onSuccess={loadWorkers}
+        open={addWorkerDialogOpen}
+        onOpenChange={setAddWorkerDialogOpen}
+      />
+
       {/* Search Section */}
-      <div className="w-full">
-        <SearchForm
-          placeholder="Search workers..."
-          className="w-full"
-          value={searchTerm}
-          onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
-        />
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <SearchForm
+            placeholder="Search workers..."
+            className="w-full"
+            value={searchTerm}
+            onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
+          />
+        </div>
       </div>
 
       {/* Workers Table */}
-      <UsageLimit feature="workers_limit" currentUsage={workers.length} title="Workers">
-        <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+      <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl">
           <CardContent className="p-0">
           {/* Column Headers */}
           <div className="grid grid-cols-[2fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
             {columns.map((col) => (
               <div
                 key={col}
-                className="text-sm font-semibold text-muted-foreground uppercase tracking-wide"
+                className="text-sm font-semibold text-gray-500 uppercase tracking-wide"
               >
                 {col}
               </div>
@@ -173,32 +167,28 @@ export default function WorkersTable({ user }: { user: User }) {
           {/* Data Rows */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-2 text-muted-foreground">
+              <div className="flex items-center space-x-2 text-gray-500">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm">Loading workers...</span>
               </div>
             </div>
           ) : filteredWorkers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-6">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                <UserX className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                No workers found
-              </h3>
-              <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
-                You haven&apos;t added any workers yet. Add your first worker to
-                get started with team management.
-              </p>
-              <FeatureGate feature="can_add_workers">
-                <Button 
-                  className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary"
-                  onClick={() => setAddWorkerDialogOpen(true)}
-                >
-                  <UserCheck className="mr-2 h-4 w-4" />
-                  Add Your First Worker
-                </Button>
-              </FeatureGate>
+                          <div className="flex flex-col items-center justify-center py-16 px-6">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                  <UserX className="h-8 w-8 text-gray-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  No workers found
+                </h3>
+                <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
+                  You haven&apos;t added any workers yet. Add your first worker to
+                  get started with team management.
+                </p>
+              <Button 
+                onClick={() => setAddWorkerDialogOpen(true)}
+              >
+                Add Your First Worker
+              </Button>
             </div>
           ) : (
             <div className="divide-y divide-border/50">
@@ -213,23 +203,23 @@ export default function WorkersTable({ user }: { user: User }) {
                       <p className="font-semibold text-foreground">
                         {worker.name}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-gray-500">
                         {worker.position || "Construction Worker"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="font-medium text-foreground">
+                  <div className="font-medium text-gray-500">
                     <span className="text-lg">${worker.hourly_rate}</span>
-                    <span className="text-sm text-muted-foreground">/hr</span>
+                    <span className="text-sm text-gray-500">/hr</span>
                   </div>
 
                   <div>
                     <Badge
                       className={
                         worker.is_active
-                          ? "bg-success/10 text-success border-success/20 hover:bg-success/20 dark:bg-success/20 dark:text-success-foreground dark:border-success/30 px-6 py-1 text-sm font-medium"
-                          : "bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/20 dark:bg-secondary/20 dark:text-secondary-foreground dark:border-secondary/30 px-6 py-1 text-sm font-medium"
+                          ? "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl"
+                          : "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl"
                       }
                     >
                       {worker.is_active ? "Active" : "Inactive"}
@@ -277,7 +267,7 @@ export default function WorkersTable({ user }: { user: User }) {
           {/* Pagination Controls */}
           {filteredWorkers.length > ITEMS_PER_PAGE && (
             <div className="flex items-center justify-between px-6 py-4">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-gray-500">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredWorkers.length)} of {filteredWorkers.length} workers
               </div>
               <div className="flex items-center space-x-2">
@@ -323,7 +313,6 @@ export default function WorkersTable({ user }: { user: User }) {
           )}
         </CardContent>
         </Card>
-      </UsageLimit>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

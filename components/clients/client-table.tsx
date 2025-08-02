@@ -8,7 +8,7 @@ import type { User } from "@supabase/supabase-js"
 import type { Client } from "@/lib/types/client"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
-import { MoreVertical, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react"
+import { MoreVertical, UserX, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -109,7 +109,7 @@ export default function ClientTable({ user }: { user: User }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className='space-y-4'>
-          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Client Management</h1>
           <p className="text-gray-500">
             Manage your construction clients and project relationships.
           </p>

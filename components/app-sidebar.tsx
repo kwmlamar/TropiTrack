@@ -9,7 +9,6 @@ import {
   Users,
   Briefcase,
   Book,
-  QrCode,
   BarChart3,
   Clock,
 } from "lucide-react";
@@ -93,13 +92,7 @@ const data = {
       badge: null,
       description: "Team management",
     },
-    {
-      title: "QR Codes",
-      url: "/dashboard/qr-codes",
-      icon: QrCode,
-      badge: null,
-      description: "Manage clock in/out QR codes",
-    },
+
     {
       title: "Reports",
       url: "/dashboard/reports",

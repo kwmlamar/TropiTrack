@@ -156,7 +156,7 @@ export function EditWorkerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -175,7 +175,7 @@ export function EditWorkerDialog({
           )}
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -546,7 +546,7 @@ export function EditWorkerDialog({
               </div>
 
               {/* Form Actions */}
-              <div className="flex items-center justify-end space-x-2 pt-4">
+              <div className="flex items-center justify-end space-x-2 pt-4 pb-2">
                 <Button 
                   type="button" 
                   variant="outline" 
