@@ -113,7 +113,7 @@ export function OnboardingTestPanel() {
   return (
     <>
       {/* Floating test button */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed top-6 right-6 z-50">
         <Button
           onClick={() => setIsVisible(!isVisible)}
           size="sm"

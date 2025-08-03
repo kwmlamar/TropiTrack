@@ -10,6 +10,8 @@ import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
 import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay"
 import { OnboardingTestPanel } from "@/components/onboarding/onboarding-test-panel"
+import { CompanySetupOverlayProvider } from "@/components/onboarding/company-setup-overlay-provider"
+import { SetupGuideDropdown } from "@/components/onboarding/setup-guide-dropdown"
 
 
 type DashboardLayoutClientProps = {
@@ -63,8 +65,14 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
           {/* Company Setup Dialog */}
           <CompanySetupDialog />
           
+          {/* Company Setup Overlay - Rendered at top level to cover entire viewport */}
+          <CompanySetupOverlayProvider />
+          
           {/* Onboarding Test Panel (Development Only) */}
           <OnboardingTestPanel />
+          
+          {/* Setup Guide Dropdown */}
+          <SetupGuideDropdown />
         </SidebarProvider>
       </DateRangeProvider>
     </OnboardingProvider>

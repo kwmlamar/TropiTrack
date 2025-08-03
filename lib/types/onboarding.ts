@@ -23,6 +23,16 @@ export interface OnboardingData {
   industry?: string;
   address?: string;
   phone?: string;
+  website?: string;
+  description?: string;
+  workers?: Array<{
+    name: string;
+    email: string;
+    phone: string;
+    position: string;
+    hourly_rate: string;
+    start_date: string;
+  }>;
   worker_count?: string;
   pay_schedule?: string;
   time_tracking_method?: string;
@@ -51,8 +61,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'company-setup',
     title: 'Company Setup',
     description: 'Enter your company information',
-    path: '/onboarding/company',
-    component: 'CompanySetupStep',
+    path: '/dashboard',
+    component: 'CompanySetupOverlay',
     order: 1,
     required: true,
   },

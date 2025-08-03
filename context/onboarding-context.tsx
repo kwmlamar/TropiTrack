@@ -98,6 +98,7 @@ interface OnboardingContextType {
   goToStep: (stepId: string) => void;
   resetOnboarding: () => void;
   skipOnboarding: () => void;
+  closeCurrentStep: () => void;
   getCurrentStep: () => OnboardingStep | null;
   getProgress: () => number;
   isStepCompleted: (stepId: string) => boolean;
@@ -110,11 +111,55 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [state, dispatch] = useReducer(onboardingReducer, initialState);
   const router = useRouter();
 
+  // Auto-activate onboarding steps based on current page
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      
+      // If user is on dashboard and company setup is not completed, show company setup overlay
+      if (pathname === '/dashboard' && !state.completedSteps.includes('company-setup')) {
+        dispatch({ type: 'SET_CURRENT_STEP', step: 'company-setup' });
+        if (!state.isActive) {
+          dispatch({ type: 'START_ONBOARDING' });
+        }
+      }
+      
+      // If user is on workers page and company setup is completed, activate workers step
+      if (pathname === '/dashboard/workers' && state.completedSteps.includes('company-setup')) {
+        dispatch({ type: 'SET_CURRENT_STEP', step: 'workers' });
+        if (!state.isActive) {
+          dispatch({ type: 'START_ONBOARDING' });
+        }
+      }
+      
+      // If user is on clients page and workers step is completed, activate clients step
+      if (pathname === '/dashboard/clients' && state.completedSteps.includes('workers')) {
+        dispatch({ type: 'SET_CURRENT_STEP', step: 'clients' });
+        if (!state.isActive) {
+          dispatch({ type: 'START_ONBOARDING' });
+        }
+      }
+      
+      // If user is on projects page and clients step is completed, activate projects step
+      if (pathname === '/dashboard/projects' && state.completedSteps.includes('clients')) {
+        dispatch({ type: 'SET_CURRENT_STEP', step: 'projects' });
+        if (!state.isActive) {
+          dispatch({ type: 'START_ONBOARDING' });
+        }
+      }
+    }
+  }, [state.completedSteps, state.isActive]);
+
   const startOnboarding = () => {
     dispatch({ type: 'START_ONBOARDING' });
     const firstStep = ONBOARDING_STEPS[0];
     if (firstStep) {
-      router.push(firstStep.path);
+      // For company setup, don't navigate - it will show as overlay
+      if (firstStep.id === 'company-setup') {
+        dispatch({ type: 'SET_CURRENT_STEP', step: firstStep.id });
+      } else {
+        router.push(firstStep.path);
+      }
     }
   };
 
@@ -125,7 +170,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const nextStep = getNextStep(stepId);
     if (nextStep) {
       dispatch({ type: 'SET_CURRENT_STEP', step: nextStep.id });
-      router.push(nextStep.path);
+      // For company setup completion, navigate to workers page
+      if (stepId === 'company-setup') {
+        router.push('/dashboard/workers');
+      } else {
+        router.push(nextStep.path);
+      }
     } else {
       // Onboarding is complete
       dispatch({ type: 'RESET_ONBOARDING' });
@@ -140,7 +190,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const nextStep = getNextStep(state.currentStep);
     if (nextStep) {
       dispatch({ type: 'SET_CURRENT_STEP', step: nextStep.id });
-      router.push(nextStep.path);
+      // For company setup, navigate to workers page
+      if (state.currentStep === 'company-setup') {
+        router.push('/dashboard/workers');
+      } else {
+        router.push(nextStep.path);
+      }
     }
   };
 
@@ -158,7 +213,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const step = getStepById(stepId);
     if (step) {
       dispatch({ type: 'SET_CURRENT_STEP', step: stepId });
-      router.push(step.path);
+      // For company setup, don't navigate - it will show as overlay
+      if (stepId === 'company-setup') {
+        // Don't navigate, just set the step
+      } else {
+        router.push(step.path);
+      }
     }
   };
 
@@ -171,6 +231,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     dispatch({ type: 'RESET_ONBOARDING' });
     toast.info('Onboarding skipped. You can restart anytime from settings.');
     router.push('/dashboard');
+  };
+
+  const closeCurrentStep = () => {
+    if (state.currentStep === 'company-setup') {
+      // For company setup, just close the overlay without resetting onboarding
+      dispatch({ type: 'SET_CURRENT_STEP', step: null });
+    } else {
+      // For other steps, skip the entire onboarding
+      skipOnboarding();
+    }
   };
 
   const getCurrentStep = (): OnboardingStep | null => {
@@ -197,6 +267,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     goToStep,
     resetOnboarding,
     skipOnboarding,
+    closeCurrentStep,
     getCurrentStep,
     getProgress,
     isStepCompleted,

@@ -64,8 +64,13 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
 
   useEffect(() => {
     if (state.isActive && currentStep) {
-      setIsVisible(true);
-      highlightElement(currentStep.id);
+      // Skip company setup step as it's handled separately
+      if (currentStep.id === 'company-setup') {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+        highlightElement(currentStep.id);
+      }
     } else {
       setIsVisible(false);
       removeHighlight();
@@ -122,7 +127,9 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
     <div className="relative">
       {children}
       
-      {/* Overlay */}
+
+      
+      {/* Regular Onboarding Overlay */}
       {isVisible && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
           {/* Highlighted area */}

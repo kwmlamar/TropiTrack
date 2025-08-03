@@ -4,17 +4,17 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Building2, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Badge } from '@/components/ui/badge';
+
 import { useOnboarding } from '@/context/onboarding-context';
 import { saveOnboardingData } from '@/lib/actions/onboarding-actions';
-import { OnboardingProgress } from '@/components/onboarding/onboarding-progress';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 const companySchema = z.object({
   company_name: z.string().min(1, 'Company name is required'),
@@ -27,9 +27,15 @@ const companySchema = z.object({
 
 type CompanyFormData = z.infer<typeof companySchema>;
 
-export function CompanySetupStep() {
+interface CompanySetupOverlayProps {
+  isVisible: boolean;
+  onClose: () => void;
+}
+
+export function CompanySetupOverlay({ isVisible, onClose }: CompanySetupOverlayProps) {
   const { completeStep } = useOnboarding();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
   
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -46,13 +52,14 @@ export function CompanySetupStep() {
   const onSubmit = async (data: CompanyFormData) => {
     setIsSubmitting(true);
     try {
-      // Save onboarding data (will get real user ID from the function)
       await saveOnboardingData(undefined, data);
-      
-      // Complete this step and move to next
       completeStep('company-setup', data);
-      
       toast.success('Company information saved!');
+      
+      onClose();
+      setTimeout(() => {
+        router.push('/dashboard/workers');
+      }, 500);
     } catch (error) {
       console.error('Error saving company data:', error);
       toast.error('Failed to save company information. Please try again.');
@@ -61,34 +68,29 @@ export function CompanySetupStep() {
     }
   };
 
+  if (!isVisible) return null;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-3xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Building2 className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">TropiTrack</span>
-          </div>
-          <p className="text-gray-500">Let&apos;s get your company set up</p>
-          <Badge variant="secondary" className="mt-2">
-            Step 1 of 8 - Company Setup
-          </Badge>
-        </div>
-
-        {/* Progress Indicator */}
-        <OnboardingProgress />
-
+    <div className="fixed inset-0 z-50 bg-gray-600 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(75, 85, 99, 0.5)' }}>
+      <div className="w-full sm:max-w-[600px]">
         {/* Form */}
-        <Card className="shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Company Information</CardTitle>
+        <Card className="shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] border-0 bg-white">
+          <CardHeader className="text-center relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="absolute right-4 top-4 h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <CardTitle className="text-3xl font-bold">Company Information</CardTitle>
             <p className="text-gray-500">
               Tell us about your construction company
             </p>
           </CardHeader>
           
-          <CardContent className="p-8">
+          <CardContent className="p-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
@@ -225,13 +227,7 @@ export function CompanySetupStep() {
           </CardContent>
         </Card>
 
-        {/* Progress indicator */}
-        <div className="text-center mt-6">
-          <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            <span>Company setup will be saved automatically</span>
-          </div>
-        </div>
+
       </div>
     </div>
   );
