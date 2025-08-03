@@ -33,7 +33,8 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
     goToNextStep, 
     goToPreviousStep, 
     skipOnboarding,
-    isStepCompleted 
+    isStepCompleted,
+    completeStep 
   } = useOnboarding();
   
   const [isVisible, setIsVisible] = useState(false);
@@ -130,46 +131,65 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
   }, [state.isActive, currentStep?.id]);
 
   useEffect(() => {
-    if (state.isActive && currentStep) {
-      // Skip company setup step as it's handled separately
-      if (currentStep.id === 'company-setup') {
-        setIsVisible(false);
-      } else if (['workers', 'clients', 'projects', 'timesheets', 'approvals', 'payroll'].includes(currentStep.id)) {
-        // For steps that support smart completion
-        const stepCompletion = smartCompletionRef.current[currentStep.id];
-        console.log(`${currentStep.id} step detected, smart completion:`, stepCompletion);
-        
-        if (stepCompletion === true) {
-          // Step is smart-completed, move to next step
-          console.log(`${currentStep.id} step smart-completed, advancing to next step`);
+    const handleStepNavigation = async () => {
+      if (state.isActive && currentStep) {
+        // Skip company setup step as it's handled separately
+        if (currentStep.id === 'company-setup') {
           setIsVisible(false);
-          // Use setTimeout to prevent immediate re-render
-          setTimeout(() => {
-            goToNextStep();
-          }, 100);
-        } else if (stepCompletion === false) {
-          // Step is not completed, but don't navigate - let the user stay on current page
-          console.log(`${currentStep.id} step not completed, staying on current page`);
+        } else if (['workers', 'clients', 'projects', 'timesheets', 'approvals', 'payroll'].includes(currentStep.id)) {
+          // For steps that support smart completion
+          const stepCompletion = smartCompletionRef.current[currentStep.id];
+          console.log(`${currentStep.id} step detected, smart completion:`, stepCompletion);
+          
+          if (stepCompletion === true) {
+            // Step is smart-completed, move to next step
+            console.log(`${currentStep.id} step smart-completed, advancing to next step`);
+            setIsVisible(false);
+            // Use setTimeout to prevent immediate re-render
+            setTimeout(() => {
+              goToNextStep();
+            }, 100);
+          } else if (stepCompletion === false) {
+            // Step is not completed, but don't navigate - let the user stay on current page
+            console.log(`${currentStep.id} step not completed, staying on current page`);
+            setIsVisible(false);
+          } else {
+            // Still loading, wait for smart completion check
+            console.log('Smart completion still loading...');
+            setIsVisible(false);
+          }
+        } else if (['dashboard'].includes(currentStep.id)) {
+          // For dashboard step, navigate and automatically complete it
+          console.log(`${currentStep.id} step detected, navigating to ${currentStep.path} and completing step`);
           setIsVisible(false);
+          
+          // Check if dashboard step is already completed before trying to complete it
+          const isAlreadyCompleted = isStepCompleted('dashboard');
+          if (!isAlreadyCompleted) {
+            // Complete the dashboard step automatically only if not already completed
+            try {
+              await completeStep('dashboard');
+              console.log('Dashboard step completed automatically');
+            } catch (error) {
+              console.error('Error completing dashboard step:', error);
+            }
+          } else {
+            console.log('Dashboard step already completed, skipping');
+          }
+          
+          router.push(currentStep.path);
         } else {
-          // Still loading, wait for smart completion check
-          console.log('Smart completion still loading...');
-          setIsVisible(false);
+          setIsVisible(true);
+          highlightElement(currentStep.id);
         }
-      } else if (['dashboard'].includes(currentStep.id)) {
-        // For steps that should navigate to their respective pages
-        console.log(`${currentStep.id} step detected, navigating to ${currentStep.path}`);
-        setIsVisible(false);
-        router.push(currentStep.path);
       } else {
-        setIsVisible(true);
-        highlightElement(currentStep.id);
+        setIsVisible(false);
+        removeHighlight();
       }
-    } else {
-      setIsVisible(false);
-      removeHighlight();
-    }
-  }, [state.isActive, currentStep?.id, highlightElement, removeHighlight, router, goToNextStep]);
+    };
+
+    handleStepNavigation();
+  }, [state.isActive, currentStep?.id, highlightElement, removeHighlight, router, goToNextStep, completeStep, isStepCompleted]);
 
   const findElementToHighlight = (stepId: string): HTMLElement | null => {
     switch (stepId) {

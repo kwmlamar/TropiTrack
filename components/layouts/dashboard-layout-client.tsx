@@ -11,6 +11,7 @@ import { OnboardingProvider } from "@/context/onboarding-context"
 
 import { CompanySetupOverlayProvider } from "@/components/onboarding/company-setup-overlay-provider"
 import { SetupGuideDropdown } from "@/components/onboarding/setup-guide-dropdown"
+import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay"
 
 
 type DashboardLayoutClientProps = {
@@ -52,7 +53,9 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
               <div className="@container/main flex flex-1 flex-col gap-2">
                 <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                   <div className="px-4 lg:px-6">
-                    {children}
+                    <OnboardingOverlay>
+                      {children}
+                    </OnboardingOverlay>
                   </div>
                 </div>
               </div>
