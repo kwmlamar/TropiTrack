@@ -10,8 +10,13 @@ async function getUserProfileWithCompany(): Promise<UserProfileWithCompany | nul
     // Get the authenticated user
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
     
-    if (authError || !authUser) {
-      console.error('Error getting auth user:', authError)
+    if (authError) {
+      console.error('Auth error:', authError)
+      return null
+    }
+
+    if (!authUser) {
+      console.log('No authenticated user found')
       return null
     }
 
@@ -24,6 +29,11 @@ async function getUserProfileWithCompany(): Promise<UserProfileWithCompany | nul
 
     if (error) {
       console.error('Error getting user profile:', error)
+      return null
+    }
+
+    if (!profile) {
+      console.log('No profile found for user:', authUser.id)
       return null
     }
 

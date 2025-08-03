@@ -7,6 +7,9 @@ import { SiteHeader } from "@/components/site-header"
 import { CompanySetupDialog } from "@/components/company-setup-dialog"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
+import { OnboardingProvider } from "@/context/onboarding-context"
+import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay"
+import { OnboardingTestPanel } from "@/components/onboarding/onboarding-test-panel"
 
 
 type DashboardLayoutClientProps = {
@@ -27,36 +30,43 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
 
 
   return (
-    <DateRangeProvider>
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "calc(var(--spacing) * 64)",
-            "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
-        }
-      >
-        <AppSidebar profile={profile} variant="inset" />
-        <SidebarInset>
-          <SiteHeader 
-            title={title} 
-            hideDateRangePicker={isDashboard} 
-            showTimesheetsDropdown={showTimesheetsDropdown}
-          />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                <div className="px-4 lg:px-6">
-                  {children}
+    <OnboardingProvider>
+      <DateRangeProvider>
+        <SidebarProvider
+          style={
+            {
+              "--sidebar-width": "calc(var(--spacing) * 64)",
+              "--header-height": "calc(var(--spacing) * 12)",
+            } as React.CSSProperties
+          }
+        >
+          <AppSidebar profile={profile} variant="inset" />
+          <SidebarInset>
+            <SiteHeader 
+              title={title} 
+              hideDateRangePicker={isDashboard} 
+              showTimesheetsDropdown={showTimesheetsDropdown}
+            />
+            <div className="flex flex-1 flex-col">
+              <div className="@container/main flex flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                  <div className="px-4 lg:px-6">
+                    <OnboardingOverlay>
+                      {children}
+                    </OnboardingOverlay>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </SidebarInset>
-        
-        {/* Company Setup Dialog */}
-        <CompanySetupDialog />
-      </SidebarProvider>
-    </DateRangeProvider>
+          </SidebarInset>
+          
+          {/* Company Setup Dialog */}
+          <CompanySetupDialog />
+          
+          {/* Onboarding Test Panel (Development Only) */}
+          <OnboardingTestPanel />
+        </SidebarProvider>
+      </DateRangeProvider>
+    </OnboardingProvider>
   )
 } 

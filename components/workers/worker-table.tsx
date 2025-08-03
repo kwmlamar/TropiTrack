@@ -123,6 +123,7 @@ export default function WorkersTable({ user }: { user: User }) {
         <Button 
           onClick={() => setAddWorkerDialogOpen(true)}
           className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+          data-onboarding="add-worker-button"
         >
           Add Worker
         </Button>

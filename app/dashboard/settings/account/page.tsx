@@ -386,7 +386,7 @@ export default function AccountSettingsPage() {
                     size="sm"
                     onClick={handleDeleteAccount}
                     disabled={loading}
-                    className="bg-transparent border-0 ring-2 ring-red-500 text-red-500 hover:bg-red-500 hover:!text-white transition-colors"
+                    className="bg-red-500 hover:bg-red-600 text-white"
                   >
                     <UserX className="h-4 w-4 mr-2" />
                     Delete Account

@@ -346,7 +346,7 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-900 mb-4">Worker Details</h3>
         
         {workers.length === 0 ? (
-          <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+          <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl">
             <CardContent>
               <div className="text-center py-6 text-gray-500">
                 No worker time logs found for the selected period

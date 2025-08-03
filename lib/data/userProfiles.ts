@@ -3,14 +3,27 @@
 import { createClient } from "@/utils/supabase/server";
 
 export async function getAuthUserId() {
-  const supabase = await createClient();
-  const { data: {user}, error } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const { data: {user}, error } = await supabase.auth.getUser();
 
-  if (error || !user) {
-    throw new Error("User not found")
+    if (error) {
+      console.error("Auth error:", error);
+      throw new Error(`Authentication error: ${error.message}`);
+    }
+
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    return user.id;
+  } catch (error) {
+    console.error("Error in getAuthUserId:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Unexpected error getting user ID: ${error}`);
   }
-
-  return user.id
 }
 
 export async function getUserProfile() {

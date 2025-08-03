@@ -7,21 +7,34 @@ import { User } from "@supabase/supabase-js";
 export async function getProfile(userId: string) {
   console.log("getProfile called with userId:", userId);
   
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .single();
+  try {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
 
-  console.log("Profile query result:", { profile, profileError });
+    console.log("Profile query result:", { profile, profileError });
 
-  if (profileError || !profile) {
-    throw new Error(
-      "error fetching profile info: " + JSON.stringify(profileError)
-    );
+    if (profileError) {
+      console.error("Profile error details:", profileError);
+      throw new Error(
+        `error fetching profile info: ${JSON.stringify(profileError)}`
+      );
+    }
+
+    if (!profile) {
+      throw new Error("Profile not found for user: " + userId);
+    }
+
+    return profile;
+  } catch (error) {
+    console.error("Error in getProfile:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Unexpected error fetching profile: ${error}`);
   }
-
-  return profile;
 }
 
 // WORKERS

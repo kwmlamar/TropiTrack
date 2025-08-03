@@ -283,7 +283,7 @@ export default function AccountingTransactions() {
       </div>
 
       {/* Transactions Table */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20 overflow-hidden">
+      <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>

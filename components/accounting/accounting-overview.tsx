@@ -102,7 +102,7 @@ export default function AccountingOverview() {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Cash Flow Line Chart */}
-        <Card className="col-span-1 lg:col-span-2 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20">
+        <Card className="col-span-1 lg:col-span-2 border-border/50 bg-sidebar/95 backdrop-blur-xl">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between">
               <div>
@@ -204,7 +204,7 @@ export default function AccountingOverview() {
         </Card>
 
         {/* Expenses Bar Chart */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20">
+        <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between">
               <div>
@@ -268,7 +268,7 @@ export default function AccountingOverview() {
         </Card>
 
         {/* Invoices Bar Chart */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50/50 dark:from-background dark:via-background dark:to-muted/20">
+        <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between">
               <div>
