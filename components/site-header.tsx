@@ -45,12 +45,6 @@ export function SiteHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
-                <Link href="/dashboard/time-logs">
-                  <DropdownMenuItem className="cursor-pointer">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Time Logs
-                  </DropdownMenuItem>
-                </Link>
                 <Link href="/dashboard/timesheets">
                   <DropdownMenuItem className="cursor-pointer">
                     <Clock className="mr-2 h-4 w-4" />
@@ -61,6 +55,12 @@ export function SiteHeader({
                   <DropdownMenuItem className="cursor-pointer">
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Approvals
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/dashboard/time-logs">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Time Logs
                   </DropdownMenuItem>
                 </Link>
               </DropdownMenuContent>

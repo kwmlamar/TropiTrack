@@ -52,7 +52,7 @@ const data = {
     },
     {
       title: "Time Tracking",
-      url: "/dashboard/time-logs",
+      url: "/dashboard/timesheets",
       icon: Clock,
       badge: null,
       description: "Track work hours",

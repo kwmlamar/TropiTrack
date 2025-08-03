@@ -186,6 +186,15 @@ export async function getWorker(companyId: string, id: string): Promise<ApiRespo
 export async function createWorker(userId: string, worker: NewWorker): Promise<ApiResponse<Worker>> {
   const profile = await getProfile(userId)
 
+  if (!profile) {
+    console.log("No profile found for user:", userId);
+    return {
+      data: null,
+      error: "User profile not found",
+      success: false,
+    };
+  }
+
   try {
     // Normalize empty email to null to avoid unique constraint issues
     const normalizedWorker = {
@@ -221,6 +230,16 @@ export async function createWorker(userId: string, worker: NewWorker): Promise<A
  */
 export async function updateWorker(userId: string, id: string, worker: UpdateWorker): Promise<ApiResponse<Worker>> {
     const profile = await getProfile(userId);
+    
+    if (!profile) {
+      console.log("No profile found for user:", userId);
+      return {
+        data: null,
+        error: "User profile not found",
+        success: false,
+      };
+    }
+    
   try {
     // Normalize empty email to null to avoid unique constraint issues
     const normalizedWorker = {

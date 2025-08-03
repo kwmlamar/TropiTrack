@@ -19,7 +19,7 @@ export function OnboardingCheck({ currentStep, fallback, children }: OnboardingC
 
   useEffect(() => {
     async function checkSmartCompletion() {
-      if (['workers', 'clients', 'projects'].includes(currentStep)) {
+      if (['workers', 'clients', 'projects', 'timesheets'].includes(currentStep)) {
         try {
           const { isCompleted } = await isStepSmartCompleted(currentStep);
           setSmartCompletion(isCompleted);
@@ -38,7 +38,7 @@ export function OnboardingCheck({ currentStep, fallback, children }: OnboardingC
   }, [currentStep]);
 
   // For steps that support smart completion
-  if (['workers', 'clients', 'projects'].includes(currentStep)) {
+  if (['workers', 'clients', 'projects', 'timesheets'].includes(currentStep)) {
     if (loading) {
       return <div className="flex items-center justify-center p-8">Loading...</div>;
     }

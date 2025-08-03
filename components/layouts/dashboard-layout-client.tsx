@@ -8,8 +8,7 @@ import { CompanySetupDialog } from "@/components/company-setup-dialog"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
-import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay"
-import { OnboardingTestPanel } from "@/components/onboarding/onboarding-test-panel"
+
 import { CompanySetupOverlayProvider } from "@/components/onboarding/company-setup-overlay-provider"
 import { SetupGuideDropdown } from "@/components/onboarding/setup-guide-dropdown"
 
@@ -53,9 +52,7 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
               <div className="@container/main flex flex-1 flex-col gap-2">
                 <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                   <div className="px-4 lg:px-6">
-                    <OnboardingOverlay>
-                      {children}
-                    </OnboardingOverlay>
+                    {children}
                   </div>
                 </div>
               </div>
@@ -67,9 +64,6 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
           
           {/* Company Setup Overlay - Rendered at top level to cover entire viewport */}
           <CompanySetupOverlayProvider />
-          
-          {/* Onboarding Test Panel (Development Only) */}
-          <OnboardingTestPanel />
           
           {/* Setup Guide Dropdown */}
           <SetupGuideDropdown />

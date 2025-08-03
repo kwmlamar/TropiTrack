@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Circle, Maximize2, Minimize2 } from 'lucide-react';
+import { Circle, Maximize2, Minimize2 } from 'lucide-react';
 import { useOnboarding } from '@/context/onboarding-context';
 import { ONBOARDING_STEPS, getNextStep } from '@/lib/types/onboarding';
 import { isStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
@@ -27,7 +26,7 @@ export function SetupGuideDropdown() {
   // Check smart completion for all supported steps
   useEffect(() => {
     async function checkSmartCompletion() {
-      const supportedSteps = ['workers', 'clients', 'projects'];
+      const supportedSteps = ['workers', 'clients', 'projects', 'timesheets', 'approvals'];
       
       for (const stepId of supportedSteps) {
         try {
@@ -57,9 +56,14 @@ export function SetupGuideDropdown() {
     return null;
   }
 
+  // Hide setup guide when onboarding is not active (completed or not started)
+  if (!state.isActive) {
+    return null;
+  }
+
   // Smart completion check function
   const isStepSmartCompletedLocal = (stepId: string): boolean => {
-    if (['workers', 'clients', 'projects'].includes(stepId) && smartCompletion[stepId] !== null) {
+    if (['workers', 'clients', 'projects', 'timesheets', 'approvals'].includes(stepId) && smartCompletion[stepId] !== null) {
       return smartCompletion[stepId] || false;
     }
     return isStepCompleted(stepId);
@@ -118,13 +122,17 @@ export function SetupGuideDropdown() {
                         setIsExpanded(false);
                       }}
                       className={`flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${
-                        isCurrent ? 'bg-blue-50 border border-blue-200' : ''
+                        isCurrent ? 'bg-[rgba(195,209,239,0.2)]' : ''
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <div className="flex items-center justify-center w-6 h-6">
                           {isCompleted ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <div className="w-4 h-4 bg-muted-foreground rounded-full flex items-center justify-center">
+                              <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                              </svg>
+                            </div>
                           ) : (
                             <Circle className="h-4 w-4 text-gray-400" />
                           )}
@@ -133,16 +141,10 @@ export function SetupGuideDropdown() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             <span className={`text-sm font-medium ${
-                              isCompleted ? 'text-green-600' : 
-                              isCurrent ? 'text-blue-600' : 'text-gray-700'
+                              isCurrent ? 'text-muted-foreground' : 'text-gray-700'
                             }`}>
                               {step.title}
                             </span>
-                            {isCurrent && (
-                              <Badge variant="secondary" className="text-xs">
-                                Current
-                              </Badge>
-                            )}
 
                           </div>
                           <p className="text-xs text-gray-500 mt-1">
@@ -161,38 +163,48 @@ export function SetupGuideDropdown() {
             ) : (
               // Show overview of steps when not active
               <div className="space-y-2">
-                {ONBOARDING_STEPS.map((step, index) => (
-                  <div key={step.id} className="flex items-center space-x-3 p-3 rounded-md">
-                    <div className="flex items-center justify-center w-6 h-6">
-                      <Circle className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-700">
-                          {step.title}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {step.description}
-                      </p>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {index + 1}/{ONBOARDING_STEPS.length}
-                    </div>
+                {state.isLoading ? (
+                  // Show loading state
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-2">Loading progress...</p>
                   </div>
-                ))}
-                <div className="pt-3 border-t">
-                  <Button 
-                    onClick={() => {
-                      startOnboarding();
-                      setIsExpanded(false);
-                    }}
-                    size="sm"
-                    className="w-full"
-                  >
-                    Start Onboarding
-                  </Button>
-                </div>
+                ) : (
+                  <>
+                    {ONBOARDING_STEPS.map((step, index) => (
+                      <div key={step.id} className="flex items-center space-x-3 p-3 rounded-md">
+                        <div className="flex items-center justify-center w-6 h-6">
+                          <Circle className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-700">
+                              {step.title}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {step.description}
+                          </p>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {index + 1}/{ONBOARDING_STEPS.length}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="pt-3 border-t">
+                      <Button 
+                        onClick={() => {
+                          startOnboarding();
+                          setIsExpanded(false);
+                        }}
+                        size="sm"
+                        className="w-full"
+                      >
+                        Start Onboarding
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </CardContent>

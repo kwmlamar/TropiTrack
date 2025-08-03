@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -139,7 +139,9 @@ export default function PayrollPage({ user }: { user: User }) {
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
 
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const isMountedRef = useRef(true)
+  const processedSearchParamsRef = useRef<string>('')
 
 
   // Payment modal state
@@ -188,6 +190,11 @@ export default function PayrollPage({ user }: { user: User }) {
       from: startOfWeek(new Date(), { weekStartsOn: weekStartDay }),
       to: endOfWeek(new Date(), { weekStartsOn: weekStartDay }),
     })
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMountedRef.current = false
+    }
   }, [])
 
   useEffect(() => {
@@ -199,6 +206,15 @@ export default function PayrollPage({ user }: { user: User }) {
     const dateFrom = searchParams.get('dateFrom')
     const dateTo = searchParams.get('dateTo')
     const periodType = searchParams.get('periodType')
+
+    const currentParams = `${dateFrom}-${dateTo}-${periodType}`
+    
+    // Only process if the params have actually changed
+    if (currentParams === processedSearchParamsRef.current) {
+      return
+    }
+    
+    processedSearchParamsRef.current = currentParams
 
     if (dateFrom && dateTo) {
       setDateRange({
@@ -216,12 +232,17 @@ export default function PayrollPage({ user }: { user: User }) {
       }
       setPayPeriodType(periodTypeMap[periodType] || 'weekly')
     }
-  }, [searchParams])
+  }, [searchParams.toString()])
 
   useEffect(() => {
+    // Only load payroll if we have a valid date range
+    if (!dateRange?.from || !dateRange?.to) {
+      return
+    }
+    
     loadPayroll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, dateRange, payPeriodType])
+  }, [user, dateRange?.from?.getTime(), dateRange?.to?.getTime(), payPeriodType])
 
   // Filter payrolls based on status using useMemo
   const filteredPayrolls = useMemo(() => {
@@ -241,6 +262,16 @@ export default function PayrollPage({ user }: { user: User }) {
   }, [selectedStatus]);
 
   const loadPayroll = async () => {
+    // Prevent multiple simultaneous loads
+    if (isLoading) {
+      return
+    }
+    
+    // Prevent loading if no valid date range
+    if (!dateRange?.from || !dateRange?.to) {
+      return
+    }
+    
     setIsLoading(true)
     try {
       const filters: { date_from?: string; date_to?: string; target_period_type: "weekly" | "bi-weekly" | "monthly" } = {
@@ -311,7 +342,9 @@ export default function PayrollPage({ user }: { user: User }) {
         }
       }
 
-      setPreviousPeriodData(previousPeriodData)
+      if (isMountedRef.current) {
+        setPreviousPeriodData(previousPeriodData)
+      }
 
       if (currentResponse.data) {
         // Fetch all payments for all payrolls in a single batch
@@ -343,22 +376,30 @@ export default function PayrollPage({ user }: { user: User }) {
           }
         })
         
-        setPayrolls(processedPayrolls)
+        if (isMountedRef.current) {
+          setPayrolls(processedPayrolls)
+        }
       } else {
-        setPayrolls([])
+        if (isMountedRef.current) {
+          setPayrolls([])
+        }
       }
     } catch (error) {
       console.error('Failed to load payroll data:', error)
-      setPayrolls([])
-      // Reset previous period data on error
-      setPreviousPeriodData({
-        totalPayroll: 0,
-        totalWorkers: 0,
-        totalNIB: 0,
-        totalUnpaid: 0
-      })
+      if (isMountedRef.current) {
+        setPayrolls([])
+        // Reset previous period data on error
+        setPreviousPeriodData({
+          totalPayroll: 0,
+          totalWorkers: 0,
+          totalNIB: 0,
+          totalUnpaid: 0
+        })
+      }
     } finally {
-      setIsLoading(false)
+      if (isMountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -430,7 +471,9 @@ export default function PayrollPage({ user }: { user: User }) {
     if (result.success) {
       toast.success(`Successfully confirmed ${selectedPayrollIds.size} payroll entries.`)
       setSelectedPayrollIds(new Set())
-      loadPayroll() // Refresh payroll data
+      if (isMountedRef.current) {
+        loadPayroll() // Refresh payroll data
+      }
     } else {
       toast.error("Failed to confirm payroll entries.", {
         description: result.error || "An unknown error occurred.",
@@ -478,7 +521,9 @@ export default function PayrollPage({ user }: { user: User }) {
         }
         toast.success("Final payments added for remaining balances")
         // Refresh payroll data to show updated payment amounts
-        await loadPayroll()
+        if (isMountedRef.current) {
+          await loadPayroll()
+        }
       } else {
         // User chose not to auto-complete, so we'll proceed with current balances
         toast.info("Proceeding with current payment amounts")
@@ -491,7 +536,9 @@ export default function PayrollPage({ user }: { user: User }) {
     if (result.success) {
       toast.success("Selected payrolls marked as paid.")
       setSelectedPayrollIds(new Set())
-      loadPayroll() // Refresh payroll data
+      if (isMountedRef.current) {
+        loadPayroll() // Refresh payroll data
+      }
     } else {
       toast.error("Failed to mark payrolls as paid.", {
         description: result.error || "An unknown error occurred.",
@@ -586,13 +633,15 @@ export default function PayrollPage({ user }: { user: User }) {
     setSavingPaymentAmount(payrollId)
 
     // Update local state immediately for better UX
-    setPayrolls(prevPayrolls => 
-      prevPayrolls.map(payroll => 
-        payroll.id === payrollId 
-          ? { ...payroll, total_paid: amount, remaining_balance: Math.max(0, payroll.net_pay - amount) }
-          : payroll
+    if (isMountedRef.current) {
+      setPayrolls(prevPayrolls => 
+        prevPayrolls.map(payroll => 
+          payroll.id === payrollId 
+            ? { ...payroll, total_paid: amount, remaining_balance: Math.max(0, payroll.net_pay - amount) }
+            : payroll
+        )
       )
-    )
+    }
     
     setEditingPaymentAmount(null)
     setPaymentAmountValue("")
@@ -605,6 +654,21 @@ export default function PayrollPage({ user }: { user: User }) {
       } else {
         toast.error(res.error || "Failed to update payment amount")
         // Revert local state if the API call failed
+        if (isMountedRef.current) {
+          setPayrolls(prevPayrolls => 
+            prevPayrolls.map(payroll => 
+              payroll.id === payrollId 
+                ? { ...payroll, total_paid: payroll.total_paid || 0, remaining_balance: Math.max(0, payroll.net_pay - (payroll.total_paid || 0)) }
+                : payroll
+            )
+          )
+        }
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred")
+      console.error("Error updating payment amount:", error)
+      // Revert local state if there was an error
+      if (isMountedRef.current) {
         setPayrolls(prevPayrolls => 
           prevPayrolls.map(payroll => 
             payroll.id === payrollId 
@@ -613,17 +677,6 @@ export default function PayrollPage({ user }: { user: User }) {
           )
         )
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred")
-      console.error("Error updating payment amount:", error)
-      // Revert local state if there was an error
-      setPayrolls(prevPayrolls => 
-        prevPayrolls.map(payroll => 
-          payroll.id === payrollId 
-            ? { ...payroll, total_paid: payroll.total_paid || 0, remaining_balance: Math.max(0, payroll.net_pay - (payroll.total_paid || 0)) }
-            : payroll
-        )
-      )
     } finally {
       setSavingPaymentAmount(null)
     }
@@ -645,7 +698,9 @@ export default function PayrollPage({ user }: { user: User }) {
       if (result.success) {
         toast.success("Payroll record deleted successfully")
         // Remove the deleted payroll from local state
-        setPayrolls(prevPayrolls => prevPayrolls.filter(payroll => payroll.id !== payrollId))
+        if (isMountedRef.current) {
+          setPayrolls(prevPayrolls => prevPayrolls.filter(payroll => payroll.id !== payrollId))
+        }
       } else {
         toast.error("Failed to delete payroll record", {
           description: result.error || "An unknown error occurred.",

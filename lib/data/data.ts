@@ -12,7 +12,7 @@ export async function getProfile(userId: string) {
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     console.log("Profile query result:", { profile, profileError });
 
@@ -23,10 +23,7 @@ export async function getProfile(userId: string) {
       );
     }
 
-    if (!profile) {
-      throw new Error("Profile not found for user: " + userId);
-    }
-
+    // Return null if no profile exists instead of throwing error
     return profile;
   } catch (error) {
     console.error("Error in getProfile:", error);
@@ -46,6 +43,12 @@ export async function fetchWorkersForCompany(userId: string) {
   
   const profile = await getProfile(userId);
   console.log("Profile data:", profile);
+  
+  if (!profile) {
+    console.log("No profile found for user:", userId);
+    return [];
+  }
+  
   console.log("Profile company_id:", profile.company_id);
 
   // Test the query without RLS to see if there are workers
@@ -94,6 +97,11 @@ export async function generateWorker(
   { user }: { user: User }
 ) {
   const profile = await getProfile(user.id);
+  
+  if (!profile) {
+    throw new Error("User profile not found");
+  }
+  
   const { data, error } = await supabase
     .from("workers")
     .insert({ ...employeeData, company_id: profile.company_id })
@@ -110,6 +118,11 @@ export async function deleteEmployee(
   { user }: { user: User }
 ) {
   const profile = await getProfile(user.id);
+  
+  if (!profile) {
+    throw new Error("User profile not found");
+  }
+  
   const { error } = await supabase
     .from("workers")
     .delete()
@@ -144,6 +157,12 @@ export async function updateEmployee(worker: Worker, { user }: { user: User }) {
 // fetch Clients
 export async function fetchClientsForCompany(userId: string) {
   const profile = await getProfile(userId);
+  
+  if (!profile) {
+    console.log("No profile found for user:", userId);
+    return [];
+  }
+  
   const { data, error } = await supabase
     .from("clients")
     .select("*")

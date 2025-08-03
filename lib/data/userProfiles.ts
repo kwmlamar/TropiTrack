@@ -34,10 +34,10 @@ export async function getUserProfile() {
     .from("profiles")
     .select("*")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data;
+  return data; // This can be null if no profile exists
 }
 
 export async function getUserProfileWithCompany() {
@@ -49,13 +49,13 @@ export async function getUserProfileWithCompany() {
     .from("profiles")
     .select("*, companies(id, name)")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
 
   return {
     ...data,
-    company: data.companies, // normalize naming
+    company: data?.companies, // normalize naming
   };
 }
 

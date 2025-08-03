@@ -52,6 +52,7 @@ export type OnboardingAction =
   | { type: 'COMPLETE_STEP'; step: string; data?: Record<string, unknown> }
   | { type: 'SET_CURRENT_STEP'; step: string }
   | { type: 'UPDATE_DATA'; data: Partial<OnboardingData> }
+  | { type: 'LOAD_PROGRESS'; completedSteps: string[]; data: OnboardingData }
   | { type: 'RESET_ONBOARDING' }
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'SET_ERROR'; error: string | null };

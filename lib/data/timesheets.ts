@@ -19,6 +19,16 @@ export async function getTimesheets(
   filters: TimesheetFilters = {}
 ): Promise<ApiResponse<TimesheetWithDetails[]>> {
   const profile = await getProfile(userId);
+  
+  if (!profile) {
+    console.log("No profile found for user:", userId);
+    return {
+      data: [],
+      error: null,
+      success: true,
+    };
+  }
+  
   try {
     let query = supabase
       .from("timesheets")
@@ -163,6 +173,16 @@ export async function createTimesheet(
   timesheet: CreateTimesheetInput
 ): Promise<ApiResponse<Timesheet>> {
   const profile = await getProfile(userId);
+  
+  if (!profile) {
+    console.log("No profile found for user:", userId);
+    return {
+      data: null,
+      error: "User profile not found",
+      success: false,
+    };
+  }
+  
   try {
     // Fetch worker's hourly rate
     const { data: workerData, error: workerError } = await supabase

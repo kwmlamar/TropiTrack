@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +38,9 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
   
   const [isVisible, setIsVisible] = useState(false);
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
-  const [smartCompletion, setSmartCompletion] = useState<{ [key: string]: boolean | null }>({});
+  const [, setSmartCompletion] = useState<{ [key: string]: boolean | null }>({});
+  const [lastCheckTime, setLastCheckTime] = useState<{ [key: string]: number }>({});
+  const smartCompletionRef = useRef<{ [key: string]: boolean | null }>({});
 
   const currentStep = getCurrentStep();
   const progress = getProgress();
@@ -70,31 +72,61 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
 
   // Check smart completion for steps that support it
   useEffect(() => {
+    let isMounted = true;
+    
     async function checkSmartCompletion() {
-      if (!currentStep?.id) return;
+      if (!currentStep?.id || !isMounted) return;
+      
+      // Only check for steps that support smart completion
+      if (!['workers', 'clients', 'projects', 'timesheets', 'approvals', 'payroll'].includes(currentStep.id)) {
+        return;
+      }
+      
+      // Prevent excessive checks - only check once every 5 seconds per step
+      const now = Date.now();
+      const lastCheck = lastCheckTime[currentStep.id] || 0;
+      if (now - lastCheck < 5000) {
+        console.log(`Skipping smart completion check for ${currentStep.id} - too recent`);
+        return;
+      }
       
       try {
         console.log(`Checking smart completion for ${currentStep.id} step...`);
+        setLastCheckTime(prev => ({ ...prev, [currentStep.id]: now }));
+        
         const result = await isStepSmartCompleted(currentStep.id);
-        console.log('Smart completion result:', result);
-        setSmartCompletion(prev => ({
-          ...prev,
-          [currentStep.id]: result.isCompleted
-        }));
+        
+        if (isMounted) {
+          console.log('Smart completion result:', result);
+          const newSmartCompletion = {
+            ...smartCompletionRef.current,
+            [currentStep.id]: result.isCompleted
+          };
+          smartCompletionRef.current = newSmartCompletion;
+          setSmartCompletion(newSmartCompletion);
+        }
       } catch (error) {
         console.error('Error checking smart completion:', error);
-        setSmartCompletion(prev => ({
-          ...prev,
-          [currentStep.id]: false
-        }));
+        if (isMounted) {
+          const newSmartCompletion = {
+            ...smartCompletionRef.current,
+            [currentStep.id]: false
+          };
+          smartCompletionRef.current = newSmartCompletion;
+          setSmartCompletion(newSmartCompletion);
+        }
       }
     }
 
     // Only check if onboarding is active and we have a current step
-    if (state.isActive && currentStep?.id) {
+    if (state.isActive && currentStep?.id && !state.error && !state.isLoading) {
       console.log(`${currentStep.id} step active, checking smart completion...`);
       checkSmartCompletion();
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [state.isActive, currentStep?.id]);
 
   useEffect(() => {
@@ -102,26 +134,33 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
       // Skip company setup step as it's handled separately
       if (currentStep.id === 'company-setup') {
         setIsVisible(false);
-      } else if (['workers', 'clients', 'projects'].includes(currentStep.id)) {
+      } else if (['workers', 'clients', 'projects', 'timesheets', 'approvals', 'payroll'].includes(currentStep.id)) {
         // For steps that support smart completion
-        const stepCompletion = smartCompletion[currentStep.id];
+        const stepCompletion = smartCompletionRef.current[currentStep.id];
         console.log(`${currentStep.id} step detected, smart completion:`, stepCompletion);
         
         if (stepCompletion === true) {
           // Step is smart-completed, move to next step
           console.log(`${currentStep.id} step smart-completed, advancing to next step`);
           setIsVisible(false);
-          goToNextStep();
+          // Use setTimeout to prevent immediate re-render
+          setTimeout(() => {
+            goToNextStep();
+          }, 100);
         } else if (stepCompletion === false) {
-          // Navigate to appropriate page for the step
-          console.log(`${currentStep.id} step not completed, navigating to ${currentStep.id} page`);
+          // Step is not completed, but don't navigate - let the user stay on current page
+          console.log(`${currentStep.id} step not completed, staying on current page`);
           setIsVisible(false);
-          router.push(`/dashboard/${currentStep.id}`);
         } else {
           // Still loading, wait for smart completion check
           console.log('Smart completion still loading...');
           setIsVisible(false);
         }
+      } else if (['dashboard'].includes(currentStep.id)) {
+        // For steps that should navigate to their respective pages
+        console.log(`${currentStep.id} step detected, navigating to ${currentStep.path}`);
+        setIsVisible(false);
+        router.push(currentStep.path);
       } else {
         setIsVisible(true);
         highlightElement(currentStep.id);
@@ -130,7 +169,7 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
       setIsVisible(false);
       removeHighlight();
     }
-  }, [state.isActive, currentStep, highlightElement, removeHighlight, smartCompletion, router, goToNextStep]);
+  }, [state.isActive, currentStep?.id, highlightElement, removeHighlight, router, goToNextStep]);
 
   const findElementToHighlight = (stepId: string): HTMLElement | null => {
     switch (stepId) {
