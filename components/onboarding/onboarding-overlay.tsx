@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -14,6 +15,9 @@ import {
 } from 'lucide-react';
 import { useOnboarding } from '@/context/onboarding-context';
 import { ONBOARDING_STEPS } from '@/lib/types/onboarding';
+import { 
+  isStepSmartCompleted
+} from '@/components/onboarding/smart-completion-checks';
 import { toast } from 'sonner';
 
 interface OnboardingOverlayProps {
@@ -21,6 +25,7 @@ interface OnboardingOverlayProps {
 }
 
 export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
+  const router = useRouter();
   const { 
     state, 
     getCurrentStep, 
@@ -33,6 +38,7 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
   
   const [isVisible, setIsVisible] = useState(false);
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
+  const [smartCompletion, setSmartCompletion] = useState<{ [key: string]: boolean | null }>({});
 
   const currentStep = getCurrentStep();
   const progress = getProgress();
@@ -62,11 +68,60 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
     }
   }, [removeHighlight]);
 
+  // Check smart completion for steps that support it
+  useEffect(() => {
+    async function checkSmartCompletion() {
+      if (!currentStep?.id) return;
+      
+      try {
+        console.log(`Checking smart completion for ${currentStep.id} step...`);
+        const result = await isStepSmartCompleted(currentStep.id);
+        console.log('Smart completion result:', result);
+        setSmartCompletion(prev => ({
+          ...prev,
+          [currentStep.id]: result.isCompleted
+        }));
+      } catch (error) {
+        console.error('Error checking smart completion:', error);
+        setSmartCompletion(prev => ({
+          ...prev,
+          [currentStep.id]: false
+        }));
+      }
+    }
+
+    // Only check if onboarding is active and we have a current step
+    if (state.isActive && currentStep?.id) {
+      console.log(`${currentStep.id} step active, checking smart completion...`);
+      checkSmartCompletion();
+    }
+  }, [state.isActive, currentStep?.id]);
+
   useEffect(() => {
     if (state.isActive && currentStep) {
       // Skip company setup step as it's handled separately
       if (currentStep.id === 'company-setup') {
         setIsVisible(false);
+      } else if (['workers', 'clients', 'projects'].includes(currentStep.id)) {
+        // For steps that support smart completion
+        const stepCompletion = smartCompletion[currentStep.id];
+        console.log(`${currentStep.id} step detected, smart completion:`, stepCompletion);
+        
+        if (stepCompletion === true) {
+          // Step is smart-completed, move to next step
+          console.log(`${currentStep.id} step smart-completed, advancing to next step`);
+          setIsVisible(false);
+          goToNextStep();
+        } else if (stepCompletion === false) {
+          // Navigate to appropriate page for the step
+          console.log(`${currentStep.id} step not completed, navigating to ${currentStep.id} page`);
+          setIsVisible(false);
+          router.push(`/dashboard/${currentStep.id}`);
+        } else {
+          // Still loading, wait for smart completion check
+          console.log('Smart completion still loading...');
+          setIsVisible(false);
+        }
       } else {
         setIsVisible(true);
         highlightElement(currentStep.id);
@@ -75,7 +130,7 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
       setIsVisible(false);
       removeHighlight();
     }
-  }, [state.isActive, currentStep, highlightElement, removeHighlight]);
+  }, [state.isActive, currentStep, highlightElement, removeHighlight, smartCompletion, router, goToNextStep]);
 
   const findElementToHighlight = (stepId: string): HTMLElement | null => {
     switch (stepId) {
@@ -126,8 +181,6 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
   return (
     <div className="relative">
       {children}
-      
-
       
       {/* Regular Onboarding Overlay */}
       {isVisible && (
