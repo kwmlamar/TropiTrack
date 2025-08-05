@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Circle, Maximize2, Minimize2 } from 'lucide-react';
 import { useOnboarding } from '@/context/onboarding-context';
 import { ONBOARDING_STEPS, getNextStep } from '@/lib/types/onboarding';
@@ -71,14 +70,14 @@ export function SetupGuideDropdown() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <Card className={`bg-white/95 backdrop-blur-sm border shadow-2xl transition-all duration-300 ${
+      <div className={`bg-white/95 backdrop-blur-sm border shadow-2xl transition-all duration-300 rounded-lg ${
         isExpanded ? 'w-80' : 'w-64'
       }`}>
-        <CardHeader className="pb-2">
+        <div className="p-4 pb-2 pt-2">
           <div className="relative">
-            <CardTitle className="text-sm font-semibold">
+            <h3 className="text-sm font-semibold">
               Setup Guide
-            </CardTitle>
+            </h3>
             <div className="w-full bg-gray-300 rounded-full h-1.5 mt-3">
               <div 
                 className="bg-muted-foreground h-1.5 rounded-full transition-all duration-300"
@@ -103,10 +102,10 @@ export function SetupGuideDropdown() {
               )}
             </Button>
           </div>
-        </CardHeader>
+        </div>
         
         {isExpanded && (
-          <CardContent className="pt-0">
+          <div className="px-4 pb-4">
             {state.isActive ? (
               // Show onboarding steps when active
               <div className="space-y-2">
@@ -207,9 +206,9 @@ export function SetupGuideDropdown() {
                 )}
               </div>
             )}
-          </CardContent>
+          </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 } 
