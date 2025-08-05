@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@/utils/supabase/server';
-import { getPaymentMethods, createPaymentMethod } from '@/lib/data/subscriptions';
+import { getUserProfileWithCompany } from '@/lib/data/userProfiles';
 
 export async function GET() {
   try {
@@ -12,12 +12,27 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await getPaymentMethods();
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+    // Get user profile with company
+    const profile = await getUserProfileWithCompany();
+    if (!profile || !profile.company_id) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 400 });
     }
 
-    return NextResponse.json({ paymentMethods: result.data });
+    // Fetch payment methods directly using server client
+    const { data, error } = await supabase
+      .from('payment_methods')
+      .select('*')
+      .eq('company_id', profile.company_id)
+      .eq('is_active', true)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching payment methods:', error);
+      return NextResponse.json({ error: 'Failed to fetch payment methods' }, { status: 500 });
+    }
+
+    return NextResponse.json({ paymentMethods: data });
   } catch (error) {
     console.error('Error fetching payment methods:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -73,16 +88,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Create payment method record in database
-    const result = await createPaymentMethod({
+    const paymentMethodData = {
+      company_id: profile.company_id,
       stripe_payment_method_id: payment_method_id,
       is_default: is_default || false,
-    });
+    };
 
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+    const { data: paymentMethod, error: createError } = await supabase
+      .from('payment_methods')
+      .insert(paymentMethodData)
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error creating payment method:', createError);
+      return NextResponse.json({ error: 'Failed to create payment method' }, { status: 500 });
     }
 
-    return NextResponse.json({ paymentMethod: result.data });
+    return NextResponse.json({ paymentMethod });
   } catch (error) {
     console.error('Error creating payment method:', error);
     return NextResponse.json({ error: 'Failed to create payment method' }, { status: 500 });
