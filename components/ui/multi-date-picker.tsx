@@ -67,7 +67,7 @@ export function MultiDatePicker({
         size="sm"
         className={cn(
           "h-8 w-8 p-0 font-normal",
-          isSelected && "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          isSelected && "bg-muted-foreground text-white hover:bg-muted-foreground/80",
           isDisabled && "text-gray-500 opacity-50 cursor-not-allowed",
           !isDisabled && !isSelected && "hover:bg-accent hover:text-accent-foreground"
         )}

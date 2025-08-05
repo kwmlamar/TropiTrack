@@ -883,10 +883,7 @@ export function BulkTimesheetForm({
         )}
 
         {/* Form Actions */}
-        <div className="w-full flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
+        <div className="w-full flex justify-start space-x-2">
           <Button 
             type="submit" 
             disabled={isSubmitting}
@@ -896,6 +893,9 @@ export function BulkTimesheetForm({
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
             {isSubmitting ? "Submitting..." : "Submit All Entries"}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
           </Button>
         </div>
       </form>

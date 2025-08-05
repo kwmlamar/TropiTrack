@@ -1,0 +1,130 @@
+-- Insert default subscription plans for TropiTrack
+INSERT INTO subscription_plans (
+  id,
+  name,
+  slug,
+  description,
+  price_monthly,
+  price_yearly,
+  currency,
+  features,
+  limits,
+  is_active,
+  is_popular,
+  sort_order
+) VALUES 
+(
+  gen_random_uuid(),
+  'Starter',
+  'starter',
+  'Essential workforce management for small teams',
+  39.00,
+  374.00,
+  'USD',
+  '[
+    "Up to 10 workers",
+    "Basic timesheet tracking", 
+    "QR code clock-in",
+    "Payroll calculations",
+    "Project management",
+    "Mobile app access",
+    "1GB storage",
+    "1,000 API calls/month"
+  ]'::jsonb,
+  '{
+    "workers_limit": 10,
+    "projects_limit": 20,
+    "storage_limit_gb": 1,
+    "api_calls_limit": 1000,
+    "can_use_biometrics": false,
+    "can_use_advanced_analytics": false,
+    "can_use_equipment_tracking": false,
+    "can_use_api": false,
+    "can_use_multi_company": false,
+    "can_use_priority_support": false
+  }'::jsonb,
+  true,
+  false,
+  1
+),
+(
+  gen_random_uuid(),
+  'Professional',
+  'professional', 
+  'Advanced workforce management for growing companies',
+  89.00,
+  854.00,
+  'USD',
+  '[
+    "Up to 50 workers",
+    "Advanced timesheet features",
+    "Biometric authentication", 
+    "Advanced payroll",
+    "Project analytics",
+    "Team management",
+    "Priority support",
+    "10GB storage",
+    "10,000 API calls/month"
+  ]'::jsonb,
+  '{
+    "workers_limit": 50,
+    "projects_limit": 100,
+    "storage_limit_gb": 10,
+    "api_calls_limit": 10000,
+    "can_use_biometrics": true,
+    "can_use_advanced_analytics": true,
+    "can_use_equipment_tracking": false,
+    "can_use_api": false,
+    "can_use_multi_company": false,
+    "can_use_priority_support": true
+  }'::jsonb,
+  true,
+  true,
+  2
+),
+(
+  gen_random_uuid(),
+  'Enterprise',
+  'enterprise',
+  'Complete workforce management solution for large organizations',
+  179.00,
+  1718.00,
+  'USD',
+  '[
+    "Unlimited workers",
+    "Multi-company access",
+    "Advanced analytics",
+    "Equipment tracking",
+    "API access",
+    "Custom integrations",
+    "Dedicated support",
+    "100GB storage",
+    "100,000 API calls/month"
+  ]'::jsonb,
+  '{
+    "workers_limit": -1,
+    "projects_limit": -1,
+    "storage_limit_gb": 100,
+    "api_calls_limit": 100000,
+    "can_use_biometrics": true,
+    "can_use_advanced_analytics": true,
+    "can_use_equipment_tracking": true,
+    "can_use_api": true,
+    "can_use_multi_company": true,
+    "can_use_priority_support": true
+  }'::jsonb,
+  true,
+  false,
+  3
+)
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  price_monthly = EXCLUDED.price_monthly,
+  price_yearly = EXCLUDED.price_yearly,
+  features = EXCLUDED.features,
+  limits = EXCLUDED.limits,
+  is_active = EXCLUDED.is_active,
+  is_popular = EXCLUDED.is_popular,
+  sort_order = EXCLUDED.sort_order,
+  updated_at = NOW(); 
