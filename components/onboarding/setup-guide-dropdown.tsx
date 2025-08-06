@@ -6,6 +6,7 @@ import { Circle, Maximize2, Minimize2 } from 'lucide-react';
 import { useOnboarding } from '@/context/onboarding-context';
 import { ONBOARDING_STEPS, getNextStep } from '@/lib/types/onboarding';
 import { isStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
+import { triggerCompanySetupDialog } from '@/components/company-setup-dialog';
 
 // Wrapper component that safely uses the onboarding context
 function SetupGuideDropdownContent() {
@@ -124,7 +125,11 @@ function SetupGuideDropdownContent() {
                     <div
                       key={step.id}
                       onClick={() => {
-                        goToStep(step.id);
+                        if (step.id === 'company-setup') {
+                          triggerCompanySetupDialog();
+                        } else {
+                          goToStep(step.id);
+                        }
                         setIsExpanded(false);
                       }}
                       className={`flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${

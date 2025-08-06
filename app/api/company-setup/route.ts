@@ -17,6 +17,11 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const companyName = formData.get("company_name") as string;
+    const phone = formData.get("phone") as string;
+    const address = formData.get("address") as string;
+    const website = formData.get("website") as string;
+    const industry = formData.get("industry") as string;
+    const description = formData.get("description") as string;
 
     // Validate required fields
     if (!companyName) {
@@ -40,13 +45,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update the company name
+    // Update the company with all the provided fields
+    const updateData: {
+      name: string;
+      updated_at: string;
+      phone?: string;
+      address?: string;
+      website?: string;
+      industry?: string;
+      description?: string;
+    } = {
+      name: companyName,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add optional fields if they are provided
+    if (phone) updateData.phone = phone;
+    if (address) updateData.address = address;
+    if (website) updateData.website = website;
+    if (industry) updateData.industry = industry;
+    if (description) updateData.description = description;
+
     const { error: updateError } = await supabase
       .from("companies")
-      .update({
-        name: companyName,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", profile.company_id);
 
     if (updateError) {
