@@ -7,7 +7,8 @@ import { useOnboarding } from '@/context/onboarding-context';
 import { ONBOARDING_STEPS, getNextStep } from '@/lib/types/onboarding';
 import { isStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
 
-export function SetupGuideDropdown() {
+// Wrapper component that safely uses the onboarding context
+function SetupGuideDropdownContent() {
   const { 
     state, 
     getCurrentStep, 
@@ -19,6 +20,7 @@ export function SetupGuideDropdown() {
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [smartCompletion, setSmartCompletion] = useState<{ [key: string]: boolean | null }>({});
+
   const currentStep = getCurrentStep();
   const progress = getProgress();
 
@@ -55,8 +57,8 @@ export function SetupGuideDropdown() {
     return null;
   }
 
-  // Hide setup guide when onboarding is not active (completed or not started)
-  if (!state.isActive) {
+  // Hide setup guide when all steps are completed (progress = 100%)
+  if (progress >= 100) {
     return null;
   }
 
@@ -87,6 +89,11 @@ export function SetupGuideDropdown() {
             {!isExpanded && state.isActive && currentStep && (
               <p className="text-sm text-gray-500 mt-2">
                 Next: <span className="text-muted-foreground">{getNextStep(currentStep.id)?.title || 'Complete setup'}</span>
+              </p>
+            )}
+            {!isExpanded && !state.isActive && (
+              <p className="text-sm text-gray-500 mt-2">
+                <span className="text-muted-foreground">Setup guide available</span>
               </p>
             )}
             <Button
@@ -211,4 +218,14 @@ export function SetupGuideDropdown() {
       </div>
     </div>
   );
+}
+
+// Main component that handles provider availability
+export function SetupGuideDropdown() {
+  try {
+    return <SetupGuideDropdownContent />;
+  } catch {
+    console.warn('OnboardingProvider not available, skipping SetupGuideDropdown render');
+    return null;
+  }
 } 

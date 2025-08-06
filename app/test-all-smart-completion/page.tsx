@@ -149,11 +149,11 @@ function AllSmartCompletionDemo() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Method:</span>
-                        <Badge variant="outline">{results[stepId].method}</Badge>
+                        <Badge variant="outline">{String(results[stepId].method)}</Badge>
                       </div>
                       <div className="flex items-center justify-between">
                         <span>{getCountLabel(stepId)}:</span>
-                        <Badge variant="outline">{results[stepId].workerCount || results[stepId].clientCount || results[stepId].projectCount || results[stepId].count}</Badge>
+                        <Badge variant="outline">{String(results[stepId].workerCount || results[stepId].clientCount || results[stepId].projectCount || results[stepId].count)}</Badge>
                       </div>
                     </div>
                   )}

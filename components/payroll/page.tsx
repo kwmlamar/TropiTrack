@@ -181,14 +181,18 @@ export default function PayrollPage({ user }: { user: User }) {
 
   // Initialize week start day from payroll settings
   useEffect(() => {
+    console.log('useEffect: initializing date range');
     // Hard-coded to Saturday start (6)
     const weekStartDay = 6 // Saturday
     setWeekStartDay(weekStartDay)
     
     // Set navigable date range to current week initially
+    const fromDate = startOfWeek(new Date(), { weekStartsOn: weekStartDay });
+    const toDate = endOfWeek(new Date(), { weekStartsOn: weekStartDay });
+    console.log('useEffect: setting date range', { fromDate, toDate });
     setDateRange({
-      from: startOfWeek(new Date(), { weekStartsOn: weekStartDay }),
-      to: endOfWeek(new Date(), { weekStartsOn: weekStartDay }),
+      from: fromDate,
+      to: toDate,
     })
 
     // Cleanup function to prevent state updates after unmount
@@ -235,11 +239,14 @@ export default function PayrollPage({ user }: { user: User }) {
   }, [searchParams.toString()])
 
   useEffect(() => {
+    console.log('useEffect: checking dateRange', { dateRange, user, payPeriodType });
     // Only load payroll if we have a valid date range
     if (!dateRange?.from || !dateRange?.to) {
+      console.log('useEffect: no valid date range, returning');
       return
     }
     
+    console.log('useEffect: calling loadPayroll');
     loadPayroll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, dateRange?.from?.getTime(), dateRange?.to?.getTime(), payPeriodType])
@@ -262,17 +269,23 @@ export default function PayrollPage({ user }: { user: User }) {
   }, [selectedStatus]);
 
   const loadPayroll = async () => {
+    console.log('loadPayroll called', { isLoading, dateRange, payPeriodType });
+    
     // Prevent multiple simultaneous loads
     if (isLoading) {
+      console.log('loadPayroll: already loading, returning');
       return
     }
     
     // Prevent loading if no valid date range
     if (!dateRange?.from || !dateRange?.to) {
+      console.log('loadPayroll: no valid date range, returning');
       return
     }
     
+    console.log('loadPayroll: starting to load data');
     setIsLoading(true)
+    
     try {
       const filters: { date_from?: string; date_to?: string; target_period_type: "weekly" | "bi-weekly" | "monthly" } = {
         target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly"
@@ -285,8 +298,12 @@ export default function PayrollPage({ user }: { user: User }) {
         filters.date_to = format(dateRange.to, "yyyy-MM-dd")
       }
 
+      console.log('loadPayroll: calling getAggregatedPayrolls with filters', filters);
+
       // Load current period data
       const currentResponse = await getAggregatedPayrolls(filters)
+
+      console.log('loadPayroll: currentResponse', currentResponse);
 
       // Calculate previous period dates
       let previousPeriodStart: Date | null = null
@@ -397,6 +414,7 @@ export default function PayrollPage({ user }: { user: User }) {
         })
       }
     } finally {
+      console.log('loadPayroll: finally block reached, setting isLoading to false');
       if (isMountedRef.current) {
         setIsLoading(false)
       }
@@ -727,12 +745,19 @@ export default function PayrollPage({ user }: { user: User }) {
   }), [payrolls]);
 
   // Calculate percentage changes with useMemo for performance
-  const percentageChanges = useMemo(() => ({
-    totalPayroll: calculatePercentageChange(currentPeriodData.totalPayroll, previousPeriodData.totalPayroll),
-    totalWorkers: calculatePercentageChange(currentPeriodData.totalWorkers, previousPeriodData.totalWorkers),
-    totalNIB: calculatePercentageChange(currentPeriodData.totalNIB, previousPeriodData.totalNIB),
-    totalUnpaid: calculatePercentageChange(currentPeriodData.totalUnpaid, previousPeriodData.totalUnpaid)
-  }), [currentPeriodData, previousPeriodData]);
+  const percentageChanges = useMemo(() => {
+    const currentTotalPayroll = payrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0);
+    const currentTotalWorkers = payrolls.length;
+    const currentTotalNIB = payrolls.reduce((sum, payroll) => sum + payroll.nib_deduction, 0);
+    const currentTotalUnpaid = payrolls.reduce((sum, payroll) => sum + (payroll.remaining_balance || 0), 0);
+    
+    return {
+      totalPayroll: calculatePercentageChange(currentTotalPayroll, previousPeriodData.totalPayroll),
+      totalWorkers: calculatePercentageChange(currentTotalWorkers, previousPeriodData.totalWorkers),
+      totalNIB: calculatePercentageChange(currentTotalNIB, previousPeriodData.totalNIB),
+      totalUnpaid: calculatePercentageChange(currentTotalUnpaid, previousPeriodData.totalUnpaid)
+    };
+  }, [payrolls, previousPeriodData]);
 
   const getStatusBadge = (status: PayrollRecord['status']) => {
     const labels = {
@@ -992,11 +1017,11 @@ export default function PayrollPage({ user }: { user: User }) {
 
                       {/* Preview and Confirm Button */}
                       <Button
-                        variant="outline"
                         onClick={handlePreviewAndConfirm}
                         disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
                           payrolls.find(payroll => payroll.id === id)?.status === "pending"
                         )}
+                        className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
                       >
                         Confirm Payroll
                       </Button>
@@ -1007,7 +1032,6 @@ export default function PayrollPage({ user }: { user: User }) {
                         disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
                           payrolls.find(payroll => payroll.id === id)?.status === "confirmed"
                         )}
-                    className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Run Payroll

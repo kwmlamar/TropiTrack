@@ -1,7 +1,6 @@
 import DashboardLayout from "@/components/layouts/dashboard-layout";
 import TimesheetsPage from "@/components/timesheets/timesheets-page";
 import { createClient } from "@/utils/supabase/server";
-import { OnboardingCheck } from '@/components/onboarding/onboarding-check';
 
 export default async function Page() {
   const supabase = await createClient();
@@ -16,12 +15,7 @@ export default async function Page() {
 
   return (
     <DashboardLayout title="Timesheets">
-      <OnboardingCheck 
-          currentStep="timesheets"
-          fallback={<TimesheetsPage user={user}/>}
-      >
-        <TimesheetsPage user={user}/>
-      </OnboardingCheck>
+      <TimesheetsPage user={user}/>
     </DashboardLayout>
   );
 }

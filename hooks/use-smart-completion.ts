@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { isWorkersStepSmartCompleted } from '@/components/onboarding/workers-completion-strategies';
+import { useOnboarding } from '@/context/onboarding-context';
+import { isWorkersStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
 
 export function useSmartCompletion() {
   const [isWorkersCompleted, setIsWorkersCompleted] = useState<boolean | null>(null);

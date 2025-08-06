@@ -604,7 +604,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
           <div className="flex items-center space-x-2">
                           {/* Create Timesheets Button */}
               <Link href="/dashboard/timesheets/bulk">
-                <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
+                <Button>
                   Create Timesheets
                 </Button>
               </Link>

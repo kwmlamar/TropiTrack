@@ -258,7 +258,6 @@ export default function ProjectsTable({ user }: { user: User }) {
               setIsAddProjectDialogOpen(true);
             }
           }}
-          className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
         >
           Add Project
         </Button>

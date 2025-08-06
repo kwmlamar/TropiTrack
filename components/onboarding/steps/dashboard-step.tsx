@@ -3,32 +3,32 @@
 import { useOnboarding } from "@/context/onboarding-context";
 
 // Wrapper component that safely uses the onboarding context
-function TimesheetsStepContent() {
+function DashboardStepContent() {
   const { goToStep } = useOnboarding();
   
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Create Timesheets</h2>
+      <h2 className="text-2xl font-bold mb-4">Dashboard Overview</h2>
       <p className="text-gray-600 mb-6">
-        Set up your timesheet system to track worker hours and manage payroll.
+        Explore your complete dashboard with all the features you&apos;ve set up.
       </p>
       
       <div className="space-y-4">
         <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold mb-2">Timesheet Features</h3>
+          <h3 className="font-semibold mb-2">Dashboard Features</h3>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• QR code clock-in/out system</li>
-            <li>• Biometric authentication</li>
-            <li>• Automatic overtime calculation</li>
-            <li>• Payroll integration</li>
+            <li>• Real-time project overview</li>
+            <li>• Worker time tracking</li>
+            <li>• Financial reporting</li>
+            <li>• Performance analytics</li>
           </ul>
         </div>
         
         <button
-          onClick={() => goToStep('timesheets')}
+          onClick={() => goToStep('dashboard')}
           className="w-full bg-primary text-white py-2 px-4 rounded hover:bg-primary/90"
         >
-          Configure Timesheets
+          View Dashboard
         </button>
       </div>
     </div>
@@ -36,11 +36,11 @@ function TimesheetsStepContent() {
 }
 
 // Main component that handles provider availability
-export function TimesheetsStep() {
+export function DashboardStep() {
   try {
-    return <TimesheetsStepContent />;
+    return <DashboardStepContent />;
   } catch {
-    console.warn('OnboardingProvider not available, skipping TimesheetsStep render');
+    console.warn('OnboardingProvider not available, skipping DashboardStep render');
     return null;
   }
 } 

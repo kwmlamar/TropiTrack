@@ -3,32 +3,32 @@
 import { useOnboarding } from "@/context/onboarding-context";
 
 // Wrapper component that safely uses the onboarding context
-function TimesheetsStepContent() {
+function ApprovalsStepContent() {
   const { goToStep } = useOnboarding();
   
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Create Timesheets</h2>
+      <h2 className="text-2xl font-bold mb-4">Approve Worker Time</h2>
       <p className="text-gray-600 mb-6">
-        Set up your timesheet system to track worker hours and manage payroll.
+        Learn how to review and approve worker timesheets for accurate payroll.
       </p>
       
       <div className="space-y-4">
         <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold mb-2">Timesheet Features</h3>
+          <h3 className="font-semibold mb-2">Approval Features</h3>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• QR code clock-in/out system</li>
-            <li>• Biometric authentication</li>
-            <li>• Automatic overtime calculation</li>
-            <li>• Payroll integration</li>
+            <li>• Review timesheet submissions</li>
+            <li>• Approve or reject entries</li>
+            <li>• Add comments and feedback</li>
+            <li>• Bulk approval options</li>
           </ul>
         </div>
         
         <button
-          onClick={() => goToStep('timesheets')}
+          onClick={() => goToStep('approvals')}
           className="w-full bg-primary text-white py-2 px-4 rounded hover:bg-primary/90"
         >
-          Configure Timesheets
+          Configure Approvals
         </button>
       </div>
     </div>
@@ -36,11 +36,11 @@ function TimesheetsStepContent() {
 }
 
 // Main component that handles provider availability
-export function TimesheetsStep() {
+export function ApprovalsStep() {
   try {
-    return <TimesheetsStepContent />;
+    return <ApprovalsStepContent />;
   } catch {
-    console.warn('OnboardingProvider not available, skipping TimesheetsStep render');
+    console.warn('OnboardingProvider not available, skipping ApprovalsStep render');
     return null;
   }
 } 

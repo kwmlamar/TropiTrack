@@ -3,32 +3,32 @@
 import { useOnboarding } from "@/context/onboarding-context";
 
 // Wrapper component that safely uses the onboarding context
-function TimesheetsStepContent() {
+function ProjectsStepContent() {
   const { goToStep } = useOnboarding();
   
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Create Timesheets</h2>
+      <h2 className="text-2xl font-bold mb-4">Create Your Projects</h2>
       <p className="text-gray-600 mb-6">
-        Set up your timesheet system to track worker hours and manage payroll.
+        Set up your project management system to track progress and timelines.
       </p>
       
       <div className="space-y-4">
         <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold mb-2">Timesheet Features</h3>
+          <h3 className="font-semibold mb-2">Project Management Features</h3>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• QR code clock-in/out system</li>
-            <li>• Biometric authentication</li>
-            <li>• Automatic overtime calculation</li>
-            <li>• Payroll integration</li>
+            <li>• Project planning and scheduling</li>
+            <li>• Resource allocation</li>
+            <li>• Progress tracking</li>
+            <li>• Budget management</li>
           </ul>
         </div>
         
         <button
-          onClick={() => goToStep('timesheets')}
+          onClick={() => goToStep('projects')}
           className="w-full bg-primary text-white py-2 px-4 rounded hover:bg-primary/90"
         >
-          Configure Timesheets
+          Configure Projects
         </button>
       </div>
     </div>
@@ -36,11 +36,11 @@ function TimesheetsStepContent() {
 }
 
 // Main component that handles provider availability
-export function TimesheetsStep() {
+export function ProjectsStep() {
   try {
-    return <TimesheetsStepContent />;
+    return <ProjectsStepContent />;
   } catch {
-    console.warn('OnboardingProvider not available, skipping TimesheetsStep render');
+    console.warn('OnboardingProvider not available, skipping ProjectsStep render');
     return null;
   }
 } 

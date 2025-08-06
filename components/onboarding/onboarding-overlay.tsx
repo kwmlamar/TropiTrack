@@ -1,239 +1,107 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  X, 
-  SkipForward,
-  CheckCircle
-} from 'lucide-react';
-import { useOnboarding } from '@/context/onboarding-context';
-import { ONBOARDING_STEPS } from '@/lib/types/onboarding';
-import { 
-  isStepSmartCompleted
-} from '@/components/onboarding/smart-completion-checks';
-import { toast } from 'sonner';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useOnboarding } from "@/context/onboarding-context";
+import { getNextStep, getPreviousStep } from "@/lib/types/onboarding";
+import { ArrowLeft, ArrowRight, CheckCircle, X } from "lucide-react";
+import { TimesheetsStep } from "./steps/timesheets-step";
+import { WorkersStep } from "./steps/workers-step";
+import { ClientsStep } from "./steps/clients-step";
+import { ProjectsStep } from "./steps/projects-step";
+import { ApprovalsStep } from "./steps/approvals-step";
+import { PayrollStep } from "./steps/payroll-step";
+import { DashboardStep } from "./steps/dashboard-step";
 
-interface OnboardingOverlayProps {
-  children: React.ReactNode;
-}
+// Component mapping
+const COMPONENT_MAP: Record<string, React.ComponentType> = {
+  'TimesheetsStep': TimesheetsStep,
+  'WorkersStep': WorkersStep,
+  'ClientsStep': ClientsStep,
+  'ProjectsStep': ProjectsStep,
+  'ApprovalsStep': ApprovalsStep,
+  'PayrollStep': PayrollStep,
+  'DashboardStep': DashboardStep,
+  'CompanySetupOverlay': () => <div>Company Setup Component</div>,
+};
 
-export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
-  const router = useRouter();
+// Wrapper component that safely uses the onboarding context
+function OnboardingOverlayContent({ children }: { children: React.ReactNode }) {
   const { 
     state, 
     getCurrentStep, 
-    getProgress, 
     goToNextStep, 
     goToPreviousStep, 
-    skipOnboarding,
-    isStepCompleted,
-    completeStep 
+    closeCurrentStep,
+    getProgress
   } = useOnboarding();
   
   const [isVisible, setIsVisible] = useState(false);
-  const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
-  const [, setSmartCompletion] = useState<{ [key: string]: boolean | null }>({});
-  const [lastCheckTime, setLastCheckTime] = useState<{ [key: string]: number }>({});
-  const smartCompletionRef = useRef<{ [key: string]: boolean | null }>({});
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState<number>(Date.now());
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const currentStep = getCurrentStep();
   const progress = getProgress();
 
-  const removeHighlight = useCallback(() => {
-    if (highlightedElement) {
-      highlightedElement.style.position = '';
-      highlightedElement.style.zIndex = '';
-      highlightedElement.style.boxShadow = '';
-      highlightedElement.style.borderRadius = '';
-      setHighlightedElement(null);
-    }
-  }, [highlightedElement]);
-
-  const highlightElement = useCallback((stepId: string) => {
-    // Remove previous highlight
-    removeHighlight();
-
-    // Find element to highlight based on step
-    const element = findElementToHighlight(stepId);
-    if (element) {
-      element.style.position = 'relative';
-      element.style.zIndex = '1000';
-      element.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.5)';
-      element.style.borderRadius = '8px';
-      setHighlightedElement(element);
-    }
-  }, [removeHighlight]);
-
-  // Check smart completion for steps that support it
-  useEffect(() => {
-    let isMounted = true;
-    
-    async function checkSmartCompletion() {
-      if (!currentStep?.id || !isMounted) return;
-      
-      // Only check for steps that support smart completion
-      if (!['workers', 'clients', 'projects', 'timesheets', 'approvals', 'payroll'].includes(currentStep.id)) {
-        return;
-      }
-      
-      // Prevent excessive checks - only check once every 5 seconds per step
-      const now = Date.now();
-      const lastCheck = lastCheckTime[currentStep.id] || 0;
-      if (now - lastCheck < 5000) {
-        console.log(`Skipping smart completion check for ${currentStep.id} - too recent`);
-        return;
-      }
-      
-      try {
-        console.log(`Checking smart completion for ${currentStep.id} step...`);
-        setLastCheckTime(prev => ({ ...prev, [currentStep.id]: now }));
-        
-        const result = await isStepSmartCompleted(currentStep.id);
-        
-        if (isMounted) {
-          console.log('Smart completion result:', result);
-          const newSmartCompletion = {
-            ...smartCompletionRef.current,
-            [currentStep.id]: result.isCompleted
-          };
-          smartCompletionRef.current = newSmartCompletion;
-          setSmartCompletion(newSmartCompletion);
-        }
-      } catch (error) {
-        console.error('Error checking smart completion:', error);
-        if (isMounted) {
-          const newSmartCompletion = {
-            ...smartCompletionRef.current,
-            [currentStep.id]: false
-          };
-          smartCompletionRef.current = newSmartCompletion;
-          setSmartCompletion(newSmartCompletion);
-        }
-      }
-    }
-
-    // Only check if onboarding is active and we have a current step
-    if (state.isActive && currentStep?.id && !state.error && !state.isLoading) {
-      console.log(`${currentStep.id} step active, checking smart completion...`);
-      checkSmartCompletion();
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [state.isActive, currentStep?.id]);
-
-  useEffect(() => {
-    const handleStepNavigation = async () => {
-      if (state.isActive && currentStep) {
-        // Skip company setup step as it's handled separately
-        if (currentStep.id === 'company-setup') {
-          setIsVisible(false);
-        } else if (['workers', 'clients', 'projects', 'timesheets', 'approvals', 'payroll'].includes(currentStep.id)) {
-          // For steps that support smart completion
-          const stepCompletion = smartCompletionRef.current[currentStep.id];
-          console.log(`${currentStep.id} step detected, smart completion:`, stepCompletion);
-          
-          if (stepCompletion === true) {
-            // Step is smart-completed, move to next step
-            console.log(`${currentStep.id} step smart-completed, advancing to next step`);
-            setIsVisible(false);
-            // Use setTimeout to prevent immediate re-render
-            setTimeout(() => {
-              goToNextStep();
-            }, 100);
-          } else if (stepCompletion === false) {
-            // Step is not completed, but don't navigate - let the user stay on current page
-            console.log(`${currentStep.id} step not completed, staying on current page`);
-            setIsVisible(false);
-          } else {
-            // Still loading, wait for smart completion check
-            console.log('Smart completion still loading...');
-            setIsVisible(false);
-          }
-        } else if (['dashboard'].includes(currentStep.id)) {
-          // For dashboard step, navigate and automatically complete it
-          console.log(`${currentStep.id} step detected, navigating to ${currentStep.path} and completing step`);
-          setIsVisible(false);
-          
-          // Check if dashboard step is already completed before trying to complete it
-          const isAlreadyCompleted = isStepCompleted('dashboard');
-          if (!isAlreadyCompleted) {
-            // Complete the dashboard step automatically only if not already completed
-            try {
-              await completeStep('dashboard');
-              console.log('Dashboard step completed automatically');
-            } catch (error) {
-              console.error('Error completing dashboard step:', error);
-            }
-          } else {
-            console.log('Dashboard step already completed, skipping');
-          }
-          
-          router.push(currentStep.path);
-        } else {
-          setIsVisible(true);
-          highlightElement(currentStep.id);
-        }
-      } else {
-        setIsVisible(false);
-        removeHighlight();
-      }
-    };
-
-    handleStepNavigation();
-  }, [state.isActive, currentStep?.id, highlightElement, removeHighlight, router, goToNextStep, completeStep, isStepCompleted]);
-
-  const findElementToHighlight = (stepId: string): HTMLElement | null => {
-    switch (stepId) {
-      case 'workers':
-        return document.querySelector('[data-onboarding="add-worker-button"]') as HTMLElement;
-      case 'clients':
-        return document.querySelector('[data-onboarding="add-client-button"]') as HTMLElement;
-      case 'projects':
-        return document.querySelector('[data-onboarding="add-project-button"]') as HTMLElement;
-      case 'timesheets':
-        return document.querySelector('[data-onboarding="add-timesheet-button"]') as HTMLElement;
-      case 'approvals':
-        return document.querySelector('[data-onboarding="approvals-list"]') as HTMLElement;
-      case 'payroll':
-        return document.querySelector('[data-onboarding="payroll-settings"]') as HTMLElement;
-      case 'dashboard':
-        return document.querySelector('[data-onboarding="dashboard-stats"]') as HTMLElement;
-      default:
-        return null;
-    }
-  };
-
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentStep) {
-      toast.success(`Completed: ${currentStep.title}`);
+      const nextStep = getNextStep(currentStep.id);
+      if (nextStep) {
+        goToNextStep();
+      } else {
+        // Onboarding is complete
+        closeCurrentStep();
+      }
     }
-    goToNextStep();
+  }, [currentStep, goToNextStep, closeCurrentStep]);
+
+  const handlePrevious = useCallback(() => {
+    if (currentStep) {
+      const previousStep = getPreviousStep(currentStep.id);
+      if (previousStep) {
+        goToPreviousStep();
+      }
+    }
+  }, [currentStep, goToPreviousStep]);
+
+  // Check if overlay should be visible
+  useEffect(() => {
+    const shouldShow = state.isActive && currentStep !== null;
+    setIsVisible(shouldShow);
+    
+    if (shouldShow) {
+      setLastCheckTime(Date.now());
+    }
+  }, [state.isActive, currentStep]);
+
+  // Auto-hide overlay after inactivity
+  useEffect(() => {
+    if (!state.isActive || !currentStep) return;
+
+    const checkInactivity = () => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - lastCheckTime;
+      
+      if (timeSinceLastActivity > 30000) { // 30 seconds
+        setIsMinimized(true);
+      }
+    };
+
+    const interval = setInterval(checkInactivity, 5000);
+    return () => clearInterval(interval);
+  }, [lastCheckTime, state.isActive, currentStep]);
+
+  // Update last activity time on user interaction
+  const updateActivity = () => {
+    setLastCheckTime(Date.now());
+    setIsMinimized(false);
   };
 
-  const handlePrevious = () => {
-    goToPreviousStep();
-  };
-
-  const handleSkip = () => {
-    toast.info('Onboarding skipped. You can restart anytime from settings.');
-    skipOnboarding();
-  };
-
-  const handleClose = () => {
-    setIsVisible(false);
-    removeHighlight();
-  };
-
-  if (!state.isActive || !currentStep) {
+  if (!isVisible) {
     return <>{children}</>;
   }
 
@@ -241,111 +109,149 @@ export function OnboardingOverlay({ children }: OnboardingOverlayProps) {
     <div className="relative">
       {children}
       
-      {/* Regular Onboarding Overlay */}
-      {isVisible && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-          {/* Highlighted area */}
-          <div className="absolute inset-0 pointer-events-none">
-            {highlightedElement && (
-              <div 
-                className="absolute border-2 border-blue-500 rounded-lg shadow-lg"
-                style={{
-                  top: highlightedElement.offsetTop - 8,
-                  left: highlightedElement.offsetLeft - 8,
-                  width: highlightedElement.offsetWidth + 16,
-                  height: highlightedElement.offsetHeight + 16,
-                }}
-              />
-            )}
-          </div>
-
-          {/* Onboarding card */}
-          <div className="absolute bottom-8 left-8 right-8 max-w-md">
-            <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="text-xs">
-                      Step {ONBOARDING_STEPS.findIndex(s => s.id === currentStep.id) + 1} of {ONBOARDING_STEPS.length}
-                    </Badge>
-                    {isStepCompleted(currentStep.id) && (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    )}
-                  </div>
+      {/* Overlay */}
+      <div 
+        ref={overlayRef}
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-all duration-300 ${
+          isMinimized ? 'opacity-50' : 'opacity-100'
+        }`}
+        onClick={updateActivity}
+      >
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Card className="w-full max-w-2xl shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-bold">
+                    {currentStep?.title || 'Onboarding'}
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    {currentStep?.description || 'Complete the setup process'}
+                  </CardDescription>
+                </div>
+                
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={handleClose}
-                    className="h-6 w-6 p-0"
+                    onClick={() => setIsMinimized(!isMinimized)}
+                    className="h-8 w-8 p-0"
+                  >
+                    {isMinimized ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowConfirmation(true)}
+                    className="h-8 w-8 p-0"
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <CardTitle className="text-lg">{currentStep.title}</CardTitle>
-              </CardHeader>
+              </div>
               
-              <CardContent className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  {currentStep.description}
-                </p>
-
-                {/* Progress */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Progress</span>
-                    <span>{Math.round(progress)}%</span>
-                  </div>
-                  <Progress value={progress} className="h-2" />
+              {/* Progress Bar */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                  <span>Progress</span>
+                  <span>{Math.round(progress)}%</span>
                 </div>
-
-                {/* Navigation */}
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center space-x-2">
+                <Progress value={progress} className="h-2" />
+              </div>
+            </CardHeader>
+            
+            <CardContent className="p-6">
+              {/* Step Content */}
+              <div className="min-h-[200px]">
+                {currentStep?.component && COMPONENT_MAP[currentStep.component] && (
+                  React.createElement(COMPONENT_MAP[currentStep.component])
+                )}
+              </div>
+              
+              {/* Navigation */}
+              <div className="flex items-center justify-between pt-6 border-t">
+                <div className="flex items-center gap-2">
+                  {currentStep && getPreviousStep(currentStep.id) && (
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={handlePrevious}
-                      disabled={ONBOARDING_STEPS.findIndex(s => s.id === currentStep.id) === 0}
-                      className="flex items-center"
+                      className="gap-2"
                     >
-                      <ArrowLeft className="h-3 w-3 mr-1" />
+                      <ArrowLeft className="h-4 w-4" />
                       Previous
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSkip}
-                      className="flex items-center text-gray-500 hover:text-gray-700"
-                    >
-                      <SkipForward className="h-3 w-3 mr-1" />
-                      Skip
-                    </Button>
-                  </div>
-
-                  <Button
-                    onClick={handleNext}
-                    className="flex items-center"
-                    size="sm"
-                  >
-                    {ONBOARDING_STEPS.findIndex(s => s.id === currentStep.id) === ONBOARDING_STEPS.length - 1 ? (
-                      <>
-                        Complete
-                        <CheckCircle className="h-3 w-3 ml-1" />
-                      </>
-                    ) : (
-                      <>
-                        Next
-                        <ArrowRight className="h-3 w-3 ml-1" />
-                      </>
-                    )}
-                  </Button>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                
+                <div className="flex items-center gap-2">
+                  {currentStep && (
+                    <Button
+                      onClick={handleNext}
+                      className="gap-2"
+                      disabled={state.isLoading}
+                    >
+                      {getNextStep(currentStep.id) ? (
+                        <>
+                          Next
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      ) : (
+                        <>
+                          Complete Setup
+                          <CheckCircle className="h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Exit Onboarding?</CardTitle>
+              <CardDescription>
+                Are you sure you want to exit the onboarding process? You can always restart it later.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmation(false)}
+                className="flex-1"
+              >
+                Continue Setup
+              </Button>
+              <Button
+                onClick={() => {
+                  closeCurrentStep();
+                  setShowConfirmation(false);
+                }}
+                className="flex-1"
+              >
+                Exit Setup
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
   );
+}
+
+// Main component that handles provider availability
+export function OnboardingOverlay({ children }: { children: React.ReactNode }) {
+  try {
+    return <OnboardingOverlayContent>{children}</OnboardingOverlayContent>;
+  } catch {
+    console.warn('OnboardingProvider not available, skipping OnboardingOverlay render');
+    return <>{children}</>;
+  }
 } 

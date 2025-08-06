@@ -1,234 +1,109 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { ArrowRight, Loader2, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useOnboarding } from "@/context/onboarding-context";
+import { saveOnboardingData } from "@/lib/actions/onboarding-actions";
+import { toast } from "sonner";
 
-import { useOnboarding } from '@/context/onboarding-context';
-import { saveOnboardingData } from '@/lib/actions/onboarding-actions';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-
-const companySchema = z.object({
-  company_name: z.string().min(1, 'Company name is required'),
-  industry: z.string().min(1, 'Industry is required'),
-  address: z.string().min(1, 'Address is required'),
-  phone: z.string().min(1, 'Phone number is required'),
-  website: z.string().optional(),
-  description: z.string().optional(),
-});
-
-type CompanyFormData = z.infer<typeof companySchema>;
-
-interface CompanySetupOverlayProps {
-  isVisible: boolean;
-  onClose: () => void;
-}
-
-export function CompanySetupOverlay({ isVisible, onClose }: CompanySetupOverlayProps) {
-  const { completeStep } = useOnboarding();
+// Wrapper component that safely uses the onboarding context
+function CompanySetupOverlayContent() {
+  const { closeCurrentStep } = useOnboarding();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  
-  const form = useForm<CompanyFormData>({
-    resolver: zodResolver(companySchema),
+  const form = useForm({
     defaultValues: {
-      company_name: '',
-      industry: '',
-      address: '',
-      phone: '',
-      website: '',
-      description: '',
+      company_name: "",
+      address: "",
+      phone: "",
+      email: "",
     },
   });
 
-  const onSubmit = async (data: CompanyFormData) => {
+  const onSubmit = async (data: { company_name: string; address: string; phone: string; email: string }) => {
     setIsSubmitting(true);
     try {
       await saveOnboardingData(undefined, data);
-      completeStep('company-setup', data);
-      toast.success('Company information saved!');
-      
-      onClose();
-      setTimeout(() => {
-        router.push('/dashboard/workers');
-      }, 500);
-    } catch (error) {
-      console.error('Error saving company data:', error);
-      toast.error('Failed to save company information. Please try again.');
+      toast.success("Company information updated successfully!");
+      closeCurrentStep();
+      router.push("/dashboard");
+    } catch {
+      toast.error("Failed to update company information");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isVisible) return null;
-
   return (
-    <div className="fixed inset-0 z-50 bg-gray-600 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(75, 85, 99, 0.5)' }}>
-      <div className="w-full sm:max-w-[600px]">
-        {/* Form */}
-        <Card className="shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] border-0 bg-white">
-          <CardHeader className="text-center relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="absolute right-4 top-4 h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <CardTitle className="text-3xl font-bold">Company Information</CardTitle>
-            <p className="text-gray-500">
-              Tell us about your construction company
-            </p>
-          </CardHeader>
-          
-          <CardContent className="p-6">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="company_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company Name *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="ABC Construction Ltd." 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="industry"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Industry *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Construction, Renovation, etc." 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Business Address *</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="123 Main Street, Nassau, Bahamas" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid gap-6 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="+1 (242) 555-0123" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="website"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website (Optional)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="https://www.yourcompany.com" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company Description (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Tell us about your company, services, and specialties..." 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex items-center justify-between pt-6">
-                  <div className="text-sm text-gray-500">
-                    * Required fields
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="min-w-[200px]"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        Continue to Workers
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-
-      </div>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Company Setup</CardTitle>
+          <CardDescription>
+            Please provide your company information to complete the setup.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="company_name">Company Name</Label>
+              <Input
+                id="company_name"
+                {...form.register("company_name", { required: true })}
+                placeholder="Enter company name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                {...form.register("address", { required: true })}
+                placeholder="Enter company address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                {...form.register("phone", { required: true })}
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                {...form.register("email", { required: true })}
+                placeholder="Enter email address"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
+                {isSubmitting ? "Saving..." : "Save & Continue"}
+              </Button>
+              <Button type="button" variant="outline" onClick={closeCurrentStep}>
+                Skip
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
+}
+
+// Main component that handles provider availability
+export function CompanySetupOverlay() {
+  try {
+    return <CompanySetupOverlayContent />;
+  } catch {
+    console.warn('OnboardingProvider not available, skipping CompanySetupOverlay render');
+    return null;
+  }
 } 

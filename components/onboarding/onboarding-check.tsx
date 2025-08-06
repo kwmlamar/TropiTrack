@@ -1,62 +1,51 @@
 "use client";
 
-import { useOnboarding } from '@/context/onboarding-context';
-import { isStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from "react";
+import { useOnboarding } from "@/context/onboarding-context";
 
-interface OnboardingCheckProps {
-  currentStep: string;
-  fallback: React.ReactNode;
-  children: React.ReactNode;
-}
-
-export function OnboardingCheck({ currentStep, fallback, children }: OnboardingCheckProps) {
+// Wrapper component that safely uses the onboarding context
+function OnboardingCheckContent({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
   const { state, getCurrentStep } = useOnboarding();
-  const [smartCompletion, setSmartCompletion] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  const currentOnboardingStep = getCurrentStep();
+  const [isLoading, setIsLoading] = useState(false);
+  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
 
   useEffect(() => {
-    async function checkSmartCompletion() {
-      if (['workers', 'clients', 'projects', 'timesheets'].includes(currentStep)) {
-        try {
-          const { isCompleted } = await isStepSmartCompleted(currentStep);
-          setSmartCompletion(isCompleted);
-        } catch (error) {
-          console.error('Error checking smart completion:', error);
-          setSmartCompletion(false);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
+    const checkOnboardingStatus = async () => {
+      setIsLoading(true);
+      try {
+        // Check if onboarding should be shown
+        const currentStep = getCurrentStep();
+        const isActive = state.isActive;
+        
+        setShouldShowOnboarding(isActive && currentStep !== null);
+      } catch {
+        console.error('Error checking onboarding status');
+        setShouldShowOnboarding(false);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
 
-    checkSmartCompletion();
-  }, [currentStep]);
+    checkOnboardingStatus();
+  }, [state.isActive, getCurrentStep]);
 
-  // For steps that support smart completion
-  if (['workers', 'clients', 'projects', 'timesheets'].includes(currentStep)) {
-    if (loading) {
-      return <div className="flex items-center justify-center p-8">Loading...</div>;
-    }
-    
-    // Show onboarding step if onboarding is active and step is not smart-completed
-    if (state.isActive && currentOnboardingStep?.id === currentStep && !smartCompletion) {
-      return <>{children}</>;
-    }
-    
-    // Otherwise show the fallback (regular page content)
-    return <>{fallback}</>;
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  // For other steps, use the original logic
-  if (state.isActive && currentOnboardingStep?.id === currentStep) {
+  if (shouldShowOnboarding) {
     return <>{children}</>;
   }
 
-  // Otherwise show the fallback (regular page content)
   return <>{fallback}</>;
+}
+
+// Main component that handles provider availability
+export function OnboardingCheck({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) {
+  try {
+    return <OnboardingCheckContent>{children}</OnboardingCheckContent>;
+  } catch {
+    console.warn('OnboardingProvider not available, skipping OnboardingCheck render');
+    return <>{fallback}</>;
+  }
 } 

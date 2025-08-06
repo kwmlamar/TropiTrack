@@ -9,10 +9,7 @@ import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
 
-import { CompanySetupOverlayProvider } from "@/components/onboarding/company-setup-overlay-provider"
 import { SetupGuideDropdown } from "@/components/onboarding/setup-guide-dropdown"
-import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay"
-
 
 type DashboardLayoutClientProps = {
   children: React.ReactNode
@@ -28,8 +25,6 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
   const isApprovals = title === "Approvals";
   const isTimeLogs = title === "Time Logs";
   const showTimesheetsDropdown = isTimesheets || isApprovals || isTimeLogs;
-
-
 
   return (
     <OnboardingProvider>
@@ -53,9 +48,7 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
               <div className="@container/main flex flex-1 flex-col gap-2">
                 <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                   <div className="px-4 lg:px-6">
-                    <OnboardingOverlay>
-                      {children}
-                    </OnboardingOverlay>
+                    {children}
                   </div>
                 </div>
               </div>
@@ -64,9 +57,6 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
           
           {/* Company Setup Dialog */}
           <CompanySetupDialog />
-          
-          {/* Company Setup Overlay - Rendered at top level to cover entire viewport */}
-          <CompanySetupOverlayProvider />
           
           {/* Setup Guide Dropdown */}
           <SetupGuideDropdown />

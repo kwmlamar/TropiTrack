@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { OnboardingProvider } from '@/context/onboarding-context';
+import { isWorkersStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
 import { useSmartCompletion } from '@/hooks/use-smart-completion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react';
-import { isWorkersStepSmartCompleted } from '@/components/onboarding/workers-completion-strategies';
 
 function HybridApproachDemo() {
   const { isWorkersCompleted, loading, error, refresh } = useSmartCompletion();
@@ -98,11 +98,11 @@ function HybridApproachDemo() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Method:</span>
-                    <Badge variant="outline">{manualCheck.method}</Badge>
+                    <Badge variant="outline">{String(manualCheck.method)}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Worker Count:</span>
-                    <Badge variant="outline">{manualCheck.workerCount}</Badge>
+                    <Badge variant="outline">{String(manualCheck.workerCount)}</Badge>
                   </div>
                 </div>
               )}

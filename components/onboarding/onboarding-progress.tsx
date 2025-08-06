@@ -1,35 +1,30 @@
 "use client";
 
-import React from 'react';
-import { CheckCircle, Circle } from 'lucide-react';
-import { ONBOARDING_STEPS } from '@/lib/types/onboarding';
-import { useOnboarding } from '@/context/onboarding-context';
+import { useOnboarding } from "@/context/onboarding-context";
+import { Progress } from "@/components/ui/progress";
 
-export function OnboardingProgress() {
-  const { isStepCompleted } = useOnboarding();
+// Wrapper component that safely uses the onboarding context
+function OnboardingProgressContent() {
+  const { getProgress } = useOnboarding();
+  const progress = getProgress();
 
   return (
-    <div className="flex items-center justify-center space-x-4 mb-8">
-      {ONBOARDING_STEPS.map((step, index) => (
-        <div key={step.id} className="flex items-center">
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-            isStepCompleted(step.id) 
-              ? 'bg-green-500 border-green-500 text-white' 
-              : 'border-gray-300 text-gray-500'
-          }`}>
-            {isStepCompleted(step.id) ? (
-              <CheckCircle className="h-4 w-4" />
-            ) : (
-              <Circle className="h-4 w-4" />
-            )}
-          </div>
-          {index < ONBOARDING_STEPS.length - 1 && (
-            <div className={`w-12 h-0.5 mx-2 ${
-              isStepCompleted(step.id) ? 'bg-green-500' : 'bg-gray-300'
-            }`} />
-          )}
-        </div>
-      ))}
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm">
+        <span>Setup Progress</span>
+        <span>{Math.round(progress)}%</span>
+      </div>
+      <Progress value={progress} className="h-2" />
     </div>
   );
+}
+
+// Main component that handles provider availability
+export function OnboardingProgress() {
+  try {
+    return <OnboardingProgressContent />;
+  } catch {
+    console.warn('OnboardingProvider not available, skipping OnboardingProgress render');
+    return null;
+  }
 } 

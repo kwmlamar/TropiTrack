@@ -116,7 +116,6 @@ export default function ClientTable({ user }: { user: User }) {
         </div>
         <Button 
           onClick={() => setClientDialogOpen(true)}
-          className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
         >
           Add Client
         </Button>

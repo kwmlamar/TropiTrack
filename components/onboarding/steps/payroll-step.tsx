@@ -3,32 +3,32 @@
 import { useOnboarding } from "@/context/onboarding-context";
 
 // Wrapper component that safely uses the onboarding context
-function TimesheetsStepContent() {
+function PayrollStepContent() {
   const { goToStep } = useOnboarding();
   
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Create Timesheets</h2>
+      <h2 className="text-2xl font-bold mb-4">Configure Payroll</h2>
       <p className="text-gray-600 mb-6">
-        Set up your timesheet system to track worker hours and manage payroll.
+        Set up your payroll system to process worker payments and deductions.
       </p>
       
       <div className="space-y-4">
         <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold mb-2">Timesheet Features</h3>
+          <h3 className="font-semibold mb-2">Payroll Features</h3>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• QR code clock-in/out system</li>
-            <li>• Biometric authentication</li>
-            <li>• Automatic overtime calculation</li>
-            <li>• Payroll integration</li>
+            <li>• Automatic payroll calculation</li>
+            <li>• NIB deductions</li>
+            <li>• Payment processing</li>
+            <li>• Tax compliance</li>
           </ul>
         </div>
         
         <button
-          onClick={() => goToStep('timesheets')}
+          onClick={() => goToStep('payroll')}
           className="w-full bg-primary text-white py-2 px-4 rounded hover:bg-primary/90"
         >
-          Configure Timesheets
+          Configure Payroll
         </button>
       </div>
     </div>
@@ -36,11 +36,11 @@ function TimesheetsStepContent() {
 }
 
 // Main component that handles provider availability
-export function TimesheetsStep() {
+export function PayrollStep() {
   try {
-    return <TimesheetsStepContent />;
+    return <PayrollStepContent />;
   } catch {
-    console.warn('OnboardingProvider not available, skipping TimesheetsStep render');
+    console.warn('OnboardingProvider not available, skipping PayrollStep render');
     return null;
   }
 } 
