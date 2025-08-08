@@ -1,138 +1,99 @@
-const Stripe = require('stripe');
-
-// Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-const products = [
-  {
-    name: 'TropiTrack Starter',
-    description: 'Essential workforce management for small teams. Includes up to 10 workers, basic timesheet tracking, QR code clock-in, payroll calculations, project management, and mobile app access. Perfect for small construction companies and contractors.',
-    slug: 'starter',
-    monthlyPrice: 3900, // $39.00 in cents
-    yearlyPrice: 37400, // $374.00 in cents
-    features: [
-      'Up to 10 workers',
-      'Basic timesheet tracking',
-      'QR code clock-in',
-      'Payroll calculations',
-      'Project management',
-      'Mobile app access',
-      '1GB storage',
-      '1,000 API calls/month'
-    ]
-  },
-  {
-    name: 'TropiTrack Professional',
-    description: 'Advanced workforce management for growing companies. Includes up to 50 workers, advanced timesheet features, biometric authentication, advanced payroll, project analytics, team management, and priority support. Ideal for medium-sized construction firms and service businesses.',
-    slug: 'professional',
-    monthlyPrice: 8900, // $89.00 in cents
-    yearlyPrice: 85400, // $854.00 in cents
-    features: [
-      'Up to 50 workers',
-      'Advanced timesheet features',
-      'Biometric authentication',
-      'Advanced payroll',
-      'Project analytics',
-      'Team management',
-      'Priority support',
-      '10GB storage',
-      '10,000 API calls/month'
-    ]
-  },
-  {
-    name: 'TropiTrack Enterprise',
-    description: 'Complete workforce management solution for large organizations. Includes unlimited workers, multi-company access, advanced analytics, equipment tracking, API access, custom integrations, and dedicated support. Perfect for large construction companies and multi-site operations.',
-    slug: 'enterprise',
-    monthlyPrice: 17900, // $179.00 in cents
-    yearlyPrice: 171800, // $1,718.00 in cents
-    features: [
-      'Unlimited workers',
-      'Multi-company access',
-      'Advanced analytics',
-      'Equipment tracking',
-      'API access',
-      'Custom integrations',
-      'Dedicated support',
-      '100GB storage',
-      '100,000 API calls/month'
-    ]
-  }
-];
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 async function setupStripeProducts() {
-  console.log('🚀 Setting up Stripe products for TropiTrack...\n');
+  try {
+    console.log('Setting up Stripe products and prices...');
 
-  for (const product of products) {
-    try {
-      console.log(`📦 Creating product: ${product.name}`);
+    // Create products and prices for each plan
+    const plans = [
+      {
+        name: 'TropiTrack Starter',
+        description: 'Perfect for small crews - Up to 15 workers, 3 active projects, time tracking & approvals',
+        amount: 3900, // $39.00 in cents
+        priceId: 'starter_monthly'
+      },
+      {
+        name: 'TropiTrack Professional',
+        description: 'For growing companies - Up to 50 workers, unlimited projects, advanced payroll features',
+        amount: 8900, // $89.00 in cents
+        priceId: 'professional_monthly'
+      },
+      {
+        name: 'TropiTrack Enterprise',
+        description: 'For large operations - Unlimited workers, multi-company access, advanced analytics',
+        amount: 17900, // $179.00 in cents
+        priceId: 'enterprise_monthly'
+      }
+    ];
+
+    const createdPrices = {};
+
+    for (const plan of plans) {
+      console.log(`\nCreating product: ${plan.name}`);
       
-      // Create the product
-      const stripeProduct = await stripe.products.create({
-        name: product.name,
-        description: product.description,
-        metadata: {
-          slug: product.slug,
-          features: JSON.stringify(product.features)
-        }
+      // Create product
+      const product = await stripe.products.create({
+        name: plan.name,
+        description: plan.description,
       });
 
-      console.log(`✅ Product created: ${stripeProduct.id}`);
+      console.log(`✅ Created product: ${product.id}`);
 
       // Create monthly price
-      const monthlyPrice = await stripe.prices.create({
-        product: stripeProduct.id,
-        unit_amount: product.monthlyPrice,
+      const price = await stripe.prices.create({
+        unit_amount: plan.amount,
         currency: 'usd',
         recurring: {
-          interval: 'month'
+          interval: 'month',
         },
-        metadata: {
-          plan_slug: product.slug,
-          billing_cycle: 'monthly'
-        }
+        product: product.id,
+        lookup_key: plan.priceId, // This helps identify the price later
       });
 
-      console.log(`💰 Monthly price created: ${monthlyPrice.id} - $${(product.monthlyPrice / 100).toFixed(2)}/month`);
-
-      // Create yearly price
-      const yearlyPrice = await stripe.prices.create({
-        product: stripeProduct.id,
-        unit_amount: product.yearlyPrice,
-        currency: 'usd',
-        recurring: {
-          interval: 'year'
-        },
-        metadata: {
-          plan_slug: product.slug,
-          billing_cycle: 'yearly'
-        }
-      });
-
-      console.log(`💰 Yearly price created: ${yearlyPrice.id} - $${(product.yearlyPrice / 100).toFixed(2)}/year`);
-
-      console.log(`\n📋 Product Summary:`);
-      console.log(`   Name: ${product.name}`);
-      console.log(`   Slug: ${product.slug}`);
-      console.log(`   Monthly: $${(product.monthlyPrice / 100).toFixed(2)}`);
-      console.log(`   Yearly: $${(product.yearlyPrice / 100).toFixed(2)}`);
-      console.log(`   Features: ${product.features.length} features`);
-      console.log('');
-
-    } catch (error) {
-      console.error(`❌ Error creating product ${product.name}:`, error.message);
+      console.log(`✅ Created price: ${price.id} (${plan.amount / 100} USD/month)`);
+      
+      createdPrices[plan.priceId] = {
+        productId: product.id,
+        priceId: price.id,
+        amount: plan.amount,
+        name: plan.name
+      };
     }
+
+    console.log('\n🎉 All products and prices created successfully!');
+    console.log('\nPrice IDs to use in your application:');
+    console.log('=====================================');
+    
+    for (const [key, value] of Object.entries(createdPrices)) {
+      console.log(`${key}: ${value.priceId}`);
+    }
+
+    console.log('\n📝 Update your checkout page with these price IDs:');
+    console.log(`
+const PRICE_IDS = {
+  starter: '${createdPrices.starter_monthly?.priceId}',
+  professional: '${createdPrices.professional_monthly?.priceId}',
+  enterprise: '${createdPrices.enterprise_monthly?.priceId}',
+};
+    `);
+
+    return createdPrices;
+
+  } catch (error) {
+    console.error('❌ Error setting up Stripe products:', error.message);
+    process.exit(1);
+  }
+}
+
+// Run the setup if this script is executed directly
+if (require.main === module) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('❌ Please set your STRIPE_SECRET_KEY environment variable');
+    console.log('You can find your secret key at: https://dashboard.stripe.com/apikeys');
+    process.exit(1);
   }
 
-  console.log('🎉 Stripe products setup complete!');
-  console.log('\n📝 Next steps:');
-  console.log('1. Copy the product and price IDs to your database');
-  console.log('2. Set up webhook endpoints in Stripe dashboard');
-  console.log('3. Test the subscription flow');
+  setupStripeProducts();
 }
 
-// Run the setup
-if (require.main === module) {
-  setupStripeProducts().catch(console.error);
-}
-
-module.exports = { setupStripeProducts, products }; 
+module.exports = { setupStripeProducts };
