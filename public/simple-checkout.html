@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Buy TropiTrack Subscription</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .plan-card {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        margin: 20px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        text-align: center;
+      }
+      .plan-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .plan-price {
+        font-size: 32px;
+        font-weight: bold;
+        color: #2563eb;
+        margin: 20px 0;
+      }
+      .plan-description {
+        color: #666;
+        margin-bottom: 30px;
+      }
+      button {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 100%;
+        max-width: 300px;
+      }
+      button:hover {
+        background-color: #1d4ed8;
+      }
+      .note {
+        background-color: #fef3cd;
+        border: 1px solid #fecf5a;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 30px 0;
+        color: #8b5a00;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Choose Your TropiTrack Plan</h1>
+    
+    <div class="note">
+      <strong>Note:</strong> These forms will redirect to your Next.js checkout page. 
+      Replace the action URLs with your actual server endpoints.
+    </div>
+
+    <!-- Starter Plan -->
+    <div class="plan-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price">$39<span style="font-size: 16px; color: #666;">/month</span></div>
+      <div class="plan-description">Perfect for small crews - Up to 15 workers</div>
+      
+      <!-- This form posts to your Next.js API endpoint -->
+      <form action="/checkout?plan=starter" method="GET">
+        <button type="submit">Start Free Trial</button>
+      </form>
+    </div>
+
+    <!-- Professional Plan -->
+    <div class="plan-card">
+      <div class="plan-name">Professional</div>
+      <div class="plan-price">$89<span style="font-size: 16px; color: #666;">/month</span></div>
+      <div class="plan-description">For growing companies - Up to 50 workers</div>
+      
+      <form action="/checkout?plan=professional" method="GET">
+        <button type="submit">Start Free Trial</button>
+      </form>
+    </div>
+
+    <!-- Enterprise Plan -->
+    <div class="plan-card">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-price">$179<span style="font-size: 16px; color: #666;">/month</span></div>
+      <div class="plan-description">For large operations - Unlimited workers</div>
+      
+      <form action="/checkout?plan=enterprise" method="GET">
+        <button type="submit">Start Free Trial</button>
+      </form>
+    </div>
+
+    <!-- Alternative: Direct POST to create-checkout-session -->
+    <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #ddd;">
+      <h2>Alternative: Direct API Approach</h2>
+      <p>You can also post directly to the checkout session API:</p>
+      
+      <div class="plan-card">
+        <div class="plan-name">Quick Checkout Example</div>
+        <div class="plan-description">This will create a checkout session directly</div>
+        
+        <!-- This would require JavaScript to include the price ID -->
+        <form action="/api/create-checkout-session" method="POST" id="checkout-form">
+          <input type="hidden" name="priceId" value="price_test_starter_monthly" id="price-id">
+          <input type="hidden" name="planName" value="Starter" id="plan-name">
+          <button type="submit">Checkout with Starter Plan</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Handle the direct API form submission
+      document.getElementById('checkout-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const data = {
+          priceId: formData.get('priceId'),
+          planName: formData.get('planName')
+        };
+
+        try {
+          const response = await fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+          
+          if (result.url) {
+            // Redirect to Stripe Checkout
+            window.location.href = result.url;
+          } else {
+            alert('Error: ' + (result.error || 'Unknown error'));
+          }
+        } catch (error) {
+          alert('Error: ' + error.message);
+        }
+      });
+    </script>
+  </body>
+</html>

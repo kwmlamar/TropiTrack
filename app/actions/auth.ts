@@ -51,27 +51,61 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   const password = formData.get("password") as string;
   const fullName = formData.get("name") as string;
   const companyName = formData.get("company_name") as string || "My Company";
+  const plan = formData.get("plan") as string;
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/onboarding`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/dashboard`,
       data: {
         full_name: fullName,
         company_name: companyName, // Pass company name to trigger
+        selected_plan: plan, // Store selected plan in user metadata
       },
     },
   });
 
-  if (!authData.user) {
-    console.error("No user returned from signUp - likely due to email confirmation required.")
-    return { success: true, redirectTo: "/onboarding" };
-  }
-
+  // Handle Supabase errors first (e.g. 400/500 from auth service)
   if (authError) {
     console.error("Signup failed:", authError);
-    return { error: "Signup failed. Please try again." };
+    const message = authError.message || "Signup failed. Please try again.";
+    // Surface common, actionable errors inline on the email field
+    const isEmailIssue = /email|registered|invalid|domain/i.test(message);
+    return isEmailIssue ? { error: message, field: "email" } : { error: message };
+  }
+
+  // If email confirmation is required, Supabase returns no user but no error → go to check-email
+  if (!authData.user) {
+    console.warn("No user returned from signUp — email confirmation likely required. Redirecting to /check-email");
+    return { success: true, redirectTo: "/check-email" };
+  }
+
+  // If a plan was selected, create trial subscription
+  if (plan && authData.user) {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/create-trial-subscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: authData.user.id,
+          planId: plan,
+          userEmail: email,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to create trial subscription');
+        // Don't fail the signup, just log the error
+      } else {
+        console.log('Trial subscription created successfully');
+      }
+    } catch (error) {
+      console.error('Error creating trial subscription:', error);
+      // Don't fail the signup, just log the error
+    }
   }
 
   // The database trigger (handle_new_user) will automatically create
@@ -79,7 +113,8 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   // No need to manually create them here
 
   // Return success with redirect path
-  return { success: true, redirectTo: "/onboarding" };
+  console.log("Returning success with redirect to /check-email");
+  return { success: true, redirectTo: "/check-email" };
 }
 
 // Google OAuth functions

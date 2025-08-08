@@ -326,7 +326,7 @@ export default function Home() {
                     </li>
                   </ul>
                   <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="/signup">Start Free Trial</Link>
+                    <Link href="/signup?plan=starter">Start Free Trial</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -373,7 +373,7 @@ export default function Home() {
                     </li>
                   </ul>
                   <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="/signup">Start Free Trial</Link>
+                    <Link href="/signup?plan=professional">Start Free Trial</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -414,7 +414,9 @@ export default function Home() {
                       <span>Dedicated support</span>
                     </li>
                   </ul>
-                  <Button className="w-full bg-primary hover:bg-primary/90">Contact Sales</Button>
+                  <Button className="w-full bg-primary hover:bg-primary/90" asChild>
+                    <Link href="/signup?plan=enterprise">Start Free Trial</Link>
+                  </Button>
                 </CardContent>
               </Card>
             </div>

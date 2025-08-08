@@ -6,7 +6,7 @@ import { Circle, Maximize2, Minimize2 } from 'lucide-react';
 import { useOnboarding } from '@/context/onboarding-context';
 import { ONBOARDING_STEPS, getNextStep } from '@/lib/types/onboarding';
 import { isStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
-import { triggerCompanySetupDialog } from '@/components/company-setup-dialog';
+
 
 // Wrapper component that safely uses the onboarding context
 function SetupGuideDropdownContent() {
@@ -126,7 +126,7 @@ function SetupGuideDropdownContent() {
                       key={step.id}
                       onClick={() => {
                         if (step.id === 'company-setup') {
-                          triggerCompanySetupDialog();
+                          // Company setup dialog removed - users go directly to dashboard
                         } else {
                           goToStep(step.id);
                         }

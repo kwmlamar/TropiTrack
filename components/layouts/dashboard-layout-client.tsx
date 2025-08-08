@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 
-import { CompanySetupDialog } from "@/components/company-setup-dialog"
+
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
@@ -55,8 +55,7 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
             </div>
           </SidebarInset>
           
-          {/* Company Setup Dialog */}
-          <CompanySetupDialog />
+
           
           {/* Setup Guide Dropdown */}
           <SetupGuideDropdown />

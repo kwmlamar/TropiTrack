@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signup, signUpWithGoogle } from "@/app/actions/auth"; // adjust path if needed
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { TropiTrackLogo } from "@/components/tropitrack-logo";
@@ -25,12 +26,27 @@ export function SignupForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string>('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get plan from URL parameter
+  useEffect(() => {
+    const plan = searchParams.get('plan');
+    if (plan && ['starter', 'professional', 'enterprise'].includes(plan)) {
+      setSelectedPlan(plan);
+    }
+  }, [searchParams]);
 
   async function handleSubmit(formData: FormData) {
     try {
       setIsLoading(true);
       setErrors({});
+      
+      // Add selected plan to form data
+      if (selectedPlan) {
+        formData.append('plan', selectedPlan);
+      }
       
       const result = await signup(formData);
 
@@ -43,12 +59,36 @@ export function SignupForm({
           });
         }
       } else {
+        // Store email for the check-email page
+        const email = formData.get('email') as string;
+        if (email) {
+          localStorage.setItem('signup-email', email);
+        }
+        
         toast.success("Account created!", {
-          description: "Welcome to TropiTrack! Let's get you set up.",
+          description: `Welcome to TropiTrack! Your ${selectedPlan} trial starts now.`,
         });
-        // Redirect to the onboarding page
+        // Redirect to the check-email page
         if (result.redirectTo) {
-          router.push(result.redirectTo);
+          console.log('Redirecting to:', result.redirectTo);
+          // Use multiple fallback methods for redirect
+          setTimeout(() => {
+            console.log('Executing redirect after delay...');
+            try {
+              // Try router.push first
+              router.push(result.redirectTo!);
+            } catch {
+              console.log('Router push failed, trying window.location.href');
+              try {
+                window.location.href = result.redirectTo!;
+              } catch {
+                console.log('Window location failed, trying window.location.replace');
+                window.location.replace(result.redirectTo!);
+              }
+            }
+          }, 1500); // Increased delay to ensure toast is visible
+        } else {
+          console.log('No redirect path provided');
         }
       }
     } catch {
@@ -97,6 +137,25 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
+          {/* Plan Selection */}
+          {selectedPlan && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    Selected Plan: {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}
+                  </p>
+                   <p className="text-xs text-blue-600">
+                      You&apos;ll start with a 14-day free trial
+                  </p>
+                </div>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  Free Trial
+                </Badge>
+              </div>
+            </div>
+          )}
+
           <form action={handleSubmit}>
             <div className="flex flex-col gap-4">
               <div className="grid gap-2">
