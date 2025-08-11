@@ -324,7 +324,13 @@ export default function WorkersTable({ user }: { user: User }) {
           setIsDeleteDialogOpen(open);
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent 
+          className="sm:max-w-[425px] bg-white border-0" 
+          style={{ 
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
+            backgroundColor: 'white'
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">
               Are you absolutely sure?
@@ -347,6 +353,13 @@ export default function WorkersTable({ user }: { user: User }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Custom CSS to override AlertDialog overlay */}
+      <style jsx>{`
+        [data-slot="alert-dialog-overlay"] {
+          background-color: rgba(75, 85, 99, 0.5) !important;
+        }
+      `}</style>
 
       {/* Edit Worker Dialog */}
       {selectedWorkerForEdit && (

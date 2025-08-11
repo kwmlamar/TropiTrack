@@ -53,6 +53,11 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   const companyName = formData.get("company_name") as string || "My Company";
   const plan = formData.get("plan") as string;
 
+  // Validate inputs before signup
+  if (!email || !password || !fullName) {
+    return { error: "All fields are required", field: "general" };
+  }
+
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -60,61 +65,88 @@ export async function signup(formData: FormData): Promise<SignupResult> {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/dashboard`,
       data: {
         full_name: fullName,
-        company_name: companyName, // Pass company name to trigger
-        selected_plan: plan, // Store selected plan in user metadata
+        company_name: companyName,
+        selected_plan: plan,
       },
     },
   });
 
-  // Handle Supabase errors first (e.g. 400/500 from auth service)
+  // Handle Supabase auth errors
   if (authError) {
     console.error("Signup failed:", authError);
     const message = authError.message || "Signup failed. Please try again.";
-    // Surface common, actionable errors inline on the email field
     const isEmailIssue = /email|registered|invalid|domain/i.test(message);
     return isEmailIssue ? { error: message, field: "email" } : { error: message };
   }
 
-  // If email confirmation is required, Supabase returns no user but no error → go to check-email
+  // If email confirmation is required
   if (!authData.user) {
-    console.warn("No user returned from signUp — email confirmation likely required. Redirecting to /check-email");
+    console.warn("Email confirmation required");
     return { success: true, redirectTo: "/check-email" };
   }
 
-  // If a plan was selected, create trial subscription
-  if (plan && authData.user) {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/create-trial-subscription`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: authData.user.id,
-          planId: plan,
-          userEmail: email,
-        }),
-      });
+  // Create trial subscription with better error handling
+  try {
+    const subscriptionResponse = await createTrialSubscription({
+      userId: authData.user.id,
+      planId: plan,
+      userEmail: email,
+    });
 
-      if (!response.ok) {
-        console.error('Failed to create trial subscription');
-        // Don't fail the signup, just log the error
-      } else {
-        console.log('Trial subscription created successfully');
-      }
-    } catch (error) {
-      console.error('Error creating trial subscription:', error);
-      // Don't fail the signup, just log the error
+    if (!subscriptionResponse.success) {
+      console.error('Subscription creation failed:', subscriptionResponse.error);
     }
+  } catch (error) {
+    console.error('Unexpected error creating subscription:', error);
   }
 
-  // The database trigger (handle_new_user) will automatically create
-  // the company and profile for new users
-  // No need to manually create them here
+  // Verify profile creation (optional safety check)
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('user_id', authData.user.id)
+    .single();
 
-  // Return success with redirect path
-  console.log("Returning success with redirect to /check-email");
+  if (profileError) {
+    console.error('Profile creation might have failed:', profileError);
+    // You could implement additional recovery logic here
+  }
+
   return { success: true, redirectTo: "/check-email" };
+}
+
+// Separate function for subscription creation
+async function createTrialSubscription({
+  userId, 
+  planId, 
+  userEmail
+}: {
+  userId: string, 
+  planId: string, 
+  userEmail: string
+}) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/create-trial-subscription`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, planId, userEmail }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { 
+        success: false, 
+        error: `Subscription creation failed: ${errorText}` 
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
 }
 
 // Google OAuth functions

@@ -272,8 +272,81 @@ export async function generatePayrollForWorkerAndPeriod(
     console.log(`[PayrollGen] Found ${approvedTimesheets.length} approved timesheets.`);
 
     if (approvedTimesheets.length === 0) {
-      console.warn("[PayrollGen] No approved timesheets for this worker and period. Skipping payroll generation.");
-      return { data: null, error: "No approved timesheets for this worker and period.", success: false };
+      console.warn("[PayrollGen] No approved timesheets for this worker and period. Checking for existing payroll to update/delete.");
+      
+      // Check for existing payroll record for the worker and period
+      const { data: existingPayroll, error: existingPayrollError } = await supabase
+        .from("payroll")
+        .select("id")
+        .eq("worker_id", workerId)
+        .eq("company_id", profile.company_id)
+        .gte("pay_period_start", dateFrom)
+        .lte("pay_period_end", dateTo)
+        .maybeSingle();
+
+      if (existingPayrollError && existingPayrollError.code !== 'PGRST116') {
+        console.error("[PayrollGen] Error checking for existing payroll:", existingPayrollError);
+        return { data: null, error: existingPayrollError.message, success: false };
+      }
+
+      if (existingPayroll) {
+        console.log(`[PayrollGen] Found existing payroll record ${existingPayroll.id} with no approved timesheets. Setting to zero.`);
+        
+        // Update the existing payroll record to zero values
+        const zeroPayrollData = {
+          id: existingPayroll.id,
+          total_hours: 0,
+          overtime_hours: 0,
+          gross_pay: 0,
+          nib_deduction: 0,
+          other_deductions: 0,
+          status: "pending" as const,
+        };
+        
+        const result = await updatePayroll(zeroPayrollData);
+        
+        if (result.success) {
+          console.log(`[PayrollGen] Successfully updated payroll record to zero values.`);
+          
+          // Update liability transaction to zero as well
+          try {
+            const { data: existingLiability, error: fetchError } = await supabase
+              .from('transactions')
+              .select('*')
+              .eq('reference', `LIABILITY-${existingPayroll.id}`)
+              .eq('type', 'liability')
+              .eq('status', 'pending')
+              .single()
+            
+            if (!fetchError && existingLiability) {
+              const { error: updateError } = await supabase
+                .from('transactions')
+                .update({
+                  amount: 0,
+                  notes: `Wages payable set to zero - no approved timesheets for period: ${dateFrom} to ${dateTo}`,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', existingLiability.id)
+              
+              if (updateError) {
+                console.error(`[PayrollGen] Failed to update liability transaction to zero: ${updateError.message}`)
+              } else {
+                console.log(`[PayrollGen] Successfully updated liability transaction to zero for payroll ${existingPayroll.id}`)
+              }
+            }
+          } catch (error) {
+            console.error(`[PayrollGen] Exception updating liability transaction to zero:`, error)
+          }
+          
+          return { data: result.data, error: null, success: true };
+        } else {
+          console.error(`[PayrollGen] Failed to update payroll record to zero:`, result.error);
+          return { data: null, error: result.error || "Failed to update payroll record to zero.", success: false };
+        }
+      } else {
+        console.log(`[PayrollGen] No existing payroll record found. No action needed.`);
+        return { data: null, error: null, success: true };
+      }
     }
 
     // 2. Calculate totals from approved timesheets

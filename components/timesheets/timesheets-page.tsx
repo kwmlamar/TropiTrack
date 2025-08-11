@@ -21,6 +21,7 @@ import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
 import { AddTimesheetDialog } from "./add-timesheet-dialog"
+import { UnapproveTimesheetDialog } from "./unapprove-timesheet-dialog"
 import { getCurrentLocalDate } from "@/lib/utils"
 
 type AttendanceStatus = "present" | "absent" | "late"
@@ -47,6 +48,17 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedCellDate, setSelectedCellDate] = useState<Date | null>(null)
   const [selectedCellWorker, setSelectedCellWorker] = useState<Worker | undefined>(undefined)
+  
+  // Unapprove dialog state
+  const [unapproveDialogOpen, setUnapproveDialogOpen] = useState(false)
+  const [selectedTimesheetForUnapprove, setSelectedTimesheetForUnapprove] = useState<{
+    id: string
+    workerName: string
+    date: string
+    displayDate: string
+    workerId: string
+    userId: string
+  } | null>(null)
 
   // Load timesheets effect
   useEffect(() => {
@@ -458,6 +470,26 @@ export default function TimesheetsPage({ user }: { user: User }) {
     loadTimesheets()
   }
 
+  const handleDisabledInputClick = (timesheet: TimesheetWithDetails) => {
+    if (timesheet.supervisor_approval === "approved") {
+      setSelectedTimesheetForUnapprove({
+        id: timesheet.id,
+        workerName: timesheet.worker?.name || "Unknown Worker",
+        date: timesheet.date, // Pass the original ISO date string
+        displayDate: format(parseISO(timesheet.date), "MMM d, yyyy"), // For display purposes
+        workerId: timesheet.worker_id,
+        userId: user.id
+      })
+      setUnapproveDialogOpen(true)
+    }
+  }
+
+  const handleUnapproveSuccess = () => {
+    loadTimesheets()
+    setUnapproveDialogOpen(false)
+    setSelectedTimesheetForUnapprove(null)
+  }
+
   // Show loading state
   if (loading) {
     return (
@@ -678,26 +710,39 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   <td key={day.toISOString()} className="p-4 text-center">
                                     {dayTimesheet ? (
                                       <div className="space-y-2">
-                                        <Input
-                                          type="number"
-                                          value={dayTimesheet.total_hours}
-                                          onChange={(e) =>
-                                            handleUpdateTimesheet(
-                                              dayTimesheet.id,
-                                              "total_hours",
-                                              Number.parseFloat(e.target.value) || 0,
-                                            )
-                                          }
-                                          disabled={dayTimesheet.supervisor_approval === "approved"}
-                                          className={`w-16 h-8 text-center text-sm border-muted/50 focus:border-primary ${
-                                            dayTimesheet.supervisor_approval === "approved" 
-                                              ? "bg-muted/30 cursor-not-allowed opacity-60" 
-                                              : ""
-                                          }`}
-                                          step="0.5"
-                                          min="0"
-                                          max="24"
-                                        />
+                                        {dayTimesheet.supervisor_approval === "approved" ? (
+                                          <div
+                                            onClick={() => handleDisabledInputClick(dayTimesheet)}
+                                            className="relative cursor-pointer"
+                                            title="Click to unapprove timesheet"
+                                          >
+                                            <Input
+                                              type="number"
+                                              value={dayTimesheet.total_hours}
+                                              disabled={true}
+                                              className="w-16 h-8 text-center text-sm border-muted/50 bg-muted/30 opacity-60 hover:bg-muted/50 cursor-pointer"
+                                              step="0.5"
+                                              min="0"
+                                              max="24"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <Input
+                                            type="number"
+                                            value={dayTimesheet.total_hours}
+                                            onChange={(e) =>
+                                              handleUpdateTimesheet(
+                                                dayTimesheet.id,
+                                                "total_hours",
+                                                Number.parseFloat(e.target.value) || 0,
+                                              )
+                                            }
+                                            className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
+                                            step="0.5"
+                                            min="0"
+                                            max="24"
+                                          />
+                                        )}
                                         {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                       </div>
                                     ) : (
@@ -765,26 +810,39 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                       <td key={day.toISOString()} className="p-4 text-center">
                                         {dayTimesheet ? (
                                           <div className="space-y-2">
-                                            <Input
-                                              type="number"
-                                              value={dayTimesheet.total_hours}
-                                              onChange={(e) =>
-                                                handleUpdateTimesheet(
-                                                  dayTimesheet.id,
-                                                  "total_hours",
-                                                  Number.parseFloat(e.target.value) || 0,
-                                                )
-                                              }
-                                              disabled={dayTimesheet.supervisor_approval === "approved"}
-                                              className={`w-16 h-8 text-center text-sm border-muted/50 focus:border-primary ${
-                                                dayTimesheet.supervisor_approval === "approved" 
-                                                  ? "bg-muted/30 cursor-not-allowed opacity-60" 
-                                                  : ""
-                                              }`}
-                                              step="0.5"
-                                              min="0"
-                                              max="24"
-                                            />
+                                            {dayTimesheet.supervisor_approval === "approved" ? (
+                                              <div
+                                                onClick={() => handleDisabledInputClick(dayTimesheet)}
+                                                className="relative cursor-pointer"
+                                                title="Click to unapprove timesheet"
+                                              >
+                                                <Input
+                                                  type="number"
+                                                  value={dayTimesheet.total_hours}
+                                                  disabled={true}
+                                                  className="w-16 h-8 text-center text-sm border-muted/50 bg-muted/30 opacity-60 hover:bg-muted/50 cursor-pointer"
+                                                  step="0.5"
+                                                  min="0"
+                                                  max="24"
+                                                />
+                                              </div>
+                                            ) : (
+                                              <Input
+                                                type="number"
+                                                value={dayTimesheet.total_hours}
+                                                onChange={(e) =>
+                                                  handleUpdateTimesheet(
+                                                    dayTimesheet.id,
+                                                    "total_hours",
+                                                    Number.parseFloat(e.target.value) || 0,
+                                                  )
+                                                }
+                                                className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
+                                                step="0.5"
+                                                min="0"
+                                                max="24"
+                                              />
+                                            )}
                                             {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                           </div>
                                         ) : (
@@ -905,6 +963,21 @@ export default function TimesheetsPage({ user }: { user: User }) {
           userId={user.id}
           selectedWorker={selectedCellWorker}
           onSuccess={handleDialogSuccess}
+        />
+      )}
+
+      {/* Unapprove Timesheet Dialog */}
+      {selectedTimesheetForUnapprove && (
+        <UnapproveTimesheetDialog
+          open={unapproveDialogOpen}
+          onOpenChange={setUnapproveDialogOpen}
+          timesheetId={selectedTimesheetForUnapprove.id}
+          workerName={selectedTimesheetForUnapprove.workerName}
+          date={selectedTimesheetForUnapprove.date}
+          displayDate={selectedTimesheetForUnapprove.displayDate}
+          workerId={selectedTimesheetForUnapprove.workerId}
+          userId={selectedTimesheetForUnapprove.userId}
+          onSuccess={handleUnapproveSuccess}
         />
       )}
     </div>

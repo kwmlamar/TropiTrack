@@ -516,3 +516,34 @@ export async function approveTimesheet(id: string): Promise<ApiResponse<boolean>
     };
   }
 }
+
+export async function unapproveTimesheet(id: string): Promise<ApiResponse<boolean>> {
+  try {
+    const { error } = await supabase
+      .from("timesheets")
+      .update({ supervisor_approval: "pending" })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error unapproving timesheet:", error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+        success: false,
+      };
+    }
+
+    return {
+      data: true,
+      error: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Unexpected error unapproving timesheet:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
