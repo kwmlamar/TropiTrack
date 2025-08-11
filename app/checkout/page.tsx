@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,8 +58,7 @@ const PLAN_DETAILS = {
   }
 };
 
-export default function CheckoutPage() {
-  // const router = useRouter();
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan') as keyof typeof PLAN_DETAILS;
   const [isLoading, setIsLoading] = useState(false);
@@ -239,5 +238,20 @@ export default function CheckoutPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading checkout...</span>
+        </div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   );
 }

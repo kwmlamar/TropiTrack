@@ -28,7 +28,7 @@ function OnboardingFormSkeleton() {
   )
 }
 
-export default function AcceptInvitePage() {
+function AcceptInviteContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
@@ -136,5 +136,21 @@ export default function AcceptInvitePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Loading invitation...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <AcceptInviteContent />
+    </Suspense>
   )
 }
