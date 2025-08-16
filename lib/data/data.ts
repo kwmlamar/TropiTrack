@@ -7,11 +7,16 @@ import { User } from "@supabase/supabase-js";
 export async function getProfile(userId: string) {
   console.log("getProfile called with userId:", userId);
   
+  if (!userId || userId === "undefined") {
+    console.error("Invalid userId provided to getProfile:", userId);
+    throw new Error("Invalid user ID provided");
+  }
+  
   try {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("user_id", userId)
       .maybeSingle();
 
     console.log("Profile query result:", { profile, profileError });

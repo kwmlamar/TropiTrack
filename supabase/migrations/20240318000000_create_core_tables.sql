@@ -104,6 +104,7 @@ DECLARE
   user_name TEXT;
   company_name TEXT;
   user_email TEXT;
+  existing_company_id UUID;
 BEGIN
   -- Log the start of the trigger
   RAISE NOTICE 'handle_new_user trigger started for user: %', new.id;
@@ -121,7 +122,43 @@ BEGIN
   );
   RAISE NOTICE 'User name: %', user_name;
 
-  -- Extract company name from user metadata or use default
+  -- Check if user already has a company_id (invited user)
+  existing_company_id := (new.raw_user_meta_data->>'company_id')::UUID;
+  
+  IF existing_company_id IS NOT NULL THEN
+    -- User is joining an existing company (invited user)
+    RAISE NOTICE 'User is joining existing company: %', existing_company_id;
+    
+    -- Create profile for invited user
+    BEGIN
+      INSERT INTO public.profiles (id, role, name, email, company_id)
+      VALUES (new.id, 'user', user_name, user_email, existing_company_id);
+      
+      RAISE NOTICE 'Successfully created profile for invited user: % with company_id: %', new.id, existing_company_id;
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error creating profile for invited user: %', SQLERRM;
+        RAISE;
+    END;
+    
+    -- Update user metadata (keep existing company_id)
+    BEGIN
+      UPDATE auth.users 
+      SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || 
+          jsonb_build_object('full_name', user_name)
+      WHERE id = new.id;
+      
+      RAISE NOTICE 'Successfully updated user metadata for invited user: %', new.id;
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error updating user metadata for invited user: %', SQLERRM;
+        -- Don't raise here as the main operations succeeded
+    END;
+    
+    RETURN new;
+  END IF;
+
+  -- Extract company name from user metadata or use default (for new company signups)
   company_name := COALESCE(
     new.raw_user_meta_data->>'company_name',
     'My Company'

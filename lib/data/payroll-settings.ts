@@ -25,10 +25,14 @@ export async function getPayrollSettings(): Promise<ApiResponse<PayrollSettings>
       .from("payroll_settings")
       .select("*")
       .eq("company_id", profile.company_id)
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.error("Supabase error fetching payroll settings:", error)
+      // Handle the case where no payroll settings exist yet
+      if (error.code === "PGRST116") {
+        return { data: null, error: "No payroll settings found. Please configure your payroll settings.", success: false }
+      }
       return { data: null, error: error.message, success: false }
     }
 
@@ -116,9 +120,13 @@ export async function getPaymentSchedule(): Promise<ApiResponse<PaymentSchedule>
       .from("payment_schedules")
       .select("*")
       .eq("company_id", profile.company_id)
-      .single()
+      .maybeSingle()
 
     if (error) {
+      // Handle the case where no payment schedule exists yet
+      if (error.code === "PGRST116") {
+        return { data: null, error: "No payment schedule found. Please configure your payment schedule.", success: false }
+      }
       return { data: null, error: error.message, success: false }
     }
 

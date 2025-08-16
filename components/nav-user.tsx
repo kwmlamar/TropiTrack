@@ -68,10 +68,12 @@ export function NavUser({ user }: NavUserProps) {
                   />
                   <AvatarFallback className="bg-sidebar-primary/10 text-sidebar-primary text-sm font-medium">
                     {user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()}
+                      ? user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                      : "U"}
                   </AvatarFallback>
                 </Avatar>
 
@@ -116,10 +118,12 @@ export function NavUser({ user }: NavUserProps) {
                   />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()}
+                      ? user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                      : "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">

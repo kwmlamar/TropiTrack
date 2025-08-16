@@ -69,6 +69,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   }
 
   const getInitials = (name: string) => {
+    if (!name) return "U"
     return name
       .split(" ")
       .map(n => n[0])

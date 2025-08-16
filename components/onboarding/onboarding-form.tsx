@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { getInviteByToken } from "@/lib/data/invites";
 import type { InviteWithDetails } from "@/lib/types/invite";
+import { signup } from "@/app/actions/auth";
 
 const onboardingSchema = z
   .object({
@@ -64,10 +65,10 @@ const onboardingSchema = z
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
-export function OnboardingForm() {
+export function OnboardingForm({ inviteToken }: { inviteToken?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get("token") || inviteToken;
 
   const [invite, setInvite] = useState<InviteWithDetails | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -120,32 +121,39 @@ export function OnboardingForm() {
     validateInvite();
   }, [token]);
 
-const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
-  setIsSubmitting(true);
-    if (!invite) return;
+  const onSubmit = async (data: z.infer<typeof onboardingSchema>) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Create form data for the unified signup
+      const formData = new FormData();
+      formData.append("name", `${data.firstName} ${data.lastName}`);
+      formData.append("email", invite?.email || "");
+      formData.append("password", data.password);
+      formData.append("invite_token", token || "");
+      
+      // Add company name for new signups (not invited users)
+      if (!invite) {
+        formData.append("company_name", "My Company");
+      }
 
-    const res = await fetch("/auth/invite-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: invite.email,
-        password: data.password,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        inviteId: invite.id,
-      }),
-    });
+      const result = await signup(formData);
 
-    const result = await res.json();
-
-    if (!res.ok) {
-      toast.error("Signup failed", { description: result.error });
-      return;
+      if ('error' in result) {
+        toast.error("Signup failed", { description: result.error });
+      } else {
+        toast.success("Account created successfully!", {
+          description: "Welcome to TropiTrack. You can now start tracking time.",
+        });
+        router.push("/dashboard");
+      }
+    } catch {
+      toast.error("Something went wrong", {
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast.success("Signup complete! Please log in.");
-    router.push("/login");
-    setIsSubmitting(false);
   };
 
   return (

@@ -372,10 +372,12 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
                       />
                       <AvatarFallback className="bg-sidebar-primary/10 text-sidebar-primary text-sm font-medium">
                         {worker.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
+                          ? worker.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                          : "W"}
                       </AvatarFallback>
                     </Avatar>
                     <div>

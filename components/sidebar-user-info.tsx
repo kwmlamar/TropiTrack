@@ -80,10 +80,12 @@ export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
             />
             <AvatarFallback className="bg-sidebar-primary/10 text-sidebar-primary text-sm font-medium">
               {profile.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()}
+                ? profile.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                : "U"}
             </AvatarFallback>
           </Avatar>
           

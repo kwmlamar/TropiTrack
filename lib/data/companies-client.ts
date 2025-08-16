@@ -75,11 +75,16 @@ export async function getCurrentUserCompany(): Promise<Company | null> {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("company_id")
-    .eq("id", user.id)
-    .single();
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-  if (profileError || !profile) {
+  if (profileError) {
     console.error("Error getting user profile:", profileError);
+    return null;
+  }
+
+  if (!profile || !profile.company_id) {
+    console.log("No profile or company_id found for user:", user.id);
     return null;
   }
 

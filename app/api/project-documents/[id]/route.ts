@@ -34,7 +34,7 @@ export async function PUT(
     const { data: userProfile } = await supabase
       .from('profiles')
       .select('company_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (!userProfile || userProfile.company_id !== existingDocument.projects.company_id) {
@@ -97,7 +97,7 @@ export async function DELETE(
     const { data: userProfile } = await supabase
       .from('profiles')
       .select('company_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (!userProfile || userProfile.company_id !== existingDocument.projects.company_id) {
@@ -154,7 +154,7 @@ export async function GET(
     const { data: userProfile } = await supabase
       .from('profiles')
       .select('company_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (!userProfile || userProfile.company_id !== document.projects.company_id) {

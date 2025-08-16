@@ -49,8 +49,8 @@ export async function GET(request: Request) {
       const { error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', data.user.id)
-        .single()
+        .eq('user_id', data.user.id)
+        .maybeSingle()
 
       if (profileError && profileError.code === 'PGRST116') {
         // Profile doesn't exist, create it manually
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
           const { error: profileCreateError } = await supabase
             .from('profiles')
             .insert({
-              id: data.user.id,
+              user_id: data.user.id,
               role: 'admin',
               name: userName,
               email: userEmail,
@@ -113,7 +113,7 @@ export async function GET(request: Request) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ last_login_at: new Date().toISOString() })
-          .eq('id', data.user.id)
+          .eq('user_id', data.user.id)
 
         if (updateError) {
           console.error('Error updating last_login_at:', updateError)

@@ -87,8 +87,9 @@ function PasswordStrengthIndicator({ password }: { password: string }) {
 
 export function SignupForm({
   className,
+  inviteToken,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { inviteToken?: string }) {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -97,6 +98,12 @@ export function SignupForm({
   async function handleSubmit(formData: FormData) {
     try {
       setErrors({});
+      
+      // Add invite token to form data if provided
+      if (inviteToken) {
+        formData.append("invite_token", inviteToken);
+      }
+      
       const result = await signup(formData);
 
       if ('error' in result) {

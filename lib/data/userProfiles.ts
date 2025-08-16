@@ -13,7 +13,13 @@ export async function getAuthUserId() {
     }
 
     if (!user) {
+      console.error("No authenticated user found");
       throw new Error("User not authenticated");
+    }
+
+    if (!user.id) {
+      console.error("User ID is undefined");
+      throw new Error("User ID is undefined");
     }
 
     return user.id;
@@ -27,35 +33,63 @@ export async function getAuthUserId() {
 }
 
 export async function getUserProfile() {
-  const supabase = await createClient();
-  const userId = await getAuthUserId();
+  try {
+    const supabase = await createClient();
+    const userId = await getAuthUserId();
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  if (error) throw new Error(error.message);
-  return data; // This can be null if no profile exists
+    if (error) {
+      // Handle the case where no profile exists yet
+      if (error.code === "PGRST116") {
+        console.log("No profile found for user:", userId);
+        return null; // Return null instead of throwing error
+      }
+      throw new Error(error.message);
+    }
+    
+    return data; // This can be null if no profile exists
+  } catch (error) {
+    console.error("Error in getUserProfile:", error);
+    throw error;
+  }
 }
 
 export async function getUserProfileWithCompany() {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
     const userId = await getAuthUserId();
 
+    console.log("getUserProfileWithCompany - userId:", userId);
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*, companies(id, name)")
-    .eq("id", userId)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*, companies(id, name)")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  if (error) throw new Error(error.message);
+    console.log("getUserProfileWithCompany - query result:", { data, error });
 
-  return {
-    ...data,
-    company: data?.companies, // normalize naming
-  };
+    if (error) {
+      // Handle the case where no profile exists yet
+      if (error.code === "PGRST116") {
+        console.log("No profile found for user:", userId);
+        return null; // Return null instead of throwing error
+      }
+      throw new Error(error.message);
+    }
+
+    return {
+      ...data,
+      company: data?.companies, // normalize naming
+    };
+  } catch (error) {
+    console.error("Error in getUserProfileWithCompany:", error);
+    throw error;
+  }
 }
 

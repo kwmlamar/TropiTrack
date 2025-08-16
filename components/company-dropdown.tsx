@@ -19,7 +19,9 @@ export function CompanyDropdown({ className }: CompanyDropdownProps) {
   const loadCompany = async () => {
     try {
       setLoading(true);
+      console.log("Loading company data...");
       const companyData = await getCurrentUserCompany();
+      console.log("Company data loaded:", companyData);
       setCompany(companyData);
     } catch (error) {
       console.error("Error loading company:", error);

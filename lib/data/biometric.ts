@@ -20,7 +20,7 @@ export async function createBiometricEnrollment(
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('company_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (profileError || !userProfile?.company_id) {

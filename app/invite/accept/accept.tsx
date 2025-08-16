@@ -130,7 +130,7 @@ function AcceptInviteContent() {
           <div className="w-full max-w-md">
             <OnboardingHeader />
             <Suspense fallback={<OnboardingFormSkeleton />}>
-              <OnboardingForm />
+              <OnboardingForm inviteToken={token || undefined} />
             </Suspense>
           </div>
         </div>

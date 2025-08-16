@@ -49,11 +49,17 @@ export function RecentTimesheets({ selectedDate }: RecentTimesheetsProps) {
     try {
       setLoading(true)
       setError(null)
+      
+      console.log("Loading recent timesheets...")
       const profile = await getUserProfileWithCompany()
+      
       if (!profile) {
+        console.log("No profile found, setting error")
         setError("No profile found")
         return
       }
+      
+      console.log("Profile found:", profile)
 
       // Get week start day from payment schedule, default to Saturday for construction industry
       const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {

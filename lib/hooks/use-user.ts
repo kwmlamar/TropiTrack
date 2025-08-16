@@ -24,7 +24,7 @@ async function getUserProfileWithCompany(): Promise<UserProfileWithCompany | nul
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*, companies(id, name)')
-      .eq('id', authUser.id)
+      .eq('user_id', authUser.id)
       .single()
 
     if (error) {

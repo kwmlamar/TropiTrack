@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('company_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (profileError || !userProfile?.company_id) {
@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('company_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (profileError || !userProfile?.company_id) {
@@ -288,7 +288,7 @@ export async function DELETE(request: NextRequest) {
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('company_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (profileError || !userProfile?.company_id) {

@@ -52,10 +52,66 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   const fullName = formData.get("name") as string;
   const companyName = formData.get("company_name") as string || "My Company";
   const plan = formData.get("plan") as string;
+  const inviteToken = formData.get("invite_token") as string; // New field for invite tokens
 
   // Validate inputs before signup
   if (!email || !password || !fullName) {
     return { error: "All fields are required", field: "general" };
+  }
+
+  // Parse first and last name from full name
+  const nameParts = fullName.trim().split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  // If there's an invite token, validate it first
+  let existingCompanyId: string | null = null;
+  let inviteData: { company_id: string; role: string; email: string } | null = null;
+  
+  if (inviteToken) {
+    try {
+      // Get invite details
+      const { data: invite, error: inviteError } = await supabase
+        .from('invites')
+        .select('*')
+        .eq('token', inviteToken)
+        .eq('is_used', false)
+        .gte('expires_at', new Date().toISOString())
+        .single();
+
+      if (inviteError || !invite) {
+        return { error: "Invalid or expired invitation", field: "general" };
+      }
+
+      // Check if email matches invite
+      if (invite.email !== email) {
+        return { error: "Email address doesn't match the invitation", field: "email" };
+      }
+
+      existingCompanyId = invite.company_id;
+      inviteData = invite;
+    } catch (error) {
+      console.error("Error validating invite:", error);
+      return { error: "Failed to validate invitation", field: "general" };
+    }
+  }
+
+  // Create user with appropriate metadata
+  const userMetadata: Record<string, string> = {
+    full_name: fullName,
+    first_name: firstName,
+    last_name: lastName,
+  };
+
+  if (existingCompanyId) {
+    // For invited users, include company_id in metadata
+    userMetadata.company_id = existingCompanyId;
+    userMetadata.invite_token = inviteToken;
+    userMetadata.role = inviteData?.role || 'worker';
+  } else {
+    // For new company signups, include company name
+    userMetadata.company_name = companyName;
+    userMetadata.selected_plan = plan;
   }
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -63,11 +119,7 @@ export async function signup(formData: FormData): Promise<SignupResult> {
     password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/dashboard`,
-      data: {
-        full_name: fullName,
-        company_name: companyName,
-        selected_plan: plan,
-      },
+      data: userMetadata,
     },
   });
 
@@ -85,19 +137,65 @@ export async function signup(formData: FormData): Promise<SignupResult> {
     return { success: true, redirectTo: "/check-email" };
   }
 
-  // Create trial subscription with better error handling
-  try {
-    const subscriptionResponse = await createTrialSubscription({
-      userId: authData.user.id,
-      planId: plan,
-      userEmail: email,
-    });
+  // For invited users, we need to manually create the profile since the trigger won't run
+  if (existingCompanyId && inviteData) {
+    try {
+      // Create profile for invited user with all required fields
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          user_id: authData.user.id,
+          name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          company_id: existingCompanyId,
+          role: inviteData.role || 'worker',
+          is_active: true,
+          onboarding_completed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
-    if (!subscriptionResponse.success) {
-      console.error('Subscription creation failed:', subscriptionResponse.error);
+      if (profileError) {
+        console.error('Error creating profile for invited user:', profileError);
+        return { error: "Failed to create user profile", field: "general" };
+      }
+
+      // Mark invite as used
+      const { error: inviteUpdateError } = await supabase
+        .from('invites')
+        .update({
+          is_used: true,
+          accepted_at: new Date().toISOString(),
+          accepted_by: authData.user.id,
+        })
+        .eq('token', inviteToken);
+
+      if (inviteUpdateError) {
+        console.error('Error updating invite:', inviteUpdateError);
+        // Don't fail the signup for this error
+      }
+    } catch (error) {
+      console.error('Error handling invited user setup:', error);
+      return { error: "Failed to complete signup process", field: "general" };
     }
-  } catch (error) {
-    console.error('Unexpected error creating subscription:', error);
+  } else {
+    // For new company signups, create trial subscription
+    try {
+      const subscriptionResponse = await createTrialSubscription({
+        userId: authData.user.id,
+        planId: plan,
+        userEmail: email,
+      });
+
+      if (!subscriptionResponse.success) {
+        console.error('Subscription creation failed:', subscriptionResponse.error);
+      }
+    } catch (error) {
+      console.error('Unexpected error creating subscription:', error);
+    }
   }
 
   // Verify profile creation (optional safety check)
