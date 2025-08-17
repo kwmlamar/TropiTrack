@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Circle, Maximize2, Minimize2 } from 'lucide-react';
 import { useOnboarding } from '@/context/onboarding-context';
-import { ONBOARDING_STEPS, getNextStep } from '@/lib/types/onboarding';
+import { ONBOARDING_STEPS, getNextIncompleteStep } from '@/lib/types/onboarding';
 import { isStepSmartCompleted } from '@/components/onboarding/smart-completion-checks';
-
+import { checkOnboardingStatus } from '@/lib/actions/onboarding-actions';
+import { getAuthUserId } from '@/lib/data/userProfiles';
 
 // Wrapper component that safely uses the onboarding context
 function SetupGuideDropdownContent() {
@@ -24,6 +25,39 @@ function SetupGuideDropdownContent() {
 
   const currentStep = getCurrentStep();
   const progress = getProgress();
+
+  // Ensure onboarding progress is loaded
+  useEffect(() => {
+    const ensureProgressLoaded = async () => {
+      try {
+        const userId = await getAuthUserId();
+        const { completedSteps } = await checkOnboardingStatus(userId);
+        console.log('SetupGuideDropdown - Loaded progress:', { 
+          completedSteps, 
+          isActive: state.isActive,
+          currentStep: currentStep?.id,
+          pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+        });
+      } catch (error) {
+        console.error('Error ensuring progress loaded:', error);
+      }
+    };
+    if (state.isActive && state.completedSteps.length === 0 && !state.isLoading) {
+      ensureProgressLoaded();
+    }
+  }, [state.isActive, state.completedSteps.length, state.isLoading]);
+
+  // Debug logging for current state
+  useEffect(() => {
+    console.log('SetupGuideDropdown - State:', { 
+      isActive: state.isActive,
+      currentStep: currentStep?.id,
+      completedSteps: state.completedSteps,
+      progress,
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+      nextIncompleteStep: getNextIncompleteStep(state.completedSteps)?.id
+    });
+  }, [state.isActive, currentStep, state.completedSteps, progress]);
 
   // Check smart completion for all supported steps
   useEffect(() => {
@@ -50,18 +84,13 @@ function SetupGuideDropdownContent() {
     checkSmartCompletion();
   }, []);
 
-  // Check if company setup overlay is visible
-  const isCompanySetupVisible = state.isActive && currentStep?.id === 'company-setup';
-
-  // Hide setup guide when company setup overlay is visible
-  if (isCompanySetupVisible) {
-    return null;
-  }
-
   // Hide setup guide when all steps are completed (progress = 100%)
   if (progress >= 100) {
     return null;
   }
+
+  // Don't hide setup guide when company setup dialog is visible - it should remain visible
+  // throughout the onboarding process
 
   // Smart completion check function
   const isStepSmartCompletedLocal = (stepId: string): boolean => {
@@ -89,7 +118,7 @@ function SetupGuideDropdownContent() {
             </div>
             {!isExpanded && state.isActive && currentStep && (
               <p className="text-sm text-gray-500 mt-2">
-                Next: <span className="text-muted-foreground">{getNextStep(currentStep.id)?.title || 'Complete setup'}</span>
+                Next: <span className="text-muted-foreground">{getNextIncompleteStep(state.completedSteps)?.title || 'Complete setup'}</span>
               </p>
             )}
             {!isExpanded && !state.isActive && (

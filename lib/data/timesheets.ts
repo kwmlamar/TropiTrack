@@ -10,6 +10,7 @@ import type {
 import { supabase } from "@/lib/supabaseClient";
 import { getProfile } from "./data";
 import { parse } from "date-fns";
+import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
 
 /**
  * Get timesheets with optional filtering and related data
@@ -225,6 +226,18 @@ export async function createTimesheet(
         error: error instanceof Error ? error.message : "Unknown error occurred",
         success: false,
       };
+    }
+
+    // Complete the timesheets onboarding step
+    try {
+      await completeOnboardingStep(userId, 'timesheets', {
+        timesheet_id: data.id,
+        created_at: new Date().toISOString()
+      });
+      console.log('Onboarding step "timesheets" completed for user:', userId);
+    } catch (onboardingError) {
+      console.error('Error completing timesheets onboarding step:', onboardingError);
+      // Don't fail the timesheet creation if onboarding completion fails
     }
 
     return {
@@ -488,10 +501,12 @@ export async function getTimesheetSummary(
 
 export async function approveTimesheet(id: string): Promise<ApiResponse<boolean>> {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("timesheets")
       .update({ supervisor_approval: "approved" })
-      .eq("id", id);
+      .eq("id", id)
+      .select('created_by')
+      .single();
 
     if (error) {
       console.error("Error approving timesheet:", error);
@@ -500,6 +515,20 @@ export async function approveTimesheet(id: string): Promise<ApiResponse<boolean>
         error: error instanceof Error ? error.message : "Unknown error occurred",
         success: false,
       };
+    }
+
+    // Complete the approvals onboarding step
+    if (data?.created_by) {
+      try {
+        await completeOnboardingStep(data.created_by, 'approvals', {
+          timesheet_id: id,
+          approved_at: new Date().toISOString()
+        });
+        console.log('Onboarding step "approvals" completed for user:', data.created_by);
+      } catch (onboardingError) {
+        console.error('Error completing approvals onboarding step:', onboardingError);
+        // Don't fail the approval if onboarding completion fails
+      }
     }
 
     return {

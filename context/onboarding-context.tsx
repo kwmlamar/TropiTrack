@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import type { 
   OnboardingState, 
@@ -129,6 +129,7 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(onboardingReducer, initialState);
   const router = useRouter();
+  const pathname = usePathname();
   const isLoadingRef = useRef(false);
 
   // Load onboarding progress from database on mount
@@ -169,6 +170,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         // Extract completed steps from database
         const completedSteps = progress.map(p => p.step_name);
         
+        console.log('OnboardingContext - Loaded progress:', {
+          completedSteps,
+          currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+        });
+        
         // Update state with database data
         dispatch({ 
           type: 'LOAD_PROGRESS', 
@@ -183,13 +189,42 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           // Activate onboarding if not complete
           dispatch({ type: 'START_ONBOARDING' });
           
-          // Set current step based on progress
-          const nextIncompleteStep = ONBOARDING_STEPS.find(step => 
-            !completedSteps.includes(step.id)
-          );
+          // Determine current step based on URL and completed steps
+          let currentStepId = null;
           
-          if (nextIncompleteStep) {
-            dispatch({ type: 'SET_CURRENT_STEP', step: nextIncompleteStep.id });
+          if (typeof window !== 'undefined') {
+            const currentPath = window.location.pathname;
+            
+            console.log('OnboardingContext - Initial load, checking path:', currentPath);
+            console.log('OnboardingContext - Completed steps:', completedSteps);
+            
+            // Find step that matches current path
+            const matchingStep = ONBOARDING_STEPS.find(step => 
+              step.path === currentPath && !completedSteps.includes(step.id)
+            );
+            
+            if (matchingStep) {
+              currentStepId = matchingStep.id;
+              console.log('OnboardingContext - Found matching step for path:', currentPath, matchingStep.id);
+            } else {
+              // Find next incomplete step
+              const nextIncompleteStep = ONBOARDING_STEPS.find(step => 
+                !completedSteps.includes(step.id)
+              );
+              currentStepId = nextIncompleteStep?.id || null;
+              console.log('OnboardingContext - Using next incomplete step:', nextIncompleteStep?.id);
+            }
+          } else {
+            // Fallback: find next incomplete step
+            const nextIncompleteStep = ONBOARDING_STEPS.find(step => 
+              !completedSteps.includes(step.id)
+            );
+            currentStepId = nextIncompleteStep?.id || null;
+          }
+          
+          if (currentStepId) {
+            dispatch({ type: 'SET_CURRENT_STEP', step: currentStepId });
+            console.log('OnboardingContext - Set current step to:', currentStepId);
           }
         }
         
@@ -212,6 +247,72 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       isMounted = false;
     };
   }, []);
+
+  // Refresh progress when pathname changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && state.isActive && pathname) {
+      console.log('OnboardingContext - Pathname changed to:', pathname);
+      console.log('OnboardingContext - Available steps:', ONBOARDING_STEPS.map(s => ({ id: s.id, path: s.path })));
+      
+      // Reset loading flag to allow refresh
+      isLoadingRef.current = false;
+      
+      // Reload progress when route changes
+      const loadProgress = async () => {
+        try {
+          const userId = await getAuthUserId();
+          const progress = await getOnboardingProgress(userId);
+          const completedSteps = progress.map(p => p.step_name);
+          
+          console.log('OnboardingContext - Pathname changed, reloading progress:', {
+            completedSteps,
+            currentPath: pathname,
+            allSteps: ONBOARDING_STEPS.map(s => ({ id: s.id, path: s.path, completed: completedSteps.includes(s.id) }))
+          });
+          
+          // Update completed steps
+          dispatch({ 
+            type: 'LOAD_PROGRESS', 
+            completedSteps, 
+            data: state.data 
+          });
+          
+          // Update current step based on new path
+          const matchingStep = ONBOARDING_STEPS.find(step => 
+            step.path === pathname && !completedSteps.includes(step.id)
+          );
+          
+          console.log('OnboardingContext - Matching step for path:', pathname, matchingStep);
+          
+          if (matchingStep) {
+            dispatch({ type: 'SET_CURRENT_STEP', step: matchingStep.id });
+            console.log('OnboardingContext - Updated current step to:', matchingStep.id);
+          } else {
+            // Check if there's a step that matches the path but is already completed
+            const pathMatchingStep = ONBOARDING_STEPS.find(step => step.path === pathname);
+            if (pathMatchingStep) {
+              console.log('OnboardingContext - Found step for path but it\'s already completed:', pathMatchingStep.id);
+            }
+            
+            // If no matching step found, find the next incomplete step
+            const nextIncompleteStep = ONBOARDING_STEPS.find(step => 
+              !completedSteps.includes(step.id)
+            );
+            if (nextIncompleteStep) {
+              dispatch({ type: 'SET_CURRENT_STEP', step: nextIncompleteStep.id });
+              console.log('OnboardingContext - Updated current step to next incomplete:', nextIncompleteStep.id);
+            } else {
+              console.log('OnboardingContext - No incomplete steps found, onboarding might be complete');
+            }
+          }
+        } catch (error) {
+          console.error('Error refreshing progress on pathname change:', error);
+        }
+      };
+      
+      loadProgress();
+    }
+  }, [pathname, state.isActive, state.data]);
 
   // Auto-navigate to current step page when onboarding is active
   // Disabled to prevent navigation loops
@@ -301,7 +402,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const saveOnboardingData = async (data: Record<string, any>) => {
+  const saveOnboardingDataLocal = async (data: Record<string, any>) => {
     try {
       dispatch({ type: 'SET_LOADING', loading: true });
       
@@ -376,7 +477,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const closeCurrentStep = () => {
     if (state.currentStep === 'company-setup') {
       // For company setup, just close the overlay without resetting onboarding
-      dispatch({ type: 'SET_CURRENT_STEP', step: null });
+      dispatch({ type: 'SET_CURRENT_STEP', step: '' });
     } else {
       // For other steps, skip the entire onboarding
       skipOnboarding();
@@ -402,7 +503,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     dispatch,
     startOnboarding,
     completeStep,
-    saveOnboardingData,
+    saveOnboardingData: saveOnboardingDataLocal,
     goToNextStep,
     goToPreviousStep,
     goToStep,

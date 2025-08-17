@@ -327,7 +327,7 @@ body {
 
 /* Improved Focus States */
 :focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  @apply outline-none ring-2 ring-muted-foreground/50 ring-offset-2 ring-offset-background;
 }
 
 /* Better Selection */

@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Worker, Client, Project, EntryMode, Timesheet } from "@/lib/types";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { User } from "@supabase/supabase-js";
+import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
 
 // PROFILE INFO
 export async function getProfile(userId: string) {
@@ -563,7 +564,7 @@ export async function generateTimesheet({
 }: TimesheetProps) {
   const profile = await getProfile(user.id);
 
-  const { error } = await supabase.from("timesheets").insert({
+  const { data, error } = await supabase.from("timesheets").insert({
     worker_id: selectedWorker.id,
     project_id: selectedProject.id,
     date,
@@ -573,11 +574,23 @@ export async function generateTimesheet({
     notes,
     hourly_rate: selectedWorker.hourly_rate,
     company_id: profile.company_id,
-  });
+  }).select().single();
 
   if (error) {
     console.error("Error saving timesheet:", error.message);
     throw new Error("Failed to save timesheet");
+  }
+
+  // Complete the timesheets onboarding step
+  try {
+    await completeOnboardingStep(user.id, 'timesheets', {
+      timesheet_id: data.id,
+      created_at: new Date().toISOString()
+    });
+    console.log('Onboarding step "timesheets" completed for user:', user.id);
+  } catch (onboardingError) {
+    console.error('Error completing timesheets onboarding step:', onboardingError);
+    // Don't fail the timesheet creation if onboarding completion fails
   }
 }
 

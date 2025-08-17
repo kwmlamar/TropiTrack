@@ -144,6 +144,13 @@ export const getNextStep = (currentStepId: string): OnboardingStep | null => {
   return nextStep || null;
 };
 
+export const getNextIncompleteStep = (completedSteps: string[]): OnboardingStep | null => {
+  const nextIncompleteStep = ONBOARDING_STEPS.find(step => 
+    !completedSteps.includes(step.id)
+  );
+  return nextIncompleteStep || null;
+};
+
 export const getPreviousStep = (currentStepId: string): OnboardingStep | null => {
   const currentStep = getStepById(currentStepId);
   if (!currentStep) return null;

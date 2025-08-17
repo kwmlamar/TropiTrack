@@ -11,6 +11,7 @@ import type {
 import type { ApiResponse, Timesheet } from "@/lib/types"
 import { getProfile } from "./data"
 import { supabase } from "@/lib/supabaseClient"
+import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
 
 /**
  * Get project locations for a company
@@ -704,6 +705,29 @@ export async function generateTimesheetFromClockEvents(
     }
 
     console.log(`[DEBUG] Successfully created timesheet: ${timesheet.id}`)
+
+    // Complete the timesheets onboarding step
+    try {
+      // Get the user ID from the worker's profile
+      const { data: workerProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("company_id", companyId)
+        .eq("role", "admin")
+        .single();
+
+      if (!profileError && workerProfile) {
+        await completeOnboardingStep(workerProfile.user_id, 'timesheets', {
+          timesheet_id: timesheet.id,
+          created_at: new Date().toISOString(),
+          source: 'qr_clock'
+        });
+        console.log('Onboarding step "timesheets" completed for QR clock timesheet');
+      }
+    } catch (onboardingError) {
+      console.error('Error completing timesheets onboarding step:', onboardingError);
+      // Don't fail the timesheet creation if onboarding completion fails
+    }
 
     return {
       data: timesheet as Timesheet,

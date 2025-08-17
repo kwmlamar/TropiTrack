@@ -10,6 +10,7 @@ import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
 
 import { SetupGuideDropdown } from "@/components/onboarding/setup-guide-dropdown"
+import { OnboardingCheck } from "@/components/onboarding/onboarding-check"
 
 type DashboardLayoutClientProps = {
   children: React.ReactNode
@@ -55,10 +56,11 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
             </div>
           </SidebarInset>
           
-
-          
           {/* Setup Guide Dropdown */}
           <SetupGuideDropdown />
+          
+          {/* Onboarding Check - Shows company setup overlay when needed */}
+          <OnboardingCheck />
         </SidebarProvider>
       </DateRangeProvider>
     </OnboardingProvider>

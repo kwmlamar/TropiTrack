@@ -207,7 +207,7 @@ export default function ProjectsTable({ user }: { user: User }) {
     const statusConfig = {
       not_started: {
         label: "Not Started",
-        className: "bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/20 dark:bg-secondary/20 dark:text-secondary-foreground dark:border-secondary/30 px-4 py-1.5 text-sm font-medium",
+        className: "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30 dark:bg-gray-400/20 dark:text-gray-400 dark:border-gray-400/30 dark:hover:bg-gray-400/30 px-3 py-1 text-xs font-medium rounded-2xl",
       },
       in_progress: {
         label: "In Progress",
@@ -215,7 +215,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       },
       paused: {
         label: "Paused",
-        className: "bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 dark:bg-warning/20 dark:text-warning-foreground dark:border-warning/30 px-4 py-1.5 text-sm font-medium",
+        className: "bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30 dark:bg-orange-400/20 dark:text-orange-400 dark:border-orange-400/30 dark:hover:bg-orange-400/30 px-3 py-1 text-xs font-medium rounded-2xl",
       },
       completed: {
         label: "Completed",
@@ -223,7 +223,7 @@ export default function ProjectsTable({ user }: { user: User }) {
       },
       cancelled: {
         label: "Cancelled",
-        className: "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 dark:bg-destructive/20 dark:text-destructive-foreground dark:border-destructive/30 px-4 py-1.5 text-sm font-medium",
+        className: "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30 dark:bg-red-400/20 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/30 px-3 py-1 text-xs font-medium rounded-2xl",
       },
     };
 

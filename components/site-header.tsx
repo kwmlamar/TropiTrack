@@ -47,19 +47,19 @@ export function SiteHeader({
               <DropdownMenuContent align="start" className="w-48">
                 <Link href="/dashboard/timesheets">
                   <DropdownMenuItem className="cursor-pointer">
-                    <Clock className="mr-2 h-4 w-4" />
+                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                     Timesheets
                   </DropdownMenuItem>
                 </Link>
                 <Link href="/dashboard/approvals">
                   <DropdownMenuItem className="cursor-pointer">
-                    <CheckCircle className="mr-2 h-4 w-4" />
+                    <CheckCircle className="mr-2 h-4 w-4 text-muted-foreground" />
                     Approvals
                   </DropdownMenuItem>
                 </Link>
                 <Link href="/dashboard/time-logs">
                   <DropdownMenuItem className="cursor-pointer">
-                    <FileText className="mr-2 h-4 w-4" />
+                    <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
                     Time Logs
                   </DropdownMenuItem>
                 </Link>

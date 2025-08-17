@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabaseClient";
 import type { PayrollRecord, CreatePayrollInput, UpdatePayrollInput, ApiResponse, PayrollPayment } from "@/lib/types";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
 import { getTimesheets } from "@/lib/data/timesheets";
+import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPayrollRecord(data: any): PayrollRecord {
@@ -556,6 +557,27 @@ export async function generatePayrollForWorkerAndPeriod(
 
     console.log(`[PayrollGen] Payroll ${existingPayroll ? 'updated' : 'created'} successfully. Result:`, result.data);
     console.log(`[PayrollGen] Returning success response with data:`, result.data);
+
+    // Mark onboarding step as completed if payroll generation was successful
+    if (result.success && result.data) {
+      try {
+        console.log(`[PayrollGen] Attempting to complete onboarding step for user: ${userId}, profile.id: ${profile.id}`);
+        await completeOnboardingStep(userId, "payroll", {
+          payroll_id: result.data.id,
+          generated_at: new Date().toISOString(),
+          worker_id: workerId,
+          period_start: dateFrom,
+          period_end: dateTo
+        });
+        console.log(`[PayrollGen] Onboarding step "payroll" completed for user ${userId}`);
+      } catch (onboardingError) {
+        console.error(`[PayrollGen] Error completing onboarding step:`, onboardingError);
+        // Don't fail the payroll generation if onboarding completion fails
+      }
+    } else {
+      console.log(`[PayrollGen] Skipping onboarding completion - result not successful:`, { success: result.success, data: !!result.data });
+    }
+
     return { data: result.data, error: null, success: true };
 
   } catch (error) {

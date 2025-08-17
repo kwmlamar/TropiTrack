@@ -70,7 +70,12 @@ export async function checkOnboardingStatus(userId: string): Promise<{
   const completedSteps = progress.map(p => p.step_name);
 
   const isCompleted = profileData?.onboarding_completed || false;
-  const shouldShowOnboarding = !isCompleted;
+  
+  // Check if company-setup step has been completed
+  const hasCompletedCompanySetup = completedSteps.includes('company-setup');
+  
+  // Show onboarding if overall onboarding is not completed OR if company-setup step is not completed
+  const shouldShowOnboarding = !isCompleted || !hasCompletedCompanySetup;
 
   return { isCompleted, completedSteps, shouldShowOnboarding };
 }

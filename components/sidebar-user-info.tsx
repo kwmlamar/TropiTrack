@@ -78,7 +78,7 @@ export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
               src="/placeholder.svg"
               alt={profile.name}
             />
-            <AvatarFallback className="bg-sidebar-primary/10 text-sidebar-primary text-sm font-medium">
+            <AvatarFallback className="bg-sidebar-primary/10 text-gray-500 text-sm font-medium">
               {profile.name
                 ? profile.name
                     .split(" ")
