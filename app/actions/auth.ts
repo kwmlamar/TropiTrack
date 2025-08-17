@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createTrialSubscriptionViaFunction } from "@/lib/data/subscriptions";
 
 type LoginResult =
   | { success: true }
@@ -183,18 +184,18 @@ export async function signup(formData: FormData): Promise<SignupResult> {
     }
   } else {
     // For new company signups, create trial subscription
-    try {
-      const subscriptionResponse = await createTrialSubscription({
-        userId: authData.user.id,
-        planId: plan,
-        userEmail: email,
-      });
+    if (plan) {
+      try {
+        const subscriptionResponse = await createTrialSubscriptionViaFunction(plan);
 
-      if (!subscriptionResponse.success) {
-        console.error('Subscription creation failed:', subscriptionResponse.error);
+        if (!subscriptionResponse.success) {
+          console.error('Subscription creation failed:', subscriptionResponse.error);
+        } else {
+          console.log('Trial subscription created successfully');
+        }
+      } catch (error) {
+        console.error('Unexpected error creating subscription:', error);
       }
-    } catch (error) {
-      console.error('Unexpected error creating subscription:', error);
     }
   }
 
@@ -213,39 +214,7 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   return { success: true, redirectTo: "/check-email" };
 }
 
-// Separate function for subscription creation
-async function createTrialSubscription({
-  userId, 
-  planId, 
-  userEmail
-}: {
-  userId: string, 
-  planId: string, 
-  userEmail: string
-}) {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/create-trial-subscription`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, planId, userEmail }),
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { 
-        success: false, 
-        error: `Subscription creation failed: ${errorText}` 
-      };
-    }
-
-    return { success: true };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
-  }
-}
 
 // Google OAuth functions
 export async function signInWithGoogle(): Promise<{ url: string } | { error: string }> {
@@ -258,6 +227,10 @@ export async function signInWithGoogle(): Promise<{ url: string } | { error: str
     provider: 'google',
     options: {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
     },
   });
 
@@ -285,6 +258,10 @@ export async function signUpWithGoogle(): Promise<{ url: string } | { error: str
     provider: 'google',
     options: {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
     },
   });
 

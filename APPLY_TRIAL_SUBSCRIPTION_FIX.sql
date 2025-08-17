@@ -1,9 +1,15 @@
--- Update handle_new_user trigger to support invited users
--- This migration modifies the trigger to check for existing company_id in user metadata
+-- Apply Trial Subscription Fix
+-- Run this in your Supabase SQL Editor
 
--- ============================================================================
--- STEP 1: Update the handle_new_user function
--- ============================================================================
+-- First, let's check if subscription plans exist
+SELECT 'Checking subscription plans...' as status;
+SELECT * FROM subscription_plans ORDER BY sort_order;
+
+-- Check if company_subscriptions table exists
+SELECT 'Checking company_subscriptions table...' as status;
+SELECT COUNT(*) as subscription_count FROM company_subscriptions;
+
+-- Update the handle_new_user trigger to create trial subscriptions
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE
@@ -14,6 +20,11 @@ DECLARE
   existing_company_id UUID;
   first_name TEXT;
   last_name TEXT;
+  selected_plan TEXT;
+  plan_id UUID;
+  now_timestamp TIMESTAMP WITH TIME ZONE;
+  trial_end TIMESTAMP WITH TIME ZONE;
+  period_end TIMESTAMP WITH TIME ZONE;
 BEGIN
   -- Log the start of the trigger
   RAISE NOTICE 'handle_new_user trigger started for user: %', new.id;
@@ -190,23 +201,68 @@ BEGIN
   -- Create trial subscription for new company signups
   BEGIN
     -- Get the selected plan from user metadata, default to 'starter'
-    DECLARE
-      selected_plan TEXT;
-      trial_result RECORD;
-    BEGIN
-      selected_plan := COALESCE(new.raw_user_meta_data->>'selected_plan', 'starter');
+    selected_plan := COALESCE(new.raw_user_meta_data->>'selected_plan', 'starter');
+    RAISE NOTICE 'Selected plan: %', selected_plan;
+    
+    -- Get the plan ID
+    SELECT id INTO plan_id
+    FROM subscription_plans
+    WHERE slug = selected_plan AND is_active = true;
+    
+    IF plan_id IS NULL THEN
+      RAISE NOTICE 'Plan not found for slug: %, using starter as fallback', selected_plan;
+      SELECT id INTO plan_id
+      FROM subscription_plans
+      WHERE slug = 'starter' AND is_active = true;
+    END IF;
+    
+    IF plan_id IS NOT NULL THEN
+      -- Set timestamps
+      now_timestamp := NOW();
+      trial_end := now_timestamp + INTERVAL '14 days';
+      period_end := now_timestamp + INTERVAL '30 days';
       
-      -- Call the create_trial_subscription function
-      SELECT * INTO trial_result
-      FROM create_trial_subscription(new.id, selected_plan, 14);
-      
-      IF trial_result.success THEN
+      -- Check if company already has an active subscription
+      IF NOT EXISTS (
+        SELECT 1 FROM company_subscriptions 
+        WHERE company_id = new_company_id 
+        AND status IN ('active', 'trialing')
+      ) THEN
+        -- Create the trial subscription
+        INSERT INTO company_subscriptions (
+          company_id,
+          plan_id,
+          status,
+          billing_cycle,
+          current_period_start,
+          current_period_end,
+          trial_start,
+          trial_end,
+          metadata
+        ) VALUES (
+          new_company_id,
+          plan_id,
+          'trialing',
+          'monthly',
+          now_timestamp,
+          period_end,
+          now_timestamp,
+          trial_end,
+          jsonb_build_object(
+            'created_by', new.id,
+            'trial_type', 'free_trial',
+            'plan_slug', selected_plan,
+            'created_via', 'user_trigger'
+          )
+        );
+        
         RAISE NOTICE 'Successfully created trial subscription for user: % with plan: %', new.id, selected_plan;
       ELSE
-        RAISE NOTICE 'Failed to create trial subscription for user: % - %', new.id, trial_result.error_message;
-        -- Don't fail the signup for subscription creation errors
+        RAISE NOTICE 'Company already has an active subscription, skipping trial creation';
       END IF;
-    END;
+    ELSE
+      RAISE NOTICE 'No valid plan found, skipping trial subscription creation';
+    END IF;
   EXCEPTION
     WHEN OTHERS THEN
       RAISE NOTICE 'Error creating trial subscription: %', SQLERRM;
@@ -224,15 +280,27 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ============================================================================
--- STEP 2: Ensure the trigger is properly attached
--- ============================================================================
+-- Ensure the trigger is properly attached
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- ============================================================================
--- STEP 3: Add comments for documentation
--- ============================================================================
-COMMENT ON FUNCTION public.handle_new_user() IS 'Handles new user creation for both new company signups and invited users. Checks for company_id in user metadata to determine if user is joining existing company.';
+-- Add comments for documentation
+COMMENT ON FUNCTION public.handle_new_user() IS 'Handles new user creation for both new company signups and invited users. Creates trial subscription automatically for new companies.';
+
+-- Test the trigger by checking recent users
+SELECT 'Testing trigger - checking recent users...' as status;
+SELECT 
+  u.id,
+  u.email,
+  u.raw_user_meta_data->>'selected_plan' as selected_plan,
+  p.company_id,
+  cs.status as subscription_status,
+  cs.trial_end
+FROM auth.users u
+LEFT JOIN profiles p ON u.id = p.user_id
+LEFT JOIN company_subscriptions cs ON p.company_id = cs.company_id
+WHERE u.created_at > NOW() - INTERVAL '1 hour'
+ORDER BY u.created_at DESC
+LIMIT 5;

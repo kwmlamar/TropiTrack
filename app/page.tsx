@@ -33,7 +33,7 @@ export default function Home() {
               <Link href="/login">Sign In</Link>
             </Button>
             <Button asChild className="bg-primary hover:bg-primary/90">
-              <Link href="/signup">Start Free Trial</Link>
+              <Link href="/signup?plan=starter">Start Free Trial</Link>
             </Button>
           </div>
         </div>

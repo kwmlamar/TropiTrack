@@ -100,6 +100,108 @@ export async function getCompanySubscription(): Promise<ApiResponse<CompanySubsc
   }
 }
 
+export async function createTrialSubscription(planSlug: string, trialDays: number = 14): Promise<ApiResponse<CompanySubscription>> {
+  try {
+    const profile = await getUserProfileWithCompany();
+    if (!profile || !profile.company_id) {
+      return { data: null, error: "Company ID not found", success: false };
+    }
+
+    // Get the plan by slug
+    const { data: plan, error: planError } = await supabase
+      .from("subscription_plans")
+      .select("*")
+      .eq("slug", planSlug)
+      .eq("is_active", true)
+      .single();
+
+    if (planError || !plan) {
+      console.error("Error getting plan:", planError);
+      return { data: null, error: "Plan not found", success: false };
+    }
+
+    const now = new Date();
+    const trialEnd = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
+    const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    const subscriptionData = {
+      company_id: profile.company_id,
+      plan_id: plan.id,
+      status: 'trialing',
+      billing_cycle: 'monthly',
+      current_period_start: now.toISOString(),
+      current_period_end: periodEnd.toISOString(),
+      trial_start: now.toISOString(),
+      trial_end: trialEnd.toISOString(),
+      metadata: {
+        created_by: profile.id,
+        trial_type: 'free_trial',
+        plan_slug: planSlug,
+      },
+    };
+
+    const { data, error } = await supabase
+      .from("company_subscriptions")
+      .insert(subscriptionData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating trial subscription:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    return { data: data as CompanySubscription, error: null, success: true };
+  } catch (error) {
+    console.error("Error creating trial subscription:", error);
+    return { data: null, error: "Failed to create trial subscription", success: false };
+  }
+}
+
+export async function createTrialSubscriptionViaFunction(planSlug: string, trialDays: number = 14): Promise<ApiResponse<CompanySubscription>> {
+  try {
+    // Call the Supabase database function directly
+    const { data, error } = await supabase
+      .rpc('create_trial_subscription', {
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        plan_slug: planSlug,
+        trial_days: trialDays
+      });
+
+    if (error) {
+      console.error("Error calling create_trial_subscription function:", error);
+      return { data: null, error: error.message, success: false };
+    }
+
+    if (!data || data.length === 0) {
+      return { data: null, error: "No result from trial subscription creation", success: false };
+    }
+
+    const result = data[0];
+    
+    if (!result.success) {
+      return { data: null, error: result.error_message || "Failed to create trial subscription", success: false };
+    }
+
+    // Get the created subscription
+    const { data: subscription, error: subError } = await supabase
+      .from("company_subscriptions")
+      .select("*")
+      .eq("id", result.subscription_id)
+      .single();
+
+    if (subError) {
+      console.error("Error fetching created subscription:", subError);
+      return { data: null, error: subError.message, success: false };
+    }
+
+    return { data: subscription as CompanySubscription, error: null, success: true };
+  } catch (error) {
+    console.error("Error creating trial subscription via function:", error);
+    return { data: null, error: "Failed to create trial subscription", success: false };
+  }
+}
+
 export async function createSubscription(input: CreateSubscriptionInput): Promise<ApiResponse<CompanySubscription>> {
   try {
     const profile = await getUserProfileWithCompany();

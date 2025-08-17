@@ -30,11 +30,14 @@ export function SignupForm({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get plan from URL parameter
+  // Get plan from URL parameter, default to starter if none selected
   useEffect(() => {
     const plan = searchParams.get('plan');
     if (plan && ['starter', 'professional', 'enterprise'].includes(plan)) {
       setSelectedPlan(plan);
+    } else {
+      // Default to starter plan if no plan selected
+      setSelectedPlan('starter');
     }
   }, [searchParams]);
 

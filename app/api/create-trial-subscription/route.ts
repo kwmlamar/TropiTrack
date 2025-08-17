@@ -62,6 +62,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Get the plan ID from the database using the slug
+    const { data: plan, error: planError } = await supabase
+      .from('subscription_plans')
+      .select('id')
+      .eq('slug', planId)
+      .single();
+
+    if (planError || !plan) {
+      console.error('Error getting plan:', planError);
+      return NextResponse.json(
+        { error: 'Invalid plan ID' },
+        { status: 400 }
+      );
+    }
+
     // Get the price ID for the selected plan
     const priceId = PRICE_IDS[planId as keyof typeof PRICE_IDS];
     if (!priceId) {
@@ -87,14 +102,29 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Get the user's company ID from their profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Error getting user profile:', profileError);
+      return NextResponse.json(
+        { error: 'User profile not found' },
+        { status: 400 }
+      );
+    }
+
     // Store subscription info in your database
     const { error: dbError } = await supabase
       .from('company_subscriptions')
       .insert({
-        company_id: userId, // Assuming user_id maps to company_id
+        company_id: profile.company_id,
         stripe_subscription_id: subscription.id,
         stripe_customer_id: customer.id,
-        plan_id: planId,
+        plan_id: plan.id,
         status: 'trialing',
         billing_cycle: 'monthly',
         current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),

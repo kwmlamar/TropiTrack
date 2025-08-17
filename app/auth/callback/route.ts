@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const state = searchParams.get('state')
   const next = searchParams.get('next') ?? '/dashboard'
   const error = searchParams.get('error')
   const error_description = searchParams.get('error_description')
@@ -11,10 +12,12 @@ export async function GET(request: Request) {
   // Log the request details for debugging
   console.log('Auth callback received:', {
     code: code ? 'present' : 'missing',
+    state: state ? 'present' : 'missing',
     error,
     error_description,
     origin,
-    next
+    next,
+    url: request.url
   })
 
   // Handle OAuth errors
@@ -27,16 +30,25 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     
     try {
+      // Exchange the code for a session
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
       
       console.log('Code exchange result:', {
         success: !exchangeError,
         hasUser: !!data?.user,
-        error: exchangeError?.message
+        error: exchangeError?.message,
+        errorCode: exchangeError?.status
       })
       
       if (exchangeError) {
         console.error('Code exchange failed:', exchangeError)
+        
+        // Handle specific error cases
+        if (exchangeError.message?.includes('invalid flow state')) {
+          console.error('Invalid flow state - this usually means the OAuth flow was interrupted or expired')
+          return NextResponse.redirect(`${origin}/error?message=OAuth session expired. Please try signing in again.`)
+        }
+        
         return NextResponse.redirect(`${origin}/error?message=Code exchange failed: ${exchangeError.message}`)
       }
       
@@ -44,6 +56,12 @@ export async function GET(request: Request) {
         console.error('No user data returned from code exchange')
         return NextResponse.redirect(`${origin}/error?message=No user data returned`)
       }
+
+      console.log('User authenticated successfully:', {
+        userId: data.user.id,
+        email: data.user.email,
+        isNewUser: data.user.created_at === data.user.updated_at
+      })
 
       // Check if user profile exists, if not create it manually
       const { error: profileError } = await supabase
