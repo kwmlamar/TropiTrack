@@ -23,7 +23,6 @@ const companySchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   zip_code: z.string().optional(),
-  country: z.string().optional(),
   tax_id: z.string().optional(),
   business_number: z.string().optional(),
   industry: z.string().optional(),
@@ -45,17 +44,6 @@ const industries = [
   "Engineering",
   "Property Management",
   "Real Estate Development",
-  "Other",
-];
-
-const countries = [
-  "Bahamas",
-  "United States",
-  "Canada",
-  "United Kingdom",
-  "Jamaica",
-  "Cayman Islands",
-  "Turks and Caicos",
   "Other",
 ];
 
@@ -95,7 +83,6 @@ export function CompanyInformationForm() {
           city: companyData.city || "",
           state: companyData.state || "",
           zip_code: companyData.zip_code || "",
-          country: companyData.country || "",
           tax_id: companyData.tax_id || "",
           business_number: companyData.business_number || "",
           industry: companyData.industry || "",
@@ -219,22 +206,6 @@ export function CompanyInformationForm() {
                   {industries.map((industry) => (
                     <SelectItem key={industry} value={industry}>
                       {industry}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Select onValueChange={(value) => setValue("country", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country} value={country}>
-                      {country}
                     </SelectItem>
                   ))}
                 </SelectContent>

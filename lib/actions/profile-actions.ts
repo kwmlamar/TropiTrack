@@ -35,7 +35,7 @@ export async function updateProfile(data: {
         website: data.website || null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id)
+      .eq("user_id", user.id)
 
     if (updateError) {
       console.error("Error updating profile:", updateError)
@@ -58,6 +58,7 @@ export async function updateProfile(data: {
     }
 
     revalidatePath("/dashboard/profile")
+    revalidatePath("/dashboard/settings/profile")
     return { success: true }
   } catch (error) {
     console.error("Unexpected error updating profile:", error)

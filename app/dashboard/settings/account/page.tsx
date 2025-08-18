@@ -248,7 +248,7 @@ export default function AccountSettingsPage() {
                 <Button 
                   onClick={handlePasswordChange}
                   disabled={loading || !passwords.current || !passwords.new || !passwords.confirm}
-                  className="w-full bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+                  className="w-full"
                 >
                   <Key className="h-4 w-4 mr-2" />
                   {loading ? "Changing Password..." : "Change Password"}
@@ -256,8 +256,6 @@ export default function AccountSettingsPage() {
               </div>
 
               <Separator />
-
-
 
               {/* Login Sessions */}
               <div className="space-y-4">
@@ -325,12 +323,12 @@ export default function AccountSettingsPage() {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button asChild className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
+                    <Button asChild>
                       <Link href="/dashboard/settings/subscription">
                         Manage Subscription
                       </Link>
                     </Button>
-                    <Button className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
+                    <Button>
                       <Download className="h-4 w-4 mr-2" />
                       Download Invoices
                     </Button>
@@ -339,7 +337,7 @@ export default function AccountSettingsPage() {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No active subscription found</p>
-                  <Button asChild className="mt-4 bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
+                  <Button asChild className="mt-4">
                     <Link href="/dashboard/settings/subscription">
                       View Subscription Options
                     </Link>
@@ -369,7 +367,7 @@ export default function AccountSettingsPage() {
                       Download a copy of your data
                     </p>
                   </div>
-                  <Button size="sm" className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors">
+                  <Button size="sm">
                     <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>

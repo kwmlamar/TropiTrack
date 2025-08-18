@@ -26,52 +26,56 @@ import {
 } from "lucide-react"
 import { PreferencesForm } from "@/components/settings/preferences-form"
 import { toast } from "sonner"
+import { useUser } from "@/lib/hooks/use-user"
+import { updateProfile } from "@/lib/actions/profile-actions"
 
 export default function ProfileSettingsPage() {
+  const { user, loading: userLoading } = useUser()
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState({
-    first_name: "",
-    last_name: "",
+    name: "",
     email: "",
     phone: "",
     avatar_url: "",
     bio: "",
-    timezone: "UTC",
-    language: "en",
+    location: "",
+    website: "",
     role: "user"
   })
 
   useEffect(() => {
-    // Load user profile data
-    loadProfile()
-  }, [])
-
-  const loadProfile = async () => {
-    try {
-      // TODO: Load actual profile data from API
+    if (user) {
       setProfile({
-        first_name: "John",
-        last_name: "Doe",
-        email: "john.doe@example.com",
-        phone: "+1 (555) 123-4567",
-        avatar_url: "",
-        bio: "Construction manager with 10+ years of experience",
-        timezone: "America/New_York",
-        language: "en",
-        role: "admin"
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        avatar_url: user.avatar_url || "",
+        bio: user.bio || "",
+        location: user.location || "",
+        website: user.website || "",
+        role: user.role || "user"
       })
-    } catch (error) {
-      console.error("Error loading profile:", error)
     }
-  }
+  }, [user])
 
   const handleSave = async () => {
     setLoading(true)
     try {
-      // TODO: Save profile data to API
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      toast.success("Profile updated successfully")
-      console.log("Profile saved")
+      const result = await updateProfile({
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        role: profile.role,
+        bio: profile.bio,
+        location: profile.location,
+        website: profile.website
+      })
+
+      if (result.success) {
+        toast.success("Profile updated successfully")
+      } else {
+        toast.error(result.error || "Failed to update profile")
+      }
     } catch (error) {
       console.error("Error saving profile:", error)
       toast.error("Failed to update profile")
@@ -91,6 +95,27 @@ export default function ProfileSettingsPage() {
       month: 'long',
       day: 'numeric'
     })
+  }
+
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Unable to load user profile. Please try refreshing the page.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   return (
@@ -122,14 +147,13 @@ export default function ProfileSettingsPage() {
                   <Avatar className="h-20 w-20">
                     <AvatarImage src={profile.avatar_url} />
                     <AvatarFallback className="text-lg">
-                      {profile.first_name?.[0]}{profile.last_name?.[0]}
+                      {profile.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
                     <Button  
                       size="sm"
                       onClick={handleAvatarUpload}
-                      className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Upload Photo
@@ -143,33 +167,22 @@ export default function ProfileSettingsPage() {
 
               <Separator />
 
-              {/* Name Fields */}
+              {/* Name Field */}
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium">Name</h4>
                   <p className="text-sm text-muted-foreground">
-                    Update your first and last name
+                    Update your full name
                   </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first_name">First Name</Label>
-                    <Input
-                      id="first_name"
-                      value={profile.first_name}
-                      onChange={(e) => setProfile({...profile, first_name: e.target.value})}
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last_name">Last Name</Label>
-                    <Input
-                      id="last_name"
-                      value={profile.last_name}
-                      onChange={(e) => setProfile({...profile, last_name: e.target.value})}
-                      placeholder="Enter your last name"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    value={profile.name}
+                    onChange={(e) => setProfile({...profile, name: e.target.value})}
+                    placeholder="Enter your full name"
+                  />
                 </div>
               </div>
 
@@ -228,6 +241,45 @@ export default function ProfileSettingsPage() {
                     onChange={(e) => setProfile({...profile, bio: e.target.value})}
                     placeholder="Tell us about yourself..."
                     rows={3}
+                  />
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium">Location</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Your location or address
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={profile.location}
+                    onChange={(e) => setProfile({...profile, location: e.target.value})}
+                    placeholder="Enter your location"
+                  />
+                </div>
+              </div>
+
+              {/* Website */}
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium">Website</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Your personal or professional website
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website URL</Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    value={profile.website}
+                    onChange={(e) => setProfile({...profile, website: e.target.value})}
+                    placeholder="https://example.com"
                   />
                 </div>
               </div>
@@ -293,7 +345,7 @@ export default function ProfileSettingsPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm">Member Since</span>
                 <span className="text-sm text-muted-foreground">
-                  {formatDate(new Date().toISOString())}
+                  {user.created_at ? formatDate(user.created_at) : 'Unknown'}
                 </span>
               </div>
             </CardContent>
@@ -308,7 +360,7 @@ export default function ProfileSettingsPage() {
               <div>
                 <Label className="text-sm font-medium">Full Name</Label>
                 <p className="text-sm text-muted-foreground">
-                  {profile.first_name} {profile.last_name}
+                  {profile.name || 'Not set'}
                 </p>
               </div>
               <div>
@@ -317,12 +369,18 @@ export default function ProfileSettingsPage() {
               </div>
               <div>
                 <Label className="text-sm font-medium">Phone</Label>
-                <p className="text-sm text-muted-foreground">{profile.phone}</p>
+                <p className="text-sm text-muted-foreground">{profile.phone || 'Not set'}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium">Role</Label>
                 <p className="text-sm text-muted-foreground capitalize">{profile.role}</p>
               </div>
+              {user.company && (
+                <div>
+                  <Label className="text-sm font-medium">Company</Label>
+                  <p className="text-sm text-muted-foreground">{user.company.name}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -381,7 +439,7 @@ export default function ProfileSettingsPage() {
           <Button 
             onClick={handleSave} 
             disabled={loading}
-            className="w-full bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+            className="w-full"
           >
             <Save className="h-4 w-4 mr-2" />
             {loading ? (

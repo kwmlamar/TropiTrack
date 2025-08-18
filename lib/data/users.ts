@@ -174,7 +174,7 @@ export async function updateUserLastLogin(id: string): Promise<ApiResponse<User>
     const { data, error } = await supabase
       .from("profiles")
       .update({ last_login_at: new Date().toISOString() })
-      .eq("id", id)
+      .eq("user_id", id)
       .select()
       .single()
 
