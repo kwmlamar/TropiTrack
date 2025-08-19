@@ -12,7 +12,6 @@ import {
   User,
   Calculator,
   Copy,
-  Check,
 } from "lucide-react";
 import { startOfWeek, endOfWeek, addDays, format } from "date-fns";
 import { z } from "zod";
@@ -60,6 +59,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { createTimesheet } from "@/lib/data/timesheets";
 import type { CreateTimesheetInput, TimesheetWithDetails } from "@/lib/types";
@@ -519,36 +519,32 @@ export function BulkTimesheetForm({
                             className="cursor-pointer hover:bg-accent/50 transition-all duration-200 group"
                           >
                             <div className="flex items-center gap-3 w-full py-1">
-                              <div className={cn(
-                                "relative h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 shadow-sm",
-                                "group-hover:border-secondary/60 group-hover:shadow-md",
-                                selectedWorkers.has(worker.id) 
-                                  ? "bg-[#E8EDF5] border-secondary text-secondary-foreground shadow-md scale-105" 
-                                  : "border-muted-foreground/40 bg-background hover:border-secondary/40"
-                              )}>
-                                {selectedWorkers.has(worker.id) && (
-                                  <Check className="h-3 w-3 animate-in zoom-in-50 duration-200 text-secondary" />
-                                )}
-                                <div className={cn(
-                                  "absolute inset-0 rounded-md transition-opacity duration-200",
-                                  selectedWorkers.has(worker.id) 
-                                    ? "bg-[#E8EDF5]/20 opacity-0" 
-                                    : "bg-[#E8EDF5]/10 opacity-0 group-hover:opacity-100"
-                                )} />
-                              </div>
+                              <Checkbox
+                                color="var(--muted-foreground)"
+                                checked={selectedWorkers.has(worker.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedWorkers(prev => {
+                                    const next = new Set(prev);
+                                    if (checked) {
+                                      next.add(worker.id);
+                                    } else {
+                                      next.delete(worker.id);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                aria-label={`Select ${worker.name}`}
+                                className="data-[state=checked]:text-white [&[data-state=checked]>div]:text-white [&[data-state=checked] svg]:text-white"
+                              />
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate group-hover:text-secondary transition-colors">
+                                <div className="font-medium text-sm truncate">
                                   {worker.name}
                                 </div>
                                 <div className="text-xs text-gray-500 truncate">
                                   {worker.position}
                                 </div>
                               </div>
-                              {selectedWorkers.has(worker.id) && (
-                                <div className="flex-shrink-0">
-                                  <div className="h-2 w-2 rounded-full bg-[#E8EDF5] animate-pulse" />
-                                </div>
-                              )}
                             </div>
                           </CommandItem>
                         ))}

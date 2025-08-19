@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { createTrialSubscriptionViaFunction } from "@/lib/data/subscriptions";
 
 type LoginResult =
   | { success: true }
@@ -183,15 +182,77 @@ export async function signup(formData: FormData): Promise<SignupResult> {
       return { error: "Failed to complete signup process", field: "general" };
     }
   } else {
-    // For new company signups, create trial subscription
+    // For new company signups, create trial subscription manually since the database trigger function has issues
     if (plan) {
       try {
-        const subscriptionResponse = await createTrialSubscriptionViaFunction(plan);
+        console.log('Creating trial subscription manually for new company signup');
+        
+        // Get the user's profile to get company_id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('user_id', authData.user.id)
+          .single();
 
-        if (!subscriptionResponse.success) {
-          console.error('Subscription creation failed:', subscriptionResponse.error);
+        if (profileError || !profile?.company_id) {
+          console.error('Failed to get profile for subscription creation:', profileError);
+          return { success: true, redirectTo: "/check-email" };
+        }
+
+        // Get the plan
+        const { data: planData, error: planError } = await supabase
+          .from('subscription_plans')
+          .select('id')
+          .eq('slug', plan)
+          .eq('is_active', true)
+          .single();
+
+        if (planError || !planData) {
+          console.error('Failed to get plan for subscription creation:', planError);
+          return { success: true, redirectTo: "/check-email" };
+        }
+
+        // Check if subscription already exists
+        const { data: existingSubscription } = await supabase
+          .from('company_subscriptions')
+          .select('id')
+          .eq('company_id', profile.company_id)
+          .in('status', ['active', 'trialing'])
+          .single();
+
+        if (existingSubscription) {
+          console.log('Subscription already exists for company');
+          return { success: true, redirectTo: "/check-email" };
+        }
+
+        // Create subscription manually
+        const now = new Date();
+        const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        const { error: subscriptionError } = await supabase
+          .from('company_subscriptions')
+          .insert({
+            company_id: profile.company_id,
+            plan_id: planData.id,
+            status: 'trialing',
+            billing_cycle: 'monthly',
+            current_period_start: now.toISOString(),
+            current_period_end: periodEnd.toISOString(),
+            trial_start: now.toISOString(),
+            trial_end: trialEnd.toISOString(),
+            metadata: {
+              created_by: authData.user.id,
+              trial_type: 'free_trial',
+              plan_slug: plan,
+              created_via: 'manual_auth_action'
+            }
+          });
+
+        if (subscriptionError) {
+          console.error('Failed to create subscription:', subscriptionError);
         } else {
-          console.log('Trial subscription created successfully');
+          console.log('Successfully created trial subscription');
         }
       } catch (error) {
         console.error('Unexpected error creating subscription:', error);

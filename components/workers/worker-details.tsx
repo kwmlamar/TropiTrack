@@ -248,7 +248,7 @@ export default function WorkerDetails() {
             <TabsContent value="details" className="container mx-auto py-4 space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Personal Information */}
-                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                <Card className="border-border/50 bg-sidebar">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <UserIcon className="h-5 w-5" />
@@ -276,7 +276,7 @@ export default function WorkerDetails() {
                 </Card>
 
                 {/* Employment Details */}
-                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                <Card className="border-border/50 bg-sidebar">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Building2 className="h-5 w-5" />
@@ -313,7 +313,7 @@ export default function WorkerDetails() {
                 </Card>
 
                 {/* Skills & Certifications */}
-                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                <Card className="border-border/50 bg-sidebar">
                   <CardHeader>
                     <CardTitle>Skills & Certifications</CardTitle>
                   </CardHeader>
@@ -350,7 +350,7 @@ export default function WorkerDetails() {
                 </Card>
 
                 {/* Emergency Contact */}
-                <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                <Card className="border-border/50 bg-sidebar">
                   <CardHeader>
                     <CardTitle>Emergency Contact</CardTitle>
                   </CardHeader>
@@ -368,7 +368,7 @@ export default function WorkerDetails() {
               </div>
 
               {/* Current Projects */}
-              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+              <Card className="border-border/50 bg-sidebar">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Building2 className="h-5 w-5" />
@@ -381,7 +381,7 @@ export default function WorkerDetails() {
                       {worker.current_projects
                         .filter((assignment: { project: { id: string; name: string } | null; is_active?: boolean }) => assignment.project)
                         .map((assignment: { project: { id: string; name: string }; role_on_project?: string; id?: string }, index: number) => (
-                        <Card key={`${assignment.project.id}-${assignment.id || index}`} className="p-4 border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                        <Card key={`${assignment.project.id}-${assignment.id || index}`} className="p-4 border-border/50 bg-sidebar">
                           <div className="space-y-2">
                             <div className="text-sm text-gray-500">Project</div>
                             <p className="font-medium">{assignment.project.name}</p>
@@ -399,7 +399,7 @@ export default function WorkerDetails() {
             </TabsContent>
 
             <TabsContent value="timecards" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+              <Card className="border-border/50 bg-sidebar">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
@@ -410,7 +410,7 @@ export default function WorkerDetails() {
                   {timesheets.length > 0 ? (
                     <div className="space-y-4">
                       {timesheets.map((timesheet) => (
-                        <Card key={timesheet.id} className="p-4 border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+                        <Card key={timesheet.id} className="p-4 border-border/50 bg-sidebar">
                           <div className="grid gap-4 md:grid-cols-4">
                             <div>
                               <p className="text-sm text-gray-500">Date</p>
@@ -450,7 +450,7 @@ export default function WorkerDetails() {
             </TabsContent>
 
             <TabsContent value="documents" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+              <Card className="border-border/50 bg-sidebar">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
@@ -473,7 +473,7 @@ export default function WorkerDetails() {
             </TabsContent>
 
             <TabsContent value="notes" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
+              <Card className="border-border/50 bg-sidebar">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <StickyNote className="h-5 w-5" />

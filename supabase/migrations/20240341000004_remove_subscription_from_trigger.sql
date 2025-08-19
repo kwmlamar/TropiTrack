@@ -1,9 +1,6 @@
--- Update handle_new_user trigger to support invited users
--- This migration modifies the trigger to check for existing company_id in user metadata
+-- Remove subscription creation from handle_new_user trigger
+-- Subscription creation is now handled manually in the auth action
 
--- ============================================================================
--- STEP 1: Update the handle_new_user function
--- ============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE
@@ -107,85 +104,100 @@ BEGIN
         -- Don't raise here as the main operations succeeded
     END;
     
-    RETURN new;
-  END IF;
-
-  -- Extract company name from user metadata or use default (for new company signups)
-  company_name := COALESCE(
-    new.raw_user_meta_data->>'company_name',
-    'My Company'
-  );
-  RAISE NOTICE 'Company name: %', company_name;
-
-  -- Create a company for new users
-  BEGIN
-    INSERT INTO public.companies (name, email)
-    VALUES (company_name, user_email)
-    RETURNING id INTO new_company_id;
+  ELSE
+    -- User is creating a new company
+    RAISE NOTICE 'User is creating new company';
     
-    RAISE NOTICE 'Successfully created company with ID: % for user: %', new_company_id, new.id;
-  EXCEPTION
-    WHEN OTHERS THEN
-      RAISE NOTICE 'Error creating company: %', SQLERRM;
-      RAISE;
-  END;
-
-  -- Create profile with company_id and all required fields
-  BEGIN
-    INSERT INTO public.profiles (
-      id,
-      user_id,
-      email,
-      name,
-      first_name,
-      last_name,
-      company_id,
-      role,
-      is_active,
-      onboarding_completed,
-      created_at,
-      updated_at
-    )
-    VALUES (
-      new.id,
-      new.id,
-      user_email,
-      user_name,
-      first_name,
-      last_name,
-      new_company_id,
-      'admin',
-      true,
-      false,
-      now(),
-      now()
+    -- Generate new company ID
+    new_company_id := gen_random_uuid();
+    
+    -- Extract company name from user metadata
+    company_name := COALESCE(
+      new.raw_user_meta_data->>'company_name',
+      'My Company'
     );
     
-    RAISE NOTICE 'Successfully created profile for user: % with company_id: %', new.id, new_company_id;
-  EXCEPTION
-    WHEN OTHERS THEN
-      RAISE NOTICE 'Error creating profile: %', SQLERRM;
-      RAISE;
-  END;
+    -- Create the company
+    BEGIN
+      INSERT INTO public.companies (
+        id,
+        name,
+        email,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        new_company_id,
+        company_name,
+        user_email,
+        now(),
+        now()
+      );
+      
+      RAISE NOTICE 'Successfully created company: % with ID: %', company_name, new_company_id;
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error creating company: %', SQLERRM;
+        RAISE;
+    END;
 
-  -- Update user metadata with company_id
-  BEGIN
-    UPDATE auth.users 
-    SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || 
-        jsonb_build_object(
-          'company_id', new_company_id, 
-          'full_name', user_name,
-          'first_name', first_name,
-          'last_name', last_name
-        )
-    WHERE id = new.id;
-    
-    RAISE NOTICE 'Successfully updated user metadata for user: % with company_id: %', new.id, new_company_id;
-  EXCEPTION
-    WHEN OTHERS THEN
-      RAISE NOTICE 'Error updating user metadata: %', SQLERRM;
-      -- Don't raise here as the main operations succeeded
-  END;
+    -- Create the user profile
+    BEGIN
+      INSERT INTO public.profiles (
+        id,
+        user_id,
+        email,
+        name,
+        first_name,
+        last_name,
+        company_id,
+        role,
+        is_active,
+        onboarding_completed,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        new.id,
+        new.id,
+        user_email,
+        user_name,
+        first_name,
+        last_name,
+        new_company_id,
+        'admin',
+        true,
+        false,
+        now(),
+        now()
+      );
+      
+      RAISE NOTICE 'Successfully created profile for user: % with company_id: %', new.id, new_company_id;
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error creating profile: %', SQLERRM;
+        RAISE;
+    END;
+
+    -- Update user metadata with company_id
+    BEGIN
+      UPDATE auth.users 
+      SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || 
+          jsonb_build_object(
+            'company_id', new_company_id, 
+            'full_name', user_name,
+            'first_name', first_name,
+            'last_name', last_name
+          )
+      WHERE id = new.id;
+      
+      RAISE NOTICE 'Successfully updated user metadata for user: % with company_id: %', new.id, new_company_id;
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Error updating user metadata: %', SQLERRM;
+        -- Don't raise here as the main operations succeeded
+    END;
+  END IF;
 
   -- Subscription creation is now handled manually in the auth action
   -- This prevents conflicts and ensures reliable subscription creation
@@ -202,15 +214,11 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ============================================================================
--- STEP 2: Ensure the trigger is properly attached
--- ============================================================================
+-- Ensure the trigger is properly attached
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- ============================================================================
--- STEP 3: Add comments for documentation
--- ============================================================================
-COMMENT ON FUNCTION public.handle_new_user() IS 'Handles new user creation for both new company signups and invited users. Checks for company_id in user metadata to determine if user is joining existing company.';
+-- Add comment for documentation
+COMMENT ON FUNCTION public.handle_new_user() IS 'Handles new user creation for both new company signups and invited users. Subscription creation is handled manually in the auth action.';

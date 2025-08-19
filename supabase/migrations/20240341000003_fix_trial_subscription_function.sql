@@ -1,5 +1,5 @@
--- Create function to create trial subscription for a user
--- This function can be called from triggers or with admin privileges
+-- Fix the create_trial_subscription function to resolve ambiguous column reference
+-- This migration ensures the function is properly updated
 
 CREATE OR REPLACE FUNCTION public.create_trial_subscription(
   user_id UUID,
@@ -52,7 +52,7 @@ BEGIN
     RETURN;
   END IF;
   
-  -- Check if company already has an active subscription
+  -- Check if company already has an active subscription (FIXED: Added table alias)
   IF EXISTS (
     SELECT 1 FROM company_subscriptions cs
     WHERE cs.company_id = company_id 
