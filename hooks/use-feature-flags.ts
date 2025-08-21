@@ -33,13 +33,15 @@ export function useFeatureFlags() {
   };
 
   const getLimit = (limitKey: keyof FeatureFlags): number => {
+    if (loading) return -1; // Return -1 while loading to indicate unlimited temporarily
     if (!featureFlags) return 0;
     return featureFlags[limitKey] as number;
   };
 
   return {
     featureFlags,
-    loading,
+    loading: loading,
+    featureFlagsLoading: loading,
     error,
     canUseFeature,
     getLimit,

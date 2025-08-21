@@ -141,6 +141,55 @@ export async function createProject(
 ): Promise<ApiResponse<Project>> {
   const profile = await getProfile(userId);
   try {
+    // Check project limit before creating
+    const { data: existingProjects, error: countError } = await supabase
+      .from("projects")
+      .select("id", { count: "exact" })
+      .eq("company_id", profile.company_id);
+
+    if (countError) {
+      console.error("Error checking project count:", countError);
+      return { data: null, error: "Failed to check project limit", success: false };
+    }
+
+    const currentProjectCount = existingProjects?.length || 0;
+
+    // Get subscription limits
+    const { data: subscription } = await supabase
+      .from("company_subscriptions")
+      .select(`
+        subscription_plans!inner(
+          limits
+        )
+      `)
+      .eq("company_id", profile.company_id)
+      .in("status", ["active", "trialing"])
+      .single();
+
+    let projectLimit = 2; // Default limit for no subscription
+    if (subscription?.subscription_plans?.limits) {
+      const limits = subscription.subscription_plans.limits;
+      // Handle different field names in limits
+      projectLimit = typeof limits.projects === 'number' ? limits.projects :
+                    typeof limits.projects_limit === 'number' ? limits.projects_limit : 2;
+      
+      // Fix for old starter plan data - if it's the starter plan with wrong limits, override them
+      if (subscription.subscription_plans.slug === 'starter') {
+        if (projectLimit === 20) {
+          projectLimit = 3;
+        }
+      }
+    }
+
+    // Check if limit is exceeded (allow unlimited if limit is -1)
+    if (projectLimit !== -1 && currentProjectCount >= projectLimit) {
+      return { 
+        data: null, 
+        error: `You've reached your limit of ${projectLimit} projects. Upgrade your plan to add more.`, 
+        success: false 
+      };
+    }
+
     const { data, error } = await supabase
       .from("projects")
       .insert([{ ...project, company_id: profile.company_id, created_by: userId }])

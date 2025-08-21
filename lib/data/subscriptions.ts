@@ -650,9 +650,31 @@ export async function getFeatureFlags(): Promise<ApiResponse<FeatureFlags>> {
     const plan = subscription.data.plan;
     const limits = plan.limits;
 
+
+
+    // Handle different field names in limits (some migrations use different names)
+    let workersLimit = typeof limits.workers === 'number' ? limits.workers : 
+                      typeof limits.workers_limit === 'number' ? limits.workers_limit : 0;
+    let projectsLimit = typeof limits.projects === 'number' ? limits.projects : 
+                       typeof limits.projects_limit === 'number' ? limits.projects_limit : 0;
+    
+    // Fix for old starter plan data - if it's the starter plan with wrong limits, override them
+    if (plan.slug === 'starter') {
+      if (projectsLimit === 20) {
+        projectsLimit = 3;
+      }
+      if (workersLimit === 10) {
+        workersLimit = 15;
+      }
+    }
+    const storageLimit = typeof limits.storage_gb === 'number' ? limits.storage_gb : 
+                        typeof limits.storage_limit_gb === 'number' ? limits.storage_limit_gb : 0;
+    const apiCallsLimit = typeof limits.api_calls_per_month === 'number' ? limits.api_calls_per_month : 
+                         typeof limits.api_calls_limit === 'number' ? limits.api_calls_limit : 0;
+
     const featureFlags: FeatureFlags = {
-      can_add_workers: (limits.workers || 0) > 0 || limits.workers === -1,
-      can_create_projects: (limits.projects || 0) > 0 || limits.projects === -1,
+      can_add_workers: workersLimit > 0 || workersLimit === -1,
+      can_create_projects: projectsLimit > 0 || projectsLimit === -1,
       can_use_biometrics: plan.slug !== 'starter',
       can_use_api: plan.slug === 'enterprise' || plan.slug === 'family',
       can_use_advanced_analytics: plan.slug !== 'starter',
@@ -664,10 +686,10 @@ export async function getFeatureFlags(): Promise<ApiResponse<FeatureFlags>> {
       can_use_advanced_payroll: plan.slug !== 'starter',
       can_use_unlimited_projects: plan.slug !== 'starter',
       can_use_dedicated_support: plan.slug === 'enterprise' || plan.slug === 'family',
-      storage_limit_gb: typeof limits.storage_gb === 'number' ? limits.storage_gb : 0,
-      api_calls_limit: typeof limits.api_calls_per_month === 'number' ? limits.api_calls_per_month : 0,
-      workers_limit: typeof limits.workers === 'number' ? limits.workers : 0,
-      projects_limit: typeof limits.projects === 'number' ? limits.projects : 0,
+      storage_limit_gb: storageLimit,
+      api_calls_limit: apiCallsLimit,
+      workers_limit: workersLimit,
+      projects_limit: projectsLimit,
     };
 
     return { data: featureFlags, error: null, success: true };

@@ -67,6 +67,8 @@ const columns = [
 
 export default function ProjectsTable({ user }: { user: User }) {
   const { getLimit } = useFeatureFlags();
+  
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [projectAssignments, setProjectAssignments] = useState<
@@ -270,6 +272,7 @@ export default function ProjectsTable({ user }: { user: User }) {
         userId={user.id}
         clients={clients}
         onSuccess={handleAddProjectSuccess}
+        currentProjectCount={projects.length}
       />
 
       {/* Edit Project Dialog */}

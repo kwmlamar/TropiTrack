@@ -43,6 +43,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 import { createProject } from "@/lib/data/projects"
+import { useFeatureFlags } from "@/hooks/use-feature-flags"
 import type { Project } from "@/lib/types/project"
 import type { Client } from "@/lib/types/client"
 
@@ -68,6 +69,7 @@ interface AddProjectDialogProps {
   userId: string
   clients: Client[]
   onSuccess?: (project: Project) => void
+  currentProjectCount?: number
 }
 
 const projectStatuses = [
@@ -91,7 +93,9 @@ export function AddProjectDialog({
   userId,
   clients,
   onSuccess,
+  currentProjectCount = 0,
 }: AddProjectDialogProps) {
+  const { getLimit } = useFeatureFlags()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
@@ -134,6 +138,14 @@ export function AddProjectDialog({
   }, [endDateValue])
 
   const onSubmit = async (data: ProjectFormData) => {
+    // Check project limit before submitting
+    const projectLimit = getLimit("projects_limit")
+    
+    if (projectLimit !== -1 && currentProjectCount >= projectLimit) {
+      toast.error(`You've reached your limit of ${projectLimit} projects. Upgrade your plan to add more.`)
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const result = await createProject(userId, {
