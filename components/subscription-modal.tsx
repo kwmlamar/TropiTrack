@@ -22,7 +22,7 @@ const PLANS = [
     description: 'Perfect for small crews',
     features: [
       'Up to 15 workers',
-      '3 active projects',
+      '5 active projects',
       'Time tracking & approvals',
       'Basic payroll reports',
       'Mobile app access',

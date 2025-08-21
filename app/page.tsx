@@ -306,7 +306,7 @@ export default function Home() {
                     </li>
                     <li className="flex items-start">
                       <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>3 active projects</span>
+                      <span>5 active projects</span>
                     </li>
                     <li className="flex items-start">
                       <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />

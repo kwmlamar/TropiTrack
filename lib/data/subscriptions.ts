@@ -661,7 +661,7 @@ export async function getFeatureFlags(): Promise<ApiResponse<FeatureFlags>> {
     // Fix for old starter plan data - if it's the starter plan with wrong limits, override them
     if (plan.slug === 'starter') {
       if (projectsLimit === 20) {
-        projectsLimit = 3;
+        projectsLimit = 5;
       }
       if (workersLimit === 10) {
         workersLimit = 15;

@@ -176,7 +176,7 @@ export async function createProject(
       // Fix for old starter plan data - if it's the starter plan with wrong limits, override them
       if (subscription.subscription_plans.slug === 'starter') {
         if (projectLimit === 20) {
-          projectLimit = 3;
+          projectLimit = 5;
         }
       }
     }

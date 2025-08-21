@@ -8,7 +8,7 @@ async function setupStripeProducts() {
     const plans = [
       {
         name: 'TropiTrack Starter',
-        description: 'Perfect for small crews - Up to 15 workers, 3 active projects, time tracking & approvals',
+        description: 'Perfect for small crews - Up to 15 workers, 5 active projects, time tracking & approvals',
         amount: 3900, // $39.00 in cents
         priceId: 'starter_monthly'
       },

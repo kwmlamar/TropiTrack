@@ -13,13 +13,13 @@ SELECT
 FROM subscription_plans 
 WHERE slug = 'starter';
 
--- Update the starter plan to have the correct limits (3 projects, 15 workers)
+-- Update the starter plan to have the correct limits (5 projects, 15 workers)
 UPDATE subscription_plans 
 SET limits = jsonb_set(
   jsonb_set(
     limits,
     '{projects}',
-    '3'::jsonb
+    '5'::jsonb
   ),
   '{workers}',
   '15'::jsonb
@@ -32,7 +32,7 @@ SET limits = jsonb_set(
   jsonb_set(
     limits,
     '{projects_limit}',
-    '3'::jsonb
+    '5'::jsonb
   ),
   '{workers_limit}',
   '15'::jsonb

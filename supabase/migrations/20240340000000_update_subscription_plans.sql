@@ -12,8 +12,8 @@ INSERT INTO subscription_plans (name, slug, description, price_monthly, price_ye
   'Perfect for small crews',
   3900, -- $39.00
   37440, -- $39.00 * 12 * 0.8 (20% yearly discount)
-  '["Up to 15 workers", "3 active projects", "Time tracking & approvals", "Basic payroll reports", "Mobile app access", "Email support"]',
-  '{"workers": 15, "projects": 3, "storage_gb": 1, "api_calls_per_month": 1000, "document_management": false, "advanced_analytics": false, "equipment_tracking": false, "api_access": false, "multi_company": false, "priority_support": false}',
+  '["Up to 15 workers", "5 active projects", "Time tracking & approvals", "Basic payroll reports", "Mobile app access", "Email support"]',
+  '{"workers": 15, "projects": 5, "storage_gb": 1, "api_calls_per_month": 1000, "document_management": false, "advanced_analytics": false, "equipment_tracking": false, "api_access": false, "multi_company": false, "priority_support": false}',
   false,
   1
 ),
