@@ -105,7 +105,11 @@ export function CompanyInformationForm() {
 
     setSaving(true);
     try {
-      const updatedCompany = await updateCompany(company.id, data);
+      // Mark setup as completed when user saves company information
+      const updatedCompany = await updateCompany(company.id, {
+        ...data,
+        setup_completed: true,
+      });
       if (updatedCompany) {
         setCompany(updatedCompany);
         toast.success("Company information updated successfully");

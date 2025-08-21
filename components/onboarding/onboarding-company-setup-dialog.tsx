@@ -12,6 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useOnboarding } from "@/context/onboarding-context";
+import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
+import { getAuthUserId } from "@/lib/data/userProfiles";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -33,7 +35,7 @@ const industries = [
 ];
 
 export function OnboardingCompanySetupDialog() {
-  const { completeStep, closeCurrentStep } = useOnboarding();
+  const { completeStep } = useOnboarding();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -94,9 +96,47 @@ export function OnboardingCompanySetupDialog() {
     }
   }
 
-  const handleSkip = () => {
-    closeCurrentStep();
-    toast.info("Company setup skipped. You can complete it later in settings.");
+  const handleSkip = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get current user ID
+      const userId = await getAuthUserId();
+      if (!userId) {
+        toast.error("User not authenticated");
+        return;
+      }
+      
+      // Mark the company-setup step as completed in onboarding progress
+      await completeOnboardingStep(userId, 'company-setup', { skipped: true });
+      
+      // Also mark company setup as completed in the database
+      const response = await fetch("/api/company-setup-skip", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        toast.error("Failed to skip setup", {
+          description: result.error || "Please try again.",
+        });
+        return;
+      }
+
+      // Complete the step in the onboarding context
+      await completeStep('company-setup', { skipped: true });
+
+      toast.success("Setup skipped", {
+        description: "You can complete company setup later from your settings.",
+      });
+    } catch (error) {
+      console.error('Error skipping company setup:', error);
+      toast.error("Something went wrong", {
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClose = () => {

@@ -16,6 +16,7 @@ export interface Company {
   industry?: string;
   description?: string;
   logo_url?: string;
+  setup_completed: boolean;
   created_at: string;
   updated_at: string;
 }

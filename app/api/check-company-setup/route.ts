@@ -29,10 +29,10 @@ export async function GET() {
       );
     }
 
-    // Check if company needs setup (has default name)
+    // Check if company needs setup (has default name and setup not completed)
     const { data: company, error: companyError } = await supabase
       .from("companies")
-      .select("name")
+      .select("name, setup_completed")
       .eq("id", profile.company_id)
       .single();
 
@@ -43,8 +43,12 @@ export async function GET() {
       );
     }
 
-    // Determine if setup is needed - only check if name is default
-    const needsSetup = company.name === "My Company";
+    // Determine if setup is needed - check if name is default AND setup not completed
+    // For now, also check if setup_completed field exists (for backward compatibility)
+    // Also check for fallback company name
+    const needsSetup = company.name === "My Company" && 
+      (company.setup_completed === undefined || !company.setup_completed) &&
+      company.name !== "Company Setup Skipped";
 
     return NextResponse.json(
       { 

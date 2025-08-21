@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     const updateData: {
       name: string;
       updated_at: string;
+      setup_completed?: boolean;
       phone?: string;
       address?: string;
       website?: string;
@@ -58,6 +59,22 @@ export async function POST(request: NextRequest) {
       name: companyName,
       updated_at: new Date().toISOString(),
     };
+
+    // Only add setup_completed if the field exists in the database
+    try {
+      // Check if setup_completed column exists
+      const { data: columnCheck } = await supabase
+        .from("companies")
+        .select("setup_completed")
+        .limit(1);
+      
+      if (columnCheck !== null) {
+        updateData.setup_completed = true;
+      }
+    } catch {
+      // Column doesn't exist, skip adding setup_completed
+      console.log("setup_completed column not available yet");
+    }
 
     // Add optional fields if they are provided
     if (phone) updateData.phone = phone;

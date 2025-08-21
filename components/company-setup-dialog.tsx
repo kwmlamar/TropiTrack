@@ -118,9 +118,36 @@ export function CompanySetupDialog() {
     }
   }
 
-  const handleSkip = () => {
-    setIsOpen(false);
-    // Dialog is already marked as shown in sessionStorage, so it won't show again this session
+  const handleSkip = async () => {
+    try {
+      setIsLoading(true);
+      
+      const response = await fetch("/api/company-setup-skip", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        toast.error("Failed to skip setup", {
+          description: result.error || "Please try again.",
+        });
+        return;
+      }
+
+      toast.success("Setup skipped", {
+        description: "You can complete company setup later from your settings.",
+      });
+      
+      setIsOpen(false);
+      // Optionally refresh the page or update the UI
+      router.refresh();
+    } catch {
+      toast.error("Something went wrong", {
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClose = () => {
