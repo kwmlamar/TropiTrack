@@ -164,25 +164,25 @@ export default function CompanySettingsPage() {
               <CardTitle>Company Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <span className="text-sm">Company Name</span>
-                <span className="text-sm font-medium">{company.name}</span>
+                <span className="text-sm font-medium text-right break-words max-w-[60%]">{company.name}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <span className="text-sm">Industry</span>
-                <span className="text-sm text-gray-500">{company.industry || 'Not set'}</span>
+                <span className="text-sm text-gray-500 text-right break-words max-w-[60%]">{company.industry || 'Not set'}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <span className="text-sm">Email</span>
-                <span className="text-sm text-gray-500">{company.email}</span>
+                <span className="text-sm text-gray-500 text-right break-all max-w-[60%]">{company.email}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <span className="text-sm">Phone</span>
-                <span className="text-sm text-gray-500">{company.phone || 'Not set'}</span>
+                <span className="text-sm text-gray-500 text-right break-all max-w-[60%]">{company.phone || 'Not set'}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <span className="text-sm">Location</span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 text-right break-words max-w-[60%]">
                   {company.city && company.state 
                     ? `${company.city}, ${company.state}` 
                     : company.address || 'Not set'}

@@ -44,6 +44,9 @@ const industries = [
   "Engineering",
   "Property Management",
   "Real Estate Development",
+  "Marine Construction",
+  "Resort Development",
+  "Infrastructure",
   "Other",
 ];
 
@@ -58,6 +61,7 @@ export function CompanyInformationForm() {
     formState: { errors, isDirty },
     reset,
     setValue,
+    watch,
   } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
   });
@@ -180,7 +184,7 @@ export function CompanyInformationForm() {
                 id="phone"
                 type="tel"
                 {...register("phone")}
-                placeholder="+1 (555) 123-4567"
+                placeholder="+1 (242) 555-1234"
               />
               {errors.phone && (
                 <p className="text-sm text-destructive">{errors.phone.message}</p>
@@ -202,7 +206,10 @@ export function CompanyInformationForm() {
 
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
-              <Select onValueChange={(value) => setValue("industry", value)}>
+              <Select 
+                value={watch("industry") || ""} 
+                onValueChange={(value) => setValue("industry", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select industry" />
                 </SelectTrigger>
@@ -237,7 +244,7 @@ export function CompanyInformationForm() {
             Address Information
           </CardTitle>
           <CardDescription>
-            Your company&apos;s physical address and location details.
+            Your company&apos;s physical address in The Bahamas.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -246,7 +253,7 @@ export function CompanyInformationForm() {
             <Input
               id="address"
               {...register("address")}
-              placeholder="123 Main Street"
+              placeholder="123 Bay Street"
             />
           </div>
 
@@ -256,25 +263,25 @@ export function CompanyInformationForm() {
               <Input
                 id="city"
                 {...register("city")}
-                placeholder="City"
+                placeholder="Nassau, Freeport, etc."
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="state">State/Province</Label>
+              <Label htmlFor="state">Island</Label>
               <Input
                 id="state"
                 {...register("state")}
-                placeholder="State"
+                placeholder="New Providence, Grand Bahama, etc."
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="zip_code">ZIP/Postal Code</Label>
+              <Label htmlFor="zip_code">Postal Code</Label>
               <Input
                 id="zip_code"
                 {...register("zip_code")}
-                placeholder="12345"
+                placeholder="N-1234 (Nassau) or F-1234 (Freeport)"
               />
             </div>
           </div>
@@ -289,26 +296,26 @@ export function CompanyInformationForm() {
             Business Information
           </CardTitle>
           <CardDescription>
-            Legal and business identification details.
+            Legal and business identification details for The Bahamas.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="tax_id">Tax ID / EIN</Label>
+              <Label htmlFor="tax_id">Business License Number</Label>
               <Input
                 id="tax_id"
                 {...register("tax_id")}
-                placeholder="12-3456789"
+                placeholder="BL-12345-2024"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="business_number">Business Number</Label>
+              <Label htmlFor="business_number">Company Registration Number</Label>
               <Input
                 id="business_number"
                 {...register("business_number")}
-                placeholder="Business registration number"
+                placeholder="CR-12345 (if incorporated)"
               />
             </div>
           </div>
