@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { FaqAccordion } from "@/components/faq-accordion"
 import { NewsletterForm } from "@/components/newsletter-form"
-import { Clock, CreditCard, Users, Smartphone, CheckCircle, ArrowRight, Star, Building2, Zap, Shield, Globe } from "lucide-react"
+import { LeadCaptureForm } from "@/components/lead-capture-form"
+import { TrustedBySection } from "@/components/trusted-by-section"
+import { Clock, CreditCard, Users, Smartphone, CheckCircle, ArrowRight, Building2, Shield, DollarSign, FileText, CheckSquare } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -33,7 +35,7 @@ export default function Home() {
               <Link href="/login">Sign In</Link>
             </Button>
             <Button asChild className="bg-primary hover:bg-primary/90">
-              <Link href="/signup?plan=starter">Start Free Trial</Link>
+              <Link href="#demo">Request Demo</Link>
             </Button>
           </div>
         </div>
@@ -69,34 +71,34 @@ export default function Home() {
               </h1>
               
               <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-                Stop losing money on manual timesheets. Track time, manage payroll, and run your construction business 
-                with confidence using our all-in-one platform.
+                Stop losing money on manual timesheets. Track time, manage payroll, handle approvals, and run basic accounting 
+                with confidence using our all-in-one platform built for construction companies in the Bahamas.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <Button size="lg" className="group bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-6 h-auto font-semibold shadow-lg hover:shadow-xl transition-all duration-300" asChild>
-                  <Link href="/signup">
-                    Start Your Free Trial
+                <Button size="lg" className="group bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-6 h-auto font-semibold shadow-lg hover:shadow-xl transition-colors duration-200" asChild>
+                  <Link href="#demo">
+                    Request a Demo
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto border-yellow-400/50 text-black hover:bg-yellow-400/10 hover:border-yellow-400 transition-all duration-300">
-                  Watch Demo
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 border-2 border-gray-300 hover:border-gray-400 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg">
+                  Learn More
                 </Button>
               </div>
               
               <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
-                  No credit card required
+                  Built for Bahamas construction
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
-                  2 weeks free trial
+                  NIB compliant payroll
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
-                  Cancel anytime
+                  Works offline
                 </div>
               </div>
             </div>
@@ -118,24 +120,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Social Proof Section */}
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-                      <p className="text-lg text-muted-foreground mb-4">Designed specifically for construction companies in the Bahamas</p>
-        <div className="flex items-center justify-center gap-8 text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <div className="flex text-primary">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-current" />
-                    ))}
-                  </div>
-                  <span className="font-medium">Built with local expertise</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Trusted By Section */}
+        <TrustedBySection />
 
         {/* Benefits Section */}
         <section className="py-24 bg-background">
@@ -149,34 +135,44 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
               <div className="text-center">
                 <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Zap className="h-8 w-8 text-primary" />
+                  <Clock className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Save 10+ Hours Weekly</h3>
+                <h3 className="text-xl font-bold mb-4">Time Tracking</h3>
                 <p className="text-muted-foreground text-lg leading-relaxed">
-                  Automate time tracking and payroll processing. No more manual calculations or chasing down timesheets.
+                  GPS-verified clock in/out with automatic overtime calculations. No more lost timesheets or manual entry.
                 </p>
               </div>
 
               <div className="text-center">
                 <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-primary" />
+                  <DollarSign className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Bahamas Compliant</h3>
+                <h3 className="text-xl font-bold mb-4">Payroll</h3>
                 <p className="text-muted-foreground text-lg leading-relaxed">
-                  Built-in NIB calculations, overtime rules, and local tax requirements. Stay compliant without the headache.
+                  Automated NIB calculations, holiday pay, and overtime. Export ready data for your accounting system.
                 </p>
               </div>
 
               <div className="text-center">
                 <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Globe className="h-8 w-8 text-primary" />
+                  <CheckSquare className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Works Offline</h3>
+                <h3 className="text-xl font-bold mb-4">Approvals</h3>
                 <p className="text-muted-foreground text-lg leading-relaxed">
-                  Perfect for remote job sites. Workers can clock in/out without internet and sync when back online.
+                  Streamlined approval workflows for timesheets and expenses. Keep projects on track and within budget.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold mb-4">Accounting</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  Basic accounting features to track project costs, generate reports, and manage your construction business finances.
                 </p>
               </div>
             </div>
@@ -278,6 +274,53 @@ export default function Home() {
         </section>
 
 
+        {/* Lead Capture Section */}
+        <section id="demo" className="py-24 bg-gradient-to-br from-gray-50 to-white">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid gap-12 lg:grid-cols-2 items-center">
+                <div>
+                  <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
+                    Ready to transform your construction business?
+                  </h2>
+                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                    See how TropiTrack can help you save time, reduce errors, and grow your construction company. 
+                    Request a personalized demo and discover the difference our platform makes.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-gray-900">Personalized Demo</h4>
+                        <p className="text-gray-600">See TropiTrack configured for your specific needs</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-gray-900">Free Consultation</h4>
+                        <p className="text-gray-600">Get expert advice on optimizing your construction operations</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-gray-900">No Obligation</h4>
+                        <p className="text-gray-600">Explore our platform without any commitment</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <LeadCaptureForm />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Pricing Section */}
         <section id="pricing" className="py-24 bg-muted/50">
           <div className="container mx-auto px-4">
@@ -306,7 +349,7 @@ export default function Home() {
                     </li>
                     <li className="flex items-start">
                       <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>5 active projects</span>
+                      <span>Up to 5 active projects at a time</span>
                     </li>
                     <li className="flex items-start">
                       <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -326,7 +369,7 @@ export default function Home() {
                     </li>
                   </ul>
                   <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="/signup?plan=starter">Start Free Trial</Link>
+                    <Link href="#demo">Request Demo</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -373,7 +416,7 @@ export default function Home() {
                     </li>
                   </ul>
                   <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="/signup?plan=professional">Start Free Trial</Link>
+                    <Link href="#demo">Request Demo</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -415,7 +458,7 @@ export default function Home() {
                     </li>
                   </ul>
                   <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="/signup?plan=enterprise">Start Free Trial</Link>
+                    <Link href="#demo">Request Demo</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -454,25 +497,25 @@ export default function Home() {
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
                 <span className="bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
-                  Ready to transform your construction business?
+                  Join the construction companies already using TropiTrack
                 </span>
               </h2>
               <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-                Join hundreds of construction companies already using TropiTrack to save time, reduce errors, and grow their business.
+                See how TropiTrack is helping construction companies across the Bahamas save time, reduce errors, and grow their business.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <Button size="lg" className="group bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-6 h-auto font-semibold shadow-lg hover:shadow-xl transition-all duration-300" asChild>
-                  <Link href="/signup">
-                    Start Your Free Trial
+                <Button size="lg" className="group bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-6 h-auto font-semibold shadow-lg hover:shadow-xl transition-colors duration-200" asChild>
+                  <Link href="#demo">
+                    Request Your Demo
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto border-yellow-400/50 text-black hover:bg-yellow-400/10 hover:border-yellow-400 transition-all duration-300">
-                  Schedule a Demo
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 border-2 border-gray-300 hover:border-gray-400 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg">
+                  Learn More
                 </Button>
               </div>
               <p className="text-sm text-gray-400">
-                No credit card required • 2 weeks free trial • Cancel anytime
+                Personalized demo • Free consultation • No obligation
               </p>
             </div>
           </div>

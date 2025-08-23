@@ -1,38 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { EmailService } from '@/lib/email/service';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
-    
-    if (!email) {
+    const { name, company_name, email, phone_number } = await request.json();
+
+    // Validate required fields
+    if (!name || !company_name || !email || !phone_number) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'All fields are required' },
         { status: 400 }
       );
     }
 
-    const supabase = await createClient();
-    
-    // Test sending a verification email
-    const { data, error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email,
+    // Test sending emails
+    const emailResults = await EmailService.sendLeadEmails({
+      name,
+      company_name,
+      email,
+      phone_number,
     });
 
-    if (error) {
-      console.error('Email resend error:', error);
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Verification email sent successfully',
-      data 
+    return NextResponse.json({
+      success: true,
+      message: 'Test emails sent successfully',
+      results: emailResults,
     });
+
   } catch (error) {
     console.error('Test email error:', error);
     return NextResponse.json(
@@ -40,4 +34,17 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    message: 'Test email endpoint',
+    usage: 'POST with { name, company_name, email, phone_number }',
+    example: {
+      name: 'John Smith',
+      company_name: 'Smith Construction Co.',
+      email: 'john@smithconstruction.com',
+      phone_number: '+1 (242) 555-0123'
+    }
+  });
 }
