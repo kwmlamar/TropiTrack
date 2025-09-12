@@ -681,6 +681,11 @@ export async function generateTimesheetFromClockEvents(
 
     console.log(`[DEBUG] Timesheet data generated:`, timesheetData)
 
+    // Check if approval is required based on company settings
+    const { getTimesheetSettingsRequireApproval } = await import("@/lib/data/timesheet-settings");
+    const requireApproval = await getTimesheetSettingsRequireApproval();
+    const approvalStatus = requireApproval ? "pending" : "approved";
+
     // Create timesheet entry
     const { data: timesheet, error: insertError } = await supabase
       .from("timesheets")
@@ -690,7 +695,7 @@ export async function generateTimesheetFromClockEvents(
         project_id: projectId,
         date: date,
         company_id: companyId,
-        supervisor_approval: "pending"
+        supervisor_approval: approvalStatus
       }])
       .select()
       .single()

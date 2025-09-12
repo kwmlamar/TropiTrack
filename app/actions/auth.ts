@@ -225,34 +225,29 @@ export async function signup(formData: FormData): Promise<SignupResult> {
           return { success: true, redirectTo: "/check-email" };
         }
 
-        // Create subscription manually
-        const now = new Date();
-        const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-        const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-        const { error: subscriptionError } = await supabase
-          .from('company_subscriptions')
-          .insert({
-            company_id: profile.company_id,
-            plan_id: planData.id,
-            status: 'trialing',
-            billing_cycle: 'monthly',
-            current_period_start: now.toISOString(),
-            current_period_end: periodEnd.toISOString(),
-            trial_start: now.toISOString(),
-            trial_end: trialEnd.toISOString(),
-            metadata: {
-              created_by: authData.user.id,
-              trial_type: 'free_trial',
-              plan_slug: plan,
-              created_via: 'manual_auth_action'
-            }
+        // Create Stripe trial subscription
+        try {
+          const trialResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/create-trial-subscription`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: authData.user.id,
+              planId: plan,
+              userEmail: email,
+            }),
           });
 
-        if (subscriptionError) {
-          console.error('Failed to create subscription:', subscriptionError);
-        } else {
-          console.log('Successfully created trial subscription');
+          if (trialResponse.ok) {
+            const trialData = await trialResponse.json();
+            console.log('Successfully created Stripe trial subscription:', trialData);
+          } else {
+            const errorData = await trialResponse.json();
+            console.error('Failed to create Stripe trial subscription:', errorData);
+          }
+        } catch (trialError) {
+          console.error('Error calling trial subscription API:', trialError);
         }
       } catch (error) {
         console.error('Unexpected error creating subscription:', error);

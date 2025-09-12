@@ -156,7 +156,7 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
   // Load data when component mounts or date range changes
   useEffect(() => {
     loadTimeLogs()
-  }, [user.id, dateRange?.from, dateRange?.to])
+  }, [user.id, dateRange?.from, dateRange?.to, loadTimeLogs])
 
   if (loading) {
     return <TimeLogsSkeleton />

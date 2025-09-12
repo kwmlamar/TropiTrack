@@ -76,7 +76,7 @@ export async function getCurrentUserCompany(): Promise<Company | null> {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("company_id")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   if (profileError || !profile) {

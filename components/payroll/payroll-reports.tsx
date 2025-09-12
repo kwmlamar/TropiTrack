@@ -102,7 +102,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
       // Check if the pay period overlaps with the selected date range
       return periodStart <= to && periodEnd >= from
     })
-  }, [payrolls, dateRange, paymentSchedule, customDateRange, getDateRange])
+  }, [payrolls, dateRange, getDateRange])
 
   // Aggregate payroll data by worker
   const aggregatedPayrolls = useMemo(() => {

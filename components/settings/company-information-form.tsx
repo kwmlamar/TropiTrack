@@ -68,7 +68,7 @@ export function CompanyInformationForm() {
 
   useEffect(() => {
     loadCompany();
-  }, []);
+  }, [loadCompany]);
 
   const loadCompany = async () => {
     setLoading(true);

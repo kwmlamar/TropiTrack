@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -67,6 +67,8 @@ import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
 import { cn } from "@/lib/utils";
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings";
+import { useTimesheetSettings } from "@/lib/hooks/use-timesheet-settings";
+import { processTimesheetApproval } from "@/lib/utils/timesheet-approval";
 
 // Schema for a single timesheet entry
 const timesheetEntrySchema = z.object({
@@ -117,6 +119,10 @@ export function BulkTimesheetForm({
   const [workerSelectOpen, setWorkerSelectOpen] = useState(false);
   
   const { paymentSchedule } = usePayrollSettings();
+  const { 
+    requireApproval, 
+    settings
+  } = useTimesheetSettings();
 
   const getWeekStartsOn = (day: number): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
     const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
@@ -140,9 +146,9 @@ export function BulkTimesheetForm({
       entries: [
         {
           worker_id: "",
-          clock_in: "07:00",
-          clock_out: "16:00",
-          break_duration: 60,
+          clock_in: settings?.work_day_start || "07:00",
+          clock_out: settings?.work_day_end || "16:00",
+          break_duration: settings?.break_time || 60,
           hourly_rate: 0,
           task_description: "",
           notes: "",
@@ -155,6 +161,18 @@ export function BulkTimesheetForm({
     control: form.control,
     name: "entries",
   });
+
+  // Update form defaults when settings are loaded
+  useEffect(() => {
+    if (settings && fields.length > 0) {
+      // Update all existing entries with the new default times
+      fields.forEach((_, index) => {
+        form.setValue(`entries.${index}.clock_in`, settings.work_day_start);
+        form.setValue(`entries.${index}.clock_out`, settings.work_day_end);
+        form.setValue(`entries.${index}.break_duration`, settings.break_time);
+      });
+    }
+  }, [settings, fields, form]);
 
   // Watch form fields for reactive calculations
   const watchedEntries = useWatch({
@@ -230,7 +248,7 @@ export function BulkTimesheetForm({
             overtime_hours: 0,
             total_hours: 0,
             total_pay: 0,
-            supervisor_approval: "pending",
+            supervisor_approval: requireApproval ? "pending" : "approved",
             notes: entry.notes || "",
           };
 
@@ -246,6 +264,44 @@ export function BulkTimesheetForm({
           `${failures.length} out of ${results.length} entries failed to submit.`
         );
       } else {
+        // If approval is not required, auto-approve and generate payroll
+        if (!requireApproval) {
+          console.log('[BulkTimesheetForm] Auto-approving timesheets and generating payroll...');
+          
+          const successfulTimesheets = results
+            .filter((result) => result.success && result.data)
+            .map((result) => result.data);
+          
+          // Process auto-approval for each timesheet
+          const approvalPromises = successfulTimesheets.map(async (timesheet) => {
+            try {
+              const approvalResult = await processTimesheetApproval(
+                timesheet.id,
+                userId,
+                timesheet.worker_id,
+                timesheet.date,
+                getPeriodStartDay()
+              );
+              
+              if (!approvalResult.success) {
+                console.warn(`[BulkTimesheetForm] Failed to auto-approve timesheet ${timesheet.id}:`, approvalResult.error);
+              }
+              
+              return approvalResult;
+            } catch (error) {
+              console.error(`[BulkTimesheetForm] Error processing auto-approval for timesheet ${timesheet.id}:`, error);
+              return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+          });
+          
+          const approvalResults = await Promise.all(approvalPromises);
+          const approvalFailures = approvalResults.filter((result) => !result.success);
+          
+          if (approvalFailures.length > 0) {
+            console.warn(`[BulkTimesheetForm] ${approvalFailures.length} timesheets failed auto-approval`);
+          }
+        }
+        
         setSubmissionSuccess(true);
         const successData = results.map((result) => result.data);
         onSuccess?.(successData);
@@ -272,9 +328,9 @@ export function BulkTimesheetForm({
   const addRow = () => {
     append({
       worker_id: "",
-      clock_in: "07:00",
-      clock_out: "16:00",
-      break_duration: 60,
+      clock_in: settings?.work_day_start || "07:00",
+      clock_out: settings?.work_day_end || "16:00",
+      break_duration: settings?.break_time || 60,
       hourly_rate: 0,
       task_description: "",
       notes: "",

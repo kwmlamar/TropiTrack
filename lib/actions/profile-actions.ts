@@ -35,7 +35,7 @@ export async function updateProfile(data: {
         website: data.website || null,
         updated_at: new Date().toISOString(),
       })
-      .eq("user_id", user.id)
+      .eq("id", user.id)
 
     if (updateError) {
       console.error("Error updating profile:", updateError)

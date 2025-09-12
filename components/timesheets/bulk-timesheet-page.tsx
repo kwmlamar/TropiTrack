@@ -28,7 +28,7 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
   const loadData = async () => {
     setLoading(true)

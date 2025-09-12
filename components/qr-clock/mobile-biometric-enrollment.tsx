@@ -114,7 +114,7 @@ export default function MobileBiometricEnrollment({
 
   useEffect(() => {
     checkDevice();
-  }, []);
+  }, [checkDevice]);
 
   const checkDevice = async () => {
     try {

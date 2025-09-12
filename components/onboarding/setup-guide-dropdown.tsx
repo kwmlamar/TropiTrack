@@ -45,7 +45,7 @@ function SetupGuideDropdownContent() {
     if (state.isActive && state.completedSteps.length === 0 && !state.isLoading) {
       ensureProgressLoaded();
     }
-  }, [state.isActive, state.completedSteps.length, state.isLoading]);
+  }, [state.isActive, state.completedSteps.length, state.isLoading, currentStep?.id]);
 
   // Debug logging for current state
   useEffect(() => {

@@ -41,7 +41,7 @@ export async function getRecentProjects(userId: string): Promise<Partial<Project
         client:clients(name)
       )
     `)
-    .eq("user_id", userId)
+    .eq("id", userId)
     .eq("company_id", profile.company_id)
     .order("last_accessed", { ascending: false })
     .limit(5);
@@ -69,7 +69,7 @@ export async function updateRecentProject(userId: string, projectId: string): Pr
     const { data: existingRecord, error: lookupError } = await supabase
       .from("recent_projects")
       .select("id")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .eq("project_id", projectId)
       .single();
 

@@ -55,7 +55,7 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
     if (worker) {
       checkDeviceCompatibility();
     }
-  }, [worker]);
+  }, [worker, checkDeviceCompatibility]);
 
   // Handle case where worker is undefined
   if (!worker) {

@@ -34,7 +34,9 @@ import { getCurrentUserCompany } from "@/lib/data/companies-client"
 import { getWorkers } from "@/lib/data/workers"
 import { getProjects } from "@/lib/data/projects"
 import { getPayrolls } from "@/lib/data/payroll"
+import { getTimesheetSettings, updateTimesheetSettings, type TimesheetSettings } from "@/lib/data/timesheet-settings"
 import type { Company } from "@/lib/data/companies-client"
+import { toast } from "sonner"
 
 export default function CompanySettingsPage() {
   const { user, loading: userLoading } = useUser()
@@ -48,17 +50,23 @@ export default function CompanySettingsPage() {
     complianceScore: 98
   })
 
-  // Mock timesheet settings data
-  const [timesheetSettings, setTimesheetSettings] = useState({
-    workDayStart: "07:00",
-    workDayEnd: "16:00",
-    breakTime: "60",
-    overtimeThreshold: "40",
-    roundingMethod: "nearest_15",
-    autoClockout: true,
-    requireApproval: true,
-    allowOvertime: true
+  // Timesheet settings state with default values
+  const [timesheetSettings, setTimesheetSettings] = useState<TimesheetSettings>({
+    id: 'default',
+    company_id: user?.company?.id || '',
+    work_day_start: '07:00:00',
+    work_day_end: '16:00:00',
+    break_time: 60,
+    overtime_threshold: 40,
+    rounding_method: 'nearest_15',
+    auto_clockout: true,
+    require_approval: true,
+    allow_overtime: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   })
+  // const [timesheetSettingsLoading, setTimesheetSettingsLoading] = useState(true)
+  const [timesheetSettingsSaving, setTimesheetSettingsSaving] = useState(false)
 
   // Load company data and statistics
   useEffect(() => {
@@ -67,9 +75,21 @@ export default function CompanySettingsPage() {
       
       setLoading(true)
       try {
-        // Load company details
-        const companyData = await getCurrentUserCompany()
+        // Load company details and timesheet settings in parallel
+        const [companyData, timesheetSettingsResponse] = await Promise.all([
+          getCurrentUserCompany(),
+          getTimesheetSettings()
+        ])
+        
         setCompany(companyData)
+        
+        if (timesheetSettingsResponse.success && timesheetSettingsResponse.data) {
+          console.log('Timesheet settings loaded:', timesheetSettingsResponse.data)
+          setTimesheetSettings(timesheetSettingsResponse.data)
+        } else {
+          console.error('Failed to load timesheet settings:', timesheetSettingsResponse.error)
+          // Keep the default values if loading fails
+        }
 
         // Load statistics in parallel
         const [workersResponse, projectsResponse, payrollResponse] = await Promise.all([
@@ -98,6 +118,7 @@ export default function CompanySettingsPage() {
         console.error("Error loading company data:", error)
       } finally {
         setLoading(false)
+        // setTimesheetSettingsLoading(false)
       }
     }
 
@@ -128,9 +149,52 @@ export default function CompanySettingsPage() {
     })
   }
 
-  const handleTimesheetSettingsSave = async () => {
-    // TODO: Implement save functionality
-    console.log("Saving timesheet settings:", timesheetSettings)
+  const handleTimesheetSettingsSave = async (showLoading = true, settings?: TimesheetSettings) => {
+    const currentSettings = settings || timesheetSettings;
+    const payload = {
+      work_day_start: currentSettings.work_day_start,
+      work_day_end: currentSettings.work_day_end,
+      break_time: currentSettings.break_time,
+      overtime_threshold: currentSettings.overtime_threshold,
+      rounding_method: currentSettings.rounding_method,
+      auto_clockout: currentSettings.auto_clockout,
+      require_approval: currentSettings.require_approval,
+      allow_overtime: currentSettings.allow_overtime,
+    };
+    
+    if (showLoading) {
+      setTimesheetSettingsSaving(true)
+    }
+    
+    try {
+      const result = await updateTimesheetSettings(payload)
+
+      if (result.success && result.data) {
+        setTimesheetSettings(result.data)
+        if (showLoading) {
+          toast.success("Timesheet settings saved successfully")
+        }
+      } else {
+        if (showLoading) {
+          toast.error(result.error || "Failed to save timesheet settings")
+        }
+      }
+    } catch (error) {
+      console.error("Error saving timesheet settings:", error)
+      if (showLoading) {
+        toast.error("Failed to save timesheet settings")
+      }
+    } finally {
+      if (showLoading) {
+        setTimesheetSettingsSaving(false)
+      }
+    }
+  }
+
+  const handleAutoSave = async (updatedSettings?: Partial<TimesheetSettings>) => {
+    const settingsToSave = updatedSettings ? { ...timesheetSettings, ...updatedSettings } : timesheetSettings;
+    console.log('Auto-saving with settings:', settingsToSave);
+    await handleTimesheetSettingsSave(false, settingsToSave)
   }
 
   if (userLoading || loading) {
@@ -422,11 +486,11 @@ export default function CompanySettingsPage() {
                         <Input
                           id="workDayStart"
                           type="time"
-                          value={timesheetSettings.workDayStart}
-                          onChange={(e) => setTimesheetSettings({
-                            ...timesheetSettings,
-                            workDayStart: e.target.value
-                          })}
+                          value={timesheetSettings.work_day_start}
+                          onChange={(e) => setTimesheetSettings(prev => ({
+                            ...prev,
+                            work_day_start: e.target.value
+                          }))}
                         />
                       </div>
                       <div className="space-y-2">
@@ -434,11 +498,11 @@ export default function CompanySettingsPage() {
                         <Input
                           id="workDayEnd"
                           type="time"
-                          value={timesheetSettings.workDayEnd}
-                          onChange={(e) => setTimesheetSettings({
-                            ...timesheetSettings,
-                            workDayEnd: e.target.value
-                          })}
+                          value={timesheetSettings.work_day_end}
+                          onChange={(e) => setTimesheetSettings(prev => ({
+                            ...prev,
+                            work_day_end: e.target.value
+                          }))}
                         />
                       </div>
                     </div>
@@ -448,11 +512,11 @@ export default function CompanySettingsPage() {
                         <Input
                           id="breakTime"
                           type="number"
-                          value={timesheetSettings.breakTime}
-                          onChange={(e) => setTimesheetSettings({
-                            ...timesheetSettings,
-                            breakTime: e.target.value
-                          })}
+                          value={timesheetSettings.break_time}
+                          onChange={(e) => setTimesheetSettings(prev => ({
+                            ...prev,
+                            break_time: parseInt(e.target.value) || 60
+                          }))}
                         />
                       </div>
                     </div>
@@ -478,21 +542,21 @@ export default function CompanySettingsPage() {
                         <Input
                           id="overtimeThreshold"
                           type="number"
-                          value={timesheetSettings.overtimeThreshold}
-                          onChange={(e) => setTimesheetSettings({
-                            ...timesheetSettings,
-                            overtimeThreshold: e.target.value
-                          })}
+                          value={timesheetSettings.overtime_threshold}
+                          onChange={(e) => setTimesheetSettings(prev => ({
+                            ...prev,
+                            overtime_threshold: parseInt(e.target.value) || 40
+                          }))}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="roundingMethod">Time Rounding Method</Label>
                         <Select
-                          value={timesheetSettings.roundingMethod}
-                          onValueChange={(value) => setTimesheetSettings({
-                            ...timesheetSettings,
-                            roundingMethod: value
-                          })}
+                          value={timesheetSettings.rounding_method}
+                          onValueChange={(value) => setTimesheetSettings(prev => ({
+                            ...prev,
+                            rounding_method: value as "nearest_15" | "nearest_30" | "exact"
+                          }))}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -500,8 +564,7 @@ export default function CompanySettingsPage() {
                           <SelectContent>
                             <SelectItem value="nearest_15">Nearest 15 minutes</SelectItem>
                             <SelectItem value="nearest_30">Nearest 30 minutes</SelectItem>
-                            <SelectItem value="nearest_hour">Nearest hour</SelectItem>
-                            <SelectItem value="no_rounding">No rounding</SelectItem>
+                            <SelectItem value="exact">No rounding</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -530,11 +593,16 @@ export default function CompanySettingsPage() {
                         </p>
                       </div>
                       <Switch
-                        checked={timesheetSettings.autoClockout}
-                        onCheckedChange={(checked) => setTimesheetSettings({
-                          ...timesheetSettings,
-                          autoClockout: checked
-                        })}
+                        checked={timesheetSettings.auto_clockout}
+                        onCheckedChange={async (checked) => {
+                          const updatedSettings = {
+                            ...timesheetSettings,
+                            auto_clockout: checked
+                          };
+                          setTimesheetSettings(updatedSettings);
+                          // Auto-save when toggled with updated values
+                          await handleAutoSave({ auto_clockout: checked });
+                        }}
                       />
                     </div>
                     <div className="flex items-center justify-between">
@@ -545,11 +613,16 @@ export default function CompanySettingsPage() {
                         </p>
                       </div>
                       <Switch
-                        checked={timesheetSettings.requireApproval}
-                        onCheckedChange={(checked) => setTimesheetSettings({
-                          ...timesheetSettings,
-                          requireApproval: checked
-                        })}
+                        checked={timesheetSettings.require_approval}
+                        onCheckedChange={async (checked) => {
+                          const updatedSettings = {
+                            ...timesheetSettings,
+                            require_approval: checked
+                          };
+                          setTimesheetSettings(updatedSettings);
+                          // Auto-save when toggled with updated values
+                          await handleAutoSave({ require_approval: checked });
+                        }}
                       />
                     </div>
                     <div className="flex items-center justify-between">
@@ -560,11 +633,16 @@ export default function CompanySettingsPage() {
                         </p>
                       </div>
                       <Switch
-                        checked={timesheetSettings.allowOvertime}
-                        onCheckedChange={(checked) => setTimesheetSettings({
-                          ...timesheetSettings,
-                          allowOvertime: checked
-                        })}
+                        checked={timesheetSettings.allow_overtime}
+                        onCheckedChange={async (checked) => {
+                          const updatedSettings = {
+                            ...timesheetSettings,
+                            allow_overtime: checked
+                          };
+                          setTimesheetSettings(updatedSettings);
+                          // Auto-save when toggled with updated values
+                          await handleAutoSave({ allow_overtime: checked });
+                        }}
                       />
                     </div>
                   </div>
@@ -572,9 +650,17 @@ export default function CompanySettingsPage() {
               </Card>
 
               <div className="flex justify-end">
-                <Button onClick={handleTimesheetSettingsSave} className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
-                  Save Timesheet Settings
+                <Button 
+                  onClick={() => handleTimesheetSettingsSave(true)} 
+                  disabled={timesheetSettingsSaving}
+                  className="flex items-center gap-2"
+                >
+                  {timesheetSettingsSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {timesheetSettingsSaving ? "Saving..." : "Save Timesheet Settings"}
                 </Button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -456,9 +457,11 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-12 bg-muted rounded border flex items-center justify-center overflow-hidden">
                             {document.file_type.includes('image') ? (
-                              <img 
+                              <Image 
                                 src={`/api/project-documents/${document.id}/preview`} 
                                 alt={document.name}
+                                width={40}
+                                height={48}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   // Fallback to icon if image fails to load
@@ -649,9 +652,11 @@ export function ProjectDocuments({ projectId, userId }: ProjectDocumentsProps) {
               <div className="border rounded-lg overflow-hidden">
                 {previewDocument.file_type.includes('image') ? (
                   <div className="flex items-center justify-center bg-muted/20 p-8">
-                    <img 
+                    <Image 
                       src={`/api/project-documents/${previewDocument.id}/file`} 
                       alt={previewDocument.name}
+                      width={400}
+                      height={400}
                       className="max-w-full max-h-96 object-contain"
                     />
                   </div>

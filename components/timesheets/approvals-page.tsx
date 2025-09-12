@@ -549,7 +549,7 @@ export function ApprovalsPage() {
             ({timesheets.length} timesheet{timesheets.length !== 1 ? 's' : ''} pending approval)
           </span>
         </div>
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-4">
           {timesheets.length > 0 && (
             <Button
               variant="outline"
@@ -562,12 +562,12 @@ export function ApprovalsPage() {
           )}
           {timesheets.length > 0 && (
             <Button
-              className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors ml-4"
               onClick={async () => {
                 const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.id)
                 await handleBatchApprove(selectedIds)
               }}
               disabled={table.getSelectedRowModel().rows.length === 0 || isProcessing}
+              className="ml-2"
             >
               Approve Selected
             </Button>

@@ -62,7 +62,7 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
 
   useEffect(() => {
     fetchEnrollmentStatus()
-  }, [worker.id])
+  }, [worker.id, fetchEnrollmentStatus])
 
   const handleRefresh = () => {
     fetchEnrollmentStatus()

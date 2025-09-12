@@ -103,7 +103,7 @@ export default function WorkerDetails() {
 
   useEffect(() => {
     loadBiometricStatus();
-  }, [worker?.id]);
+  }, [worker?.id, loadBiometricStatus]);
 
   if (loading) {
     return (

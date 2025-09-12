@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { getProfile } from "./data";
 import { parse } from "date-fns";
 import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
+import { getTimesheetSettingsRequireApproval } from "@/lib/data/timesheet-settings";
 
 /**
  * Get timesheets with optional filtering and related data
@@ -207,6 +208,10 @@ export async function createTimesheet(
     // Calculate totals before inserting
     const calculatedTimesheet = calculateTimesheetTotals(timesheet, workerHourlyRate);
 
+    // Check if approval is required based on company settings
+    const requireApproval = await getTimesheetSettingsRequireApproval();
+    const approvalStatus = requireApproval ? "pending" : "approved";
+
     const { data, error } = await supabase
       .from("timesheets")
       .insert({
@@ -214,7 +219,7 @@ export async function createTimesheet(
         hourly_rate: workerHourlyRate,
         company_id: profile.company_id,
         created_by: userId,
-        supervisor_approval: "pending",
+        supervisor_approval: approvalStatus,
       })
       .select()
       .single();

@@ -64,6 +64,8 @@ import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
 import { cn } from "@/lib/utils";
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings";
+import { useTimesheetSettings } from "@/lib/hooks/use-timesheet-settings";
+import { processTimesheetApproval } from "@/lib/utils/timesheet-approval";
 
 // Schema for a single timesheet entry
 const timesheetEntrySchema = z.object({
@@ -113,32 +115,39 @@ interface TimeTemplate {
   breakDuration: number;
 }
 
-const DEFAULT_TEMPLATES: TimeTemplate[] = [
-  {
-    name: "Standard Day (7-4)",
-    clockIn: "07:00",
-    clockOut: "16:00",
-    breakDuration: 60,
-  },
-  {
-    name: "Early Shift (6-3)",
-    clockIn: "06:00",
-    clockOut: "15:00",
-    breakDuration: 60,
-  },
-  {
-    name: "Late Shift (9-6)",
-    clockIn: "09:00",
-    clockOut: "18:00",
-    breakDuration: 60,
-  },
-  {
-    name: "Half Day (7-12)",
-    clockIn: "07:00",
-    clockOut: "12:00",
-    breakDuration: 30,
-  },
-];
+// Default templates will be generated based on timesheet settings
+const getDefaultTemplates = (settings?: { work_day_start?: string; work_day_end?: string; break_time?: number }): TimeTemplate[] => {
+  const workStart = settings?.work_day_start || "07:00";
+  const workEnd = settings?.work_day_end || "16:00";
+  const breakTime = settings?.break_time || 60;
+  
+  return [
+    {
+      name: `Standard Day (${workStart}-${workEnd})`,
+      clockIn: workStart,
+      clockOut: workEnd,
+      breakDuration: breakTime,
+    },
+    {
+      name: "Early Shift (6-3)",
+      clockIn: "06:00",
+      clockOut: "15:00",
+      breakDuration: breakTime,
+    },
+    {
+      name: "Late Shift (9-6)",
+      clockIn: "09:00",
+      clockOut: "18:00",
+      breakDuration: breakTime,
+    },
+    {
+      name: "Half Day (7-12)",
+      clockIn: "07:00",
+      clockOut: "12:00",
+      breakDuration: 30,
+    },
+  ];
+};
 
 export function TimesheetForm({
   userId,
@@ -153,6 +162,10 @@ export function TimesheetForm({
   const [selectedTemplate, setSelectedTemplate] = useState<TimeTemplate | null>(null);
   
   const { paymentSchedule } = usePayrollSettings();
+  const { 
+    requireApproval, 
+    settings
+  } = useTimesheetSettings();
 
   const getWeekStartsOn = (day: number): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
     const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
@@ -179,9 +192,9 @@ export function TimesheetForm({
       entries: [
         {
           worker_id: "",
-          clock_in: "07:00",
-          clock_out: "16:00",
-          break_duration: 60,
+          clock_in: settings?.work_day_start || "07:00",
+          clock_out: settings?.work_day_end || "16:00",
+          break_duration: settings?.break_time || 60,
           hourly_rate: 0,
           task_description: "",
           notes: "",
@@ -194,6 +207,18 @@ export function TimesheetForm({
     control: form.control,
     name: "entries",
   });
+
+  // Update form defaults when settings are loaded
+  useEffect(() => {
+    if (settings && fields.length > 0) {
+      // Update all existing entries with the new default times
+      fields.forEach((_, index) => {
+        form.setValue(`entries.${index}.clock_in`, settings.work_day_start);
+        form.setValue(`entries.${index}.clock_out`, settings.work_day_end);
+        form.setValue(`entries.${index}.break_duration`, settings.break_time);
+      });
+    }
+  }, [settings, fields, form]);
 
   // Calculate total hours and cost
   const calculateTotals = () => {
@@ -279,7 +304,7 @@ export function TimesheetForm({
             overtime_hours: 0,
             total_hours: 0,
             total_pay: 0,
-            supervisor_approval: false,
+            supervisor_approval: requireApproval ? "pending" : "approved",
             notes: entry.notes,
           };
 
@@ -295,6 +320,44 @@ export function TimesheetForm({
           `${failures.length} out of ${results.length} entries failed to submit.`
         );
       } else {
+        // If approval is not required, auto-approve and generate payroll
+        if (!requireApproval) {
+          console.log('[TimesheetForm] Auto-approving timesheets and generating payroll...');
+          
+          const successfulTimesheets = results
+            .filter((result) => result.success && result.data)
+            .map((result) => result.data);
+          
+          // Process auto-approval for each timesheet
+          const approvalPromises = successfulTimesheets.map(async (timesheet) => {
+            try {
+              const approvalResult = await processTimesheetApproval(
+                timesheet.id,
+                userId,
+                timesheet.worker_id,
+                timesheet.date,
+                getPeriodStartDay()
+              );
+              
+              if (!approvalResult.success) {
+                console.warn(`[TimesheetForm] Failed to auto-approve timesheet ${timesheet.id}:`, approvalResult.error);
+              }
+              
+              return approvalResult;
+            } catch (error) {
+              console.error(`[TimesheetForm] Error processing auto-approval for timesheet ${timesheet.id}:`, error);
+              return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+            }
+          });
+          
+          const approvalResults = await Promise.all(approvalPromises);
+          const approvalFailures = approvalResults.filter((result) => !result.success);
+          
+          if (approvalFailures.length > 0) {
+            console.warn(`[TimesheetForm] ${approvalFailures.length} timesheets failed auto-approval`);
+          }
+        }
+        
         setSubmissionSuccess(true);
         const successData = results.map((result) => result.data);
         onSuccess?.(successData);
@@ -321,9 +384,9 @@ export function TimesheetForm({
   const addRow = () => {
     append({
       worker_id: "",
-      clock_in: "07:00",
-      clock_out: "16:00",
-      break_duration: 60,
+      clock_in: settings?.work_day_start || "07:00",
+      clock_out: settings?.work_day_end || "16:00",
+      break_duration: settings?.break_time || 60,
       hourly_rate: 0,
       task_description: "",
       notes: "",
@@ -543,7 +606,7 @@ export function TimesheetForm({
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">Quick Templates</h3>
                 <div className="flex gap-2">
-                  {DEFAULT_TEMPLATES.map((template) => (
+                  {getDefaultTemplates(settings).map((template) => (
                     <Button
                       key={template.name}
                       type="button"

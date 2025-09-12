@@ -24,7 +24,7 @@ async function getUserProfileWithCompany(): Promise<UserProfileWithCompany | nul
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*, companies(id, name)')
-      .eq('user_id', authUser.id)
+      .eq('id', authUser.id)
       .single()
 
     if (error) {
@@ -53,20 +53,16 @@ export function useUser() {
   const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    
     // Get initial user profile
     const getUserProfile = async () => {
       try {
         setLoading(true)
-        console.log('Getting user profile...')
-        
         const profile = await getUserProfileWithCompany()
         setUser(profile)
       } catch (error) {
         console.error('Error in getUserProfile:', error)
         setUser(null)
       } finally {
-        console.log('Setting loading to false and initialized to true')
         setLoading(false)
         setInitialized(true)
       }

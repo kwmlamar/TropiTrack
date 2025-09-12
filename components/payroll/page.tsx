@@ -236,7 +236,7 @@ export default function PayrollPage({ user }: { user: User }) {
       }
       setPayPeriodType(periodTypeMap[periodType] || 'weekly')
     }
-  }, [searchParams.toString()])
+  }, [searchParams])
 
   useEffect(() => {
     console.log('useEffect: checking dateRange', { dateRange, user, payPeriodType });

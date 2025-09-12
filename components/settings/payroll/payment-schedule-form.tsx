@@ -75,7 +75,7 @@ export function PaymentScheduleForm() {
   useEffect(() => {
     loadUserProfile()
     loadPaymentSchedule()
-  }, [])
+  }, [loadUserProfile, loadPaymentSchedule])
 
   const loadUserProfile = async () => {
     try {

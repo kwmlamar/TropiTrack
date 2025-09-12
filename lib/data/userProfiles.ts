@@ -40,7 +40,7 @@ export async function getUserProfile() {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .maybeSingle();
 
     if (error) {
@@ -64,15 +64,11 @@ export async function getUserProfileWithCompany() {
     const supabase = await createClient();
     const userId = await getAuthUserId();
 
-    console.log("getUserProfileWithCompany - userId:", userId);
-
     const { data, error } = await supabase
       .from("profiles")
       .select("*, companies(id, name)")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .maybeSingle();
-
-    console.log("getUserProfileWithCompany - query result:", { data, error });
 
     if (error) {
       // Handle the case where no profile exists yet

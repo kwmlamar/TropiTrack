@@ -36,7 +36,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
 
   useEffect(() => {
     checkDeviceCompatibility()
-  }, [])
+  }, [checkDeviceCompatibility])
 
   const checkDeviceCompatibility = async () => {
     try {

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -85,7 +86,7 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
   const loadData = async () => {
     setLoading(true)
@@ -447,9 +448,11 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <img 
+                        <Image 
                           src={qrCodeImages[qrCode.id]} 
                           alt={`QR Code for ${qrCode.name}`}
+                          width={128}
+                          height={128}
                           className={`w-32 h-32 border rounded-lg cursor-pointer hover:opacity-80 transition-opacity ${
                             !qrCode.is_active ? 'grayscale opacity-50' : ''
                           }`}
@@ -558,9 +561,11 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
             </DialogHeader>
             <div className="flex items-center justify-center">
               {largeQRCodeImage ? (
-                <img 
+                <Image 
                   src={largeQRCodeImage} 
                   alt={`QR Code for ${selectedQRCode.name}`}
+                  width={256}
+                  height={256}
                   className="w-64 h-64 border rounded-lg"
                 />
               ) : (

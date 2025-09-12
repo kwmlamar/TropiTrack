@@ -48,7 +48,7 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
 
   useEffect(() => {
     loadData()
-  }, [projectId])
+  }, [projectId, loadData])
 
   const loadData = async () => {
     setLoading(true)

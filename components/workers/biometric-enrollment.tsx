@@ -37,7 +37,7 @@ export function BiometricEnrollment({ workerId, workerName, onEnrollmentComplete
 
   useEffect(() => {
     checkDeviceCompatibility()
-  }, [])
+  }, [checkDeviceCompatibility])
 
   const checkDeviceCompatibility = async () => {
     try {

@@ -38,6 +38,8 @@ import { toast } from "sonner"
 import { createTimesheet } from "@/lib/data/timesheets"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
+import { useTimesheetSettings } from "@/lib/hooks/use-timesheet-settings"
+import { processTimesheetApproval } from "@/lib/utils/timesheet-approval"
 
 const timesheetSchema = z.object({
   worker_id: z.string().min(1, "Worker is required"),
@@ -76,15 +78,16 @@ export function AddTimesheetDialog({
   onSuccess,
 }: AddTimesheetDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { requireApproval, settings } = useTimesheetSettings()
 
   const form = useForm<TimesheetFormData>({
     resolver: zodResolver(timesheetSchema),
     defaultValues: {
       worker_id: selectedWorker?.id || "",
       project_id: "",
-      clock_in: "07:00",
-      clock_out: "16:00",
-      break_duration: 60,
+      clock_in: settings?.work_day_start || "07:00",
+      clock_out: settings?.work_day_end || "16:00",
+      break_duration: settings?.break_time || 60,
       task_description: "",
       notes: "",
     },
@@ -96,6 +99,15 @@ export function AddTimesheetDialog({
       form.setValue("worker_id", selectedWorker.id)
     }
   }, [selectedWorker, form])
+
+  // Update form when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      form.setValue("clock_in", settings.work_day_start)
+      form.setValue("clock_out", settings.work_day_end)
+      form.setValue("break_duration", settings.break_time)
+    }
+  }, [settings, form])
 
   const onSubmit = async (data: TimesheetFormData) => {
     setIsSubmitting(true)
@@ -109,11 +121,36 @@ export function AddTimesheetDialog({
         overtime_hours: 0,
         total_hours: 0,
         total_pay: 0,
-        supervisor_approval: "pending",
+        supervisor_approval: requireApproval ? "pending" : "approved",
       })
 
       if (result.success) {
-        toast.success("Timesheet entry created successfully")
+        // If approval is not required, auto-approve and generate payroll
+        if (!requireApproval && result.data) {
+          try {
+            console.log('[AddTimesheetDialog] Auto-approving timesheet and generating payroll...');
+            const approvalResult = await processTimesheetApproval(
+              result.data.id,
+              userId,
+              result.data.worker_id,
+              result.data.date,
+              6 // Default to Saturday for week start
+            );
+            
+            if (!approvalResult.success) {
+              console.warn('[AddTimesheetDialog] Failed to auto-approve timesheet:', approvalResult.error);
+              toast.warning("Timesheet created but auto-approval failed");
+            } else {
+              toast.success("Timesheet entry created and approved successfully")
+            }
+          } catch (error) {
+            console.error('[AddTimesheetDialog] Error processing auto-approval:', error);
+            toast.warning("Timesheet created but auto-approval failed");
+          }
+        } else {
+          toast.success("Timesheet entry created successfully")
+        }
+        
         onSuccess?.()
         onOpenChange(false)
         form.reset()

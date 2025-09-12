@@ -48,7 +48,7 @@ export default function TestAuth() {
   // Add debugging for cross-device tab
   useEffect(() => {
     console.log('TestAuth: Cross-device tab component mounted, selectedWorker:', selectedWorker);
-  }, []);
+  }, [selectedWorker]);
 
   // Add debugging for when the component renders
   useEffect(() => {
