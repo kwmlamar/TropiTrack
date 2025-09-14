@@ -14,7 +14,7 @@ import { OnboardingCheck } from "@/components/onboarding/onboarding-check"
 
 type DashboardLayoutClientProps = {
   children: React.ReactNode
-  title: string
+  title: string | React.ReactNode
   profile: UserProfileWithCompany
 }
 

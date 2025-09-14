@@ -17,7 +17,7 @@ import { DateRangePicker } from "@/components/date-range-picker";
 import { CompanyDropdown } from "@/components/company-dropdown";
 
 type SiteHeaderProps = {
-  title?: string;
+  title?: string | React.ReactNode;
   children?: React.ReactNode;
   hideDateRangePicker?: boolean;
   showTimesheetsDropdown?: boolean;
@@ -66,7 +66,9 @@ export function SiteHeader({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+            <h1 className="text-lg font-semibold text-foreground">
+              {typeof title === 'string' ? title : title}
+            </h1>
           )}
         </div>
 

@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { ClientDialog } from "./add-client-dialog"
+import { useRouter } from "next/navigation"
 
 const columns = ["Name", "Email"]
 const ITEMS_PER_PAGE = 10;
@@ -33,6 +34,7 @@ export default function ClientTable({ user }: { user: User }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [clientDialogOpen, setClientDialogOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     loadClients()
@@ -77,6 +79,10 @@ export default function ClientTable({ user }: { user: User }) {
   const handleClientSuccess = () => {
     loadClients()
     handleDialogClose()
+  }
+
+  const handleRowClick = (clientId: string) => {
+    router.push(`/dashboard/clients/${clientId}`)
   }
 
   const filteredClients = clients.filter((client) => {
@@ -183,7 +189,8 @@ export default function ClientTable({ user }: { user: User }) {
               {paginatedClients.map((client, i) => (
                 <div
                   key={client.id || i}
-                  className="grid grid-cols-[2fr_2fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group"
+                  className="grid grid-cols-[2fr_2fr_min-content] gap-4 px-6 py-4 items-center hover:bg-muted/20 transition-colors group cursor-pointer"
+                  onClick={() => handleRowClick(client.id)}
                 >
                   <div className="flex items-center space-x-3">
                     <div>

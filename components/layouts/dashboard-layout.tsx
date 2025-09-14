@@ -4,7 +4,7 @@ import { DashboardLayoutClient } from "./dashboard-layout-client"
 
 type DashboardLayoutProps = {
   children: React.ReactNode
-  title?: string
+  title?: string | React.ReactNode
 }
 
 export default async function DashboardLayout({ 
