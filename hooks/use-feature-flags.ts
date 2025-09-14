@@ -7,10 +7,6 @@ export function useFeatureFlags() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadFeatureFlags();
-  }, []);
-
   const loadFeatureFlags = async () => {
     try {
       setLoading(true);
@@ -26,6 +22,10 @@ export function useFeatureFlags() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadFeatureFlags();
+  }, []);
 
   const canUseFeature = (feature: keyof FeatureFlags): boolean => {
     if (!featureFlags) return false;

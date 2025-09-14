@@ -238,36 +238,6 @@ export default function PayrollPage({ user }: { user: User }) {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    console.log('useEffect: checking dateRange', { dateRange, user, payPeriodType });
-    // Only load payroll if we have a valid date range
-    if (!dateRange?.from || !dateRange?.to) {
-      console.log('useEffect: no valid date range, returning');
-      return
-    }
-    
-    console.log('useEffect: calling loadPayroll');
-    loadPayroll()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, dateRange?.from?.getTime(), dateRange?.to?.getTime(), payPeriodType])
-
-  // Filter payrolls based on status using useMemo
-  const filteredPayrolls = useMemo(() => {
-    let filtered = payrolls;
-    
-    // Apply status filter
-    if (selectedStatus !== "all") {
-      filtered = filtered.filter(payroll => payroll.status === selectedStatus);
-    }
-    
-    return filtered;
-  }, [payrolls, selectedStatus]);
-
-  // Reset to first page when status changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedStatus]);
-
   const loadPayroll = async () => {
     console.log('loadPayroll called', { isLoading, dateRange, payPeriodType });
     
@@ -420,6 +390,36 @@ export default function PayrollPage({ user }: { user: User }) {
       }
     }
   }
+
+  useEffect(() => {
+    console.log('useEffect: checking dateRange', { dateRange, user, payPeriodType });
+    // Only load payroll if we have a valid date range
+    if (!dateRange?.from || !dateRange?.to) {
+      console.log('useEffect: no valid date range, returning');
+      return
+    }
+    
+    console.log('useEffect: calling loadPayroll');
+    loadPayroll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, dateRange?.from?.getTime(), dateRange?.to?.getTime(), payPeriodType])
+
+  // Filter payrolls based on status using useMemo
+  const filteredPayrolls = useMemo(() => {
+    let filtered = payrolls;
+    
+    // Apply status filter
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter(payroll => payroll.status === selectedStatus);
+    }
+    
+    return filtered;
+  }, [payrolls, selectedStatus]);
+
+  // Reset to first page when status changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStatus]);
 
   const handlePreviousWeek = () => {
     if (dateRange?.from) {

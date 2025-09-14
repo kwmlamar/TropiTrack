@@ -55,15 +55,6 @@ export function CompanySetupDialog() {
     };
   }, []);
 
-  // Check if user needs company setup on mount (only once per session)
-  useEffect(() => {
-    const hasShownThisSession = sessionStorage.getItem('company-setup-shown');
-    
-    if (!hasShownThisSession) {
-      checkCompanySetup();
-    }
-  }, []);
-
   const checkCompanySetup = async () => {
     try {
       const response = await fetch("/api/check-company-setup");
@@ -78,6 +69,15 @@ export function CompanySetupDialog() {
       console.error("Error checking company setup:", error);
     }
   };
+
+  // Check if user needs company setup on mount (only once per session)
+  useEffect(() => {
+    const hasShownThisSession = sessionStorage.getItem('company-setup-shown');
+    
+    if (!hasShownThisSession) {
+      checkCompanySetup();
+    }
+  }, []);
 
   async function handleSubmit(formData: FormData) {
     try {

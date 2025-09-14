@@ -84,10 +84,6 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
     is_active: true,
   })
 
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
   const loadData = async () => {
     setLoading(true)
     try {
@@ -137,6 +133,10 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleCreateQRCode = async () => {
     try {

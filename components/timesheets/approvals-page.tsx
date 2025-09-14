@@ -67,34 +67,6 @@ export function ApprovalsPage() {
   const [user, setUser] = useState<{ id: string } | null>(null)
   const weekStartDay = 6 // Saturday
 
-  useEffect(() => {
-    console.log('[Approvals] Component mounted, fetching data...')
-    fetchUnapprovedTimesheets()
-    // Get current user
-    const getUser = async () => {
-      try {
-        console.log('[Approvals] Fetching user data...')
-        const supabase = createClient()
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-        
-        if (authError) {
-          console.error('[Approvals] Auth error:', authError)
-          return
-        }
-        
-        if (authUser) {
-          console.log('[Approvals] User data fetched:', authUser)
-          setUser(authUser)
-        } else {
-          console.error('[Approvals] No user found')
-        }
-      } catch (error) {
-        console.error('[Approvals] Error fetching user:', error)
-      }
-    }
-    getUser()
-  }, [])
-
   const fetchUnapprovedTimesheets = async () => {
     try {
       console.log('[Approvals] Fetching unapproved timesheets...')
@@ -123,6 +95,34 @@ export function ApprovalsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    console.log('[Approvals] Component mounted, fetching data...')
+    fetchUnapprovedTimesheets()
+    // Get current user
+    const getUser = async () => {
+      try {
+        console.log('[Approvals] Fetching user data...')
+        const supabase = createClient()
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError) {
+          console.error('[Approvals] Auth error:', authError)
+          return
+        }
+        
+        if (authUser) {
+          console.log('[Approvals] User data fetched:', authUser)
+          setUser(authUser)
+        } else {
+          console.error('[Approvals] No user found')
+        }
+      } catch (error) {
+        console.error('[Approvals] Error fetching user:', error)
+      }
+    }
+    getUser()
+  }, [])
 
   const onApprove = async (id: string) => {
     const response = await fetch(`/api/approvals/${id}/approve`, {

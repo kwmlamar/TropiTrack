@@ -46,10 +46,6 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
     radius_meters: "50"
   })
 
-  useEffect(() => {
-    loadData()
-  }, [projectId, loadData])
-
   const loadData = async () => {
     setLoading(true)
     try {
@@ -83,6 +79,10 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadData()
+  }, [projectId, loadData])
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setSelectedCoordinates({ lat, lng })

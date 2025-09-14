@@ -167,9 +167,9 @@ export function BulkTimesheetForm({
     if (settings && fields.length > 0) {
       // Update all existing entries with the new default times
       fields.forEach((_, index) => {
-        form.setValue(`entries.${index}.clock_in`, settings.work_day_start);
-        form.setValue(`entries.${index}.clock_out`, settings.work_day_end);
-        form.setValue(`entries.${index}.break_duration`, settings.break_time);
+        form.setValue(`entries.${index}.clock_in`, settings.work_day_start || "07:00");
+        form.setValue(`entries.${index}.clock_out`, settings.work_day_end || "16:00");
+        form.setValue(`entries.${index}.break_duration`, settings.break_time || 60);
       });
     }
   }, [settings, fields, form]);

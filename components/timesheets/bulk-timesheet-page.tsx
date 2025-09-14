@@ -26,10 +26,6 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
   const [submissionSuccess, setSubmissionSuccess] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
   const loadData = async () => {
     setLoading(true)
     setError(null)
@@ -59,6 +55,10 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
       router.push('/dashboard/timesheets')
     }, 2000)
   }
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleCancel = () => {
     router.push('/dashboard/timesheets')

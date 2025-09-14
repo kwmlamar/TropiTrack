@@ -36,25 +36,6 @@ export default function TestAuth() {
     error?: string;
   } | null>(null);
 
-  useEffect(() => {
-    loadTestData();
-  }, []);
-
-  // Add debugging for selectedWorker
-  useEffect(() => {
-    console.log('TestAuth: selectedWorker changed:', selectedWorker);
-  }, [selectedWorker]);
-
-  // Add debugging for cross-device tab
-  useEffect(() => {
-    console.log('TestAuth: Cross-device tab component mounted, selectedWorker:', selectedWorker);
-  }, [selectedWorker]);
-
-  // Add debugging for when the component renders
-  useEffect(() => {
-    console.log('TestAuth: Component rendered, selectedWorker:', selectedWorker, 'isLoading:', isLoading);
-  });
-
   const loadTestData = async () => {
     try {
       setIsLoading(true);
@@ -100,6 +81,25 @@ export default function TestAuth() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadTestData();
+  }, []);
+
+  // Add debugging for selectedWorker
+  useEffect(() => {
+    console.log('TestAuth: selectedWorker changed:', selectedWorker);
+  }, [selectedWorker]);
+
+  // Add debugging for cross-device tab
+  useEffect(() => {
+    console.log('TestAuth: Cross-device tab component mounted, selectedWorker:', selectedWorker);
+  }, [selectedWorker]);
+
+  // Add debugging for when the component renders
+  useEffect(() => {
+    console.log('TestAuth: Component rendered, selectedWorker:', selectedWorker, 'isLoading:', isLoading);
+  });
 
   const handleEnrollmentComplete = () => {
     // Reload enrollments to show the new one

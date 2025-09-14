@@ -17,10 +17,6 @@ export function TrialExpiredBanner({ onSubscribe, onDismiss }: TrialExpiredBanne
   const [isLoading, setIsLoading] = useState(true);
   const [, setSubscriptionStatus] = useState<Record<string, unknown> | null>(null);
 
-  useEffect(() => {
-    checkTrialStatus();
-  }, []);
-
   const checkTrialStatus = async () => {
     try {
       const result = await getSubscriptionStatus();
@@ -41,6 +37,10 @@ export function TrialExpiredBanner({ onSubscribe, onDismiss }: TrialExpiredBanne
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    checkTrialStatus();
+  }, []);
 
   const handleDismiss = () => {
     setIsVisible(false);

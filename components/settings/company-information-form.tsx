@@ -66,14 +66,13 @@ export function CompanyInformationForm() {
     resolver: zodResolver(companySchema),
   });
 
-  useEffect(() => {
-    loadCompany();
-  }, [loadCompany]);
-
   const loadCompany = async () => {
+    console.log("CompanyInformationForm: Starting to load company data...");
     setLoading(true);
     try {
       const companyData = await getCurrentUserCompany();
+      console.log("CompanyInformationForm: Company data received:", companyData);
+      
       if (companyData) {
         setCompany(companyData);
         
@@ -93,16 +92,24 @@ export function CompanyInformationForm() {
           description: companyData.description || "",
         };
         
+        console.log("CompanyInformationForm: Setting form data:", formData);
         // Reset form with existing data
         reset(formData);
+      } else {
+        console.log("CompanyInformationForm: No company data found");
+        toast.error("No company information found. Please set up your company first.");
       }
     } catch (error) {
-      console.error("Error loading company:", error);
+      console.error("CompanyInformationForm: Error loading company:", error);
       toast.error("Failed to load company information");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadCompany();
+  }, []);
 
   const onSubmit = async (data: CompanyFormData) => {
     if (!company) return;
