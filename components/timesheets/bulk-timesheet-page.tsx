@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { User } from "@supabase/supabase-js"
 import { ArrowLeft, Clock, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -26,7 +26,7 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
   const [submissionSuccess, setSubmissionSuccess] = useState(false)
   const router = useRouter()
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
     
@@ -44,7 +44,7 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user.id])
 
   const handleSuccess = async (timesheets: TimesheetWithDetails[]) => {
     setSubmissionSuccess(true)

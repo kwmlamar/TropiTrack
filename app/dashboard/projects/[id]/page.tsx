@@ -5,19 +5,15 @@ import { getProject } from "@/lib/data/projects";
 import { getProfile } from "@/lib/data/data";
 import { getTransactionsServer } from "@/lib/data/transactions";
 import { getPayrollsByProject } from "@/lib/data/payroll";
-import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getProjectAssignments } from "@/lib/data/project-assignments";
 import { fetchClientsForCompany } from "@/lib/data/data";
 import { ProjectDetailsSection } from "@/components/projects/project-details-section";
 import { TeamMembersClient } from "@/components/projects/team-members-client";
 import { ProjectDocumentsNew } from "@/components/projects/project-documents-new";
-import { ProjectLocationsSection } from "@/components/projects/project-locations-section";
 import { getWorkers } from "@/lib/data/workers";
 
 // Helper function to get color based on percentage
@@ -131,30 +127,13 @@ export default async function ProjectPage({
   });
 
   return (
-    <DashboardLayout title={project.name}>
+    <DashboardLayout title={
+      <>
+        <span className="text-gray-500">Project</span> <span className="text-gray-500"> / </span> {project.name}
+      </>
+    }>
       <div className="container mx-auto space-y-6 p-6">
-        {/* Breadcrumb Navigation */}
-        <div className="flex items-center space-x-2 text-sm text-gray-500">
-          <Link href="/dashboard/projects" className="hover:text-foreground transition-colors">
-            Projects
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">{project.name}</span>
-        </div>
 
-        {/* Project Header */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-4">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                {project.name}
-              </h1>
-              <p className="text-gray-500">
-                Created on {format(new Date(project.created_at), "MMMM d, yyyy")}
-              </p>
-            </div>
-          </div>
-        </div>
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
           <Tabs defaultValue="overview" className="w-full">
@@ -169,18 +148,10 @@ export default async function ProjectPage({
                 </TabsTrigger>
 
                 <TabsTrigger
-                  value="budget"
+                  value="qr-codes"
                   className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
-                  Budget
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="payroll"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-                >
-                  Payroll
+                  QR Codes
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
                 </TabsTrigger>
 
@@ -189,14 +160,6 @@ export default async function ProjectPage({
                   className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
                   Documents
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="locations"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-                >
-                  Location
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
                 </TabsTrigger>
               </TabsList>
@@ -291,36 +254,18 @@ export default async function ProjectPage({
               />
             </TabsContent>
 
-            <TabsContent value="budget" className="container mx-auto py-4 space-y-6">
+            <TabsContent value="qr-codes" className="container mx-auto py-4 space-y-6">
               <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">Project Budget</CardTitle>
+                  <CardTitle className="text-lg">Project QR Codes</CardTitle>
                   <p className="text-sm text-gray-500">
-                    Track budget allocation, expenses, and financial performance.
+                    Manage QR codes for worker clock-in/clock-out at project locations.
                   </p>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-64">
                     <div className="text-center">
-                      <p className="text-gray-500">Budget tracking features coming soon...</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="payroll" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Project Payroll</CardTitle>
-                  <p className="text-sm text-gray-500">
-                    View payroll data and labor costs for this project.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                      <p className="text-gray-500">Project payroll features coming soon...</p>
+                      <p className="text-gray-500">QR code management features coming soon...</p>
                     </div>
                   </div>
                 </CardContent>
@@ -329,10 +274,6 @@ export default async function ProjectPage({
 
             <TabsContent value="documents" className="container mx-auto py-4 space-y-6">
               <ProjectDocumentsNew projectId={id} />
-            </TabsContent>
-
-            <TabsContent value="locations" className="container mx-auto py-4 space-y-6">
-              <ProjectLocationsSection projectId={id} userId={user.id} />
             </TabsContent>
           </Tabs>
         </div>

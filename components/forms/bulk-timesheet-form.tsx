@@ -208,15 +208,16 @@ export function BulkTimesheetForm({
 
         const breakMs = (entry.break_duration || 0) * 60 * 1000;
         const hours = Math.max(0, (diffMs - breakMs) / (1000 * 60 * 60));
+        const hourlyRate = Number(entry.hourly_rate) || 0;
 
         totalHours += hours * numberOfDays;
-        totalCost += hours * numberOfDays * (entry.hourly_rate || 0);
+        totalCost += hours * numberOfDays * hourlyRate;
       }
     });
 
     return {
-      hours: totalHours.toFixed(2),
-      cost: totalCost.toFixed(2),
+      hours: isNaN(totalHours) ? "0.00" : totalHours.toFixed(2),
+      cost: isNaN(totalCost) ? "0.00" : totalCost.toFixed(2),
       days: numberOfDays,
       workers: entries.length,
     };
