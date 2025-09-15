@@ -5,7 +5,6 @@ import { getProject } from "@/lib/data/projects";
 import { getProfile } from "@/lib/data/data";
 import { getTransactionsServer } from "@/lib/data/transactions";
 import { getPayrollsByProject } from "@/lib/data/payroll";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { notFound } from "next/navigation";
@@ -14,6 +13,7 @@ import { fetchClientsForCompany } from "@/lib/data/data";
 import { ProjectDetailsSection } from "@/components/projects/project-details-section";
 import { TeamMembersClient } from "@/components/projects/team-members-client";
 import { ProjectDocumentsNew } from "@/components/projects/project-documents-new";
+import { ProjectQRCodes } from "@/components/projects/project-qr-codes";
 import { getWorkers } from "@/lib/data/workers";
 
 // Helper function to get color based on percentage
@@ -53,7 +53,12 @@ export default async function ProjectPage({
   }
 
   // Update recent projects list
-  await updateRecentProject(user.id, id);
+  try {
+    await updateRecentProject(user.id, id);
+  } catch (error) {
+    console.error("Failed to update recent projects:", error);
+    // Don't throw - this is not critical for the page to function
+  }
 
   // Get project details using company_id
   const projectResponse = await getProject(profile.company_id, id);
@@ -255,21 +260,7 @@ export default async function ProjectPage({
             </TabsContent>
 
             <TabsContent value="qr-codes" className="container mx-auto py-4 space-y-6">
-              <Card className="border-border/50 bg-gradient-to-br from-card/50 to-card/80 dark:from-background dark:via-background dark:to-muted/20 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Project QR Codes</CardTitle>
-                  <p className="text-sm text-gray-500">
-                    Manage QR codes for worker clock-in/clock-out at project locations.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                      <p className="text-gray-500">QR code management features coming soon...</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProjectQRCodes projectId={id} userId={user.id} />
             </TabsContent>
 
             <TabsContent value="documents" className="container mx-auto py-4 space-y-6">

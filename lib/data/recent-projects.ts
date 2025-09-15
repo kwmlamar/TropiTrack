@@ -64,12 +64,18 @@ export async function getRecentProjects(userId: string): Promise<Partial<Project
 export async function updateRecentProject(userId: string, projectId: string): Promise<void> {
   try {
     const profile = await getProfile(userId);
+    
+    // Check if profile exists and has company_id
+    if (!profile || !profile.company_id) {
+      console.error("Error inserting recent project: Profile not found or missing company_id", { userId, projectId, profile });
+      return;
+    }
 
     // First try to update existing record
     const { data: existingRecord, error: lookupError } = await supabase
       .from("recent_projects")
       .select("id")
-      .eq("id", userId)
+      .eq("user_id", userId)
       .eq("project_id", projectId)
       .single();
 
