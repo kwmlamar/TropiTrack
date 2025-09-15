@@ -187,14 +187,14 @@ export function TimesheetForm({
       project_id: "",
       date_range: {
         from: new Date(),
-        to: undefined,
+        to: new Date(),
       },
       entries: [
         {
           worker_id: "",
-          clock_in: settings?.work_day_start || "07:00",
-          clock_out: settings?.work_day_end || "16:00",
-          break_duration: settings?.break_time || 60,
+          clock_in: "07:00",
+          clock_out: "16:00",
+          break_duration: 60,
           hourly_rate: 0,
           task_description: "",
           notes: "",
@@ -219,6 +219,18 @@ export function TimesheetForm({
       });
     }
   }, [settings, fields, form]);
+
+  // Update form when settings are loaded for the first time
+  useEffect(() => {
+    if (settings && !form.formState.isDirty) {
+      form.setValue("project_id", "");
+      fields.forEach((_, index) => {
+        form.setValue(`entries.${index}.clock_in`, settings.work_day_start || "07:00");
+        form.setValue(`entries.${index}.clock_out`, settings.work_day_end || "16:00");
+        form.setValue(`entries.${index}.break_duration`, settings.break_time || 60);
+      });
+    }
+  }, [settings, form, fields]);
 
   // Calculate total hours and cost
   const calculateTotals = () => {
@@ -385,9 +397,9 @@ export function TimesheetForm({
   const addRow = () => {
     append({
       worker_id: "",
-      clock_in: settings?.work_day_start || "07:00",
-      clock_out: settings?.work_day_end || "16:00",
-      break_duration: settings?.break_time || 60,
+      clock_in: "07:00",
+      clock_out: "16:00",
+      break_duration: 60,
       hourly_rate: 0,
       task_description: "",
       notes: "",
@@ -638,9 +650,9 @@ export function TimesheetForm({
                       Array.from({ length: 5 }).forEach(() => {
                         append({
                           worker_id: "",
-                          clock_in: "07:00",
-                          clock_out: "16:00",
-                          break_duration: 60,
+                          clock_in: settings?.work_day_start || "07:00",
+                          clock_out: settings?.work_day_end || "16:00",
+                          break_duration: settings?.break_time || 60,
                           hourly_rate: 0,
                           task_description: "",
                           notes: "",

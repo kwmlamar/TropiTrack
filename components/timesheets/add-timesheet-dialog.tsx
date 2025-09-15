@@ -85,9 +85,9 @@ export function AddTimesheetDialog({
     defaultValues: {
       worker_id: selectedWorker?.id || "",
       project_id: "",
-      clock_in: settings?.work_day_start || "07:00",
-      clock_out: settings?.work_day_end || "16:00",
-      break_duration: settings?.break_time || 60,
+      clock_in: "07:00",
+      clock_out: "16:00",
+      break_duration: 60,
       task_description: "",
       notes: "",
     },
@@ -103,9 +103,9 @@ export function AddTimesheetDialog({
   // Update form when settings are loaded
   useEffect(() => {
     if (settings) {
-      form.setValue("clock_in", settings.work_day_start)
-      form.setValue("clock_out", settings.work_day_end)
-      form.setValue("break_duration", settings.break_time)
+      form.setValue("clock_in", settings.work_day_start || "07:00")
+      form.setValue("clock_out", settings.work_day_end || "16:00")
+      form.setValue("break_duration", settings.break_time || 60)
     }
   }, [settings, form])
 

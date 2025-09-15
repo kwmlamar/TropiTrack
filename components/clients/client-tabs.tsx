@@ -168,6 +168,7 @@ export function ClientTabs({ client }: ClientTabsProps) {
           Projects
         </TabsTrigger>
         <TabsTrigger value="photos" className="flex items-center gap-2">
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image className="h-4 w-4" />
           Photos
         </TabsTrigger>

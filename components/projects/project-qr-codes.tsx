@@ -33,7 +33,7 @@ import {
   Eye
 } from "lucide-react"
 import { toast } from "sonner"
-import { getQRCodes, createProjectLocation, generateQRCode, updateQRCode } from "@/lib/data/qr-clock"
+import { getQRCodes, createProjectLocation, generateQRCode, updateQRCode, deleteQRCode } from "@/lib/data/qr-clock"
 import { getProfile } from "@/lib/data/data"
 import Image from "next/image"
 
@@ -163,23 +163,14 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
   }
 
   // Delete QR code
-  const deleteQRCode = async (qrCodeId: string) => {
-    if (!confirm('Are you sure you want to delete this QR code?')) return
+  const handleDeleteQRCode = async (qrCodeId: string) => {
+    if (!confirm('Are you sure you want to delete this QR code? This action cannot be undone.')) return
 
     try {
-      const response = await fetch(`/api/qr-clock/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          qrCodeId,
-          updates: { is_active: false }
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete QR code')
+      const result = await deleteQRCode(userId, qrCodeId)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete QR code')
       }
 
       setQrCodes(prev => prev.filter(qr => qr.id !== qrCodeId))
@@ -211,10 +202,12 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
     }
   }
 
-  // Copy QR code data to clipboard
+  // Copy QR code URL to clipboard
   const copyQRData = (codeHash: string) => {
-    navigator.clipboard.writeText(codeHash)
-    toast.success('QR code data copied to clipboard')
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const qrUrl = `${baseUrl}/qr-scan/${codeHash}`
+    navigator.clipboard.writeText(qrUrl)
+    toast.success('QR code URL copied to clipboard')
   }
 
   // View QR code in modal
@@ -225,8 +218,9 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
   // Download QR code as image
   const downloadQRCode = async (qrCode: QRCode) => {
     try {
-      // Create QR code data URL
-      const qrData = qrCode.code_hash
+      // Create QR code data URL that points to the scanning page
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const qrData = `${baseUrl}/qr-scan/${qrCode.code_hash}`
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`
       
       // Fetch the image as a blob
@@ -402,7 +396,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
                         variant="ghost"
                         size="sm"
                         onClick={() => copyQRData(qrCode.code_hash)}
-                        title="Copy QR data"
+                        title="Copy QR URL"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -425,7 +419,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteQRCode(qrCode.id)}
+                        onClick={() => handleDeleteQRCode(qrCode.id)}
                         title="Delete QR code"
                         className="text-red-600 hover:text-red-700"
                       >
@@ -498,7 +492,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
             <div className="space-y-4">
               <div className="flex justify-center">
                 <Image
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(viewingQRCode.code_hash)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr-scan/${viewingQRCode.code_hash}`)}`}
                   alt={`QR Code for ${viewingQRCode.name}`}
                   width={300}
                   height={300}
@@ -516,9 +510,9 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
                   </div>
                 )}
                 <div className="text-sm">
-                  <span className="font-medium">QR Data:</span> 
-                  <code className="ml-2 px-2 py-1 bg-gray-100 rounded text-xs">
-                    {viewingQRCode.code_hash}
+                  <span className="font-medium">QR URL:</span> 
+                  <code className="ml-2 px-2 py-1 bg-gray-100 rounded text-xs break-all">
+                    {`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr-scan/${viewingQRCode.code_hash}`}
                   </code>
                 </div>
               </div>
@@ -529,7 +523,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
                   onClick={() => copyQRData(viewingQRCode.code_hash)}
                 >
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy Data
+                  Copy URL
                 </Button>
                 <Button
                   onClick={() => downloadQRCode(viewingQRCode)}

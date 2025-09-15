@@ -534,6 +534,41 @@ export async function updateQRCode(
 }
 
 /**
+ * Delete a QR code
+ */
+export async function deleteQRCode(
+  userId: string, 
+  qrCodeId: string
+): Promise<ApiResponse<null>> {
+  try {
+    const profile = await getProfile(userId)
+    if (!profile) {
+      return { data: null, error: "User profile not found", success: false }
+    }
+
+    const { error } = await supabase
+      .from("qr_codes")
+      .delete()
+      .eq("id", qrCodeId)
+      .eq("company_id", profile.company_id)
+
+    if (error) {
+      console.error("Error deleting QR code:", error)
+      return { data: null, error: error.message, success: false }
+    }
+
+    return { data: null, error: null, success: true }
+  } catch (error) {
+    console.error("Unexpected error deleting QR code:", error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    }
+  }
+}
+
+/**
  * Delete a project location
  */
 export async function deleteProjectLocation(

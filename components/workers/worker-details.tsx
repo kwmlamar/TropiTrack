@@ -11,8 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EditWorkerDialog } from "@/components/forms/worker-form";
-import { BiometricEnrollment } from './biometric-enrollment';
-import BiometricStatus from './biometric-status';
+import { WorkerPinSetup } from './worker-pin-setup';
 import { getWorker } from "@/lib/data/workers";
 import { getTimesheets } from "@/lib/data/timesheets";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
@@ -25,8 +24,13 @@ import {
   User as UserIcon,
   StickyNote,
   Edit,
+  Shield,
+  Key,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
-import { getWorkerBiometricStatus } from '@/lib/data/biometric';
+import { getWorkerPinStatus, resetWorkerPin } from '@/lib/data/worker-pins';
 
 export default function WorkerDetails() {
   const params = useParams();
@@ -37,32 +41,51 @@ export default function WorkerDetails() {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [showBiometricEnrollment, setShowBiometricEnrollment] = useState(false);
-  const [, setBiometricStatus] = useState<unknown>(null);
-  const [, setBiometricLoading] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [pinStatus, setPinStatus] = useState<{
+    hasPin: boolean
+    pinSetAt?: string
+    pinLastUsed?: string
+    isLocked: boolean
+    attempts: number
+  } | null>(null);
+  const [pinLoading, setPinLoading] = useState(false);
 
 
 
-  // Load biometric status
-  const loadBiometricStatus = async () => {
+  // Load PIN status
+  const loadPinStatus = async () => {
     if (!worker?.id) return;
     
-    setBiometricLoading(true);
+    setPinLoading(true);
     try {
-      const result = await getWorkerBiometricStatus(worker.id);
-      if (result.success) {
-        setBiometricStatus(result);
+      const result = await getWorkerPinStatus(worker.id);
+      if (result.success && result.data) {
+        setPinStatus(result.data);
       }
     } catch (error) {
-      console.error('Failed to load biometric status:', error);
+      console.error('Failed to load PIN status:', error);
     } finally {
-      setBiometricLoading(false);
+      setPinLoading(false);
     }
   };
 
-  const handleBiometricEnrollmentComplete = () => {
-    setShowBiometricEnrollment(false);
-    loadBiometricStatus(); // Refresh the status
+  const handlePinSet = () => {
+    setShowPinSetup(false);
+    loadPinStatus(); // Refresh the status
+  };
+
+  const handleResetPin = async () => {
+    if (!worker?.id) return;
+    
+    try {
+      const result = await resetWorkerPin("", worker.id); // Empty userId for now
+      if (result.success) {
+        loadPinStatus();
+      }
+    } catch (error) {
+      console.error('Failed to reset PIN:', error);
+    }
   };
 
   useEffect(() => {
@@ -101,9 +124,12 @@ export default function WorkerDetails() {
     loadData();
   }, [params.id]);
 
+  // Load PIN status when worker changes
   useEffect(() => {
-    loadBiometricStatus();
-  }, [worker?.id, loadBiometricStatus]);
+    if (worker) {
+      loadPinStatus();
+    }
+  }, [worker]);
 
   if (loading) {
     return (
@@ -236,10 +262,10 @@ export default function WorkerDetails() {
                 </TabsTrigger>
 
                 <TabsTrigger
-                  value="biometrics"
+                  value="pin"
                   className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[120px] border-none"
                 >
-                  Biometrics
+                  PIN
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
                 </TabsTrigger>
               </TabsList>
@@ -494,31 +520,127 @@ export default function WorkerDetails() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="biometrics" className="space-y-4">
-              {showBiometricEnrollment ? (
-                <BiometricEnrollment
+            <TabsContent value="pin" className="space-y-4">
+              {showPinSetup ? (
+                <WorkerPinSetup
                   workerId={worker.id}
                   workerName={worker.name}
-                  onEnrollmentComplete={handleBiometricEnrollmentComplete}
-                  onCancel={() => setShowBiometricEnrollment(false)}
+                  onPinSet={handlePinSet}
+                  onCancel={() => setShowPinSetup(false)}
                 />
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Biometric Authentication</h3>
+                    <h3 className="text-lg font-semibold">PIN Authentication</h3>
                     <Button
-                      onClick={() => setShowBiometricEnrollment(true)}
-                      disabled={worker.biometric_enrolled}
+                      onClick={() => setShowPinSetup(true)}
                     >
-                      {worker.biometric_enrolled ? 'Already Enrolled' : 'Enroll Biometrics'}
+                      {pinStatus?.hasPin ? 'Update PIN' : 'Set PIN'}
                     </Button>
                   </div>
                   
-                  <BiometricStatus 
-                    worker={worker}
-                    onStartEnrollment={() => setShowBiometricEnrollment(true)}
-                    onRefreshStatus={loadBiometricStatus}
-                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        PIN Status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {pinLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                      ) : pinStatus ? (
+                        <div className="space-y-4">
+                          {/* Status Badge */}
+                          <div className="flex items-center gap-2">
+                            {pinStatus.hasPin ? (
+                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800 flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3" />
+                                PIN Set
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 border-red-200 dark:border-red-800 flex items-center gap-1">
+                                <XCircle className="h-3 w-3" />
+                                No PIN
+                              </Badge>
+                            )}
+                            
+                            {pinStatus.isLocked && (
+                              <Badge variant="destructive" className="flex items-center gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Locked
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* PIN Details */}
+                          {pinStatus.hasPin && (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground">PIN Set</p>
+                                  <p className="font-medium">
+                                    {pinStatus.pinSetAt ? new Date(pinStatus.pinSetAt).toLocaleString() : 'Unknown'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Last Used</p>
+                                  <p className="font-medium">
+                                    {pinStatus.pinLastUsed ? new Date(pinStatus.pinLastUsed).toLocaleString() : 'Never'}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {pinStatus.attempts > 0 && (
+                                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                    <strong>Failed Attempts:</strong> {pinStatus.attempts}
+                                    {pinStatus.attempts >= 5 && " (PIN is locked)"}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-3 pt-4">
+                            <Button
+                              onClick={() => setShowPinSetup(true)}
+                              className="flex-1"
+                            >
+                              <Key className="h-4 w-4 mr-2" />
+                              {pinStatus?.hasPin ? 'Update PIN' : 'Set PIN'}
+                            </Button>
+                            
+                            {pinStatus?.hasPin && (
+                              <Button
+                                variant="outline"
+                                onClick={handleResetPin}
+                                className="flex-1"
+                              >
+                                Reset PIN
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* Security Notice */}
+                          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <p className="text-sm text-blue-800 dark:text-blue-200">
+                              <strong>Security:</strong> PINs are encrypted and stored securely. 
+                              Workers use their PIN to verify identity when clocking in/out via QR codes.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>Failed to load PIN status</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </TabsContent>

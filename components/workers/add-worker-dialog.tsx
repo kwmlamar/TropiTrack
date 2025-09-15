@@ -34,6 +34,7 @@ import {
 import { toast } from "sonner"
 
 import { createWorker } from "@/lib/data/workers"
+import { setWorkerPin } from "@/lib/data/worker-pins"
 import type { Worker } from "@/lib/types/worker"
 
 // Simplified schema for quick worker creation
@@ -41,6 +42,8 @@ const quickWorkerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   position: z.string().min(1, "Position is required"),
   hourly_rate: z.number().min(0, "Hourly rate must be positive"),
+  pin: z.string().optional(),
+  setPin: z.boolean().optional(),
 })
 
 type QuickWorkerFormData = z.infer<typeof quickWorkerSchema>
@@ -101,7 +104,19 @@ export function AddWorkerDialog({
       })
 
       if (result.success && result.data) {
-        toast.success("Worker added successfully")
+        // Set PIN if provided
+        if (data.setPin && data.pin) {
+          const pinResult = await setWorkerPin(userId, result.data.id, data.pin)
+          if (pinResult.success) {
+            toast.success("Worker added successfully with PIN set")
+          } else {
+            toast.success("Worker added successfully, but PIN setup failed")
+            console.error("PIN setup error:", pinResult.error)
+          }
+        } else {
+          toast.success("Worker added successfully")
+        }
+        
         onSuccess?.(result.data)
         onOpenChange(false)
         form.reset()
@@ -194,6 +209,54 @@ export function AddWorkerDialog({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="setPin"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      checked={field.value || false}
+                      onChange={field.onChange}
+                      className="h-4 w-4"
+                    />
+                  </FormControl>
+                  <FormLabel className="text-sm font-normal">
+                    Set up PIN for clock in/out
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("setPin") && (
+              <FormField
+                control={form.control}
+                name="pin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>PIN (4-8 digits)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter PIN"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 8)
+                          field.onChange(value)
+                        }}
+                        maxLength={8}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      Worker will use this PIN to verify their identity when clocking in/out
+                    </p>
+                  </FormItem>
+                )}
+              />
+            )}
 
             <DialogFooter>
               <Button

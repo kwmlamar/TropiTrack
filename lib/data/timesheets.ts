@@ -9,7 +9,6 @@ import type {
 
 import { supabase } from "@/lib/supabaseClient";
 import { getProfile } from "./data";
-import { parse } from "date-fns";
 import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
 import { getTimesheetSettingsRequireApproval } from "@/lib/data/timesheet-settings";
 
@@ -408,14 +407,25 @@ function calculateTimesheetTotals(
   timesheet: Partial<Timesheet>,
   workerHourlyRate: number
 ): Partial<Timesheet> {
-  const clockIn = timesheet.clock_in ? parse(timesheet.clock_in, 'HH:mm', new Date()) : null;
-  const clockOut = timesheet.clock_out ? parse(timesheet.clock_out, 'HH:mm', new Date()) : null;
   const breakDuration = timesheet.break_duration || 0; // in minutes
 
   let totalHours = 0;
-  if (clockIn && clockOut) {
-    const durationMs = clockOut.getTime() - clockIn.getTime();
-    totalHours = durationMs / (1000 * 60 * 60) - (breakDuration / 60);
+  if (timesheet.clock_in && timesheet.clock_out) {
+    // Parse time strings (HH:mm format) to calculate duration
+    const [clockInHours, clockInMinutes] = timesheet.clock_in.split(':').map(Number);
+    const [clockOutHours, clockOutMinutes] = timesheet.clock_out.split(':').map(Number);
+    
+    const clockInTotalMinutes = clockInHours * 60 + clockInMinutes;
+    const clockOutTotalMinutes = clockOutHours * 60 + clockOutMinutes;
+    
+    // Handle case where clock out is next day
+    let durationMinutes = clockOutTotalMinutes - clockInTotalMinutes;
+    if (durationMinutes < 0) {
+      durationMinutes += 24 * 60; // Add 24 hours
+    }
+    
+    // Subtract break duration and convert to hours
+    totalHours = Math.max(0, (durationMinutes - breakDuration) / 60);
   }
 
   // Calculate overtime hours (anything over 8 hours)
