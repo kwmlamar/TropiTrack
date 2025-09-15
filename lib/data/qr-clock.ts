@@ -416,21 +416,27 @@ export async function getWorkerClockEvents(
         qr_code:qr_codes(*)
       `)
       .eq("worker_id", workerId)
+      .eq("company_id", companyId)
 
     if (projectId) {
       query = query.eq("project_id", projectId)
     }
 
     if (date) {
-      const startOfDay = new Date(date)
-      startOfDay.setHours(0, 0, 0, 0)
-      const endOfDay = new Date(date)
-      endOfDay.setHours(23, 59, 59, 999)
+      // Parse the date string and create date range in local timezone
+      const [year, month, day] = date.split('-').map(Number)
+      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0)
+      const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999)
       
-      query = query.gte("event_time", startOfDay.toISOString())
-      query = query.lte("event_time", endOfDay.toISOString())
+      // Convert to ISO strings for database query
+      const startISO = startOfDay.toISOString()
+      const endISO = endOfDay.toISOString()
       
-      console.log(`[DEBUG] Date range: ${startOfDay.toISOString()} to ${endOfDay.toISOString()}`)
+      query = query.gte("event_time", startISO)
+      query = query.lte("event_time", endISO)
+      
+      console.log(`[DEBUG] Date range: ${startISO} to ${endISO}`)
+      console.log(`[DEBUG] Date range (local): ${startOfDay.toLocaleString()} to ${endOfDay.toLocaleString()}`)
     }
 
     const { data, error } = await query.order("event_time", { ascending: false })
@@ -440,15 +446,38 @@ export async function getWorkerClockEvents(
       return { data: null, error: error.message, success: false }
     }
 
+    console.log(`[DEBUG] Query executed successfully, found ${data?.length || 0} events`)
+
     console.log(`[DEBUG] Found ${data?.length || 0} clock events`)
     if (data && data.length > 0) {
       console.log(`[DEBUG] Clock events:`, data.map(e => ({ 
         id: e.id, 
         type: e.event_type, 
         time: e.event_time,
+        time_local: new Date(e.event_time).toLocaleString(),
         worker: e.worker?.name,
         project: e.project?.name
       })))
+    } else {
+      console.log(`[DEBUG] No clock events found. Let's check what events exist for this worker...`)
+      // Debug query without date filter to see all events for this worker
+      const { data: allEvents, error: allEventsError } = await supabase
+        .from("clock_events")
+        .select("*")
+        .eq("worker_id", workerId)
+        .eq("company_id", companyId)
+        .order("event_time", { ascending: false })
+        .limit(10)
+      
+      if (!allEventsError && allEvents) {
+        console.log(`[DEBUG] All events for worker (last 10):`, allEvents.map(e => ({
+          id: e.id,
+          type: e.event_type,
+          time: e.event_time,
+          time_local: new Date(e.event_time).toLocaleString(),
+          project_id: e.project_id
+        })))
+      }
     }
 
     return { data: data as ClockEvent[], error: null, success: true }
@@ -715,6 +744,12 @@ export async function generateTimesheetFromClockEvents(
     }
 
     console.log(`[DEBUG] Timesheet data generated:`, timesheetData)
+    console.log(`[DEBUG] TIMESHEET DATA BREAKDOWN:`, {
+      totalHours: timesheetData.total_hours,
+      regularHours: timesheetData.regular_hours,
+      overtimeHours: timesheetData.overtime_hours,
+      totalPay: timesheetData.total_pay
+    })
 
     // Check if approval is required based on company settings
     const { getTimesheetSettingsRequireApproval } = await import("@/lib/data/timesheet-settings");
@@ -900,7 +935,7 @@ function calculateAdjustedHours(
   overtimeHours: number
 } {
   const STANDARD_WORK_DAY = 8 // Standard 8-hour work day
-  const ROUNDING_THRESHOLD = 0.15 // 9 minutes (0.15 hours) threshold for rounding
+  const ROUNDING_THRESHOLD = 0.25 // 15 minutes (0.25 hours) threshold for rounding to 8 hours
   const MIN_WORK_HOURS = 0.01 // Minimum 0.6 minutes to count as work (very low for testing)
   const MAX_ROUND_TO_STANDARD = 0.5 // Maximum 30 minutes over standard to round down to 8 hours
   const SHORT_WORK_THRESHOLD = 0.5 // If less than 30 minutes, don't apply standard rounding
@@ -915,15 +950,16 @@ function calculateAdjustedHours(
         adjustedHours = rawHours
         break
       case "quarter_hour":
-        adjustedHours = Math.round(rawHours * 4) / 4
+        // Round to nearest 0.5 hours for short periods
+        adjustedHours = Math.round(rawHours * 2) / 2
         break
       case "exact":
         adjustedHours = Math.round(rawHours * 60) / 60
         break
       case "standard":
       default:
-        // For short periods, just round to nearest minute
-        adjustedHours = Math.round(rawHours * 60) / 60
+        // For short periods, round to nearest 0.5 hours
+        adjustedHours = Math.round(rawHours * 2) / 2
         break
     }
   } else {
@@ -934,8 +970,8 @@ function calculateAdjustedHours(
         break
         
       case "quarter_hour":
-        // Round to nearest 15-minute increment (0.25 hours)
-        adjustedHours = Math.round(adjustedHours * 4) / 4
+        // Round to nearest 0.5 hours (30-minute increment)
+        adjustedHours = Math.round(adjustedHours * 2) / 2
         break
         
       case "exact":
@@ -946,32 +982,36 @@ function calculateAdjustedHours(
       case "standard":
       default:
         // Standard rounding logic
-        // Round to nearest 15-minute increment first
-        const roundedToQuarter = Math.round(adjustedHours * 4) / 4
+        // Round to nearest 0.5 hours first
+        const roundedToHalf = Math.round(adjustedHours * 2) / 2
 
         if (roundToStandard) {
           // Apply rounding logic based on proximity to standard work day
-          if (Math.abs(roundedToQuarter - STANDARD_WORK_DAY) <= ROUNDING_THRESHOLD) {
+          if (Math.abs(roundedToHalf - STANDARD_WORK_DAY) <= ROUNDING_THRESHOLD) {
             // If within 9 minutes of 8 hours, round to exactly 8 hours
             adjustedHours = STANDARD_WORK_DAY
-          } else if (roundedToQuarter > STANDARD_WORK_DAY && 
-                     roundedToQuarter <= STANDARD_WORK_DAY + MAX_ROUND_TO_STANDARD) {
+          } else if (roundedToHalf > STANDARD_WORK_DAY && 
+                     roundedToHalf <= STANDARD_WORK_DAY + MAX_ROUND_TO_STANDARD) {
             // If between 8-8.5 hours, round down to 8 hours (manager's discretion)
             adjustedHours = STANDARD_WORK_DAY
           } else {
-            // Otherwise use the rounded quarter-hour value
-            adjustedHours = roundedToQuarter
+            // Otherwise use the rounded half-hour value
+            adjustedHours = roundedToHalf
           }
         } else {
-          // Just round to quarter hour without standard day adjustments
-          adjustedHours = roundedToQuarter
+          // Just round to half hour without standard day adjustments
+          adjustedHours = roundedToHalf
         }
         break
     }
   }
 
-  // Ensure minimum work hours (but don't force it to be too high)
-  if (adjustedHours < MIN_WORK_HOURS) {
+  // For very short periods that round to 0, round up to 0.5 hours (minimum billable time)
+  if (adjustedHours === 0 && rawHours > 0) {
+    adjustedHours = 0.5
+  }
+  // Only apply minimum for extremely tiny periods (less than 1 minute)
+  else if (adjustedHours < MIN_WORK_HOURS && rawHours < 0.017) { // Less than 1 minute
     adjustedHours = MIN_WORK_HOURS
   }
 
@@ -979,7 +1019,8 @@ function calculateAdjustedHours(
   const overtimeHours = Math.max(0, adjustedHours - STANDARD_WORK_DAY)
   const regularHours = Math.min(adjustedHours, STANDARD_WORK_DAY)
 
-  console.log(`[DEBUG] Rounding calculation: raw=${rawHours}h, adjusted=${adjustedHours}h, regular=${regularHours}h, overtime=${overtimeHours}h`)
+  console.log(`[DEBUG] Rounding calculation: raw=${rawHours}h, adjusted=${adjustedHours}h (rounded to nearest 0.5h), regular=${regularHours}h, overtime=${overtimeHours}h`)
+  console.log(`[DEBUG] FINAL TIMESHEET VALUES: totalHours=${adjustedHours}, regularHours=${regularHours}, overtimeHours=${overtimeHours}`)
 
   return {
     totalHours: adjustedHours,

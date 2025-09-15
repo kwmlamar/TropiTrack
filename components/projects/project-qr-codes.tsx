@@ -204,7 +204,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
 
   // Copy QR code URL to clipboard
   const copyQRData = (codeHash: string) => {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     const qrUrl = `${baseUrl}/qr-scan/${codeHash}`
     navigator.clipboard.writeText(qrUrl)
     toast.success('QR code URL copied to clipboard')
@@ -219,7 +219,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
   const downloadQRCode = async (qrCode: QRCode) => {
     try {
       // Create QR code data URL that points to the scanning page
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
       const qrData = `${baseUrl}/qr-scan/${qrCode.code_hash}`
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`
       
@@ -492,7 +492,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
             <div className="space-y-4">
               <div className="flex justify-center">
                 <Image
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr-scan/${viewingQRCode.code_hash}`)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/qr-scan/${viewingQRCode.code_hash}`)}`}
                   alt={`QR Code for ${viewingQRCode.name}`}
                   width={300}
                   height={300}
@@ -512,7 +512,7 @@ export function ProjectQRCodes({ projectId, userId }: ProjectQRCodesProps) {
                 <div className="text-sm">
                   <span className="font-medium">QR URL:</span> 
                   <code className="ml-2 px-2 py-1 bg-gray-100 rounded text-xs break-all">
-                    {`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr-scan/${viewingQRCode.code_hash}`}
+                    {`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/qr-scan/${viewingQRCode.code_hash}`}
                   </code>
                 </div>
               </div>

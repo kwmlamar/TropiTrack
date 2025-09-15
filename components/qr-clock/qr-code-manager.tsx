@@ -106,7 +106,8 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
         const images: Record<string, string> = {}
         for (const qrCode of codes) {
           try {
-            const url = `${window.location.origin}/qr-scan/${qrCode.code_hash}`
+            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+            const url = `${baseUrl}/qr-scan/${qrCode.code_hash}`
             const qrDataUrl = await QRCodeGenerator.toDataURL(url, {
               width: 150,
               margin: 1,
@@ -223,14 +224,16 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
   }
 
   const copyQRCodeUrl = (qrCode: QRCode) => {
-    const url = `${window.location.origin}/qr-scan/${qrCode.code_hash}`
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const url = `${baseUrl}/qr-scan/${qrCode.code_hash}`
     navigator.clipboard.writeText(url)
     toast.success("QR code URL copied to clipboard")
   }
 
   const downloadQRCode = async (qrCode: QRCode) => {
     try {
-      const url = `${window.location.origin}/qr-scan/${qrCode.code_hash}`
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      const url = `${baseUrl}/qr-scan/${qrCode.code_hash}`
       
       // Generate QR code as data URL
       const qrDataUrl = await QRCodeGenerator.toDataURL(url, {
@@ -268,7 +271,8 @@ export function QRCodeManager({ userId }: QRCodeManagerProps) {
 
   const getLargeQRCode = async (qrCode: QRCode) => {
     try {
-      const url = `${window.location.origin}/qr-scan/${qrCode.code_hash}`
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      const url = `${baseUrl}/qr-scan/${qrCode.code_hash}`
       return await QRCodeGenerator.toDataURL(url, {
         width: 400,
         margin: 2,

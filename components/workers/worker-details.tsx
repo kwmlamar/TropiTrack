@@ -29,8 +29,10 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import { getWorkerPinStatus, resetWorkerPin } from '@/lib/data/worker-pins';
+import { getWorkerPinStatus, resetWorkerPin, getWorkerPinForAdmin, testPinForAdminColumn } from '@/lib/data/worker-pins';
 
 export default function WorkerDetails() {
   const params = useParams();
@@ -50,6 +52,9 @@ export default function WorkerDetails() {
     attempts: number
   } | null>(null);
   const [pinLoading, setPinLoading] = useState(false);
+  const [adminPin, setAdminPin] = useState<string | null>(null);
+  const [showAdminPin, setShowAdminPin] = useState(false);
+  const [adminPinError, setAdminPinError] = useState<string | null>(null);
 
 
 
@@ -70,9 +75,34 @@ export default function WorkerDetails() {
     }
   };
 
+  // Load admin PIN
+  const loadAdminPin = async () => {
+    if (!worker?.id) return;
+    
+    try {
+      console.log('Loading admin PIN for worker:', worker.id);
+      const result = await getWorkerPinForAdmin(worker.id);
+      console.log('Admin PIN result:', result);
+      if (result.success) {
+        console.log('Setting admin PIN to:', result.data);
+        setAdminPin(result.data);
+        setAdminPinError(null);
+      } else {
+        console.error('Failed to get admin PIN:', result.error);
+        setAdminPin(null);
+        setAdminPinError(result.error || 'Failed to load admin PIN');
+      }
+    } catch (error) {
+      console.error('Failed to load admin PIN:', error);
+      setAdminPin(null);
+      setAdminPinError('Failed to load admin PIN');
+    }
+  };
+
   const handlePinSet = () => {
     setShowPinSetup(false);
     loadPinStatus(); // Refresh the status
+    loadAdminPin(); // Refresh the admin PIN
   };
 
   const handleResetPin = async () => {
@@ -82,6 +112,7 @@ export default function WorkerDetails() {
       const result = await resetWorkerPin("", worker.id); // Empty userId for now
       if (result.success) {
         loadPinStatus();
+        loadAdminPin();
       }
     } catch (error) {
       console.error('Failed to reset PIN:', error);
@@ -124,10 +155,15 @@ export default function WorkerDetails() {
     loadData();
   }, [params.id]);
 
-  // Load PIN status when worker changes
+  // Load PIN status and admin PIN when worker changes
   useEffect(() => {
     if (worker) {
       loadPinStatus();
+      loadAdminPin();
+      // Test if column exists
+      testPinForAdminColumn().then(result => {
+        setColumnExists(result.success ? result.data : false);
+      });
     }
   }, [worker]);
 
@@ -520,95 +556,173 @@ export default function WorkerDetails() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="pin" className="space-y-4">
+            <TabsContent value="pin" className="container mx-auto py-4 space-y-6">
               {showPinSetup ? (
-                <WorkerPinSetup
-                  workerId={worker.id}
-                  workerName={worker.name}
-                  onPinSet={handlePinSet}
-                  onCancel={() => setShowPinSetup(false)}
-                />
+                <div className="max-w-2xl mx-auto">
+                  <WorkerPinSetup
+                    workerId={worker.id}
+                    workerName={worker.name}
+                    onPinSet={handlePinSet}
+                    onCancel={() => setShowPinSetup(false)}
+                  />
+                </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Header Section */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">PIN Authentication</h3>
+                    <div className="space-y-1">
+                      <h3 className="text-2xl font-bold tracking-tight">PIN Authentication</h3>
+                      <p className="text-gray-500">
+                        Manage {worker.name}&apos;s PIN for secure QR code clock-in/out verification
+                      </p>
+                    </div>
                     <Button
                       onClick={() => setShowPinSetup(true)}
+                      className="flex items-center gap-2"
+                      size="lg"
                     >
+                      <Key className="h-4 w-4" />
                       {pinStatus?.hasPin ? 'Update PIN' : 'Set PIN'}
                     </Button>
                   </div>
                   
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Shield className="h-5 w-5" />
-                        PIN Status
+                  {/* Main PIN Status Card */}
+                  <Card className="border-border/50 bg-sidebar">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Shield className="h-6 w-6 text-primary" />
+                        </div>
+                        PIN Status & Information
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-6">
                       {pinLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        <div className="flex items-center justify-center py-12">
+                          <div className="text-center space-y-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                            <p className="text-foreground">Loading PIN status...</p>
+                          </div>
                         </div>
                       ) : pinStatus ? (
-                        <div className="space-y-4">
-                          {/* Status Badge */}
-                          <div className="flex items-center gap-2">
-                            {pinStatus.hasPin ? (
-                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800 flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3" />
-                                PIN Set
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 border-red-200 dark:border-red-800 flex items-center gap-1">
-                                <XCircle className="h-3 w-3" />
-                                No PIN
-                              </Badge>
-                            )}
-                            
-                            {pinStatus.isLocked && (
-                              <Badge variant="destructive" className="flex items-center gap-1">
-                                <AlertTriangle className="h-3 w-3" />
-                                Locked
-                              </Badge>
-                            )}
+                        <div className="space-y-6">
+                          {/* Status Overview */}
+                          <div className="grid gap-4 md:grid-cols-2">
+                            {/* Status Card */}
+                            <Card className="p-4 border-border/30 bg-background/50">
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="font-semibold text-sm text-foreground uppercase tracking-wide">Status</h4>
+                                {pinStatus.hasPin ? (
+                                  <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 flex items-center gap-1.5 px-3 py-1">
+                                    <CheckCircle className="h-3 w-3" />
+                                    PIN Configured
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20 flex items-center gap-1.5 px-3 py-1">
+                                    <XCircle className="h-3 w-3" />
+                                    No PIN Set
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              {pinStatus.isLocked && (
+                                <div className="mt-3">
+                                  <Badge variant="destructive" className="flex items-center gap-1.5 px-3 py-1">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    Account Locked
+                                  </Badge>
+                                </div>
+                              )}
+
+                              {/* PIN Display */}
+                              {pinStatus.hasPin && (
+                                <div className="mt-4 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Key className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">PIN:</span>
+                                      {showAdminPin && adminPin && adminPin.length === 4 ? (
+                                        <span className="text-lg font-mono font-bold text-primary">
+                                          {adminPin}
+                                        </span>
+                                      ) : (
+                                        <span className="text-lg font-mono text-foreground">
+                                          ••••
+                                        </span>
+                                      )}
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setShowAdminPin(!showAdminPin)}
+                                      className="h-6 w-6 p-0 hover:bg-transparent"
+                                    >
+                                      {showAdminPin ? (
+                                        <EyeOff className="h-3 w-3 text-muted-foreground" />
+                                      ) : (
+                                        <Eye className="h-3 w-3 text-muted-foreground" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                  {adminPinError && (
+                                    <div className="text-xs text-red-600">
+                                      Error: {adminPinError}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </Card>
+
+                            {/* Usage Statistics */}
+                            <Card className="p-4 border-border/30 bg-background/50">
+                              <h4 className="font-semibold text-sm text-foreground uppercase tracking-wide mb-3">Usage Statistics</h4>
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-foreground">PIN Set Date</span>
+                                  <span className="text-sm font-medium text-foreground">
+                                    {pinStatus.pinSetAt ? new Date(pinStatus.pinSetAt).toLocaleDateString() : 'Not set'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-foreground">Last Used</span>
+                                  <span className="text-sm font-medium text-foreground">
+                                    {pinStatus.pinLastUsed ? new Date(pinStatus.pinLastUsed).toLocaleDateString() : 'Never'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-foreground">Failed Attempts</span>
+                                  <span className="text-sm font-medium text-foreground">
+                                    {pinStatus.attempts || 0}
+                                  </span>
+                                </div>
+                              </div>
+                            </Card>
                           </div>
 
-                          {/* PIN Details */}
-                          {pinStatus.hasPin && (
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-2 gap-4 text-sm">
+                          {/* Security Alerts */}
+                          {pinStatus.attempts > 0 && (
+                            <Card className="p-4 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20">
+                              <div className="flex items-start gap-3">
+                                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                                 <div>
-                                  <p className="text-muted-foreground">PIN Set</p>
-                                  <p className="font-medium">
-                                    {pinStatus.pinSetAt ? new Date(pinStatus.pinSetAt).toLocaleString() : 'Unknown'}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-muted-foreground">Last Used</p>
-                                  <p className="font-medium">
-                                    {pinStatus.pinLastUsed ? new Date(pinStatus.pinLastUsed).toLocaleString() : 'Never'}
+                                  <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
+                                    Security Alert
+                                  </h4>
+                                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                                    {pinStatus.attempts} failed PIN attempt{pinStatus.attempts > 1 ? 's' : ''} detected.
+                                    {pinStatus.attempts >= 5 && " Account is currently locked for security."}
                                   </p>
                                 </div>
                               </div>
-                              
-                              {pinStatus.attempts > 0 && (
-                                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                    <strong>Failed Attempts:</strong> {pinStatus.attempts}
-                                    {pinStatus.attempts >= 5 && " (PIN is locked)"}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
+                            </Card>
                           )}
 
                           {/* Action Buttons */}
-                          <div className="flex gap-3 pt-4">
+                          <div className="flex gap-3 pt-4 border-t border-border/50">
                             <Button
                               onClick={() => setShowPinSetup(true)}
-                              className="flex-1"
+                              className="flex-1 h-11"
+                              size="lg"
                             >
                               <Key className="h-4 w-4 mr-2" />
                               {pinStatus?.hasPin ? 'Update PIN' : 'Set PIN'}
@@ -618,25 +732,52 @@ export default function WorkerDetails() {
                               <Button
                                 variant="outline"
                                 onClick={handleResetPin}
-                                className="flex-1"
+                                className="flex-1 h-11"
+                                size="lg"
                               >
                                 Reset PIN
                               </Button>
                             )}
                           </div>
 
-                          {/* Security Notice */}
-                          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                            <p className="text-sm text-blue-800 dark:text-blue-200">
-                              <strong>Security:</strong> PINs are encrypted and stored securely. 
-                              Workers use their PIN to verify identity when clocking in/out via QR codes.
-                            </p>
-                          </div>
+                          {/* Security Information */}
+                          <Card className="p-4 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/20">
+                            <div className="flex items-start gap-3">
+                              <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                              <div>
+                                <h4 className="font-semibold text-gray-500 mb-2">
+                                  Security Information
+                                </h4>
+                                <ul className="text-sm text-gray-500 space-y-1">
+                                  <li>• PINs are encrypted using bcrypt and stored securely</li>
+                                  <li>• PINs must be exactly 4 digits (numbers only)</li>
+                                  <li>• Account locks after 5 failed attempts for 15 minutes</li>
+                                  <li>• Used for QR code clock-in/out verification</li>
+                                  <li>• Company admins can view PINs for management purposes</li>
+                                  <li>• PINs are stored temporarily for admin access only</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </Card>
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>Failed to load PIN status</p>
+                        <div className="text-center py-12">
+                          <div className="space-y-4">
+                            <Shield className="h-16 w-16 mx-auto text-muted-foreground/50" />
+                            <div>
+                              <h4 className="font-semibold text-lg mb-2 text-foreground">Failed to Load PIN Status</h4>
+                              <p className="text-foreground mb-4">
+                                There was an error loading the PIN information for this worker.
+                              </p>
+                              <Button 
+                                variant="outline" 
+                                onClick={loadPinStatus}
+                                className="flex items-center gap-2"
+                              >
+                                Try Again
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </CardContent>

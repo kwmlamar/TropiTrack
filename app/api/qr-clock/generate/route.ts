@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     if (result.success && result.data) {
       // Generate QR code URL for the frontend
-      const qrCodeUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr-scan/${result.data.code_hash}`
+      const qrCodeUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/qr-scan/${result.data.code_hash}`
       
       return NextResponse.json({
         ...result,

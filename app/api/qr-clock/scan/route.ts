@@ -149,6 +149,8 @@ export async function POST(request: NextRequest) {
     const currentStatus = statusData?.[0]
     const shouldClockIn = !currentStatus?.is_clocked_in
     const eventType = shouldClockIn ? 'clock_in' : 'clock_out'
+    
+    console.log(`[SERVER DEBUG] Worker status:`, { currentStatus, shouldClockIn, eventType })
 
     // Anti-buddy punching checks including location validation
     const securityChecks = await performSecurityChecks(worker_id, project_id, device_info, biometric_data, qrCode, eventType)
@@ -179,8 +181,9 @@ export async function POST(request: NextRequest) {
 
     if (result.success) {
       // If this was a clock out event, try to generate a timesheet
+      console.log(`[SERVER DEBUG] Checking timesheet generation condition: shouldClockIn=${shouldClockIn}`)
       if (shouldClockIn === false) { // This means we just clocked out
-        console.log(`Worker ${worker_id} clocked out, attempting to generate timesheet...`)
+        console.log(`[SERVER DEBUG] Worker ${worker_id} clocked out, attempting to generate timesheet...`)
         try {
           // Use local timezone for date calculation
           const now = new Date()
@@ -198,10 +201,12 @@ export async function POST(request: NextRequest) {
           
           if (timesheetResult.success) {
             console.log(`Successfully generated timesheet: ${timesheetResult.data?.id}`)
+            console.log(`[SERVER DEBUG] Timesheet data:`, timesheetResult.data)
             // Update the success message to include timesheet generation info
             result.message += " Timesheet generated automatically."
           } else {
             console.log(`Failed to generate timesheet: ${timesheetResult.error}`)
+            console.log(`[SERVER DEBUG] Timesheet generation failed with error:`, timesheetResult.error)
             
             // Test: Try to create a simple timesheet manually to see if there are permission issues
             console.log("Testing manual timesheet creation...")

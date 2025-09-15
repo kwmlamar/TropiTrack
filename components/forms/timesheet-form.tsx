@@ -328,10 +328,24 @@ export function TimesheetForm({
       const results = await Promise.all(timesheetPromises);
 
       const failures = results.filter((result) => !result.success);
+      const successes = results.filter((result) => result.success);
+      
       if (failures.length > 0) {
-        setSubmissionError(
-          `${failures.length} out of ${results.length} entries failed to submit.`
+        // Check if all failures are due to duplicate entries
+        const duplicateErrors = failures.filter((failure) => 
+          failure.error?.includes('already exists') || 
+          failure.error?.includes('duplicate key')
         );
+        
+        if (duplicateErrors.length === failures.length) {
+          setSubmissionError(
+            `${duplicateErrors.length} entries were skipped because timesheets already exist for those workers and dates. ${successes.length} new timesheets were created successfully.`
+          );
+        } else {
+          setSubmissionError(
+            `${failures.length} out of ${results.length} entries failed to submit. ${successes.length} entries were created successfully.`
+          );
+        }
       } else {
         // If approval is not required, auto-approve and generate payroll
         if (!requireApproval) {

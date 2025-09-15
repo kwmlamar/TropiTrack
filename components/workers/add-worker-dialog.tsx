@@ -92,7 +92,9 @@ export function AddWorkerDialog({
     setIsSubmitting(true)
     try {
       const result = await createWorker(userId, {
-        ...data,
+        name: data.name,
+        position: data.position,
+        hourly_rate: data.hourly_rate,
         hire_date: new Date().toISOString().split("T")[0], // Today's date
         is_active: true,
         email: undefined, // Use undefined instead of empty string

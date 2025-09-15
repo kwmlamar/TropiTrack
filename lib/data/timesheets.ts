@@ -185,6 +185,33 @@ export async function createTimesheet(
   }
   
   try {
+    // Check if a timesheet already exists for this worker, project, and date
+    const { data: existingTimesheet, error: checkError } = await supabase
+      .from("timesheets")
+      .select("id, worker_id, project_id, date")
+      .eq("worker_id", timesheet.worker_id)
+      .eq("project_id", timesheet.project_id)
+      .eq("date", timesheet.date)
+      .eq("company_id", profile.company_id)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error("Error checking for existing timesheet:", checkError);
+      return {
+        data: null,
+        error: "Error checking for existing timesheet",
+        success: false,
+      };
+    }
+
+    if (existingTimesheet) {
+      return {
+        data: null,
+        error: `A timesheet already exists for this worker on ${timesheet.date} for the selected project. Please edit the existing timesheet instead.`,
+        success: false,
+      };
+    }
+
     // Fetch worker's hourly rate
     const { data: workerData, error: workerError } = await supabase
       .from("workers")
@@ -225,6 +252,16 @@ export async function createTimesheet(
 
     if (error) {
       console.error("Error creating timesheet:", error);
+      
+      // Handle specific duplicate key error
+      if (error.code === '23505') {
+        return {
+          data: null,
+          error: `A timesheet already exists for this worker on ${timesheet.date} for the selected project. Please edit the existing timesheet instead.`,
+          success: false,
+        };
+      }
+      
       return {
         data: null,
         error: error instanceof Error ? error.message : "Unknown error occurred",
@@ -392,6 +429,62 @@ export async function bulkUpdateTimesheets(
     };
   } catch (error) {
     console.error("Unexpected error in bulk update:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
+/**
+ * Check if a timesheet already exists for a worker, project, and date
+ */
+export async function checkExistingTimesheet(
+  userId: string,
+  workerId: string,
+  projectId: string,
+  date: string
+): Promise<ApiResponse<{ exists: boolean; timesheetId?: string }>> {
+  const profile = await getProfile(userId);
+  
+  if (!profile) {
+    return {
+      data: null,
+      error: "User profile not found",
+      success: false,
+    };
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from("timesheets")
+      .select("id")
+      .eq("worker_id", workerId)
+      .eq("project_id", projectId)
+      .eq("date", date)
+      .eq("company_id", profile.company_id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error("Error checking for existing timesheet:", error);
+      return {
+        data: null,
+        error: "Error checking for existing timesheet",
+        success: false,
+      };
+    }
+
+    return {
+      data: {
+        exists: !!data,
+        timesheetId: data?.id
+      },
+      error: null,
+      success: true,
+    };
+  } catch (error) {
+    console.error("Unexpected error checking for existing timesheet:", error);
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",

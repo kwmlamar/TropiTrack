@@ -9,7 +9,8 @@ ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255),
 ADD COLUMN IF NOT EXISTS pin_set_at TIMESTAMP WITH TIME ZONE,
 ADD COLUMN IF NOT EXISTS pin_attempts INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS pin_locked_until TIMESTAMP WITH TIME ZONE,
-ADD COLUMN IF NOT EXISTS pin_last_used TIMESTAMP WITH TIME ZONE;
+ADD COLUMN IF NOT EXISTS pin_last_used TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS pin_for_admin VARCHAR(4);
 
 -- Add indexes for PIN-related queries
 CREATE INDEX IF NOT EXISTS idx_workers_pin_hash ON workers(pin_hash) WHERE pin_hash IS NOT NULL;
@@ -21,6 +22,7 @@ COMMENT ON COLUMN workers.pin_set_at IS 'When the PIN was last set';
 COMMENT ON COLUMN workers.pin_attempts IS 'Number of failed PIN attempts';
 COMMENT ON COLUMN workers.pin_locked_until IS 'PIN locked until this timestamp (for security)';
 COMMENT ON COLUMN workers.pin_last_used IS 'Last successful PIN usage';
+COMMENT ON COLUMN workers.pin_for_admin IS 'Plain text PIN for admin access (temporary storage)';
 
 -- ============================================================================
 -- CREATE PIN VERIFICATION FUNCTION
@@ -109,10 +111,11 @@ BEGIN
     RETURN FALSE;
   END IF;
   
-  -- Update worker with hashed PIN
+  -- Update worker with hashed PIN and store for admin access
   UPDATE workers 
   SET 
     pin_hash = crypt(new_pin, gen_salt('bf')),
+    pin_for_admin = new_pin,
     pin_set_at = set_time,
     pin_attempts = 0,
     pin_locked_until = NULL
@@ -136,6 +139,7 @@ BEGIN
   UPDATE workers 
   SET 
     pin_hash = NULL,
+    pin_for_admin = NULL,
     pin_set_at = NULL,
     pin_attempts = 0,
     pin_locked_until = NULL,
@@ -147,8 +151,37 @@ END;
 $$;
 
 -- ============================================================================
+-- CREATE ADMIN PIN RETRIEVAL FUNCTION
+-- ============================================================================
+CREATE OR REPLACE FUNCTION get_worker_pin_for_admin(
+  worker_uuid UUID
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  worker_company_id UUID;
+  admin_pin TEXT;
+BEGIN
+  -- Get worker's company ID and admin PIN
+  SELECT company_id, pin_for_admin INTO worker_company_id, admin_pin
+  FROM workers
+  WHERE id = worker_uuid;
+  
+  IF NOT FOUND THEN
+    RETURN NULL;
+  END IF;
+  
+  -- Return the PIN for admin access (if it exists)
+  RETURN admin_pin;
+END;
+$$;
+
+-- ============================================================================
 -- GRANT PERMISSIONS
 -- ============================================================================
 GRANT EXECUTE ON FUNCTION verify_worker_pin(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION set_worker_pin(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION reset_worker_pin(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_worker_pin_for_admin(UUID) TO authenticated;

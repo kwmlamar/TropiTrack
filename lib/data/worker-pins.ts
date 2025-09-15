@@ -19,17 +19,19 @@ export async function setWorkerPin(
       }
     }
 
-    const { data, error } = await supabase.rpc('set_worker_pin', {
-      worker_uuid: workerId,
-      new_pin: pin
-    })
+          // Update worker PIN directly with proper bcrypt hashing
+          const { error: directError } = await supabase
+            .rpc('set_worker_pin', {
+              worker_uuid: workerId,
+              new_pin: pin
+            })
 
-    if (error) {
-      console.error("Error setting worker PIN:", error)
-      return { data: false, error: error.message, success: false }
+    if (directError) {
+      console.error("Direct update failed:", directError)
+      return { data: false, error: directError.message, success: false }
     }
 
-    return { data: data as boolean, error: null, success: true }
+    return { data: true, error: null, success: true }
   } catch (error) {
     console.error("Unexpected error setting worker PIN:", error)
     return {
@@ -162,6 +164,92 @@ export async function getWorkerPinStatus(workerId: string): Promise<ApiResponse<
     }
   } catch (error) {
     console.error("Unexpected error getting worker PIN status:", error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false
+    }
+  }
+}
+
+/**
+ * Test if the pin_for_admin column exists
+ */
+export async function testPinForAdminColumn(): Promise<ApiResponse<boolean>> {
+  try {
+    console.log("Testing if pin_for_admin column exists...");
+    const { error } = await supabase
+      .from("workers")
+      .select("pin_for_admin")
+      .limit(1);
+
+    if (error) {
+      console.log("pin_for_admin column test failed:", error);
+      return { data: false, error: error.message, success: false };
+    }
+
+    console.log("pin_for_admin column exists:", true);
+    return { data: true, error: null, success: true };
+  } catch (error) {
+    console.log("pin_for_admin column test error:", error);
+    return { data: false, error: error instanceof Error ? error.message : "Unknown error", success: false };
+  }
+}
+
+/**
+ * Get worker PIN for admin access
+ */
+export async function getWorkerPinForAdmin(workerId: string): Promise<ApiResponse<string | null>> {
+  try {
+    console.log("Getting admin PIN for workerId:", workerId);
+    
+    // First try the RPC function
+    try {
+      const { data, error } = await supabase.rpc('get_worker_pin_for_admin', {
+        worker_uuid: workerId
+      })
+
+      console.log("RPC call result - data:", data, "error:", error);
+
+      if (!error && data) {
+        console.log("Returning admin PIN from RPC:", data);
+        return { data: data as string | null, error: null, success: true }
+      }
+      
+      console.log("RPC failed or returned empty, trying direct query. Error:", error);
+    } catch (rpcError) {
+      console.log("RPC call failed, trying direct query. Error:", rpcError);
+    }
+    
+    // Fallback: direct query to workers table
+    console.log("Trying direct query to workers table");
+    const { data, error } = await supabase
+      .from("workers")
+      .select("pin_for_admin, pin_hash")
+      .eq("id", workerId)
+      .single()
+
+    console.log("Direct query result - data:", data, "error:", error);
+
+    if (error) {
+      console.error("Error getting worker PIN for admin:", error)
+      return { data: null, error: error.message, success: false }
+    }
+
+    // If we have a PIN hash but no admin PIN, the PIN was set before the migration
+    if (data?.pin_hash && !data?.pin_for_admin) {
+      console.log("PIN exists but admin PIN is missing - PIN was set before migration");
+      return { 
+        data: null, 
+        error: "PIN exists but admin access not available. Please reset and set PIN again.", 
+        success: false 
+      }
+    }
+
+    console.log("Returning admin PIN from direct query:", data?.pin_for_admin);
+    return { data: data?.pin_for_admin || null, error: null, success: true }
+  } catch (error) {
+    console.error("Unexpected error getting worker PIN for admin:", error)
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown error occurred",

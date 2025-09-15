@@ -230,7 +230,6 @@ export default function QRScanPage({ params }: QRScanPageProps) {
       console.log("PIN status result:", result)
       
       if (result.success) {
-        setWorkerHasPin(result.data)
         if (result.data) {
           // Worker has PIN, go to verification
           console.log("Worker has PIN, going to verification")
@@ -287,7 +286,6 @@ export default function QRScanPage({ params }: QRScanPageProps) {
 
       // PIN set successfully, proceed to verification
       toast.success("PIN set successfully!")
-      setWorkerHasPin(true)
       setAuthStep('biometric')
       
     } catch (error) {
@@ -443,7 +441,6 @@ export default function QRScanPage({ params }: QRScanPageProps) {
     setPin('')
     setConfirmPin('')
     setShowPinSetup(false)
-    setWorkerHasPin(null)
     setScanResult(null)
   }
 
