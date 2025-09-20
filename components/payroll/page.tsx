@@ -11,7 +11,7 @@ import type { DateRange } from "react-day-picker"
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown } from "lucide-react"
+import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown, Plus } from "lucide-react"
 import { updatePayrollStatus, checkPendingTimesheetsForPayrolls } from "@/lib/data/payroll"
 import { toast } from "sonner"
 
@@ -168,6 +168,7 @@ export default function PayrollPage({ user }: { user: User }) {
   const [newAmount, setNewAmount] = useState("")
   const [adding, setAdding] = useState(false)
   const [paymentType, setPaymentType] = useState<"net" | "gross">("net")
+  const [showConfirmPayrollModal, setShowConfirmPayrollModal] = useState(false)
 
   // Table state for inline editing
   const [editingPaymentAmount, setEditingPaymentAmount] = useState<string | null>(null)
@@ -243,7 +244,7 @@ export default function PayrollPage({ user }: { user: User }) {
     }
   }, [searchParams])
 
-  const loadPayroll = async () => {
+  const loadPayroll = async (forceRefresh = false) => {
     console.log('loadPayroll called', { isLoading, dateRange, payPeriodType });
     
     // Prevent multiple simultaneous loads
@@ -286,8 +287,8 @@ export default function PayrollPage({ user }: { user: User }) {
       const cachedData = payrollCacheRef.current.get(cacheKey)
       const now = Date.now()
       
-      // Check if we have valid cached data
-      if (cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
+      // Check if we have valid cached data (skip cache if forceRefresh is true)
+      if (!forceRefresh && cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
         console.log('loadPayroll: using cached data');
         if (isMountedRef.current) {
           setPayrolls(cachedData.data)
@@ -559,7 +560,10 @@ export default function PayrollPage({ user }: { user: User }) {
       toast.success(`Successfully confirmed ${selectedPayrollIds.size} payroll entries.`)
       setSelectedPayrollIds(new Set())
       if (isMountedRef.current) {
-        loadPayroll() // Refresh payroll data
+        // Add a small delay to ensure database update has completed
+        setTimeout(() => {
+          loadPayroll(true) // Force refresh payroll data
+        }, 500)
       }
     } else {
       toast.error("Failed to confirm payroll entries.", {
@@ -624,7 +628,7 @@ export default function PayrollPage({ user }: { user: User }) {
       toast.success("Selected payrolls marked as paid.")
       setSelectedPayrollIds(new Set())
       if (isMountedRef.current) {
-        loadPayroll() // Refresh payroll data
+        loadPayroll(true) // Force refresh payroll data
       }
     } else {
       toast.error("Failed to mark payrolls as paid.", {
@@ -774,6 +778,10 @@ export default function PayrollPage({ user }: { user: User }) {
     setPaymentAmountValue("")
   }
 
+  const handlePendingPayrollClick = () => {
+    setShowConfirmPayrollModal(true)
+  }
+
   const handleDeletePayroll = async (payrollId: string) => {
     if (!confirm("Are you sure you want to delete this payroll record? This action cannot be undone.")) {
       return
@@ -846,7 +854,7 @@ export default function PayrollPage({ user }: { user: User }) {
       totalNIB: calculatePercentageChange(currentTotalNIB, previousPeriodData.totalNIB),
       totalUnpaid: calculatePercentageChange(currentTotalUnpaid, previousPeriodData.totalUnpaid)
     };
-  }, [currentPeriodData, previousPeriodData]);
+  }, [currentPeriodData, previousPeriodData, payrolls.length]);
 
   const getStatusBadge = (status: PayrollRecord['status']) => {
     const labels = {
@@ -1010,7 +1018,7 @@ export default function PayrollPage({ user }: { user: User }) {
             <Card className="bg-sidebar border border-border/50 shadow-none">
               <CardContent className="px-4 py-0">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Unpaid Balance</p>
+                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Balance</p>
                   <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
@@ -1246,14 +1254,14 @@ export default function PayrollPage({ user }: { user: User }) {
                                 if (isEditing) {
                                   return (
                                     <div className="space-y-2 min-w-[120px]">
-                                      <Input
-                                        type="number"
-                                        value={paymentAmountValue}
-                                        onChange={(e) => setPaymentAmountValue(e.target.value)}
-                                        className="w-full h-8 text-center text-sm border-muted/50 focus:border-primary"
-                                        step="0.01"
-                                        min="0"
-                                        placeholder="0.00"
+                                        <Input
+                                          type="number"
+                                          value={paymentAmountValue}
+                                          onChange={(e) => setPaymentAmountValue(e.target.value)}
+                                          className="w-full h-8 text-center text-sm border-muted/50 focus:border-primary"
+                                          step="1"
+                                          min="0"
+                                          placeholder="0"
                                         onKeyDown={(e) => {
                                           if (e.key === "Enter") {
                                             handlePaymentAmountSave(payroll.id)
@@ -1298,9 +1306,10 @@ export default function PayrollPage({ user }: { user: User }) {
                                       totalPaid === 0 ? (
                                         <button
                                           onClick={() => handlePaymentAmountEdit(payroll.id, "0")}
-                                          className="font-medium text-gray-500 hover:text-foreground cursor-pointer text-center w-full"
+                                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-gray-700 border border-gray-200 rounded-md transition-colors w-full justify-start"
                                         >
-                                          -
+                                          <Plus className="w-4 h-4" />
+                                          Set Amount
                                         </button>
                                       ) : (
                                         <button
@@ -1317,7 +1326,13 @@ export default function PayrollPage({ user }: { user: User }) {
                                     ) : (
                                       <span className="font-medium text-gray-400">
                                         {totalPaid === 0 ? (
-                                          "-"
+                                          <button
+                                            onClick={() => handlePendingPayrollClick(payroll.id)}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 hover:text-gray-500 transition-colors cursor-pointer"
+                                          >
+                                            <Plus className="w-4 h-4" />
+                                            Set Amount
+                                          </button>
                                         ) : (
                                           new Intl.NumberFormat("en-BS", {
                                             style: "currency",
@@ -1401,10 +1416,33 @@ export default function PayrollPage({ user }: { user: User }) {
                                     <span className="sr-only">Open menu</span>
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuContent align="end" className="w-48">
+                                  {payroll.status === "pending" && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSelectedPayrollIds(new Set([payroll.id]))
+                                        handlePreviewAndConfirm()
+                                      }}
+                                      className="text-gray-500 focus:text-gray-500"
+                                    >
+                                      Confirm Payroll
+                                    </DropdownMenuItem>
+                                  )}
+                                  {payroll.status === "confirmed" && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSelectedPayrollIds(new Set([payroll.id]))
+                                        handleMarkAsPaid()
+                                      }}
+                                      className="text-gray-500 focus:text-gray-500"
+                                    >
+                                      Mark as Paid
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={() => handleDeletePayroll(payroll.id)}
-                                    className="text-red-600 focus:text-red-600"
+                                    className="text-gray-500 focus:text-gray-500"
                                   >
                                     Delete Payroll
                                   </DropdownMenuItem>
@@ -1662,6 +1700,36 @@ export default function PayrollPage({ user }: { user: User }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Payroll Modal */}
+      <Dialog open={showConfirmPayrollModal} onOpenChange={setShowConfirmPayrollModal}>
+        <DialogContent className="w-80 max-w-[calc(100vw-2rem)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirm Payroll First
+            </DialogTitle>
+            <DialogDescription>
+              Please confirm the payroll before setting payment amounts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <p className="text-sm text-amber-700">
+                  Payroll must be confirmed before payment amounts can be set.
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmPayrollModal(false)}>
+              Got It
             </Button>
           </DialogFooter>
         </DialogContent>

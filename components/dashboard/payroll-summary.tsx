@@ -206,13 +206,24 @@ export function PayrollSummary() {
   const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium text-sm">{label}</p>
-          {payload.map((entry, index: number) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: {formatCurrency(entry.value)}
-            </p>
-          ))}
+        <div className="bg-background/95 backdrop-blur-sm border border-border/50 rounded-xl p-4 shadow-xl">
+          <p className="font-semibold text-sm text-foreground mb-3">{label}</p>
+          <div className="space-y-2">
+            {payload.map((entry, index: number) => (
+              <div key={index} className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">{entry.name}</span>
+                </div>
+                <span className="text-sm font-semibold text-foreground">
+                  {formatCurrency(entry.value)}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )
     }
@@ -222,14 +233,14 @@ export function PayrollSummary() {
   const CustomLegend = (props: unknown) => {
     const { payload } = props as { payload?: Array<{ value: string; color: string }> }
     return (
-      <div className="flex justify-center gap-4 mt-2">
+      <div className="flex justify-center gap-6 mt-4">
         {payload?.map((entry: { value: string; color: string }, index: number) => (
-          <div key={index} className="flex items-center gap-2 text-gray-500">
+          <div key={index} className="flex items-center gap-2">
             <div 
-              className="w-3 h-0.5" 
+              className="w-3 h-3 rounded-full" 
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-sm">{entry.value}</span>
+            <span className="text-sm font-medium text-gray-500">{entry.value}</span>
           </div>
         ))}
       </div>
@@ -315,17 +326,44 @@ export function PayrollSummary() {
       <CardContent className="space-y-4 flex-1">
         <div className="h-64 flex-1">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <defs>
+                <linearGradient id="grossPayGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                </linearGradient>
+                <linearGradient id="netPayGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.1}/>
+                </linearGradient>
+                <linearGradient id="nibGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid 
+                strokeDasharray="1 4" 
+                stroke="hsl(var(--muted-foreground))" 
+                strokeOpacity={0.2}
+                vertical={false}
+              />
               <XAxis 
                 dataKey="date" 
-                stroke="#64748b"
-                fontSize={12}
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                fontWeight={500}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
               />
               <YAxis 
-                stroke="#64748b"
-                fontSize={12}
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                fontWeight={500}
                 tickFormatter={formatCurrency}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend content={<CustomLegend />} />
@@ -333,25 +371,61 @@ export function PayrollSummary() {
                 type="monotone" 
                 dataKey="gross_pay" 
                 stroke="#3b82f6" 
-                strokeWidth={2}
+                strokeWidth={3}
                 name="Gross Pay"
-                dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                dot={{ 
+                  fill: "#3b82f6", 
+                  strokeWidth: 0, 
+                  r: 5,
+                  filter: "drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3))"
+                }}
+                activeDot={{ 
+                  r: 7, 
+                  fill: "#3b82f6",
+                  stroke: "#ffffff",
+                  strokeWidth: 2,
+                  filter: "drop-shadow(0 4px 8px rgba(59, 130, 246, 0.4))"
+                }}
               />
               <Line 
                 type="monotone" 
                 dataKey="net_pay" 
                 stroke="#10b981" 
-                strokeWidth={2}
+                strokeWidth={3}
                 name="Net Pay"
-                dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
+                dot={{ 
+                  fill: "#10b981", 
+                  strokeWidth: 0, 
+                  r: 5,
+                  filter: "drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3))"
+                }}
+                activeDot={{ 
+                  r: 7, 
+                  fill: "#10b981",
+                  stroke: "#ffffff",
+                  strokeWidth: 2,
+                  filter: "drop-shadow(0 4px 8px rgba(16, 185, 129, 0.4))"
+                }}
               />
               <Line 
                 type="monotone" 
                 dataKey="nib_deduction" 
-                stroke="#ef4444" 
-                strokeWidth={2}
+                stroke="#f59e0b" 
+                strokeWidth={3}
                 name="NIB Deductions"
-                dot={{ fill: "#ef4444", strokeWidth: 2, r: 4 }}
+                dot={{ 
+                  fill: "#f59e0b", 
+                  strokeWidth: 0, 
+                  r: 5,
+                  filter: "drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3))"
+                }}
+                activeDot={{ 
+                  r: 7, 
+                  fill: "#f59e0b",
+                  stroke: "#ffffff",
+                  strokeWidth: 2,
+                  filter: "drop-shadow(0 4px 8px rgba(245, 158, 11, 0.4))"
+                }}
               />
             </LineChart>
           </ResponsiveContainer>
