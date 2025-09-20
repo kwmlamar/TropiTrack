@@ -782,6 +782,44 @@ export default function PayrollPage({ user }: { user: User }) {
     setShowConfirmPayrollModal(true)
   }
 
+  const handleReverseStatus = async (payrollId: string, newStatus: "pending" | "confirmed") => {
+    const payroll = payrolls.find(p => p.id === payrollId)
+    if (!payroll) return
+
+    const statusLabels = {
+      pending: "Pending",
+      confirmed: "Confirmed", 
+      paid: "Paid"
+    }
+
+    const confirmMessage = `Are you sure you want to revert "${payroll.worker_name}" from ${statusLabels[payroll.status]} to ${statusLabels[newStatus]}?`
+    
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    try {
+      const result = await updatePayrollStatus([payrollId], newStatus)
+      
+      if (result.success) {
+        toast.success(`Payroll status reverted to ${statusLabels[newStatus]}`)
+        if (isMountedRef.current) {
+          // Add a small delay to ensure database update has completed
+          setTimeout(() => {
+            loadPayroll(true) // Force refresh payroll data
+          }, 500)
+        }
+      } else {
+        toast.error("Failed to revert payroll status", {
+          description: result.error || "An unknown error occurred.",
+        })
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred while reverting payroll status")
+      console.error("Error reverting payroll status:", error)
+    }
+  }
+
   const handleDeletePayroll = async (payrollId: string) => {
     if (!confirm("Are you sure you want to delete this payroll record? This action cannot be undone.")) {
       return
@@ -1429,14 +1467,30 @@ export default function PayrollPage({ user }: { user: User }) {
                                     </DropdownMenuItem>
                                   )}
                                   {payroll.status === "confirmed" && (
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          setSelectedPayrollIds(new Set([payroll.id]))
+                                          handleMarkAsPaid()
+                                        }}
+                                        className="text-gray-500 focus:text-gray-500"
+                                      >
+                                        Mark as Paid
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handleReverseStatus(payroll.id, "pending")}
+                                        className="text-amber-600 focus:text-amber-600"
+                                      >
+                                        Revert to Pending
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  {payroll.status === "paid" && (
                                     <DropdownMenuItem
-                                      onClick={() => {
-                                        setSelectedPayrollIds(new Set([payroll.id]))
-                                        handleMarkAsPaid()
-                                      }}
-                                      className="text-gray-500 focus:text-gray-500"
+                                      onClick={() => handleReverseStatus(payroll.id, "confirmed")}
+                                      className="text-amber-600 focus:text-amber-600"
                                     >
-                                      Mark as Paid
+                                      Revert to Confirmed
                                     </DropdownMenuItem>
                                   )}
                                   <DropdownMenuSeparator />
@@ -1453,8 +1507,32 @@ export default function PayrollPage({ user }: { user: User }) {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={9} className="h-24 text-center px-4">
-                            No results.
+                          <TableCell colSpan={9} className="h-32 text-center px-4">
+                            <div className="flex flex-col items-center justify-center space-y-3 py-8">
+                              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                                <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                                  {selectedStatus !== "all" 
+                                    ? `No payroll records with "${selectedStatus}" status for the selected period.`
+                                    : "No payroll records found for the selected date range. Try adjusting your filters or date range."
+                                  }
+                                </p>
+                              </div>
+                              {selectedStatus !== "all" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedStatus("all")}
+                                  className="text-xs"
+                                >
+                                  Clear Status Filter
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
