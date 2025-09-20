@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ChevronLeft, ChevronRight, MoreVertical } from "lucide-react"
+import { ChevronLeft, ChevronRight, MoreVertical, CheckCircle2 } from "lucide-react"
 import type { PayrollRecord } from "@/lib/types"
 import { setPayrollPaymentAmount } from "@/lib/data/payroll"
 import { toast } from "sonner"
@@ -186,12 +186,12 @@ export function PayrollTable({
 
         if (isEditing) {
           return (
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-[120px]">
               <Input
                 type="number"
                 value={paymentAmountValue}
                 onChange={(e) => setPaymentAmountValue(e.target.value)}
-                className="w-20 h-8 text-center text-sm border-muted/50 focus:border-primary"
+                className="w-full h-8 text-center text-sm border-muted/50 focus:border-primary"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
@@ -204,6 +204,7 @@ export function PayrollTable({
                 }}
                 autoFocus
               />
+              
               <div className="flex gap-1">
                 <Button
                   size="sm"
@@ -246,6 +247,60 @@ export function PayrollTable({
                   minimumFractionDigits: 2,
                 }).format(totalPaid)}
               </button>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      id: "remaining_balance",
+      header: "Remaining Balance",
+      cell: ({ row }) => {
+        const totalPaid = row.original.total_paid || 0
+        const isEditing = editingPaymentAmount === row.original.id
+        
+        // Use current input value if editing, otherwise use saved totalPaid
+        const currentAmount = isEditing ? (parseFloat(paymentAmountValue) || 0) : totalPaid
+        
+        const grossRemaining = Math.max(0, row.original.gross_pay - currentAmount)
+        const netRemaining = Math.max(0, row.original.net_pay - currentAmount)
+        const isFullyPaid = currentAmount >= row.original.net_pay
+
+        return (
+          <div className="space-y-1">
+            {isFullyPaid ? (
+              <div className="flex items-center gap-1 text-green-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="text-sm font-medium">Fully Paid</span>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {/* Net Pay Remaining (most important) */}
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-gray-500">Net:</span>
+                  <span className="font-medium text-orange-600">
+                    {new Intl.NumberFormat("en-BS", {
+                      style: "currency",
+                      currency: "BSD",
+                      minimumFractionDigits: 0,
+                    }).format(netRemaining)}
+                  </span>
+                </div>
+                
+                {/* Gross Pay Remaining (if different from net) */}
+                {grossRemaining !== netRemaining && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500">Gross:</span>
+                    <span className="font-medium text-orange-600">
+                      {new Intl.NumberFormat("en-BS", {
+                        style: "currency",
+                        currency: "BSD",
+                        minimumFractionDigits: 0,
+                      }).format(grossRemaining)}
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )

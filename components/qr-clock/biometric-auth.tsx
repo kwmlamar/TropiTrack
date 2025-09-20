@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -50,6 +50,27 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
   const [workerStatus] = useState<WorkerClockStatus | null>(null);
   const [webauthnManager] = useState(() => WebAuthnManager.getInstance());
 
+  const checkDeviceCompatibility = useCallback(async () => {
+    try {
+      const compatibility = await webauthnManager.isBiometricAvailable();
+      setDeviceCompatibility(compatibility);
+      
+      if (!compatibility.webauthn) {
+        setError('This device does not support biometric authentication.');
+        setCurrentStep('error');
+      } else if (!worker?.biometric_enrolled) {
+        setError('Worker is not enrolled for biometric authentication.');
+        setCurrentStep('error');
+      } else {
+        setCurrentStep('select');
+      }
+    } catch (err) {
+      console.error('Device compatibility check failed:', err);
+      setError('Failed to check device compatibility.');
+      setCurrentStep('error');
+    }
+  }, [worker?.biometric_enrolled, webauthnManager]);
+
   useEffect(() => {
     // Check device compatibility on mount
     if (worker) {
@@ -76,27 +97,6 @@ export function BiometricAuth({ worker, onAuthSuccess, onAuthError }: BiometricA
       </Card>
     );
   }
-
-  const checkDeviceCompatibility = async () => {
-    try {
-      const compatibility = await webauthnManager.isBiometricAvailable();
-      setDeviceCompatibility(compatibility);
-      
-      if (!compatibility.webauthn) {
-        setError('This device does not support biometric authentication.');
-        setCurrentStep('error');
-      } else if (!worker?.biometric_enrolled) {
-        setError('Worker is not enrolled for biometric authentication.');
-        setCurrentStep('error');
-      } else {
-        setCurrentStep('select');
-      }
-    } catch (err) {
-      console.error('Device compatibility check failed:', err);
-      setError('Failed to check device compatibility.');
-      setCurrentStep('error');
-    }
-  };
 
   const handleTypeSelection = (type: AuthType) => {
     setSelectedType(type);

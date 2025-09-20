@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -46,7 +46,7 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
     radius_meters: "50"
   })
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       // Load project data
@@ -78,7 +78,7 @@ export function ProjectLocationsSection({ projectId, userId }: ProjectLocationsS
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId, projectId])
 
   useEffect(() => {
     loadData()

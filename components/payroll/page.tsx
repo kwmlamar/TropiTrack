@@ -11,8 +11,8 @@ import type { DateRange } from "react-day-picker"
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown } from "lucide-react"
-import { updatePayrollStatus } from "@/lib/data/payroll"
+import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown } from "lucide-react"
+import { updatePayrollStatus, checkPendingTimesheetsForPayrolls } from "@/lib/data/payroll"
 import { toast } from "sonner"
 
 import { Input } from "@/components/ui/input"
@@ -139,6 +139,7 @@ export default function PayrollPage({ user }: { user: User }) {
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
 
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [remainingBalanceView, setRemainingBalanceView] = useState<"net" | "gross" | "both">("gross")
   const [isLoading, setIsLoading] = useState(false)
   const isMountedRef = useRef(true)
   const processedSearchParamsRef = useRef<string>('')
@@ -459,7 +460,7 @@ export default function PayrollPage({ user }: { user: User }) {
   // const totalNetPay = payrolls.reduce((total, payroll) => total + payroll.net_pay, 0);
   // const totalPaid = payrolls.reduce((total, payroll) => total + (payroll.total_paid || 0), 0);
 
-  const handlePreviewAndConfirm = () => {
+  const handlePreviewAndConfirm = async () => {
     if (selectedPayrollIds.size === 0) {
       toast.error("Please select payroll entries to confirm.")
       return
@@ -472,6 +473,38 @@ export default function PayrollPage({ user }: { user: User }) {
     if (nonPendingPayrolls.length > 0) {
       toast.error("Only payroll entries with 'pending' status can be confirmed.")
       return
+    }
+
+    // Check for pending timesheets before confirming payroll
+    const payrollIdsArray = Array.from(selectedPayrollIds)
+    const pendingCheckResult = await checkPendingTimesheetsForPayrolls(payrollIdsArray)
+    
+    if (!pendingCheckResult.success) {
+      toast.error("Failed to check for pending timesheets.", {
+        description: pendingCheckResult.error || "An unknown error occurred.",
+      })
+      return
+    }
+
+    if (pendingCheckResult.data?.hasPendingTimesheets) {
+      const { pendingCount, details } = pendingCheckResult.data
+      
+      // Create detailed message about pending timesheets
+      const affectedPayrolls = details.filter(d => d.pendingCount > 0)
+      const detailsMessage = affectedPayrolls
+        .map(d => `${d.workerName} (${d.payPeriod}): ${d.pendingCount} pending timesheet${d.pendingCount > 1 ? 's' : ''}`)
+        .join('\n')
+      
+      const shouldContinue = confirm(
+        `Warning: ${pendingCount} pending timesheet${pendingCount > 1 ? 's' : ''} found for the selected payroll period${selectedPayrollIds.size > 1 ? 's' : ''}.\n\n` +
+        `Affected payrolls:\n${detailsMessage}\n\n` +
+        `Do you want to continue confirming payroll despite having pending timesheets?`
+      )
+      
+      if (!shouldContinue) {
+        toast.info("Payroll confirmation cancelled.")
+        return
+      }
     }
 
     // Directly confirm payrolls without preview dialog
@@ -932,19 +965,17 @@ export default function PayrollPage({ user }: { user: User }) {
                     }).format(currentPeriodData.totalUnpaid)}
                   </p>
                   <div className="flex items-center gap-1">
-                    {typeof percentageChanges.totalUnpaid === 'number' && percentageChanges.totalUnpaid >= 0 ? (
-                      <TrendingUp className="text-green-600 dark:text-green-600 h-4 w-4" />
+                    {currentPeriodData.totalUnpaid > 0 ? (
+                      <AlertTriangle className="text-orange-600 dark:text-orange-600 h-4 w-4" />
                     ) : (
-                      <TrendingDown className="text-red-600 dark:text-red-600 h-4 w-4" />
+                      <CheckCircle2 className="text-green-600 dark:text-green-600 h-4 w-4" />
                     )}
                     <span className={`text-sm font-medium ${
-                      typeof percentageChanges.totalUnpaid === 'number' && percentageChanges.totalUnpaid >= 0
-                        ? "text-green-600 dark:text-green-600"
-                        : "text-red-600 dark:text-red-600"
+                      currentPeriodData.totalUnpaid > 0
+                        ? "text-orange-600 dark:text-orange-600"
+                        : "text-green-600 dark:text-green-600"
                     }`}>
-                      {typeof percentageChanges.totalUnpaid === 'number'
-                        ? `${percentageChanges.totalUnpaid >= 0 ? '+' : ''}${percentageChanges.totalUnpaid}%`
-                        : '--%'}
+                      {currentPeriodData.totalUnpaid > 0 ? "Unpaid" : "Paid"}
                     </span>
                   </div>
                 </div>
@@ -1057,6 +1088,44 @@ export default function PayrollPage({ user }: { user: User }) {
                         <TableHead className="px-4 text-gray-500">NIB Deduction</TableHead>
                         <TableHead className="px-4 text-gray-500">Net Pay</TableHead>
                         <TableHead className="px-4 text-gray-500">Payment Amount</TableHead>
+                        <TableHead className="px-4 text-gray-500">
+                          <div className="flex items-center gap-2">
+                            <span>Remaining Balance</span>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-muted"
+                                >
+                                  <ChevronDown className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuLabel className="text-xs">View Options</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => setRemainingBalanceView("net")}
+                                  className="text-xs"
+                                >
+                                  Net Pay Only
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => setRemainingBalanceView("gross")}
+                                  className="text-xs"
+                                >
+                                  Gross Pay Only
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => setRemainingBalanceView("both")}
+                                  className="text-xs"
+                                >
+                                  Both Net & Gross
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableHead>
                         <TableHead className="px-4 text-gray-500">Status</TableHead>
                         <TableHead className="px-4 text-gray-500 w-16">Actions</TableHead>
                       </TableRow>
@@ -1122,15 +1191,15 @@ export default function PayrollPage({ user }: { user: User }) {
 
                                 if (isEditing) {
                                   return (
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 min-w-[120px]">
                                       <Input
                                         type="number"
                                         value={paymentAmountValue}
                                         onChange={(e) => setPaymentAmountValue(e.target.value)}
-                                        className="w-20 h-8 text-center text-sm border-muted/50 focus:border-primary"
-                                        step="1"
+                                        className="w-full h-8 text-center text-sm border-muted/50 focus:border-primary"
+                                        step="0.01"
                                         min="0"
-                                        placeholder=""
+                                        placeholder="0.00"
                                         onKeyDown={(e) => {
                                           if (e.key === "Enter") {
                                             handlePaymentAmountSave(payroll.id)
@@ -1209,6 +1278,59 @@ export default function PayrollPage({ user }: { user: User }) {
                               })()}
                             </TableCell>
                             <TableCell className="px-4">
+                              {(() => {
+                                const totalPaid = payroll.total_paid || 0
+                                const isEditing = editingPaymentAmount === payroll.id
+                                
+                                // Use current input value if editing, otherwise use saved totalPaid
+                                const currentAmount = isEditing ? (parseFloat(paymentAmountValue) || 0) : totalPaid
+                                
+                                const grossRemaining = Math.max(0, payroll.gross_pay - currentAmount)
+                                const netRemaining = Math.max(0, payroll.net_pay - currentAmount)
+                                const isFullyPaid = currentAmount >= payroll.gross_pay
+
+                                return (
+                                  <div className="space-y-1">
+                                    {isFullyPaid ? (
+                                      <div className="flex items-center gap-1 text-green-600">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        <span className="text-sm font-medium">Fully Paid</span>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-1">
+                                        {/* Show based on selected view */}
+                                        {(remainingBalanceView === "net" || remainingBalanceView === "both") && (
+                                          <div className="flex items-center gap-1">
+                                            <span className="text-xs text-gray-500">Net:</span>
+                                            <span className="font-medium text-gray-500">
+                                              {new Intl.NumberFormat("en-BS", {
+                                                style: "currency",
+                                                currency: "BSD",
+                                                minimumFractionDigits: 0,
+                                              }).format(netRemaining)}
+                                            </span>
+                                          </div>
+                                        )}
+                                        
+                                        {(remainingBalanceView === "gross" || (remainingBalanceView === "both" && grossRemaining !== netRemaining)) && (
+                                          <div className="flex items-center gap-1">
+                                            <span className="text-xs text-gray-500">Gross:</span>
+                                            <span className="font-medium text-gray-500">
+                                              {new Intl.NumberFormat("en-BS", {
+                                                style: "currency",
+                                                currency: "BSD",
+                                                minimumFractionDigits: 0,
+                                              }).format(grossRemaining)}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })()}
+                            </TableCell>
+                            <TableCell className="px-4">
                               <div className="font-medium text-gray-500">
                                 {getStatusBadge(payroll.status)}
                               </div>
@@ -1239,7 +1361,7 @@ export default function PayrollPage({ user }: { user: User }) {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} className="h-24 text-center px-4">
+                          <TableCell colSpan={9} className="h-24 text-center px-4">
                             No results.
                           </TableCell>
                         </TableRow>
@@ -1412,6 +1534,70 @@ export default function PayrollPage({ user }: { user: User }) {
                       </Select>
                     </div>
                   </div>
+                  
+                  {/* Remaining Balance Display */}
+                  {modalPayroll && (
+                    <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Remaining Balances</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Gross Pay Remaining */}
+                        <div className="space-y-1">
+                          <div className="text-xs text-gray-500">Gross Pay</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium">
+                              {new Intl.NumberFormat("en-BS", {
+                                style: "currency",
+                                currency: "BSD",
+                                minimumFractionDigits: 2,
+                              }).format(Math.max(0, modalPayroll.gross_pay - (payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0) + (parseFloat(newAmount) || 0))))}
+                            </div>
+                            {Math.max(0, modalPayroll.gross_pay - (payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0) + (parseFloat(newAmount) || 0))) <= 0 ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <AlertTriangle className="h-4 w-4 text-orange-600" />
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Net Pay Remaining */}
+                        <div className="space-y-1">
+                          <div className="text-xs text-gray-500">Net Pay</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium">
+                              {new Intl.NumberFormat("en-BS", {
+                                style: "currency",
+                                currency: "BSD",
+                                minimumFractionDigits: 2,
+                              }).format(Math.max(0, modalPayroll.net_pay - (payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0) + (parseFloat(newAmount) || 0))))}
+                            </div>
+                            {Math.max(0, modalPayroll.net_pay - (payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0) + (parseFloat(newAmount) || 0))) <= 0 ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <AlertTriangle className="h-4 w-4 text-orange-600" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Current Payment Preview */}
+                      {newAmount && parseFloat(newAmount) > 0 && (
+                        <div className="pt-2 border-t border-border/50">
+                          <div className="text-xs text-gray-500 mb-1">Payment Preview</div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Adding:</span>
+                            <span className="font-medium">
+                              {new Intl.NumberFormat("en-BS", {
+                                style: "currency",
+                                currency: "BSD",
+                                minimumFractionDigits: 2,
+                              }).format(parseFloat(newAmount))}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   <Button onClick={handleAddPayment} disabled={adding || !newAmount} className="w-full">
                     {adding ? "Adding..." : "Add Payment"}
                   </Button>

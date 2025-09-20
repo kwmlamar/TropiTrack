@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -34,7 +34,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
   const { paymentSchedule } = usePayrollSettings()
 
   // Get week start day from payment schedule
-  const getWeekStartsOn = (): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
+  const getWeekStartsOn = useCallback((): 0 | 1 | 2 | 3 | 4 | 5 | 6 => {
     if (paymentSchedule?.period_start_type === "day_of_week") {
       const dayMap: Record<number, 0 | 1 | 2 | 3 | 4 | 5 | 6> = {
         1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 0,
@@ -42,10 +42,10 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
       return dayMap[paymentSchedule.period_start_day] || 1
     }
     return 6 // Default to Saturday for construction industry
-  }
+  }, [paymentSchedule?.period_start_type, paymentSchedule?.period_start_day])
 
   // Calculate date ranges
-  const getDateRange = (range: string) => {
+  const getDateRange = useCallback((range: string) => {
     const now = new Date()
     const weekStartsOn = getWeekStartsOn()
     
@@ -83,7 +83,7 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
           to: endOfWeek(now, { weekStartsOn })
         }
     }
-  }
+  }, [customDateRange, getWeekStartsOn])
 
   // Filter payrolls based on selected date range
   const filteredPayrolls = useMemo(() => {

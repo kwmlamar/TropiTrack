@@ -171,6 +171,76 @@ export async function updatePayroll(input: UpdatePayrollInput): Promise<ApiRespo
   }
 }
 
+/**
+ * Check for pending timesheets in the pay periods of the given payroll records
+ */
+export async function checkPendingTimesheetsForPayrolls(
+  payrollIds: string[]
+): Promise<ApiResponse<{ hasPendingTimesheets: boolean; pendingCount: number; details: Array<{ payrollId: string; workerName: string; payPeriod: string; pendingCount: number }> }>> {
+  try {
+    // First, get the payroll records to get their pay periods and worker IDs
+    const { data: payrolls, error: payrollError } = await supabase
+      .from("payroll")
+      .select("id, worker_id, worker_name, pay_period_start, pay_period_end, company_id")
+      .in("id", payrollIds);
+
+    if (payrollError) {
+      return { data: null, error: payrollError.message, success: false };
+    }
+
+    if (!payrolls || payrolls.length === 0) {
+      return { data: { hasPendingTimesheets: false, pendingCount: 0, details: [] }, error: null, success: true };
+    }
+
+    const details: Array<{ payrollId: string; workerName: string; payPeriod: string; pendingCount: number }> = [];
+    let totalPendingCount = 0;
+    let hasPendingTimesheets = false;
+
+    // Check for pending timesheets for each payroll record
+    for (const payroll of payrolls) {
+      const { data: pendingTimesheets, error: timesheetError } = await supabase
+        .from("timesheets")
+        .select("id")
+        .eq("worker_id", payroll.worker_id)
+        .eq("company_id", payroll.company_id)
+        .eq("supervisor_approval", "pending")
+        .gte("date", payroll.pay_period_start)
+        .lte("date", payroll.pay_period_end);
+
+      if (timesheetError) {
+        console.error(`[CheckPendingTimesheets] Error checking timesheets for payroll ${payroll.id}:`, timesheetError);
+        continue;
+      }
+
+      const pendingCount = pendingTimesheets?.length || 0;
+      if (pendingCount > 0) {
+        hasPendingTimesheets = true;
+        totalPendingCount += pendingCount;
+      }
+
+      details.push({
+        payrollId: payroll.id,
+        workerName: payroll.worker_name,
+        payPeriod: `${payroll.pay_period_start} to ${payroll.pay_period_end}`,
+        pendingCount
+      });
+    }
+
+    return {
+      data: { hasPendingTimesheets, pendingCount: totalPendingCount, details },
+      error: null,
+      success: true
+    };
+  } catch (error) {
+    console.error("[CheckPendingTimesheets] Unexpected error:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+      success: false,
+    };
+  }
+}
+
 export async function updatePayrollStatus(
   payrollIds: string[],
   status: PayrollRecord["status"]
