@@ -59,30 +59,50 @@ function SetupGuideDropdownContent() {
     });
   }, [state.isActive, currentStep, state.completedSteps, progress]);
 
-  // Check smart completion for all supported steps
+  // Check smart completion for all supported steps (optimized to run less frequently)
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     async function checkSmartCompletion() {
-      const supportedSteps = ['workers', 'clients', 'projects', 'timesheets', 'approvals'];
-      
-      for (const stepId of supportedSteps) {
-        try {
-          const { isCompleted } = await isStepSmartCompleted(stepId);
-          setSmartCompletion(prev => ({
-            ...prev,
-            [stepId]: isCompleted
-          }));
-        } catch (error) {
-          console.error(`Error checking smart completion for ${stepId}:`, error);
-          setSmartCompletion(prev => ({
-            ...prev,
-            [stepId]: false
-          }));
+      // Debounce smart completion checks to avoid excessive API calls
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(async () => {
+        const supportedSteps = ['workers', 'clients', 'projects', 'timesheets', 'approvals'];
+        
+        // Only check steps that are not already completed
+        const stepsToCheck = supportedSteps.filter(stepId => !state.completedSteps.includes(stepId));
+        
+        if (stepsToCheck.length === 0) {
+          return; // No need to check if all steps are already completed
         }
-      }
+        
+        for (const stepId of stepsToCheck) {
+          try {
+            const { isCompleted } = await isStepSmartCompleted(stepId);
+            setSmartCompletion(prev => ({
+              ...prev,
+              [stepId]: isCompleted
+            }));
+          } catch (error) {
+            console.error(`Error checking smart completion for ${stepId}:`, error);
+            setSmartCompletion(prev => ({
+              ...prev,
+              [stepId]: false
+            }));
+          }
+        }
+      }, 1000); // 1 second debounce
     }
 
-    checkSmartCompletion();
-  }, []);
+    // Only run smart completion checks if onboarding is active
+    if (state.isActive) {
+      checkSmartCompletion();
+    }
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [state.isActive, state.completedSteps]);
 
   // Hide setup guide when all steps are completed (progress = 100%)
   if (progress >= 100) {

@@ -162,6 +162,53 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         
         if (!isMounted) return;
         
+        // Check if we have cached data first
+        const cacheKey = `onboarding_${userId}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+        const cacheTimestamp = sessionStorage.getItem(`${cacheKey}_timestamp`);
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        
+        if (cachedData && cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < CACHE_DURATION) {
+          console.log('OnboardingContext - Using cached data');
+          const { completedSteps, data } = JSON.parse(cachedData);
+          
+          dispatch({ 
+            type: 'LOAD_PROGRESS', 
+            completedSteps, 
+            data: data || {} 
+          });
+          
+          // Check if onboarding is complete
+          const isOnboardingComplete = completedSteps.length >= ONBOARDING_STEPS.length;
+          
+          if (!isOnboardingComplete) {
+            dispatch({ type: 'START_ONBOARDING' });
+            
+            // Determine current step
+            let currentStepId = null;
+            if (typeof window !== 'undefined') {
+              const currentPath = window.location.pathname;
+              const matchingStep = ONBOARDING_STEPS.find(step => 
+                step.path === currentPath && !completedSteps.includes(step.id)
+              );
+              currentStepId = matchingStep?.id || ONBOARDING_STEPS.find(step => 
+                !completedSteps.includes(step.id)
+              )?.id || null;
+            }
+            
+            if (currentStepId) {
+              dispatch({ type: 'SET_CURRENT_STEP', step: currentStepId });
+            }
+          }
+          
+          if (isMounted) {
+            isLoadingRef.current = false;
+            dispatch({ type: 'SET_LOADING', loading: false });
+          }
+          return;
+        }
+        
+        // Load fresh data from database
         const progress = await getOnboardingProgress(userId);
         const onboardingData = await getOnboardingData(userId);
         
@@ -170,7 +217,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         // Extract completed steps from database
         const completedSteps = progress.map(p => p.step_name);
         
-        console.log('OnboardingContext - Loaded progress:', {
+        // Cache the data
+        const dataToCache = { completedSteps, data: onboardingData || {} };
+        sessionStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+        sessionStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+        
+        console.log('OnboardingContext - Loaded fresh progress:', {
           completedSteps,
           currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
         });
@@ -248,71 +300,41 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
-  // Refresh progress when pathname changes
+  // Refresh progress when pathname changes (optimized to avoid redundant DB calls)
   useEffect(() => {
-    if (typeof window !== 'undefined' && state.isActive && pathname) {
+    if (typeof window !== 'undefined' && state.isActive && pathname && !state.isLoading) {
       console.log('OnboardingContext - Pathname changed to:', pathname);
-      console.log('OnboardingContext - Available steps:', ONBOARDING_STEPS.map(s => ({ id: s.id, path: s.path })));
       
-      // Reset loading flag to allow refresh
-      isLoadingRef.current = false;
+      // Update current step based on new path without reloading from database
+      const matchingStep = ONBOARDING_STEPS.find(step => 
+        step.path === pathname && !state.completedSteps.includes(step.id)
+      );
       
-      // Reload progress when route changes
-      const loadProgress = async () => {
-        try {
-          const userId = await getAuthUserId();
-          const progress = await getOnboardingProgress(userId);
-          const completedSteps = progress.map(p => p.step_name);
-          
-          console.log('OnboardingContext - Pathname changed, reloading progress:', {
-            completedSteps,
-            currentPath: pathname,
-            allSteps: ONBOARDING_STEPS.map(s => ({ id: s.id, path: s.path, completed: completedSteps.includes(s.id) }))
-          });
-          
-          // Update completed steps
-          dispatch({ 
-            type: 'LOAD_PROGRESS', 
-            completedSteps, 
-            data: state.data 
-          });
-          
-          // Update current step based on new path
-          const matchingStep = ONBOARDING_STEPS.find(step => 
-            step.path === pathname && !completedSteps.includes(step.id)
-          );
-          
-          console.log('OnboardingContext - Matching step for path:', pathname, matchingStep);
-          
-          if (matchingStep) {
-            dispatch({ type: 'SET_CURRENT_STEP', step: matchingStep.id });
-            console.log('OnboardingContext - Updated current step to:', matchingStep.id);
-          } else {
-            // Check if there's a step that matches the path but is already completed
-            const pathMatchingStep = ONBOARDING_STEPS.find(step => step.path === pathname);
-            if (pathMatchingStep) {
-              console.log('OnboardingContext - Found step for path but it\'s already completed:', pathMatchingStep.id);
-            }
-            
-            // If no matching step found, find the next incomplete step
-            const nextIncompleteStep = ONBOARDING_STEPS.find(step => 
-              !completedSteps.includes(step.id)
-            );
-            if (nextIncompleteStep) {
-              dispatch({ type: 'SET_CURRENT_STEP', step: nextIncompleteStep.id });
-              console.log('OnboardingContext - Updated current step to next incomplete:', nextIncompleteStep.id);
-            } else {
-              console.log('OnboardingContext - No incomplete steps found, onboarding might be complete');
-            }
-          }
-        } catch (error) {
-          console.error('Error refreshing progress on pathname change:', error);
+      console.log('OnboardingContext - Matching step for path:', pathname, matchingStep);
+      
+      if (matchingStep) {
+        dispatch({ type: 'SET_CURRENT_STEP', step: matchingStep.id });
+        console.log('OnboardingContext - Updated current step to:', matchingStep.id);
+      } else {
+        // Check if there's a step that matches the path but is already completed
+        const pathMatchingStep = ONBOARDING_STEPS.find(step => step.path === pathname);
+        if (pathMatchingStep) {
+          console.log('OnboardingContext - Found step for path but it\'s already completed:', pathMatchingStep.id);
         }
-      };
-      
-      loadProgress();
+        
+        // If no matching step found, find the next incomplete step
+        const nextIncompleteStep = ONBOARDING_STEPS.find(step => 
+          !state.completedSteps.includes(step.id)
+        );
+        if (nextIncompleteStep) {
+          dispatch({ type: 'SET_CURRENT_STEP', step: nextIncompleteStep.id });
+          console.log('OnboardingContext - Updated current step to next incomplete:', nextIncompleteStep.id);
+        } else {
+          console.log('OnboardingContext - No incomplete steps found, onboarding might be complete');
+        }
+      }
     }
-  }, [pathname, state.isActive, state.data]);
+  }, [pathname, state.isActive, state.completedSteps, state.isLoading]);
 
   // Auto-navigate to current step page when onboarding is active
   // Disabled to prevent navigation loops
@@ -371,6 +393,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       
       // Update local state
       dispatch({ type: 'COMPLETE_STEP', step: stepId, data });
+      
+      // Invalidate cache when step is completed
+      const cacheKey = `onboarding_${userId}`;
+      sessionStorage.removeItem(cacheKey);
+      sessionStorage.removeItem(`${cacheKey}_timestamp`);
       
       // Auto-advance to next step
       const nextStep = getNextStep(stepId);

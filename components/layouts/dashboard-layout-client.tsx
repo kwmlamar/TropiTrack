@@ -9,7 +9,7 @@ import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
 
-import { SetupGuideDropdown } from "@/components/onboarding/setup-guide-dropdown"
+import { LazySetupGuide } from "@/components/onboarding/lazy-setup-guide"
 import { OnboardingCheck } from "@/components/onboarding/onboarding-check"
 
 type DashboardLayoutClientProps = {
@@ -56,8 +56,8 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
             </div>
           </SidebarInset>
           
-          {/* Setup Guide Dropdown */}
-          <SetupGuideDropdown />
+          {/* Setup Guide Dropdown - Lazy Loaded */}
+          <LazySetupGuide />
           
           {/* Onboarding Check - Shows company setup overlay when needed */}
           <OnboardingCheck />

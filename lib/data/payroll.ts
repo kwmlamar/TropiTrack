@@ -821,6 +821,38 @@ export async function getPayrollPayments(payrollId: string): Promise<PayrollPaym
   return data || [];
 }
 
+// Batch fetch payments for multiple payrolls
+export async function getPayrollPaymentsBatch(payrollIds: string[]): Promise<Record<string, PayrollPayment[]>> {
+  if (payrollIds.length === 0) return {};
+  
+  const { data, error } = await supabase
+    .from("payroll_payments")
+    .select("*")
+    .in("payroll_id", payrollIds)
+    .order("payment_date", { ascending: true });
+    
+  if (error) {
+    console.error("Error fetching payroll payments batch:", error);
+    return {};
+  }
+  
+  // Group payments by payroll_id
+  const paymentsByPayrollId: Record<string, PayrollPayment[]> = {};
+  payrollIds.forEach(id => {
+    paymentsByPayrollId[id] = [];
+  });
+  
+  if (data) {
+    data.forEach(payment => {
+      if (paymentsByPayrollId[payment.payroll_id]) {
+        paymentsByPayrollId[payment.payroll_id].push(payment);
+      }
+    });
+  }
+  
+  return paymentsByPayrollId;
+}
+
 // Add a new payment
 export async function addPayrollPayment(input: Omit<PayrollPayment, "id" | "created_at" | "updated_at">): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase

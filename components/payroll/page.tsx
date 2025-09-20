@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react"
 
 import { Card, CardContent } from "@/components/ui/card"
 
-import { getAggregatedPayrolls, getPayrollPayments, addPayrollPayment, setPayrollPaymentAmount, deletePayroll } from "@/lib/data/payroll"
+import { getAggregatedPayrolls, getPayrollPayments, getPayrollPaymentsBatch, addPayrollPayment, setPayrollPaymentAmount, deletePayroll } from "@/lib/data/payroll"
 import type { PayrollRecord, PayrollPayment } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
 import type { DateRange } from "react-day-picker"
@@ -131,7 +131,16 @@ export default function PayrollPage({ user }: { user: User }) {
   const searchParams = useSearchParams()
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>()
+  // Initialize date range with default values to prevent "Select a date range" flash
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const weekStartDay = 6 // Saturday
+    const fromDate = startOfWeek(new Date(), { weekStartsOn: weekStartDay });
+    const toDate = endOfWeek(new Date(), { weekStartsOn: weekStartDay });
+    return {
+      from: fromDate,
+      to: toDate,
+    }
+  })
   const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
 
@@ -143,6 +152,10 @@ export default function PayrollPage({ user }: { user: User }) {
   const [isLoading, setIsLoading] = useState(false)
   const isMountedRef = useRef(true)
   const processedSearchParamsRef = useRef<string>('')
+  
+  // Cache for payroll data to prevent redundant API calls
+  const payrollCacheRef = useRef<Map<string, { data: PayrollRecord[], timestamp: number }>>(new Map())
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 
   // Payment modal state
@@ -186,15 +199,6 @@ export default function PayrollPage({ user }: { user: User }) {
     // Hard-coded to Saturday start (6)
     const weekStartDay = 6 // Saturday
     setWeekStartDay(weekStartDay)
-    
-    // Set navigable date range to current week initially
-    const fromDate = startOfWeek(new Date(), { weekStartsOn: weekStartDay });
-    const toDate = endOfWeek(new Date(), { weekStartsOn: weekStartDay });
-    console.log('useEffect: setting date range', { fromDate, toDate });
-    setDateRange({
-      from: fromDate,
-      to: toDate,
-    })
 
     // Cleanup function to prevent state updates after unmount
     return () => {
@@ -257,6 +261,14 @@ export default function PayrollPage({ user }: { user: User }) {
     console.log('loadPayroll: starting to load data');
     setIsLoading(true)
     
+    // Set a timeout to prevent infinite loading states
+    const loadingTimeout = setTimeout(() => {
+      if (isMountedRef.current) {
+        console.warn('loadPayroll: loading timeout reached, setting isLoading to false');
+        setIsLoading(false)
+      }
+    }, 30000) // 30 second timeout
+    
     try {
       const filters: { date_from?: string; date_to?: string; target_period_type: "weekly" | "bi-weekly" | "monthly" } = {
         target_period_type: payPeriodType as "weekly" | "bi-weekly" | "monthly"
@@ -267,6 +279,21 @@ export default function PayrollPage({ user }: { user: User }) {
       }
       if (dateRange?.to) {
         filters.date_to = format(dateRange.to, "yyyy-MM-dd")
+      }
+
+      // Create cache key
+      const cacheKey = `${filters.date_from}-${filters.date_to}-${filters.target_period_type}`
+      const cachedData = payrollCacheRef.current.get(cacheKey)
+      const now = Date.now()
+      
+      // Check if we have valid cached data
+      if (cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
+        console.log('loadPayroll: using cached data');
+        if (isMountedRef.current) {
+          setPayrolls(cachedData.data)
+          setIsLoading(false)
+        }
+        return
       }
 
       console.log('loadPayroll: calling getAggregatedPayrolls with filters', filters);
@@ -291,7 +318,7 @@ export default function PayrollPage({ user }: { user: User }) {
         previousPeriodStart.setDate(previousPeriodStart.getDate() - daysDifference + 1)
       }
 
-      // Load previous period data
+      // Load previous period data (only if we have valid dates)
       let previousPeriodData = {
         totalPayroll: 0,
         totalWorkers: 0,
@@ -299,7 +326,11 @@ export default function PayrollPage({ user }: { user: User }) {
         totalUnpaid: 0
       }
 
-      if (previousPeriodStart && previousPeriodEnd) {
+      // Only load previous period data if we have valid dates and it's not the same period
+      if (previousPeriodStart && previousPeriodEnd && 
+          (previousPeriodStart.getTime() !== dateRange.from.getTime() || 
+           previousPeriodEnd.getTime() !== dateRange.to.getTime())) {
+        
         const previousFilters = {
           ...filters,
           date_from: format(previousPeriodStart, "yyyy-MM-dd"),
@@ -337,16 +368,14 @@ export default function PayrollPage({ user }: { user: User }) {
       if (currentResponse.data) {
         // Fetch all payments for all payrolls in a single batch
         const allPayrollIds = currentResponse.data.map(payroll => payroll.id)
-        const allPayments = await Promise.all(
-          allPayrollIds.map(id => getPayrollPayments(id))
-        )
+        const paymentsByPayrollId = await getPayrollPaymentsBatch(allPayrollIds)
 
         // Process payrolls with payment data
-        const processedPayrolls = currentResponse.data.map((payroll, index) => {
+        const processedPayrolls = currentResponse.data.map((payroll) => {
           const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay)
           
           // Get payments for this specific payroll
-          const payments = allPayments[index] || []
+          const payments = paymentsByPayrollId[payroll.id] || []
           const totalPaid = payments.filter(p => p.status === "completed").reduce((sum, p) => sum + Number(p.amount), 0)
           
           // Calculate net pay and remaining balance
@@ -366,6 +395,12 @@ export default function PayrollPage({ user }: { user: User }) {
         
         if (isMountedRef.current) {
           setPayrolls(processedPayrolls)
+          
+          // Cache the processed data
+          payrollCacheRef.current.set(cacheKey, {
+            data: processedPayrolls,
+            timestamp: now
+          })
         }
       } else {
         if (isMountedRef.current) {
@@ -386,6 +421,7 @@ export default function PayrollPage({ user }: { user: User }) {
       }
     } finally {
       console.log('loadPayroll: finally block reached, setting isLoading to false');
+      clearTimeout(loadingTimeout)
       if (isMountedRef.current) {
         setIsLoading(false)
       }
@@ -770,19 +806,39 @@ export default function PayrollPage({ user }: { user: User }) {
   };
 
   // Calculate current period totals with useMemo for performance
-  const currentPeriodData = useMemo(() => ({
-    totalPayroll: payrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0),
-    totalWorkers: payrolls.length,
-    totalNIB: payrolls.reduce((sum, payroll) => sum + payroll.nib_deduction, 0),
-    totalUnpaid: payrolls.reduce((sum, payroll) => sum + (payroll.remaining_balance || 0), 0)
-  }), [payrolls]);
+  const currentPeriodData = useMemo(() => {
+    if (payrolls.length === 0) {
+      return {
+        totalPayroll: 0,
+        totalWorkers: 0,
+        totalNIB: 0,
+        totalUnpaid: 0
+      };
+    }
+    
+    return {
+      totalPayroll: payrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0),
+      totalWorkers: payrolls.length,
+      totalNIB: payrolls.reduce((sum, payroll) => sum + payroll.nib_deduction, 0),
+      totalUnpaid: payrolls.reduce((sum, payroll) => sum + (payroll.remaining_balance || 0), 0)
+    };
+  }, [payrolls]);
 
   // Calculate percentage changes with useMemo for performance
   const percentageChanges = useMemo(() => {
-    const currentTotalPayroll = payrolls.reduce((sum, payroll) => sum + payroll.gross_pay, 0);
-    const currentTotalWorkers = payrolls.length;
-    const currentTotalNIB = payrolls.reduce((sum, payroll) => sum + payroll.nib_deduction, 0);
-    const currentTotalUnpaid = payrolls.reduce((sum, payroll) => sum + (payroll.remaining_balance || 0), 0);
+    if (payrolls.length === 0) {
+      return {
+        totalPayroll: 0,
+        totalWorkers: 0,
+        totalNIB: 0,
+        totalUnpaid: 0
+      };
+    }
+    
+    const currentTotalPayroll = currentPeriodData.totalPayroll;
+    const currentTotalWorkers = currentPeriodData.totalWorkers;
+    const currentTotalNIB = currentPeriodData.totalNIB;
+    const currentTotalUnpaid = currentPeriodData.totalUnpaid;
     
     return {
       totalPayroll: calculatePercentageChange(currentTotalPayroll, previousPeriodData.totalPayroll),
@@ -790,7 +846,7 @@ export default function PayrollPage({ user }: { user: User }) {
       totalNIB: calculatePercentageChange(currentTotalNIB, previousPeriodData.totalNIB),
       totalUnpaid: calculatePercentageChange(currentTotalUnpaid, previousPeriodData.totalUnpaid)
     };
-  }, [payrolls, previousPeriodData]);
+  }, [currentPeriodData, previousPeriodData]);
 
   const getStatusBadge = (status: PayrollRecord['status']) => {
     const labels = {
@@ -836,15 +892,13 @@ export default function PayrollPage({ user }: { user: User }) {
               <div>
                 <h2 className="text-lg font-medium mb-0">
                   Payroll{" "}
-                  {dateRange?.from && dateRange?.to
-                    ? (
-                      <span className="text-gray-500">
-                        {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
-                      </span>
-                    )
-                    : (
-                      <span className="text-gray-500">Select a date range</span>
-                    )}
+                  {dateRange?.from && dateRange?.to ? (
+                    <span className="text-gray-500">
+                      {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">Select a date range</span>
+                  )}
                 </h2>
               </div>
               <Button
