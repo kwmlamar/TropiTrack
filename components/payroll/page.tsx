@@ -7,13 +7,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { getAggregatedPayrolls, getPayrollPayments, getPayrollPaymentsBatch, addPayrollPayment, setPayrollPaymentAmount, deletePayroll } from "@/lib/data/payroll"
 import type { PayrollRecord, PayrollPayment } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
-import type { DateRange } from "react-day-picker"
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CheckCircle, SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown, Plus } from "lucide-react"
 import { updatePayrollStatus, checkPendingTimesheetsForPayrolls } from "@/lib/data/payroll"
 import { toast } from "sonner"
+import { useDateRange } from "@/context/date-range-context"
 
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
@@ -130,17 +130,9 @@ const PayrollSkeleton = () => {
 export default function PayrollPage({ user }: { user: User }) {
   const searchParams = useSearchParams()
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([])
-
-  // Initialize date range with default values to prevent "Select a date range" flash
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
-    const weekStartDay = 6 // Saturday
-    const fromDate = startOfWeek(new Date(), { weekStartsOn: weekStartDay });
-    const toDate = endOfWeek(new Date(), { weekStartsOn: weekStartDay });
-    return {
-      from: fromDate,
-      to: toDate,
-    }
-  })
+  
+  // Use global date range context instead of local state
+  const { dateRange, setDateRange } = useDateRange()
   const [payPeriodType, setPayPeriodType] = useState<string>("weekly")
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set())
 

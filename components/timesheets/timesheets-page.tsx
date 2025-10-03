@@ -23,6 +23,7 @@ import type { Project } from "@/lib/types/project"
 import { AddTimesheetDialog } from "./add-timesheet-dialog"
 import { UnapproveTimesheetDialog } from "./unapprove-timesheet-dialog"
 import { getCurrentLocalDate } from "@/lib/utils"
+import { useDateRange } from "@/context/date-range-context"
 
 type AttendanceStatus = "present" | "absent" | "late"
 
@@ -35,9 +36,11 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // Create a date that represents the current day in the user's local timezone
-  // This ensures we're working with the correct day regardless of server timezone
-  const [selectedDate, setSelectedDate] = useState<Date>(getCurrentLocalDate())
+  
+  // Use date range context instead of local selectedDate
+  const { dateRange, setDateRange } = useDateRange()
+  const selectedDate = dateRange?.from || getCurrentLocalDate()
+  
   const [selectedWorker] = useState<string>("all")
   const [selectedProject] = useState<string>("all")
   const [viewMode] = useState<"daily" | "weekly">("weekly")
@@ -66,7 +69,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
     loadWorkers();
     loadProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, selectedWorker, selectedProject, viewMode, weekStartDay])
+  }, [dateRange, selectedWorker, selectedProject, viewMode, weekStartDay])
 
   // CRUD operations
   const loadTimesheets = async () => {
@@ -76,15 +79,15 @@ export default function TimesheetsPage({ user }: { user: User }) {
     try {
       const filters: TimesheetFilters = {}
 
-      // Apply date filters based on view mode
-      if (viewMode === "daily") {
-        filters.date_from = format(selectedDate, "yyyy-MM-dd")
-        filters.date_to = format(selectedDate, "yyyy-MM-dd")
+      // Apply date filters using date range from context
+      if (dateRange?.from && dateRange?.to) {
+        filters.date_from = format(dateRange.from, "yyyy-MM-dd")
+        filters.date_to = format(dateRange.to, "yyyy-MM-dd")
       } else {
-        const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay })
-        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay })
-        filters.date_from = format(weekStart, "yyyy-MM-dd")
-        filters.date_to = format(weekEnd, "yyyy-MM-dd")
+        // Fallback to current date if no date range is set
+        const fallbackDate = getCurrentLocalDate()
+        filters.date_from = format(fallbackDate, "yyyy-MM-dd")
+        filters.date_to = format(fallbackDate, "yyyy-MM-dd")
       }
 
       // Apply other filters
@@ -272,14 +275,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
     return timesheets.filter((timesheet) => {
       const timesheetDate = parseISO(timesheet.date);
 
-      // Date filter
+      // Date filter using date range from context
       let dateMatch = false;
-      if (viewMode === "daily") {
-        dateMatch = format(timesheetDate, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
+      if (dateRange?.from && dateRange?.to) {
+        dateMatch = isWithinInterval(timesheetDate, { start: dateRange.from, end: dateRange.to });
       } else {
-        const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay });
-        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay });
-        dateMatch = isWithinInterval(timesheetDate, { start: weekStart, end: weekEnd });
+        // Fallback to current date if no date range is set
+        const fallbackDate = getCurrentLocalDate();
+        dateMatch = format(timesheetDate, "yyyy-MM-dd") === format(fallbackDate, "yyyy-MM-dd");
       }
 
       // Worker filter
@@ -290,7 +293,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
       return dateMatch && workerMatch && projectMatch;
     });
-  }, [timesheets, selectedDate, selectedWorker, selectedProject, viewMode, weekStartDay]);
+  }, [timesheets, dateRange, selectedWorker, selectedProject]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredTimesheets.length / ITEMS_PER_PAGE);
@@ -305,7 +308,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedDate, selectedWorker, selectedProject, viewMode, weekStartDay]);
+  }, [dateRange, selectedWorker, selectedProject, viewMode, weekStartDay]);
 
   const groupedTimesheets = useMemo(() => {
     if (viewMode === "weekly") {
@@ -425,10 +428,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
     if (viewMode === "daily") {
       return [selectedDate];
     }
+    // Use date range from context if available, otherwise fallback to selectedDate
+    if (dateRange?.from && dateRange?.to) {
+      return eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+    }
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: weekStartDay });
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: weekStartDay });
     return eachDayOfInterval({ start: weekStart, end: weekEnd });
-  }, [selectedDate, viewMode, weekStartDay]);
+  }, [selectedDate, viewMode, weekStartDay, dateRange]);
 
 
 
@@ -440,12 +447,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
       // Move to previous week
       const newDate = new Date(selectedDate);
       newDate.setDate(selectedDate.getDate() - 7);
-      setSelectedDate(newDate);
+      const weekStart = startOfWeek(newDate, { weekStartsOn: weekStartDay });
+      const weekEnd = endOfWeek(newDate, { weekStartsOn: weekStartDay });
+      setDateRange({ from: weekStart, to: weekEnd });
     } else {
       // Move to previous day
       const newDate = new Date(selectedDate);
       newDate.setDate(selectedDate.getDate() - 1);
-      setSelectedDate(newDate);
+      setDateRange({ from: newDate, to: newDate });
     }
   };
 
@@ -453,10 +462,13 @@ export default function TimesheetsPage({ user }: { user: User }) {
     const newDate = new Date(selectedDate)
     if (viewMode === "daily") {
       newDate.setDate(newDate.getDate() + 1)
+      setDateRange({ from: newDate, to: newDate });
     } else {
       newDate.setDate(newDate.getDate() + 7)
+      const weekStart = startOfWeek(newDate, { weekStartsOn: weekStartDay });
+      const weekEnd = endOfWeek(newDate, { weekStartsOn: weekStartDay });
+      setDateRange({ from: weekStart, to: weekEnd });
     }
-    setSelectedDate(newDate)
   }
 
   const handleCellClick = (date: Date, workerId: string) => {
@@ -607,9 +619,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
             <div>
               <h2 className="text-lg font-medium mb-0">
                 {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet{" "}
-                {viewMode === "weekly" ? (
+                {dateRange?.from && dateRange?.to ? (
                   <span className="text-gray-500">
-                    {format(startOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM dd")} - {format(endOfWeek(selectedDate, { weekStartsOn: weekStartDay }), "MMM dd")}
+                    {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
                   </span>
                 ) : (
                   <span className="text-gray-500">{format(selectedDate, "PPP")}</span>

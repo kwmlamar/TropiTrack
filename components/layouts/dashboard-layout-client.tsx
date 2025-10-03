@@ -19,13 +19,14 @@ type DashboardLayoutClientProps = {
 }
 
 export function DashboardLayoutClient({ children, title, profile }: DashboardLayoutClientProps) {
-  // Determine if this is the dashboard overview page
-  const isDashboard = title === "Dashboard";
   // Determine if this is the timesheets, approvals, or time logs page
   const isTimesheets = title === "Timesheets";
   const isApprovals = title === "Approvals";
   const isTimeLogs = title === "Time Logs";
+  const isPayroll = title === "Payroll";
   const showTimesheetsDropdown = isTimesheets || isApprovals || isTimeLogs;
+  // Show date range picker only on timesheets and payroll pages
+  const showDateRangePicker = isTimesheets || isPayroll;
 
   return (
     <OnboardingProvider>
@@ -42,7 +43,7 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
           <SidebarInset>
             <SiteHeader 
               title={title} 
-              hideDateRangePicker={isDashboard} 
+              hideDateRangePicker={!showDateRangePicker} 
               showTimesheetsDropdown={showTimesheetsDropdown}
             />
             <div className="flex flex-1 flex-col">

@@ -62,16 +62,14 @@ export function MultiDatePicker({
     }
 
     return (
-      <Button
-        variant="ghost"
-        size="sm"
+      <div
         className={cn(
-          "h-8 w-8 p-0 font-normal",
+          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 hover:bg-accent/70 hover:text-primary dark:hover:text-accent-foreground dark:hover:bg-accent/50",
+          "h-8 w-8 p-0 font-normal cursor-pointer",
           isSelected && "bg-muted-foreground text-white hover:bg-muted-foreground/80",
           isDisabled && "text-gray-500 opacity-50 cursor-not-allowed",
           !isDisabled && !isSelected && "hover:bg-accent hover:text-accent-foreground"
         )}
-        disabled={isDisabled}
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -81,7 +79,7 @@ export function MultiDatePicker({
         }}
       >
         {date.getDate()}
-      </Button>
+      </div>
     )
   }
 

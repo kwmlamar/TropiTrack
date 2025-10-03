@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,8 +44,19 @@ export function DateRangePicker({
   const currentDateRange = dateRange || contextDateRange
   const setCurrentDateRange = onDateRangeChange || setContextDateRange
 
-  const handleDateChange = (newDate: DateRange | undefined) => {
-    setCurrentDateRange(newDate);
+
+  // Calculate the Saturday-Friday pay period for any given date
+  const calculatePayPeriod = (date: Date): DateRange => {
+    const weekStartsOn = getWeekStartsOn();
+    
+    // Use date-fns functions for reliable date calculations
+    const startDate = startOfWeek(date, { weekStartsOn });
+    const endDate = endOfWeek(date, { weekStartsOn });
+    
+    return {
+      from: startDate,
+      to: endDate
+    };
   };
 
   return (
@@ -78,12 +89,31 @@ export function DateRangePicker({
         <PopoverContent className="w-auto p-0" align="end">
           <Calendar
             initialFocus
-            mode="range"
+            mode="single"
             defaultMonth={currentDateRange?.from}
-            selected={currentDateRange}
-            onSelect={handleDateChange}
-            numberOfMonths={2}
+            selected={currentDateRange?.from}
+            onSelect={(date) => {
+              // Handle single date selection
+              if (date) {
+                // User selected a date - calculate pay period for that date
+                const payPeriod = calculatePayPeriod(date);
+                setCurrentDateRange(payPeriod);
+              } else {
+                // No date selected
+                setCurrentDateRange(undefined);
+              }
+            }}
+            numberOfMonths={1}
             weekStartsOn={getWeekStartsOn()}
+            modifiers={{
+              range: currentDateRange?.from && currentDateRange?.to ? {
+                from: currentDateRange.from,
+                to: currentDateRange.to
+              } : []
+            }}
+            modifiersClassNames={{
+              range: "bg-primary text-primary-foreground"
+            }}
           />
         </PopoverContent>
       </Popover>
