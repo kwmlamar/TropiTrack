@@ -1,7 +1,6 @@
-import DashboardLayout from "@/components/layouts/dashboard-layout";
-import PayrollPage from "@/components/payroll/page";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
 import { redirect } from 'next/navigation';
+import { PayrollPageClient } from "@/components/payroll/payroll-page-client";
 
 export default async function Page() {
   const user = await getUserProfileWithCompany();
@@ -10,11 +9,5 @@ export default async function Page() {
     redirect('/login');
   }
 
-  return (
-    <DashboardLayout title="Payroll">
-      <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
-        <PayrollPage user={user} />
-      </div>
-    </DashboardLayout>
-  );
+  return <PayrollPageClient user={user} />;
 }

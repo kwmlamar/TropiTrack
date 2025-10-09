@@ -26,14 +26,13 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
   const [selectedSection, setSelectedSection] = useState<string | null>(null)
   const [isSecondarySidebarCollapsed, setIsSecondarySidebarCollapsed] = useState(false)
   
-  // Determine if this is the approvals, time logs, payroll, or reports page
+  // Determine if this is the approvals, time logs, or reports page
   const isApprovals = title === "Approvals";
   const isTimeLogs = title === "Time Logs";
-  const isPayroll = title === "Payroll";
   const isReports = title === "Reports";
   const showTimesheetsDropdown = isApprovals || isTimeLogs;
-  // Show date range picker only on payroll pages
-  const showDateRangePicker = isPayroll;
+  // Don't show date range picker on any pages now (handled in page-specific headers)
+  const showDateRangePicker = false;
   // Show report tabs only on reports page
   const showReportsTabs = isReports;
 
