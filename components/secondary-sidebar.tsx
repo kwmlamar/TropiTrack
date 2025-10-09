@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
 import { 
   Clock,
   BarChart3,
@@ -35,8 +36,9 @@ interface SectionContent {
   showRecent?: boolean
 }
 
-export function SecondarySidebar({ section, isCollapsed = false }: SecondarySidebarProps) {
+export function SecondarySidebar({ profile, section, isCollapsed = false }: SecondarySidebarProps) {
   const pathname = usePathname()
+  const { theme } = useTheme()
   const [currentSection, setCurrentSection] = useState<string | null>(section || "track")
 
   useEffect(() => {
@@ -81,28 +83,57 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
 
   if (!content) {
     return (
-      <div className={cn(
-        "flex h-screen flex-col border-r border-sidebar-border/50 bg-gray-100/98 backdrop-blur-xl transition-all duration-300",
-        isCollapsed ? "w-0 overflow-hidden" : "w-52"
-      )}>
-        <div className="flex h-16 shrink-0 items-center justify-between px-6">
-          <h2 className="text-lg font-semibold">TropiTrack</h2>
+      <div 
+        className={cn(
+          "flex h-screen flex-col backdrop-blur-xl transition-all duration-300",
+          isCollapsed ? "w-0 overflow-hidden" : "w-52"
+        )}
+        style={{ 
+          backgroundColor: theme === 'dark' ? '#0f0f0f' : 'rgb(243 244 246 / 0.98)',
+          borderRight: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
+        }}
+      >
+        <div className="flex h-16 shrink-0 flex-col justify-center px-6">
+          <h2 className={cn(
+            "text-lg font-semibold",
+            theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+          )}>TropiTrack</h2>
+          <p className={cn(
+            "text-xs",
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+          )}>{profile.company?.name || "Company"}</p>
         </div>
         <div className="flex flex-1 items-center justify-center p-6">
-          <p className="text-center text-sm text-gray-500">Select a section to view details</p>
+          <p className={cn(
+            "text-center text-sm",
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+          )}>Select a section to view details</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={cn(
-      "flex h-screen flex-col border-r border-sidebar-border/50 bg-gray-100/98 backdrop-blur-xl transition-all duration-300",
-      isCollapsed ? "w-0 overflow-hidden" : "w-52"
-    )}>
+    <div 
+      className={cn(
+        "flex h-screen flex-col backdrop-blur-xl transition-all duration-300",
+        isCollapsed ? "w-0 overflow-hidden" : "w-52"
+      )}
+      style={{ 
+        backgroundColor: theme === 'dark' ? '#0f0f0f' : 'rgb(243 244 246 / 0.98)',
+        borderRight: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
+      }}
+    >
       {/* Section Header */}
-      <div className="flex h-16 shrink-0 items-center justify-between px-6">
-        <h2 className="text-lg font-semibold">TropiTrack</h2>
+      <div className="flex h-16 shrink-0 flex-col justify-center px-6">
+        <h2 className={cn(
+          "text-lg font-semibold",
+          theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+        )}>TropiTrack</h2>
+        <p className={cn(
+          "text-xs",
+          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+        )}>{profile.company?.name || "Company"}</p>
       </div>
 
       {/* Content */}
@@ -111,7 +142,10 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
           {/* Track Section */}
           {sectionContent.track && (
             <div className="space-y-2">
-              <h3 className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <h3 className={cn(
+                "px-2 text-xs font-medium uppercase tracking-wider",
+                theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+              )}>
                 {sectionContent.track.title}
               </h3>
               <nav className="space-y-0.5">
@@ -126,8 +160,12 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
                       className={cn(
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                         isActive
-                          ? "bg-primary/10 text-gray-700 font-medium"
-                          : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                          ? theme === 'dark'
+                            ? "bg-primary/20 text-gray-100 font-medium"
+                            : "bg-primary/10 text-gray-700 font-medium"
+                          : theme === 'dark'
+                            ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                            : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
                       )}
                     >
                       {Icon && <Icon className="h-4 w-4" />}
@@ -142,7 +180,10 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
           {/* Analyze Section */}
           {sectionContent.analyze && (
             <div className="space-y-2">
-              <h3 className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <h3 className={cn(
+                "px-2 text-xs font-medium uppercase tracking-wider",
+                theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+              )}>
                 {sectionContent.analyze.title}
               </h3>
               <nav className="space-y-0.5">
@@ -157,8 +198,12 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
                       className={cn(
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                         isActive
-                          ? "bg-primary/10 text-gray-700 font-medium"
-                          : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                          ? theme === 'dark'
+                            ? "bg-primary/20 text-gray-100 font-medium"
+                            : "bg-primary/10 text-gray-700 font-medium"
+                          : theme === 'dark'
+                            ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                            : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
                       )}
                     >
                       {Icon && <Icon className="h-4 w-4" />}
@@ -173,7 +218,10 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
           {/* Manage Section */}
           {sectionContent.manage && (
             <div className="space-y-2">
-              <h3 className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <h3 className={cn(
+                "px-2 text-xs font-medium uppercase tracking-wider",
+                theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+              )}>
                 {sectionContent.manage.title}
               </h3>
               <nav className="space-y-0.5">
@@ -188,8 +236,12 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
                       className={cn(
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                         isActive
-                          ? "bg-primary/10 text-gray-700 font-medium"
-                          : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                          ? theme === 'dark'
+                            ? "bg-primary/20 text-gray-100 font-medium"
+                            : "bg-primary/10 text-gray-700 font-medium"
+                          : theme === 'dark'
+                            ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                            : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
                       )}
                     >
                       {Icon && <Icon className="h-4 w-4" />}

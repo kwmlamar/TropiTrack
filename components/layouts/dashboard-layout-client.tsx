@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTheme } from "next-themes"
 import { SiteHeader } from "@/components/site-header"
 import { PrimarySidebar } from "@/components/primary-sidebar"
 import { SecondarySidebar } from "@/components/secondary-sidebar"
@@ -23,6 +24,7 @@ type DashboardLayoutClientProps = {
 }
 
 export function DashboardLayoutClient({ children, title, profile, fullWidth = false, headerActions }: DashboardLayoutClientProps) {
+  const { theme } = useTheme()
   const [selectedSection, setSelectedSection] = useState<string | null>(null)
   const [isSecondarySidebarCollapsed, setIsSecondarySidebarCollapsed] = useState(false)
   
@@ -71,7 +73,12 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
         )}
         
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-white">
+        <main 
+          className="flex-1 overflow-auto"
+          style={{
+            backgroundColor: theme === 'dark' ? '#171717' : '#ffffff'
+          }}
+        >
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className={fullWidth ? "" : "px-4 lg:px-6"}>

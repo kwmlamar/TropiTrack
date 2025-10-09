@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { ChevronDown, FileText, CheckCircle, Clock, BarChart3, TrendingUp, Users, DollarSign } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,8 +34,16 @@ export function SiteHeader({
   activeReportTab = "summary",
   onReportTabChange,
 }: SiteHeaderProps) {
+  const { theme } = useTheme();
+
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border/40 bg-sidebar transition-all duration-300">
+    <header 
+      className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 transition-all duration-300"
+      style={{
+        backgroundColor: theme === 'dark' ? '#171717' : 'oklch(1 0.003 250)',
+        borderBottom: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.4)'
+      }}
+    >
       <div className="flex w-full items-center gap-2 px-4 lg:gap-4 lg:px-6">
         {/* Left Section - Title */}
         <div className="flex items-center gap-2">

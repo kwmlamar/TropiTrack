@@ -115,7 +115,60 @@
   --z-toast: 1080;
 }
 
+.dark {
+  /* Dark mode color palette */
+  --background: #0D141C;
+  --foreground: #F8FAFC;
 
+  /* Surface Colors */
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+
+  /* Primary Colors */
+  --primary: #01a2be;
+  --primary-foreground: #0D141C;
+
+  /* Secondary Colors */
+  --secondary: #475569;
+  --secondary-foreground: #F8FAFC;
+
+  /* Muted Colors */
+  --muted: #334155;
+  --muted-foreground: #94A3B8;
+
+  /* Accent */
+  --accent: #1E293B;
+  --accent-foreground: #F8FAFC;
+
+  /* Status Colors */
+  --destructive: #EF4444;
+  --destructive-foreground: #F8FAFC;
+  --success: #10B981;
+  --success-foreground: #F8FAFC;
+  --warning: #F59E0B;
+  --warning-foreground: #F8FAFC;
+  --info: #3B82F6;
+  --info-foreground: #F8FAFC;
+
+  /* Interactive Elements */
+  --border: #334155;
+  --input: #1E293B;
+  --ring: #3B82F6;
+
+  /* Sidebar */
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #01a2be;
+  --sidebar-primary-foreground: #0D141C;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #334155;
+  --sidebar-ring: #3B82F6;
+  --sidebar-muted-foreground: #01a2be;
+  --sidebar-selected: #01a2be;
+}
 
 @theme inline {
   /* Color System */

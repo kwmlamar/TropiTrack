@@ -2,10 +2,13 @@
 
 import { useState } from "react"
 import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
 import {
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
+  Moon,
+  Sun,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -42,6 +45,7 @@ interface PrimarySidebarProps {
 export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = false, onToggleSecondarySidebar, profile }: PrimarySidebarProps) {
   const pathname = usePathname()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const { theme, setTheme } = useTheme()
 
   const isActive = (item: NavItem) => {
     // Check if current pathname matches this section
@@ -92,7 +96,13 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex h-screen w-16 flex-col border-r border-sidebar-border/50 bg-gray-200/80 backdrop-blur-xl">
+      <div 
+        className="flex h-screen w-16 flex-col backdrop-blur-xl" 
+        style={{ 
+          backgroundColor: theme === 'dark' ? '#000000' : 'rgb(229 231 235 / 0.8)',
+          borderRight: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
+        }}
+      >
         {/* Logo/Brand */}
         <div className="flex h-16 shrink-0 items-center justify-center">
           <a href="/dashboard" className="flex items-center">
@@ -142,13 +152,46 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
           })}
         </nav>
 
+        {/* Theme Toggle Button */}
+        <div className="flex shrink-0 items-center justify-center py-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className={cn(
+                  "flex h-12 w-12 items-center justify-center transition-colors duration-200",
+                  theme === 'dark' 
+                    ? 'text-gray-400 hover:text-gray-200' 
+                    : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <span className="font-medium">
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </span>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
         {/* Collapse/Expand Secondary Sidebar Button - Centered */}
-        <div className="flex shrink-0 items-center justify-center py-4">
+        <div className="flex shrink-0 items-center justify-center py-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={onToggleSecondarySidebar || (() => {})}
-                className="flex h-12 w-12 items-center justify-center text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                className={cn(
+                  "flex h-12 w-12 items-center justify-center transition-colors duration-200",
+                  theme === 'dark' 
+                    ? 'text-gray-400 hover:text-gray-200' 
+                    : 'text-gray-500 hover:text-gray-700'
+                )}
               >
                 {isSecondarySidebarCollapsed ? (
                   <PanelLeft className="h-5 w-5" />
@@ -169,13 +212,23 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
         <div className="shrink-0 p-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200 text-gray-500 hover:bg-sidebar-accent/50 hover:text-gray-700">
+              <button className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200",
+                theme === 'dark'
+                  ? 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                  : 'text-gray-500 hover:bg-sidebar-accent/50 hover:text-gray-700'
+              )}>
                 <Avatar className="h-10 w-10">
                   <AvatarImage
                     src="/placeholder.svg"
                     alt={profile.name}
                   />
-                  <AvatarFallback className="bg-sidebar-primary/10 text-gray-500 text-sm font-medium">
+                  <AvatarFallback className={cn(
+                    "text-sm font-medium",
+                    theme === 'dark'
+                      ? 'bg-primary/10 text-gray-300'
+                      : 'bg-sidebar-primary/10 text-gray-500'
+                  )}>
                     {profile.name
                       ? profile.name
                           .split(" ")
