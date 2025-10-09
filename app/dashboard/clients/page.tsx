@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import ClientTable from "@/components/clients/client-table";
 import DashboardLayout from '@/components/layouts/dashboard-layout';
+import { ClientsHeaderActions } from "@/components/clients/clients-header-actions";
 
 export default async function ClientPage() {
     const supabase = await createClient();
@@ -12,12 +13,12 @@ export default async function ClientPage() {
     }
 
     return (
-        <DashboardLayout title='Clients' >
-            <div className="container mx-auto p-6">
-                <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
-                    <ClientTable user={user}/>
-                </div>
-            </div>
+        <DashboardLayout 
+            title='Clients' 
+            fullWidth={true}
+            headerActions={<ClientsHeaderActions userId={user.id} />}
+        >
+            <ClientTable user={user}/>
         </DashboardLayout>
     )
 }

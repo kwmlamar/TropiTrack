@@ -72,7 +72,7 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
         { title: "Payroll", href: "/dashboard/payroll", icon: DollarSign },
         { title: "Projects", href: "/dashboard/projects", icon: FolderKanban },
         { title: "Clients", href: "/dashboard/clients", icon: Building2 },
-        { title: "Members", href: "/dashboard/workers", icon: Users },
+        { title: "Workers", href: "/dashboard/workers", icon: Users },
       ],
     },
   }
@@ -82,7 +82,7 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
   if (!content) {
     return (
       <div className={cn(
-        "flex h-screen flex-col border-r border-sidebar-border/50 bg-gray-50/98 backdrop-blur-xl transition-all duration-300",
+        "flex h-screen flex-col border-r border-sidebar-border/50 bg-gray-100/98 backdrop-blur-xl transition-all duration-300",
         isCollapsed ? "w-0 overflow-hidden" : "w-52"
       )}>
         <div className="flex h-16 shrink-0 items-center justify-between px-6">
@@ -97,7 +97,7 @@ export function SecondarySidebar({ section, isCollapsed = false }: SecondarySide
 
   return (
     <div className={cn(
-      "flex h-screen flex-col border-r border-sidebar-border/50 bg-gray-50/98 backdrop-blur-xl transition-all duration-300",
+      "flex h-screen flex-col border-r border-sidebar-border/50 bg-gray-100/98 backdrop-blur-xl transition-all duration-300",
       isCollapsed ? "w-0 overflow-hidden" : "w-52"
     )}>
       {/* Section Header */}

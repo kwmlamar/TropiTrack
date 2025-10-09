@@ -300,11 +300,11 @@ export default function ProjectsTable({ user }: { user: User }) {
         <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
           <div className="px-0 flex-1 flex flex-col">
             <div className="overflow-x-auto flex-1 overflow-y-auto">
-              <table className="w-full border-collapse border-spacing-0 h-full">
+              <table className="w-full border-collapse border-spacing-0 border-b border-border/30">
                 <thead className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
                   <tr className="bg-white">
                     {columns.map((col, idx) => (
-                      <th key={col} className={`text-left p-4 pb-4 font-medium text-sm text-gray-500 bg-white ${idx === 0 ? 'pl-12' : ''}`}>
+                      <th key={col} className={`text-left p-4 pb-4 font-medium text-sm text-gray-500 bg-white ${idx === 0 ? 'pl-8' : ''}`}>
                         {col}
                       </th>
                     ))}
@@ -343,32 +343,32 @@ export default function ProjectsTable({ user }: { user: User }) {
                     </tr>
                   ) : (
                     paginatedProjects.map((project, i) => (
-                      <tr key={project.id || i} className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
-                        <td className="py-2 px-4 pl-12">
+                      <tr key={project.id || i} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                        <td className="py-3 px-4 pl-8">
                           <Link href={`/dashboard/projects/${project.id}`}>
                             <p className="font-semibold text-foreground">{project.name}</p>
                             <p className="text-sm text-gray-500">{project.location || "Location TBD"}</p>
                           </Link>
                         </td>
-                        <td className="py-2 px-4">
+                        <td className="py-3 px-4">
                           <div className="text-gray-500">
                             {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
                           </div>
                         </td>
-                        <td className="py-2 px-4">
+                        <td className="py-3 px-4">
                           <div className="text-gray-500">
                             {project.start_date ? format(parseISO(project.start_date), "MMM d, yyyy") : "Not started"}
                           </div>
                         </td>
-                        <td className="py-2 px-4">
+                        <td className="py-3 px-4">
                           {getStatusBadge(project.status)}
                         </td>
-                        <td className="py-2 px-4">
+                        <td className="py-3 px-4">
                           <div className="text-gray-500">
                             {assignmentCounts.get(project.id) || 0}{(assignmentCounts.get(project.id) || 0) === 1 ? " worker" : " workers"}
                           </div>
                         </td>
-                        <td className="py-2 px-4 pr-6">
+                        <td className="py-3 px-4 pr-6">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>

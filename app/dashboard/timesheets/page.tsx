@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/layouts/dashboard-layout";
 import TimesheetsPage from "@/components/timesheets/timesheets-page";
 import { createClient } from "@/utils/supabase/server";
+import { TimesheetsHeaderActions } from "@/components/timesheets/timesheets-header-actions";
 
 export default async function Page() {
   const supabase = await createClient();
@@ -14,7 +15,11 @@ export default async function Page() {
   }
 
   return (
-    <DashboardLayout title="Timesheets" fullWidth={true}>
+    <DashboardLayout 
+      title="Timesheets" 
+      fullWidth={true}
+      headerActions={<TimesheetsHeaderActions />}
+    >
       <TimesheetsPage user={user}/>
     </DashboardLayout>
   );

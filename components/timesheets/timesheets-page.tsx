@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
-import Link from "next/link"
 
 import {
   getTimesheets,
@@ -584,15 +583,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center space-x-2">
-                          {/* Create Timesheets Button */}
-              <Link href="/dashboard/timesheets/bulk">
-                <Button>
-                  Create Timesheets
-                </Button>
-              </Link>
-
-          </div>
         </div>
 
 
@@ -637,7 +627,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                             <tr key={workerId} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
 
                               <td className="p-4 pl-6">
-                                <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
+                                <div className="font-medium text-base">{worker?.name || "Unknown Worker"}</div>
                                 <div className="text-xs text-gray-500">{worker?.position || "Worker"}</div>
                               </td>
                               <td className="p-4">
@@ -741,7 +731,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                 <tr key={`${workerId}-${weekStart}`} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
 
                                   <td className="p-4">
-                                    <div className="font-medium text-sm">{worker?.name || "Unknown Worker"}</div>
+                                    <div className="font-medium text-base">{worker?.name || "Unknown Worker"}</div>
                                     <div className="text-xs text-gray-500">{worker?.position || "Worker"}</div>
                                   </td>
                                   <td className="p-4">
