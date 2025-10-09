@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { fetchClientsForCompany, deleteClient } from "@/lib/data/data"
 import type { User } from "@supabase/supabase-js"
@@ -24,6 +25,7 @@ const columns = ["Name", "Email"]
 const ITEMS_PER_PAGE = 20;
 
 export default function ClientTable({ user }: { user: User }) {
+  const { theme } = useTheme()
   const [clients, setClients] = useState<Client[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
@@ -91,18 +93,34 @@ export default function ClientTable({ user }: { user: User }) {
     <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
         {/* Clients Table */}
-        <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+        <div 
+          className="border-t border-b flex-1 flex flex-col"
+          style={{
+            backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+            borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+          }}
+        >
           <div className="px-0 flex-1 flex flex-col">
             <div className="overflow-x-auto flex-1 overflow-y-auto">
-              <table className="w-full border-collapse border-spacing-0 border-b border-border/30">
-                <thead className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
-                  <tr className="bg-white">
+              <table className="w-full border-collapse border-spacing-0">
+                <thead 
+                  className="sticky top-0 z-50 shadow-sm"
+                  style={{
+                    backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                    borderBottom: theme === 'dark' ? '2px solid #262626' : '2px solid rgb(226 232 240 / 0.5)'
+                  }}
+                >
+                  <tr style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
                     {columns.map((col, idx) => (
-                      <th key={col} className={`text-left p-4 pb-4 font-medium text-sm text-gray-500 bg-white ${idx === 0 ? 'pl-8' : ''}`}>
+                      <th 
+                        key={col} 
+                        className={`text-left p-4 pb-4 font-medium text-sm text-gray-500 ${idx === 0 ? 'pl-8' : ''}`}
+                        style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                      >
                         {col}
                       </th>
                     ))}
-                    <th className="w-12 bg-white"></th>
+                    <th className="w-12" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -110,7 +128,10 @@ export default function ClientTable({ user }: { user: User }) {
                     <tr>
                       <td colSpan={columns.length + 1} className="p-12">
                         <div className="flex items-center justify-center">
-                          <div className="flex items-center space-x-2 text-gray-500">
+                          <div 
+                            className="flex items-center space-x-2"
+                            style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                          >
                             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                             <span className="text-sm">Loading clients...</span>
                           </div>
@@ -121,13 +142,25 @@ export default function ClientTable({ user }: { user: User }) {
                     <tr>
                       <td colSpan={columns.length + 1} className="p-12">
                         <div className="flex flex-col items-center justify-center">
-                          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                            <UserX className="h-8 w-8 text-gray-500" />
+                          <div 
+                            className="flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                            style={{ backgroundColor: theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.5)' }}
+                          >
+                            <UserX 
+                              className="h-8 w-8"
+                              style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                            />
                           </div>
-                          <h3 className="text-lg font-semibold text-foreground mb-2">
+                          <h3 
+                            className="text-lg font-semibold mb-2"
+                            style={{ color: theme === 'dark' ? '#9ca3af' : '#111827' }}
+                          >
                             No clients found
                           </h3>
-                          <p className="text-sm text-gray-500 text-center max-w-sm">
+                          <p 
+                            className="text-sm text-center max-w-sm"
+                            style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                          >
                             You haven&apos;t added any clients yet. Click the &apos;New Client&apos; button in the header to get started.
                           </p>
                         </div>
@@ -135,15 +168,34 @@ export default function ClientTable({ user }: { user: User }) {
                     </tr>
                   ) : (
                     paginatedClients.map((client, i) => (
-                      <tr key={client.id || i} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                      <tr 
+                        key={client.id || i} 
+                        className="border-b last:border-b-0 transition-all duration-200 group"
+                        style={{
+                          borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
+                          backgroundColor: 'transparent'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }}
+                      >
                         <td className="py-3 px-4 pl-8">
                           <Link href={`/dashboard/clients/${client.id}`}>
-                            <p className="font-semibold text-foreground">{client.name}</p>
-                            <p className="text-sm text-gray-500">{client.phone || client.email || "No contact info"}</p>
+                            <p 
+                              className="font-semibold"
+                              style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                            >{client.name}</p>
+                            <p 
+                              className="text-sm"
+                              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                            >{client.phone || client.email || "No contact info"}</p>
                           </Link>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="text-gray-500">
+                          <div style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>
                             {client.email}
                           </div>
                         </td>
@@ -187,7 +239,10 @@ export default function ClientTable({ user }: { user: User }) {
             {/* Pagination */}
             {totalPages > 1 && paginatedClients.length > 0 && (
               <div className="flex items-center justify-between px-6 py-4">
-                <div className="text-sm text-gray-500">
+                <div 
+                  className="text-sm"
+                  style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                >
                   Showing {startIndex + 1} to {Math.min(endIndex, clients.length)} of {clients.length} clients
                 </div>
                 <div className="flex items-center space-x-2">
