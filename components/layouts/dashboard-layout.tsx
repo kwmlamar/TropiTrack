@@ -6,12 +6,14 @@ type DashboardLayoutProps = {
   children: React.ReactNode
   title?: string | React.ReactNode
   fullWidth?: boolean
+  headerActions?: React.ReactNode
 }
 
 export default async function DashboardLayout({ 
   children,
   title = "Dashboard",
   fullWidth = false,
+  headerActions,
 }: DashboardLayoutProps) {
   const profile = await getUserProfileWithCompany()
 
@@ -19,5 +21,5 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  return <DashboardLayoutClient profile={profile} title={title} fullWidth={fullWidth}>{children}</DashboardLayoutClient>
+  return <DashboardLayoutClient profile={profile} title={title} fullWidth={fullWidth} headerActions={headerActions}>{children}</DashboardLayoutClient>
 }

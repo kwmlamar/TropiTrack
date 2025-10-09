@@ -13,7 +13,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 
 import { DateRangePicker } from "@/components/date-range-picker";
-import { CompanyDropdown } from "@/components/company-dropdown";
 
 type SiteHeaderProps = {
   title?: string | React.ReactNode;
@@ -115,9 +114,8 @@ export function SiteHeader({
           )}
         </div>
 
-        {/* Right Section - Company Dropdown & Custom Content */}
+        {/* Right Section - Custom Content */}
         <div className="flex items-center gap-2">
-          <CompanyDropdown />
           {children}
         </div>
       </div>

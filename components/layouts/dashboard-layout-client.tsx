@@ -19,9 +19,10 @@ type DashboardLayoutClientProps = {
   title: string | React.ReactNode
   profile: UserProfileWithCompany
   fullWidth?: boolean
+  headerActions?: React.ReactNode
 }
 
-export function DashboardLayoutClient({ children, title, profile, fullWidth = false }: DashboardLayoutClientProps) {
+export function DashboardLayoutClient({ children, title, profile, fullWidth = false, headerActions }: DashboardLayoutClientProps) {
   const [selectedSection, setSelectedSection] = useState<string | null>(null)
   const [isSecondarySidebarCollapsed, setIsSecondarySidebarCollapsed] = useState(false)
   
@@ -66,7 +67,9 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
             hideDateRangePicker={!showDateRangePicker} 
             showTimesheetsDropdown={showTimesheetsDropdown}
             showReportsTabs={showReportsTabs}
-          />
+          >
+            {headerActions}
+          </SiteHeader>
         )}
         
         {/* Page Content */}

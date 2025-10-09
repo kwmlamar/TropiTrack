@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
-import { SearchForm } from "@/components/search-form";
 import {
   Select,
   SelectItem,
@@ -29,7 +28,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   MoreVertical,
   Building2,
@@ -50,12 +48,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
-import { AddProjectDialog } from "@/components/projects/add-project-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import { useFeatureFlags } from "@/hooks/use-feature-flags";
-import { toast } from "sonner";
 
 const columns = [
   "Project",
@@ -66,9 +61,6 @@ const columns = [
 ];
 
 export default function ProjectsTable({ user }: { user: User }) {
-  const { getLimit } = useFeatureFlags();
-  
-
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [projectAssignments, setProjectAssignments] = useState<
@@ -79,16 +71,10 @@ export default function ProjectsTable({ user }: { user: User }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
   const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const rowsPerPage = 10;
-
-  // Check if user has reached project limit
-  const projectLimit = getLimit("projects_limit");
-  const hasReachedLimit = projectLimit !== -1 && projects.length >= projectLimit;
 
   useEffect(() => {
     loadProjects();
@@ -174,13 +160,9 @@ export default function ProjectsTable({ user }: { user: User }) {
         : true;
       const matchesStatus =
         statusFilter === "all" ? true : project.status === statusFilter;
-      const matchesSearch =
-        searchTerm.trim() === "" ||
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
-      return matchesClient && matchesStatus && matchesSearch;
+      return matchesClient && matchesStatus;
     });
-  }, [projects, selectedClient, statusFilter, searchTerm]);
+  }, [projects, selectedClient, statusFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredProjects.length / rowsPerPage);
@@ -203,7 +185,7 @@ export default function ProjectsTable({ user }: { user: User }) {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedClient, statusFilter, searchTerm]);
+  }, [selectedClient, statusFilter]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -237,43 +219,244 @@ export default function ProjectsTable({ user }: { user: User }) {
     );
   };
 
-  const handleAddProjectSuccess = () => {
-    loadProjects();
-    setIsAddProjectDialogOpen(false);
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className='space-y-4'>
-          <h1 className="text-3xl font-bold tracking-tight">Project Management</h1>
-          <p className="text-gray-500">
-            Manage your construction projects and track progress.
-          </p>
+    <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
+        {/* Header with Filters */}
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-10">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Filters
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                
+                {/* Client Filter */}
+                <div className="p-2">
+                  <Label htmlFor="client-filter" className="text-sm font-medium mb-2 block">
+                    Filter by Client
+                  </Label>
+                  <SearchableCombobox
+                    items={clients}
+                    selectedItem={selectedClient}
+                    onSelect={setSelectedClient}
+                    placeholder="All clients"
+                    displayKey="name"
+                  />
+                </div>
+                
+                <DropdownMenuSeparator />
+                
+                {/* Status Filter */}
+                <div className="p-2">
+                  <Label htmlFor="status-filter" className="text-sm font-medium mb-2 block">
+                    Filter by Status
+                  </Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="not_started">Not Started</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Clear Filters */}
+                {(selectedClient || statusFilter !== "all") && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div className="p-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedClient(null);
+                          setStatusFilter("all");
+                        }}
+                        className="w-full h-8"
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Clear Filters
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <Button 
-          onClick={() => {
-            if (hasReachedLimit) {
-              toast.error(`You've reached your limit of ${projectLimit} projects. Upgrade your plan to add more.`);
-            } else {
-              setIsAddProjectDialogOpen(true);
-            }
-          }}
-        >
-          Add Project
-        </Button>
-      </div>
 
-      {/* Add Project Dialog */}
-      <AddProjectDialog
-        open={isAddProjectDialogOpen}
-        onOpenChange={setIsAddProjectDialogOpen}
-        userId={user.id}
-        clients={clients}
-        onSuccess={handleAddProjectSuccess}
-        currentProjectCount={projects.length}
-      />
+        {/* Projects Table */}
+        <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+          <div className="px-0 flex-1 flex flex-col">
+            <div className="overflow-x-auto flex-1 overflow-y-auto">
+              <table className="w-full border-collapse border-spacing-0 h-full">
+                <thead className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
+                  <tr className="bg-white">
+                    {columns.map((col, idx) => (
+                      <th key={col} className={`text-left p-4 pb-4 font-medium text-sm text-gray-500 bg-white ${idx === 0 ? 'pl-12' : ''}`}>
+                        {col}
+                      </th>
+                    ))}
+                    <th className="w-12 bg-white"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={columns.length + 1} className="p-12">
+                        <div className="flex items-center justify-center">
+                          <div className="flex items-center space-x-2 text-gray-500">
+                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            <span className="text-sm">Loading projects...</span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : paginatedProjects.length === 0 ? (
+                    <tr>
+                      <td colSpan={columns.length + 1} className="p-12">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                            <Building2 className="h-8 w-8 text-gray-500" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-foreground mb-2">
+                            No projects found
+                          </h3>
+                          <p className="text-sm text-gray-500 text-center max-w-sm">
+                            {statusFilter !== "all" || selectedClient
+                              ? "No projects match your current filters. Try adjusting your search criteria."
+                              : "You haven't added any projects yet. Click the 'New Project' button in the header to get started."}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedProjects.map((project, i) => (
+                      <tr key={project.id || i} className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
+                        <td className="py-2 px-4 pl-12">
+                          <Link href={`/dashboard/projects/${project.id}`}>
+                            <p className="font-semibold text-foreground">{project.name}</p>
+                            <p className="text-sm text-gray-500">{project.location || "Location TBD"}</p>
+                          </Link>
+                        </td>
+                        <td className="py-2 px-4">
+                          <div className="text-gray-500">
+                            {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
+                          </div>
+                        </td>
+                        <td className="py-2 px-4">
+                          <div className="text-gray-500">
+                            {project.start_date ? format(parseISO(project.start_date), "MMM d, yyyy") : "Not started"}
+                          </div>
+                        </td>
+                        <td className="py-2 px-4">
+                          {getStatusBadge(project.status)}
+                        </td>
+                        <td className="py-2 px-4">
+                          <div className="text-gray-500">
+                            {assignmentCounts.get(project.id) || 0}{(assignmentCounts.get(project.id) || 0) === 1 ? " worker" : " workers"}
+                          </div>
+                        </td>
+                        <td className="py-2 px-4 pr-6">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-muted"
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem
+                                  onSelect={(e) => e.preventDefault()}
+                                  onClick={() => handleEditProject(project)}
+                                >
+                                  Edit Project
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedProject(project);
+                                    setIsDeleteDialogOpen(true);
+                                  }}
+                                  className="cursor-pointer text-destructive focus:text-destructive"
+                                >
+                                  Delete Project
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && paginatedProjects.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4">
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredProjects.length)} of {filteredProjects.length} projects
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(page)}
+                        className={`h-8 w-8 p-0 ${
+                          currentPage === page 
+                            ? "bg-muted text-gray-800 border-muted dark:bg-gray-500 dark:text-gray-100 dark:border-gray-500" 
+                            : "hover:bg-muted dark:hover:bg-gray-600 dark:hover:text-gray-100"
+                        }`}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Edit Project Dialog */}
       {editingProject && (
@@ -286,250 +469,6 @@ export default function ProjectsTable({ user }: { user: User }) {
           onSuccess={handleEditProjectSuccess}
         />
       )}
-
-      {/* Search Section */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <SearchForm
-            placeholder="Search projects..."
-            className="w-full"
-            value={searchTerm}
-            onChange={e => setSearchTerm((e.target as HTMLInputElement).value)}
-          />
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-10">
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            
-            {/* Client Filter */}
-            <div className="p-2">
-              <Label htmlFor="client-filter" className="text-sm font-medium mb-2 block">
-                Filter by Client
-              </Label>
-              <SearchableCombobox
-                items={clients}
-                selectedItem={selectedClient}
-                onSelect={setSelectedClient}
-                placeholder="All clients"
-                displayKey="name"
-              />
-            </div>
-            
-            <DropdownMenuSeparator />
-            
-            {/* Status Filter */}
-            <div className="p-2">
-              <Label htmlFor="status-filter" className="text-sm font-medium mb-2 block">
-                Filter by Status
-              </Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="not_started">Not Started</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Clear Filters */}
-            {(selectedClient || statusFilter !== "all") && (
-              <>
-                <DropdownMenuSeparator />
-                <div className="p-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedClient(null);
-                      setStatusFilter("all");
-                    }}
-                    className="w-full h-8"
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Clear Filters
-                  </Button>
-                </div>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Projects Table */}
-      <Card className="border-border/50 bg-sidebar/95 backdrop-blur-xl">
-          <CardContent className="p-0">
-          {/* Column Headers */}
-          <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_40px] gap-4 px-6 py-4 border-b border-border/50 bg-muted/30">
-            {columns.map((col) => (
-              <div
-                key={col}
-                className="text-sm font-semibold text-gray-500 uppercase tracking-wide"
-              >
-                {col}
-              </div>
-            ))}
-            <div /> {/* Empty column for the menu */}
-          </div>
-
-          {/* Data Rows */}
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-2 text-gray-500">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm">Loading projects...</span>
-              </div>
-            </div>
-          ) : paginatedProjects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-6">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                <Building2 className="h-8 w-8 text-gray-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                No projects found
-              </h3>
-              <p className="text-sm text-gray-500 text-center mb-6 max-w-sm">
-                {statusFilter !== "all" || selectedClient
-                  ? "No projects match your current filters. Try adjusting your search criteria."
-                  : "You haven't added any projects yet. Add your first project to start building your portfolio."}
-              </p>
-              <Button 
-                onClick={() => {
-                  if (hasReachedLimit) {
-                    toast.error(`You've reached your limit of ${projectLimit} projects. Upgrade your plan to add more.`);
-                  } else {
-                    setIsAddProjectDialogOpen(true);
-                  }
-                }}
-              >
-                Add Your First Project
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="divide-y divide-border/50">
-                {paginatedProjects.map((project, i) => (
-                  <div
-                    key={project.id || i}
-                    className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_min-content] gap-4 px-6 py-4 items-center group"
-                  >
-                    <Link
-                      href={`/dashboard/projects/${project.id}`}
-                      className="contents"
-                      style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                      <div>
-                        <p className="font-semibold text-foreground">{project.name}</p>
-                        <p className="text-sm text-gray-500">{project.location || "Location TBD"}</p>
-                      </div>
-                      <div className="text-gray-500">
-                        {clients.find((c) => c.id === project.client_id)?.name || "Unknown Client"}
-                      </div>
-                      <div className="text-gray-500">
-                        {project.start_date ? format(parseISO(project.start_date), "MMM d, yyyy") : "Not started"}
-                      </div>
-                      <div>{getStatusBadge(project.status)}</div>
-                      <div className="text-gray-500">
-                        {assignmentCounts.get(project.id) || 0}{(assignmentCounts.get(project.id) || 0) === 1 ? " worker" : " workers"}
-                      </div>
-                    </Link>
-                    
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-muted"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            onClick={() => handleEditProject(project)}
-                          >
-                            Edit Project
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedProject(project);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                            className="cursor-pointer text-destructive focus:text-destructive"
-                          >
-                            Delete Project
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4">
-                  <div className="text-sm text-gray-500">
-                    Showing {startIndex + 1} to {Math.min(endIndex, filteredProjects.length)} of {filteredProjects.length} projects
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToPreviousPage}
-                      disabled={currentPage === 1}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className="flex items-center space-x-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => goToPage(page)}
-                          className={`h-8 w-8 p-0 ${
-                            currentPage === page 
-                              ? "bg-[#E8EDF5] text-primary border-[#E8EDF5] dark:bg-primary dark:text-primary-foreground dark:border-primary" 
-                              : "hover:bg-[#E8EDF5]/70 dark:hover:bg-primary dark:hover:text-primary-foreground"
-                          }`}
-                        >
-                          {page}
-                        </Button>
-                      ))}
-                    </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToNextPage}
-                      disabled={currentPage === totalPages}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-        </Card>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

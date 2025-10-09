@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/layouts/dashboard-layout";
 import ProjectsTable from "@/components/projects/projects-table";
 import { createClient } from "@/utils/supabase/server";
+import { ProjectsHeaderActions } from "@/components/projects/projects-header-actions";
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
@@ -13,12 +14,12 @@ export default async function ProjectsPage() {
   if (error || !user) throw new Error("User not found");
 
   return (
-    <DashboardLayout title="Projects">
-      <div className="container mx-auto p-6">
-        <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
-          <ProjectsTable user={user} />
-        </div>
-      </div>
+    <DashboardLayout 
+      title="Projects" 
+      fullWidth={true}
+      headerActions={<ProjectsHeaderActions userId={user.id} />}
+    >
+      <ProjectsTable user={user} />
     </DashboardLayout>
   );
 }

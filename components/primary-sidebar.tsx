@@ -92,7 +92,7 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex h-screen w-16 flex-col border-r border-sidebar-border/50 bg-gray-100/95 backdrop-blur-xl">
+      <div className="flex h-screen w-16 flex-col border-r border-sidebar-border/50 bg-gray-200/80 backdrop-blur-xl">
         {/* Logo/Brand */}
         <div className="flex h-16 shrink-0 items-center justify-center">
           <a href="/dashboard" className="flex items-center">
