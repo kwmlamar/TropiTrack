@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTheme } from "next-themes";
 import { DashboardLayoutClient } from "@/components/layouts/dashboard-layout-client";
 import PayrollPage from "./page";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ interface PayrollPageClientProps {
 }
 
 export function PayrollPageClient({ user }: PayrollPageClientProps) {
+  const { theme } = useTheme();
   const [selectedPayrollIds, setSelectedPayrollIds] = useState<Set<string>>(new Set());
   const [payrolls, setPayrolls] = useState<PayrollRecord[]>([]);
   const [confirmHandler, setConfirmHandler] = useState<(() => void) | null>(null);
@@ -46,8 +48,21 @@ export function PayrollPageClient({ user }: PayrollPageClientProps) {
         disabled={selectedPayrollIds.size === 0 || !Array.from(selectedPayrollIds).every(id => 
           payrolls.find(payroll => payroll.id === id)?.status === "pending"
         )}
-        className="bg-transparent border-0 ring-2 ring-muted-foreground text-muted-foreground hover:bg-muted-foreground hover:!text-white transition-colors"
+        variant="outline"
         size="sm"
+        style={{
+          backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+          borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+          color: theme === 'dark' ? '#d1d5db' : '#374151'
+        }}
+        onMouseEnter={(e) => {
+          if (!e.currentTarget.disabled) {
+            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+        }}
       >
         Confirm Payroll
       </Button>

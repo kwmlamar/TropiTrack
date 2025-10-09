@@ -1,5 +1,6 @@
 "use client"
 
+import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,7 @@ import { format, startOfWeek, endOfWeek } from "date-fns"
 import { useState } from "react"
 
 export default function ReportsPageClient() {
+  const { theme } = useTheme()
   const { activeTab } = useReportsTabs()
   const reportsData = useReportsData()
   const { dateRange, setDateRange } = useDateRange()
@@ -41,20 +43,48 @@ export default function ReportsPageClient() {
   }
 
   const FiltersCard = () => (
-    <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none rounded-none border-l-0 border-r-0 border-t-0 m-0">
+    <Card 
+      className="backdrop-blur-sm shadow-none rounded-none border-l-0 border-r-0 border-t-0 m-0"
+      style={{
+        backgroundColor: theme === 'dark' ? '#171717' : 'oklch(1 0.003 250)',
+        borderBottom: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
+      }}
+    >
       <CardContent className="px-4 lg:px-6 py-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-6xl mx-auto">
           <div>
-            <div className="flex items-center border rounded-md overflow-hidden">
+            <div 
+              className="flex items-center rounded-md overflow-hidden"
+              style={{
+                border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240)'
+              }}
+            >
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handlePreviousPeriod}
-                className="h-10 w-10 p-0 hover:bg-muted rounded-none border-0"
+                className="h-10 w-10 p-0 rounded-none border-0"
+                style={{
+                  color: theme === 'dark' ? '#d1d5db' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-                <div className="flex-1 text-center px-4 py-2 bg-background text-sm font-semibold text-gray-700 border-x border-border/50 flex items-center justify-center gap-2">
+                <div 
+                  className="flex-1 text-center px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))',
+                    color: theme === 'dark' ? '#d1d5db' : '#374151',
+                    borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)',
+                    borderRight: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+                  }}
+                >
                   <Calendar className="h-4 w-4" />
                   {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
                 </div>
@@ -62,7 +92,16 @@ export default function ReportsPageClient() {
                 variant="ghost"
                 size="sm"
                 onClick={handleNextPeriod}
-                className="h-10 w-10 p-0 hover:bg-muted rounded-none border-0"
+                className="h-10 w-10 p-0 rounded-none border-0"
+                style={{
+                  color: theme === 'dark' ? '#d1d5db' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -199,13 +238,19 @@ export default function ReportsPageClient() {
       return (
         <div className="space-y-6">
           {/* Combined metrics card skeleton */}
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+          <Card 
+            className="backdrop-blur-sm shadow-none"
+            style={{
+              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+              border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+            }}
+          >
             <CardContent className="px-4 py-1">
               <div className="flex items-center justify-between">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="text-left flex-1 pl-2">
-                    <div className="h-4 w-20 animate-pulse rounded bg-gray-300 mb-2"></div>
-                    <div className="h-8 w-16 animate-pulse rounded bg-gray-300"></div>
+                    <div className="h-4 w-20 animate-pulse rounded bg-gray-300 dark:bg-gray-700 mb-2"></div>
+                    <div className="h-8 w-16 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
                   </div>
                 ))}
               </div>
@@ -213,9 +258,15 @@ export default function ReportsPageClient() {
           </Card>
 
           {/* Hours by Project card skeleton */}
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+          <Card 
+            className="backdrop-blur-sm shadow-none"
+            style={{
+              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+              border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+            }}
+          >
             <CardHeader>
-              <div className="h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+              <div className="h-6 w-40 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -244,19 +295,25 @@ export default function ReportsPageClient() {
           </Card>
 
           {/* Upcoming Payroll card skeleton */}
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+          <Card 
+            className="backdrop-blur-sm shadow-none"
+            style={{
+              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+              border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+            }}
+          >
             <CardHeader>
-              <div className="h-6 w-48 animate-pulse rounded bg-gray-300"></div>
+              <div className="h-6 w-48 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="h-8 w-32 animate-pulse rounded bg-gray-300 mb-2"></div>
-                  <div className="h-4 w-24 animate-pulse rounded bg-gray-300"></div>
+                  <div className="h-8 w-32 animate-pulse rounded bg-gray-300 dark:bg-gray-700 mb-2"></div>
+                  <div className="h-4 w-24 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
                 </div>
                 <div className="text-right">
-                  <div className="h-4 w-20 animate-pulse rounded bg-gray-300 mb-2"></div>
-                  <div className="h-6 w-24 animate-pulse rounded bg-gray-300"></div>
+                  <div className="h-4 w-20 animate-pulse rounded bg-gray-300 dark:bg-gray-700 mb-2"></div>
+                  <div className="h-6 w-24 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
                 </div>
               </div>
             </CardContent>
@@ -268,9 +325,15 @@ export default function ReportsPageClient() {
     if (reportsData.error) {
       return (
         <div className="space-y-6">
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+          <Card 
+            className="backdrop-blur-sm shadow-none"
+            style={{
+              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+              border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+            }}
+          >
             <CardContent className="p-6">
-              <p className="text-red-600 text-sm">Error loading reports data: {reportsData.error}</p>
+              <p className="text-red-600 dark:text-red-400 text-sm">Error loading reports data: {reportsData.error}</p>
             </CardContent>
           </Card>
         </div>
@@ -280,51 +343,102 @@ export default function ReportsPageClient() {
     return (
     <div className="space-y-6">
       {/* Combined metrics card */}
-      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+      <Card 
+        className="backdrop-blur-sm shadow-none"
+        style={{
+          backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+          border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+        }}
+      >
         <CardContent className="px-4 py-1">
           <div className="flex items-center justify-between">
             {/* Total Hours */}
             <div className="text-left flex-1 pl-2">
-              <p className="text-sm font-bold text-gray-500 dark:text-gray-500">Total Hours</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-900">{reportsData.totalHours.toFixed(0)}</p>
+              <p 
+                className="text-sm font-bold"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >Total Hours</p>
+              <p 
+                className="text-2xl font-bold"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{reportsData.totalHours.toFixed(0)}</p>
             </div>
 
             {/* Separator */}
-            <div className="border-l border-border/30 h-8 mx-3"></div>
+            <div 
+              className="h-8 mx-3"
+              style={{ 
+                borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.3)' 
+              }}
+            ></div>
 
             {/* Average Daily Hours */}
             <div className="text-left flex-1 pl-2">
-              <p className="text-sm font-bold text-gray-500 dark:text-gray-500">Avg Daily Hours</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-900">
+              <p 
+                className="text-sm font-bold"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >Avg Daily Hours</p>
+              <p 
+                className="text-2xl font-bold"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >
                 {((reportsData.totalHours / Math.max(1, Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))))).toFixed(1)}
               </p>
             </div>
 
             {/* Separator */}
-            <div className="border-l border-border/30 h-8 mx-3"></div>
+            <div 
+              className="h-8 mx-3"
+              style={{ 
+                borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.3)' 
+              }}
+            ></div>
 
             {/* Total Labor Cost */}
             <div className="text-left flex-1 pl-2">
-              <p className="text-sm font-bold text-gray-500 dark:text-gray-500">Labor Cost</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-900">{formatCurrency(reportsData.totalLaborCost)}</p>
+              <p 
+                className="text-sm font-bold"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >Labor Cost</p>
+              <p 
+                className="text-2xl font-bold"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{formatCurrency(reportsData.totalLaborCost)}</p>
             </div>
 
             {/* Separator */}
-            <div className="border-l border-border/30 h-8 mx-3"></div>
+            <div 
+              className="h-8 mx-3"
+              style={{ 
+                borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.3)' 
+              }}
+            ></div>
 
             {/* Overtime Hours */}
             <div className="text-left flex-1 pl-2">
-              <p className="text-sm font-bold text-gray-500 dark:text-gray-500">Overtime Hours</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-900">{reportsData.overtimeHours.toFixed(0)}</p>
+              <p 
+                className="text-sm font-bold"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >Overtime Hours</p>
+              <p 
+                className="text-2xl font-bold"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{reportsData.overtimeHours.toFixed(0)}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Hours by Project (Top 3) */}
-      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+      <Card 
+        className="backdrop-blur-sm shadow-none"
+        style={{
+          backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+          border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+        }}
+      >
         <CardHeader>
-          <CardTitle>Hours by Project (Top 3)</CardTitle>
+          <CardTitle style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>Hours by Project (Top 3)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -344,19 +458,34 @@ export default function ReportsPageClient() {
                         <div className="flex items-center space-x-3">
                           <div className={`w-4 h-4 bg-gradient-to-r ${color.bg} rounded-full shadow-sm`}></div>
                           <div>
-                            <span className="text-sm font-semibold text-gray-900">{project.project_name}</span>
-                            <div className="text-xs text-gray-500">
+                            <span 
+                              className="text-sm font-semibold"
+                              style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                            >{project.project_name}</span>
+                            <div 
+                              className="text-xs"
+                              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                            >
                               {index === 0 ? 'Primary project' : index === 1 ? 'Secondary project' : 'Supporting project'}
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900">{project.total_hours.toFixed(0)}h</div>
-                          <div className="text-xs text-gray-500">{project.percentage.toFixed(0)}% of total</div>
+                          <div 
+                            className="text-lg font-bold"
+                            style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                          >{project.total_hours.toFixed(0)}h</div>
+                          <div 
+                            className="text-xs"
+                            style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                          >{project.percentage.toFixed(0)}% of total</div>
                         </div>
                       </div>
             <div className="relative">
-              <div className="w-full bg-gray-100 rounded-full h-3 shadow-inner">
+              <div 
+                className="w-full rounded-full h-3 shadow-inner"
+                style={{ backgroundColor: theme === 'dark' ? '#262626' : 'rgb(243 244 246)' }}
+              >
                 <div
                   className={`bg-gradient-to-r ${color.bg} h-3 rounded-full shadow-sm transition-all duration-300`}
                   style={{ width: `${project.percentage}%` }}
@@ -368,16 +497,30 @@ export default function ReportsPageClient() {
                 })}
 
                 {/* Summary Stats */}
-                <div className="pt-4 border-t border-gray-100">
+                <div 
+                  className="pt-4"
+                  style={{ 
+                    borderTop: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(243 244 246)' 
+                  }}
+                >
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 font-medium">Total Project Hours</span>
-                    <span className="text-gray-900 font-bold">{reportsData.totalHours.toFixed(0)}h</span>
+                    <span 
+                      className="font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#4b5563' }}
+                    >Total Project Hours</span>
+                    <span 
+                      className="font-bold"
+                      style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                    >{reportsData.totalHours.toFixed(0)}h</span>
                   </div>
                 </div>
               </>
             ) : (
               <div className="text-center py-8">
-                <div className="text-gray-500 text-sm">No project data available for this period</div>
+                <div 
+                  className="text-sm"
+                  style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                >No project data available for this period</div>
               </div>
             )}
           </div>
@@ -385,19 +528,37 @@ export default function ReportsPageClient() {
       </Card>
 
       {/* Upcoming Payroll Due Date */}
-      <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+      <Card 
+        className="backdrop-blur-sm shadow-none"
+        style={{
+          backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+          border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+        }}
+      >
         <CardHeader>
-          <CardTitle>Upcoming Payroll Due Date</CardTitle>
+          <CardTitle style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>Upcoming Payroll Due Date</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl font-bold">{reportsData.upcomingPayrollDate}</div>
-              <p className="text-sm text-muted-foreground">Next pay period</p>
+              <div 
+                className="text-2xl font-bold"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{reportsData.upcomingPayrollDate}</div>
+              <p 
+                className="text-sm"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >Next pay period</p>
             </div>
             <div className="text-right">
-              <div className="text-sm text-muted-foreground">Estimated Amount</div>
-              <div className="text-xl font-semibold">{formatCurrency(reportsData.upcomingPayrollAmount)}</div>
+              <div 
+                className="text-sm"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >Estimated Amount</div>
+              <div 
+                className="text-xl font-semibold"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{formatCurrency(reportsData.upcomingPayrollAmount)}</div>
             </div>
           </div>
         </CardContent>
@@ -419,13 +580,19 @@ export default function ReportsPageClient() {
       return (
         <div className="space-y-6">
           {/* Worker Hours Table skeleton */}
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+          <Card 
+            className="backdrop-blur-sm shadow-none"
+            style={{
+              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+              border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+            }}
+          >
             <CardHeader>
               <div className="flex items-center justify-between">
-                <div className="h-6 w-48 animate-pulse rounded bg-gray-300"></div>
+                <div className="h-6 w-48 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
                 <div className="flex space-x-2">
-                  <div className="h-8 w-24 animate-pulse rounded bg-gray-300"></div>
-                  <div className="h-8 w-24 animate-pulse rounded bg-gray-300"></div>
+                  <div className="h-8 w-24 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
+                  <div className="h-8 w-24 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
                 </div>
               </div>
             </CardHeader>
@@ -452,9 +619,15 @@ export default function ReportsPageClient() {
           </Card>
 
           {/* Project Hours Table skeleton */}
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+          <Card 
+            className="backdrop-blur-sm shadow-none"
+            style={{
+              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+              border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+            }}
+          >
             <CardHeader>
-              <div className="h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+              <div className="h-6 w-40 animate-pulse rounded bg-gray-300 dark:bg-gray-700"></div>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -484,9 +657,15 @@ export default function ReportsPageClient() {
     if (reportsData.error) {
       return (
         <div className="space-y-6">
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+          <Card 
+            className="backdrop-blur-sm shadow-none"
+            style={{
+              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+              border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+            }}
+          >
             <CardContent className="p-6">
-              <p className="text-red-600 text-sm">Error loading detailed data: {reportsData.error}</p>
+              <p className="text-red-600 dark:text-red-400 text-sm">Error loading detailed data: {reportsData.error}</p>
             </CardContent>
           </Card>
         </div>
@@ -497,10 +676,16 @@ export default function ReportsPageClient() {
       <div className="space-y-6">
 
         {/* Worker Hours Table */}
-        <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+        <Card 
+          className="backdrop-blur-sm shadow-none"
+          style={{
+            backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+            border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+          }}
+        >
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Worker Hours & Costs</CardTitle>
+              <CardTitle style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>Worker Hours & Costs</CardTitle>
               <div className="flex space-x-2">
                 <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
                   Export Excel
@@ -515,32 +700,81 @@ export default function ReportsPageClient() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Worker</th>
-                    <th className="text-right p-3 font-medium">Regular Hours</th>
-                    <th className="text-right p-3 font-medium">OT Hours</th>
-                    <th className="text-right p-3 font-medium">Total Hours</th>
-                    <th className="text-right p-3 font-medium">Regular Cost</th>
-                    <th className="text-right p-3 font-medium">OT Cost</th>
-                    <th className="text-right p-3 font-medium">Total Cost</th>
+                  <tr 
+                    style={{ 
+                      borderBottom: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(229 231 235)' 
+                    }}
+                  >
+                    <th 
+                      className="text-left p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Worker</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Regular Hours</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >OT Hours</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Total Hours</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Regular Cost</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >OT Cost</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Total Cost</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reportsData.workerHours.length > 0 ? (
                     reportsData.workerHours.map((worker) => (
-                      <tr key={worker.worker_id} className="border-b">
-                        <td className="p-3">{worker.worker_name}</td>
-                        <td className="p-3 text-right">{worker.regular_hours.toFixed(1)}</td>
+                      <tr 
+                        key={worker.worker_id} 
+                        style={{ 
+                          borderBottom: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(229 231 235)' 
+                        }}
+                      >
+                        <td 
+                          className="p-3"
+                          style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                        >{worker.worker_name}</td>
+                        <td 
+                          className="p-3 text-right"
+                          style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                        >{worker.regular_hours.toFixed(1)}</td>
                         <td className="p-3 text-right text-orange-600">{worker.overtime_hours.toFixed(1)}</td>
-                        <td className="p-3 text-right font-medium">{worker.total_hours.toFixed(1)}</td>
-                        <td className="p-3 text-right">{formatCurrency(worker.regular_cost)}</td>
+                        <td 
+                          className="p-3 text-right font-medium"
+                          style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                        >{worker.total_hours.toFixed(1)}</td>
+                        <td 
+                          className="p-3 text-right"
+                          style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                        >{formatCurrency(worker.regular_cost)}</td>
                         <td className="p-3 text-right text-orange-600">{formatCurrency(worker.overtime_cost)}</td>
-                        <td className="p-3 text-right font-medium">{formatCurrency(worker.total_cost)}</td>
+                        <td 
+                          className="p-3 text-right font-medium"
+                          style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                        >{formatCurrency(worker.total_cost)}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="p-6 text-center text-gray-500">
+                      <td 
+                        colSpan={7} 
+                        className="p-6 text-center"
+                        style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                      >
                         No worker data available for this period
                       </td>
                     </tr>
@@ -552,34 +786,77 @@ export default function ReportsPageClient() {
         </Card>
 
         {/* Project Hours Table */}
-        <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
+        <Card 
+          className="backdrop-blur-sm shadow-none"
+          style={{
+            backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+            border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+          }}
+        >
           <CardHeader>
-            <CardTitle>Project Hours & Costs</CardTitle>
+            <CardTitle style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}>Project Hours & Costs</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Project</th>
-                    <th className="text-right p-3 font-medium">Total Hours</th>
-                    <th className="text-right p-3 font-medium">Total Cost</th>
-                    <th className="text-right p-3 font-medium">Avg Hourly Rate</th>
+                  <tr 
+                    style={{ 
+                      borderBottom: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(229 231 235)' 
+                    }}
+                  >
+                    <th 
+                      className="text-left p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Project</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Total Hours</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Total Cost</th>
+                    <th 
+                      className="text-right p-3 font-medium"
+                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                    >Avg Hourly Rate</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reportsData.projectCosts.length > 0 ? (
                     reportsData.projectCosts.map((project) => (
-                      <tr key={project.project_id} className="border-b">
-                        <td className="p-3">{project.project_name}</td>
-                        <td className="p-3 text-right font-medium">{project.total_hours.toFixed(1)}</td>
-                        <td className="p-3 text-right font-medium">{formatCurrency(project.total_cost)}</td>
-                        <td className="p-3 text-right">{formatCurrency(project.avg_hourly_rate)}</td>
+                      <tr 
+                        key={project.project_id} 
+                        style={{ 
+                          borderBottom: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(229 231 235)' 
+                        }}
+                      >
+                        <td 
+                          className="p-3"
+                          style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                        >{project.project_name}</td>
+                        <td 
+                          className="p-3 text-right font-medium"
+                          style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                        >{project.total_hours.toFixed(1)}</td>
+                        <td 
+                          className="p-3 text-right font-medium"
+                          style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                        >{formatCurrency(project.total_cost)}</td>
+                        <td 
+                          className="p-3 text-right"
+                          style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                        >{formatCurrency(project.avg_hourly_rate)}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="p-6 text-center text-gray-500">
+                      <td 
+                        colSpan={4} 
+                        className="p-6 text-center"
+                        style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                      >
                         No project data available for this period
                       </td>
                     </tr>

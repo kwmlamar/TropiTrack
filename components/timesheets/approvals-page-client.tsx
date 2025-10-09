@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTheme } from "next-themes";
 import { DashboardLayoutClient } from "@/components/layouts/dashboard-layout-client";
 import { ApprovalsPage } from "./approvals-page";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useEffect } from "react";
 import type { UserProfileWithCompany } from "@/lib/types/userProfile";
 
 export function ApprovalsPageClient() {
+  const { theme } = useTheme();
   const [profile, setProfile] = useState<UserProfileWithCompany | null>(null);
   const [selectedCount, setSelectedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -45,7 +47,17 @@ export function ApprovalsPageClient() {
         variant="outline"
         onClick={handleRefresh}
         size="sm"
-        className="border border-muted-foreground"
+        style={{
+          backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+          borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+          color: theme === 'dark' ? '#d1d5db' : '#374151'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+        }}
       >
         Refresh
       </Button>

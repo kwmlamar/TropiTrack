@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
+import { useTheme } from "next-themes"
 
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -39,6 +40,8 @@ const ITEMS_PER_PAGE = 20;
 
 // Loading Skeleton Component
 const PayrollSkeleton = () => {
+  const { theme } = useTheme()
+  
   return (
     <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
@@ -57,7 +60,14 @@ const PayrollSkeleton = () => {
         {/* Stats Cards Skeleton */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6 px-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="bg-sidebar border border-border/50 shadow-none">
+            <Card 
+              key={i} 
+              className="shadow-none"
+              style={{
+                backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+                border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+              }}
+            >
               <CardContent className="px-4 py-0">
                 <div className="space-y-2">
                   <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
@@ -73,7 +83,13 @@ const PayrollSkeleton = () => {
         </div>
 
         {/* Table Section Skeleton */}
-        <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+        <div 
+          className="border-t border-b flex-1 flex flex-col"
+          style={{
+            backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+            borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+          }}
+        >
           <div className="px-0 flex-1 flex flex-col">
             <div className="overflow-x-auto flex-1 overflow-y-auto">
               <div className="border-b">
@@ -134,6 +150,7 @@ export default function PayrollPage({
   onConfirmHandlerChange,
   onMarkAsPaidHandlerChange
 }: PayrollPageProps) {
+  const { theme } = useTheme()
   const searchParams = useSearchParams()
   const [internalPayrolls, setInternalPayrolls] = useState<PayrollRecord[]>([])
   const [internalSelectedPayrollIds, setInternalSelectedPayrollIds] = useState<Set<string>>(new Set())
@@ -957,14 +974,17 @@ export default function PayrollPage({
         <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
           <div className="flex items-center space-x-2">
             <div>
-              <h2 className="text-lg font-medium mb-0">
+              <h2 
+                className="text-lg font-medium mb-0"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >
                 Payroll{" "}
                 {dateRange?.from && dateRange?.to ? (
-                  <span className="text-gray-500">
+                  <span style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>
                     {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
                   </span>
                 ) : (
-                  <span className="text-gray-500">Select a date range</span>
+                  <span style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>Select a date range</span>
                 )}
               </h2>
             </div>
@@ -972,7 +992,18 @@ export default function PayrollPage({
               variant="outline"
               size="default"
               onClick={handlePreviousWeek}
-              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+              className="h-10 w-10 p-0"
+              style={{
+                backgroundColor: theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)',
+                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                color: theme === 'dark' ? '#d1d5db' : '#374151'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)'
+              }}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -980,7 +1011,18 @@ export default function PayrollPage({
               variant="outline"
               size="default"
               onClick={handleNextWeek}
-              className="h-10 w-10 p-0 !bg-sidebar border-border hover:!bg-muted"
+              className="h-10 w-10 p-0"
+              style={{
+                backgroundColor: theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)',
+                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                color: theme === 'dark' ? '#d1d5db' : '#374151'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)'
+              }}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -989,7 +1031,21 @@ export default function PayrollPage({
           {/* Filters Button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 h-10">
+              <Button 
+                variant="outline" 
+                className="gap-2 h-10"
+                style={{
+                  backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                  borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                  color: theme === 'dark' ? '#d1d5db' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                }}
+              >
                 <SlidersHorizontal className="h-4 w-4" />
                 Filters
                 {(payPeriodType !== "weekly" || selectedStatus !== "all") && (
@@ -1043,11 +1099,23 @@ export default function PayrollPage({
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6 px-6">
-            <Card className="bg-sidebar border border-border/50 shadow-none">
+            <Card 
+              className="shadow-none"
+              style={{
+                backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+                border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+              }}
+            >
               <CardContent className="px-4 py-0">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Total Payroll</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                  <p 
+                    className="text-sm font-medium"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#9ca3af' }}
+                  >Total Payroll</p>
+                  <p 
+                    className="text-2xl font-semibold leading-tight"
+                    style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                  >
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
                       currency: "BSD",
@@ -1072,11 +1140,23 @@ export default function PayrollPage({
               </CardContent>
             </Card>
 
-            <Card className="bg-sidebar border border-border/50 shadow-none">
+            <Card 
+              className="shadow-none"
+              style={{
+                backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+                border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+              }}
+            >
               <CardContent className="px-4 py-0">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Total Workers</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                  <p 
+                    className="text-sm font-medium"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#9ca3af' }}
+                  >Total Workers</p>
+                  <p 
+                    className="text-2xl font-semibold leading-tight"
+                    style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                  >
                     {currentPeriodData.totalWorkers}
                   </p>
                   <div className="flex items-center gap-1">
@@ -1097,11 +1177,23 @@ export default function PayrollPage({
               </CardContent>
             </Card>
 
-            <Card className="bg-sidebar border border-border/50 shadow-none">
+            <Card 
+              className="shadow-none"
+              style={{
+                backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+                border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+              }}
+            >
               <CardContent className="px-4 py-0">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">NIB Remittance</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                  <p 
+                    className="text-sm font-medium"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#9ca3af' }}
+                  >NIB Remittance</p>
+                  <p 
+                    className="text-2xl font-semibold leading-tight"
+                    style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                  >
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
                       currency: "BSD",
@@ -1128,11 +1220,23 @@ export default function PayrollPage({
               </CardContent>
             </Card>
 
-            <Card className="bg-sidebar border border-border/50 shadow-none">
+            <Card 
+              className="shadow-none"
+              style={{
+                backgroundColor: theme === 'dark' ? '#1f1f1f' : 'oklch(1 0.003 250)',
+                border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+              }}
+            >
               <CardContent className="px-4 py-0">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-400 dark:text-gray-400">Balance</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-900 leading-tight">
+                  <p 
+                    className="text-sm font-medium"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#9ca3af' }}
+                  >Balance</p>
+                  <p 
+                    className="text-2xl font-semibold leading-tight"
+                    style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                  >
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
                       currency: "BSD",
@@ -1159,13 +1263,33 @@ export default function PayrollPage({
           </div>
 
         {/* Payroll Table */}
-        <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+        <div 
+          className="border-t border-b flex-1 flex flex-col"
+          style={{
+            backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+            borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+          }}
+        >
           <div className="px-0 flex-1 flex flex-col">
             <div className="overflow-x-auto flex-1 overflow-y-auto">
                   <Table>
-                    <TableHeader className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
-                      <TableRow className="bg-white hover:bg-white">
-                        <TableHead className="p-4 pl-8 pb-4 font-medium text-sm text-gray-500 bg-white">
+                    <TableHeader 
+                      className="sticky top-0 z-50 shadow-sm"
+                      style={{
+                        backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                        borderBottom: theme === 'dark' ? '2px solid #262626' : '2px solid rgb(226 232 240 / 0.5)'
+                      }}
+                    >
+                      <TableRow 
+                        style={{ 
+                          backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                        }}
+                        className="hover:bg-transparent"
+                      >
+                        <TableHead 
+                          className="p-4 pl-8 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >
                           <Checkbox
                             color="var(--muted-foreground)"
                             checked={selectedPayrollIds.size === paginatedPayrolls.length && paginatedPayrolls.length > 0}
@@ -1173,13 +1297,34 @@ export default function PayrollPage({
                             aria-label="Select all"
                           />
                         </TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Worker</TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Hourly Rate</TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Gross Pay</TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">NIB Deduction</TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Net Pay</TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Payment Amount</TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >Worker</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >Hourly Rate</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >Gross Pay</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >NIB Deduction</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >Net Pay</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >Payment Amount</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >
                           <div className="flex items-center gap-2">
                             <span>Remaining Balance</span>
                             <DropdownMenu>
@@ -1217,14 +1362,33 @@ export default function PayrollPage({
                             </DropdownMenu>
                           </div>
                         </TableHead>
-                        <TableHead className="p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Status</TableHead>
-                        <TableHead className="p-4 pb-4 pr-6 font-medium text-sm text-gray-500 bg-white w-16">Actions</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 font-medium text-sm text-gray-500"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >Status</TableHead>
+                        <TableHead 
+                          className="p-4 pb-4 pr-6 font-medium text-sm text-gray-500 w-16"
+                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                        >Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedPayrolls.length ? (
                         paginatedPayrolls.map((payroll) => (
-                          <TableRow key={payroll.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
+                          <TableRow 
+                            key={payroll.id} 
+                            className="border-b last:border-b-0 transition-all duration-200"
+                            style={{
+                              borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
+                              backgroundColor: 'transparent'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }}
+                          >
                             <TableCell className="py-3 px-4 pl-8">
                               <Checkbox
                                 color="var(--muted-foreground)"
@@ -1235,12 +1399,21 @@ export default function PayrollPage({
                             </TableCell>
                             <TableCell className="py-3 px-4">
                               <div>
-                                <div className="font-medium">{payroll.worker_name}</div>
-                                <div className="text-sm text-gray-500">{payroll.position}</div>
+                                <div 
+                                  className="font-medium"
+                                  style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                                >{payroll.worker_name}</div>
+                                <div 
+                                  className="text-sm"
+                                  style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                >{payroll.position}</div>
                               </div>
                             </TableCell>
                             <TableCell className="py-3 px-4">
-                              <div className="font-medium text-gray-500">
+                              <div 
+                                className="font-medium"
+                                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                              >
                                 {new Intl.NumberFormat("en-BS", {
                                   style: "currency",
                                   currency: "BSD",
@@ -1249,7 +1422,10 @@ export default function PayrollPage({
                               </div>
                             </TableCell>
                             <TableCell className="py-3 px-4">
-                              <div className="font-medium text-gray-500">
+                              <div 
+                                className="font-medium"
+                                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                              >
                                 {new Intl.NumberFormat("en-BS", {
                                   style: "currency",
                                   currency: "BSD",
@@ -1258,7 +1434,10 @@ export default function PayrollPage({
                               </div>
                             </TableCell>
                             <TableCell className="py-3 px-4">
-                              <div className="font-medium text-gray-500">
+                              <div 
+                                className="font-medium"
+                                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                              >
                                 {new Intl.NumberFormat("en-BS", {
                                   style: "currency",
                                   currency: "BSD",
@@ -1267,7 +1446,10 @@ export default function PayrollPage({
                               </div>
                             </TableCell>
                             <TableCell className="py-3 px-4">
-                              <div className="font-medium text-gray-500">
+                              <div 
+                                className="font-medium"
+                                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                              >
                                 {new Intl.NumberFormat("en-BS", {
                                   style: "currency",
                                   currency: "BSD",
@@ -1335,7 +1517,21 @@ export default function PayrollPage({
                                       totalPaid === 0 ? (
                                         <button
                                           onClick={() => handlePaymentAmountEdit(payroll.id, "0")}
-                                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-gray-700 border border-gray-200 rounded-md transition-colors w-full justify-start"
+                                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors w-full justify-start"
+                                          style={{
+                                            backgroundColor: theme === 'dark' ? '#262626' : 'rgb(249 250 251)',
+                                            borderColor: theme === 'dark' ? '#404040' : 'rgb(229 231 235)',
+                                            color: theme === 'dark' ? '#9ca3af' : '#4b5563',
+                                            border: '1px solid'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                                            e.currentTarget.style.color = theme === 'dark' ? '#d1d5db' : '#374151'
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                            e.currentTarget.style.color = theme === 'dark' ? '#9ca3af' : '#4b5563'
+                                          }}
                                         >
                                           <Plus className="w-4 h-4" />
                                           Set Amount
@@ -1343,7 +1539,16 @@ export default function PayrollPage({
                                       ) : (
                                         <button
                                           onClick={() => handlePaymentAmountEdit(payroll.id, totalPaid.toString())}
-                                          className="font-medium text-gray-500 hover:text-foreground cursor-pointer"
+                                          className="font-medium cursor-pointer"
+                                          style={{ 
+                                            color: theme === 'dark' ? '#9ca3af' : '#6b7280' 
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = theme === 'dark' ? '#e5e7eb' : '#111827'
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = theme === 'dark' ? '#9ca3af' : '#6b7280'
+                                          }}
                                         >
                                           {new Intl.NumberFormat("en-BS", {
                                             style: "currency",
@@ -1353,11 +1558,28 @@ export default function PayrollPage({
                                         </button>
                                       )
                                     ) : (
-                                      <span className="font-medium text-gray-400">
+                                      <span 
+                                        className="font-medium"
+                                        style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                                      >
                                         {totalPaid === 0 ? (
                                           <button
-                                            onClick={() => handlePendingPayrollClick(payroll.id)}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 hover:text-gray-500 transition-colors cursor-pointer"
+                                            onClick={handlePendingPayrollClick}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer"
+                                            style={{
+                                              backgroundColor: theme === 'dark' ? '#1f1f1f' : 'rgb(249 250 251)',
+                                              borderColor: theme === 'dark' ? '#404040' : 'rgb(229 231 235)',
+                                              color: theme === 'dark' ? '#6b7280' : '#9ca3af',
+                                              border: '1px solid'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
+                                              e.currentTarget.style.color = theme === 'dark' ? '#9ca3af' : '#6b7280'
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#1f1f1f' : 'rgb(249 250 251)'
+                                              e.currentTarget.style.color = theme === 'dark' ? '#6b7280' : '#9ca3af'
+                                            }}
                                           >
                                             <Plus className="w-4 h-4" />
                                             Set Amount
@@ -1399,8 +1621,14 @@ export default function PayrollPage({
                                         {/* Show based on selected view */}
                                         {(remainingBalanceView === "net" || remainingBalanceView === "both") && (
                                           <div className="flex items-center gap-1">
-                                            <span className="text-xs text-gray-500">Net:</span>
-                                            <span className="font-medium text-gray-500">
+                                            <span 
+                                              className="text-xs"
+                                              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                            >Net:</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                            >
                                               {new Intl.NumberFormat("en-BS", {
                                                 style: "currency",
                                                 currency: "BSD",
@@ -1412,8 +1640,14 @@ export default function PayrollPage({
                                         
                                         {(remainingBalanceView === "gross" || (remainingBalanceView === "both" && grossRemaining !== netRemaining)) && (
                                           <div className="flex items-center gap-1">
-                                            <span className="text-xs text-gray-500">Gross:</span>
-                                            <span className="font-medium text-gray-500">
+                                            <span 
+                                              className="text-xs"
+                                              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                            >Gross:</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                            >
                                               {new Intl.NumberFormat("en-BS", {
                                                 style: "currency",
                                                 currency: "BSD",
@@ -1500,13 +1734,25 @@ export default function PayrollPage({
                         <TableRow>
                           <TableCell colSpan={10} className="h-32 text-center py-3 px-4">
                             <div className="flex flex-col items-center justify-center space-y-3 py-8">
-                              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
-                                <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div 
+                                className="w-12 h-12 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.5)' }}
+                              >
+                                <svg 
+                                  className="w-6 h-6" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                  style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                                >
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                               </div>
                               <div className="space-y-1">
-                                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                                <p 
+                                  className="text-sm max-w-sm"
+                                  style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                                >
                                   {selectedStatus !== "all" 
                                     ? `No payroll records with "${selectedStatus}" status for the selected period.`
                                     : "No payroll records found for the selected date range. Try adjusting your filters or date range."
@@ -1534,7 +1780,10 @@ export default function PayrollPage({
             {/* Pagination Controls */}
             {filteredPayrolls.length > ITEMS_PER_PAGE && (
               <div className="flex items-center justify-between px-6 py-4">
-                <div className="text-sm text-gray-500">
+                <div 
+                  className="text-sm"
+                  style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                >
                   Showing {startIndex + 1} to {Math.min(endIndex, filteredPayrolls.length)} of {filteredPayrolls.length} payroll records
                 </div>
                 <div className="flex items-center space-x-2">

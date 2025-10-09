@@ -229,7 +229,21 @@ export default function ProjectsTable({ user }: { user: User }) {
           <div className="flex items-center space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-10">
+                <Button 
+                  variant="outline" 
+                  className="h-10"
+                  style={{
+                    backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                    borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                    color: theme === 'dark' ? '#d1d5db' : '#374151'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                  }}
+                >
                   <Filter className="mr-2 h-4 w-4" />
                   Filters
                 </Button>

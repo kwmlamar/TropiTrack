@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { format, startOfWeek, endOfWeek, parseISO } from "date-fns"
 import { Check, X, Clock, User, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -70,6 +71,7 @@ export function ApprovalsPage({
   onApproveHandlerChange,
   onRefreshHandlerChange
 }: ApprovalsPageProps = {}) {
+  const { theme } = useTheme()
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -383,9 +385,9 @@ export function ApprovalsPage({
         const timesheet = row.original
         return (
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-500" />
+            <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             <div>
-              <p className="font-medium">{timesheet.worker?.name || 'Unknown Worker'}</p>
+              <p className="font-medium text-gray-900 dark:text-gray-200">{timesheet.worker?.name || 'Unknown Worker'}</p>
             </div>
           </div>
         )
@@ -397,7 +399,7 @@ export function ApprovalsPage({
       cell: ({ row }) => {
         const timesheet = row.original
         return (
-          <span className="text-gray-500">{timesheet.project?.name || 'Unknown Project'}</span>
+          <span className="text-gray-500 dark:text-gray-400">{timesheet.project?.name || 'Unknown Project'}</span>
         )
       },
     },
@@ -407,7 +409,7 @@ export function ApprovalsPage({
       cell: ({ row }) => {
         const timesheet = row.original
         return (
-          <span className="text-gray-500">{format(new Date(timesheet.date), 'MMM d, yyyy')}</span>
+          <span className="text-gray-500 dark:text-gray-400">{format(new Date(timesheet.date), 'MMM d, yyyy')}</span>
         )
       },
     },
@@ -418,7 +420,7 @@ export function ApprovalsPage({
         const timesheet = row.original
         return (
           <div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {timesheet.regular_hours}h regular, {timesheet.overtime_hours}h overtime
             </p>
           </div>
@@ -431,7 +433,7 @@ export function ApprovalsPage({
       cell: ({ row }) => {
         const timesheet = row.original
         return (
-          <span className="text-gray-500">${timesheet.total_pay.toFixed(2)}</span>
+          <span className="text-gray-500 dark:text-gray-400">${timesheet.total_pay.toFixed(2)}</span>
         )
       },
     },
@@ -500,7 +502,13 @@ export function ApprovalsPage({
       <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
           {/* Table Skeleton */}
-          <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+          <div 
+            className="border-t border-b flex-1 flex flex-col"
+            style={{
+              backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+              borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+            }}
+          >
             <div className="px-0 flex-1 flex-col">
               <div className="overflow-x-auto flex-1 overflow-y-auto">
             <div className="border-b">
@@ -564,28 +572,60 @@ export function ApprovalsPage({
     <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
         {/* Approvals Table */}
-        <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+        <div 
+          className="border-t border-b flex-1 flex flex-col"
+          style={{
+            backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+            borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+          }}
+        >
           <div className="px-0 flex-1 flex flex-col">
             <div className="overflow-x-auto flex-1 overflow-y-auto">
               {timesheets.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-6">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                    <Clock className="h-8 w-8 text-gray-500" />
+                  <div 
+                    className="flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                    style={{ backgroundColor: theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.5)' }}
+                  >
+                    <Clock 
+                      className="h-8 w-8"
+                      style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                    />
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                  <h3 
+                    className="text-lg font-semibold mb-2"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#111827' }}
+                  >
                     No unapproved timesheets
                   </h3>
-                  <p className="text-sm text-gray-500 text-center max-w-sm">
+                  <p 
+                    className="text-sm text-center max-w-sm"
+                    style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                  >
                     All timesheets have been approved or there are no pending submissions.
                   </p>
                 </div>
               ) : (
-          <Table className="border-b border-border/30">
-            <TableHeader className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
+          <Table>
+            <TableHeader 
+              className="sticky top-0 z-50 shadow-sm"
+              style={{
+                backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                borderBottom: theme === 'dark' ? '2px solid #262626' : '2px solid rgb(226 232 240 / 0.5)'
+              }}
+            >
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="bg-white hover:bg-white">
+                <TableRow 
+                  key={headerGroup.id} 
+                  className="hover:bg-transparent"
+                  style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                >
                   {headerGroup.headers.map((header, idx) => (
-                    <TableHead key={header.id} className={`p-4 pb-4 font-medium text-sm text-gray-500 bg-white ${idx === 0 ? 'pl-8' : ''}`}>
+                    <TableHead 
+                      key={header.id} 
+                      className={`p-4 pb-4 font-medium text-sm text-gray-500 ${idx === 0 ? 'pl-8' : ''}`}
+                      style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -600,7 +640,20 @@ export function ApprovalsPage({
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
+                  <TableRow 
+                    key={row.id} 
+                    className="border-b last:border-b-0 transition-all duration-200"
+                    style={{
+                      borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
+                      backgroundColor: 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
                     {row.getVisibleCells().map((cell, idx) => (
                       <TableCell key={cell.id} className={`py-3 px-4 ${idx === 0 ? 'pl-8' : ''}`}>
                         {flexRender(
@@ -613,7 +666,11 @@ export function ApprovalsPage({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center py-3 px-4">
+                  <TableCell 
+                    colSpan={columns.length} 
+                    className="h-24 text-center py-3 px-4"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                  >
                     No results.
                   </TableCell>
                 </TableRow>
