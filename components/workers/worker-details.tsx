@@ -165,6 +165,7 @@ export default function WorkerDetails() {
         setColumnExists(result.success ? result.data : false);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worker]);
 
   if (loading) {

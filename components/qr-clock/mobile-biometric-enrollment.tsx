@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -112,11 +112,7 @@ export default function MobileBiometricEnrollment({
   const [deviceId, setDeviceId] = useState<string>('');
   const [templateHash, setTemplateHash] = useState<string>('');
 
-  useEffect(() => {
-    checkDevice();
-  }, [checkDevice]);
-
-  const checkDevice = async () => {
+  const checkDevice = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -138,9 +134,11 @@ export default function MobileBiometricEnrollment({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [workerId, t.deviceError]);
 
-
+  useEffect(() => {
+    checkDevice();
+  }, [checkDevice]);
 
   const handleBiometricSetup = async () => {
     try {

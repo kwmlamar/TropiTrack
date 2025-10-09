@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { format } from "date-fns"
 import { useDateRange } from "@/context/date-range-context"
 import { Card, CardContent } from "@/components/ui/card"
@@ -127,7 +127,7 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
   const [error, setError] = useState<string | null>(null)
 
   // Load time logs data
-  const loadTimeLogs = async () => {
+  const loadTimeLogs = useCallback(async () => {
     setLoading(true)
     setError(null)
     
@@ -151,12 +151,12 @@ export function TimeLogsPage({ user }: TimeLogsPageProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user.id, dateRange?.from, dateRange?.to])
 
   // Load data when component mounts or date range changes
   useEffect(() => {
     loadTimeLogs()
-  }, [user.id, dateRange?.from, dateRange?.to, loadTimeLogs])
+  }, [loadTimeLogs])
 
   if (loading) {
     return <TimeLogsSkeleton />

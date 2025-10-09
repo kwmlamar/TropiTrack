@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -34,11 +34,7 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
   const [deviceInfo, setDeviceInfo] = useState<unknown>(null)
   const [webauthnManager] = useState(() => WebAuthnManager.getInstance())
 
-  useEffect(() => {
-    checkDeviceCompatibility()
-  }, [checkDeviceCompatibility])
-
-  const checkDeviceCompatibility = async () => {
+  const checkDeviceCompatibility = useCallback(async () => {
     try {
       const compatibility = await webauthnManager.isBiometricAvailable()
       setDeviceCompatibility(compatibility)
@@ -53,7 +49,11 @@ export function TestBiometricVerification({ workerId, workerName }: TestBiometri
       console.error('Device compatibility check failed:', err)
       setError('Failed to check device compatibility.')
     }
-  }
+  }, [webauthnManager])
+
+  useEffect(() => {
+    checkDeviceCompatibility()
+  }, [checkDeviceCompatibility])
 
   const performRealEnrollment = async () => {
     setIsProcessing(true)

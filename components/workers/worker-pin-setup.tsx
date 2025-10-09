@@ -49,6 +49,7 @@ export function WorkerPinSetup({
   // Load PIN status on mount
   useEffect(() => {
     loadPinStatus()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadPinStatus = async () => {

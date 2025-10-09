@@ -234,7 +234,7 @@ export default function PayrollPage({ user }: { user: User }) {
       }
       setPayPeriodType(periodTypeMap[periodType] || 'weekly')
     }
-  }, [searchParams])
+  }, [searchParams, setDateRange])
 
   const loadPayroll = async (forceRefresh = false) => {
     console.log('loadPayroll called', { isLoading, dateRange, payPeriodType });

@@ -46,6 +46,7 @@ export function WorkerConnection({ companyId, onWorkerConnected }: WorkerConnect
 
   useEffect(() => {
     loadWorkers()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId])
 
   const loadWorkers = async () => {

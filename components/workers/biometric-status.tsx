@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -40,7 +40,7 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
   const [error, setError] = useState<string | null>(null)
   const [showTestVerification, setShowTestVerification] = useState(false)
 
-  const fetchEnrollmentStatus = async () => {
+  const fetchEnrollmentStatus = useCallback(async () => {
     setLoading(true)
     setError(null)
     
@@ -58,11 +58,11 @@ export default function BiometricStatus({ worker, onStartEnrollment, onRefreshSt
     } finally {
       setLoading(false)
     }
-  }
+  }, [worker.id])
 
   useEffect(() => {
     fetchEnrollmentStatus()
-  }, [worker.id, fetchEnrollmentStatus])
+  }, [fetchEnrollmentStatus])
 
   const handleRefresh = () => {
     fetchEnrollmentStatus()
