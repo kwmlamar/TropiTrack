@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { format, startOfWeek, endOfWeek, parseISO } from "date-fns"
 import { Check, X, Clock, User, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -58,7 +57,19 @@ interface TimesheetWithDetails {
   }
 }
 
-export function ApprovalsPage() {
+interface ApprovalsPageProps {
+  onSelectedCountChange?: (count: number) => void;
+  onTotalCountChange?: (count: number) => void;
+  onApproveHandlerChange?: (handler: () => void) => void;
+  onRefreshHandlerChange?: (handler: () => void) => void;
+}
+
+export function ApprovalsPage({
+  onSelectedCountChange,
+  onTotalCountChange,
+  onApproveHandlerChange,
+  onRefreshHandlerChange
+}: ApprovalsPageProps = {}) {
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -123,6 +134,26 @@ export function ApprovalsPage() {
     }
     getUser()
   }, [])
+
+  // Share state with parent component
+  useEffect(() => {
+    onTotalCountChange?.(timesheets.length);
+  }, [timesheets.length, onTotalCountChange]);
+
+  useEffect(() => {
+    onSelectedCountChange?.(table.getSelectedRowModel().rows.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowSelection, onSelectedCountChange]);
+
+  // Share handlers with parent component
+  useEffect(() => {
+    onApproveHandlerChange?.(() => {
+      const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.id);
+      handleBatchApprove(selectedIds);
+    });
+    onRefreshHandlerChange?.(fetchUnapprovedTimesheets);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onApproveHandlerChange, onRefreshHandlerChange, rowSelection, timesheets])
 
   const onApprove = async (id: string) => {
     const response = await fetch(`/api/approvals/${id}/approve`, {
@@ -466,22 +497,12 @@ export function ApprovalsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
-          {/* Header Skeleton */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-              <div className="h-4 w-48 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-            </div>
-            <div className="flex items-center space-x-6">
-              <div className="h-9 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-              <div className="h-9 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-            </div>
-          </div>
-
+      <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
           {/* Table Skeleton */}
-          <div className="rounded-md border bg-sidebar">
+          <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+            <div className="px-0 flex-1 flex-col">
+              <div className="overflow-x-auto flex-1 overflow-y-auto">
             <div className="border-b">
               <div className="grid grid-cols-7 gap-4 p-4">
                 <div className="h-4 w-4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
@@ -520,6 +541,8 @@ export function ApprovalsPage() {
                 </div>
               </div>
             ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -528,10 +551,7 @@ export function ApprovalsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
-        <div>
-          <h2 className="text-lg font-medium mb-2">Pending Approvals</h2>
-        </div>
+      <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col px-6">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
@@ -541,58 +561,31 @@ export function ApprovalsPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-medium">Pending Approvals</h2>
-          <span className="text-sm text-gray-500">
-            ({timesheets.length} timesheet{timesheets.length !== 1 ? 's' : ''} pending approval)
-          </span>
-        </div>
-        <div className="flex items-center space-x-4">
-          {timesheets.length > 0 && (
-            <Button
-              variant="outline"
-              onClick={fetchUnapprovedTimesheets}
-              disabled={loading}
-              className="border border-muted-foreground m-0"
-            >
-              Refresh
-            </Button>
-          )}
-          {timesheets.length > 0 && (
-            <Button
-              onClick={async () => {
-                const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.id)
-                await handleBatchApprove(selectedIds)
-              }}
-              disabled={table.getSelectedRowModel().rows.length === 0 || isProcessing}
-              className="ml-2"
-            >
-              Approve Selected
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {timesheets.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Clock className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No unapproved timesheets</h3>
-            <p className="text-gray-500">
-              All timesheets have been approved or there are no pending submissions.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="rounded-md border bg-sidebar">
-          <Table>
-            <TableHeader>
+    <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
+        {/* Approvals Table */}
+        <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+          <div className="px-0 flex-1 flex flex-col">
+            <div className="overflow-x-auto flex-1 overflow-y-auto">
+              {timesheets.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 px-6">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                    <Clock className="h-8 w-8 text-gray-500" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No unapproved timesheets
+                  </h3>
+                  <p className="text-sm text-gray-500 text-center max-w-sm">
+                    All timesheets have been approved or there are no pending submissions.
+                  </p>
+                </div>
+              ) : (
+          <Table className="border-b border-border/30">
+            <TableHeader className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="px-4 text-gray-500">
+                <TableRow key={headerGroup.id} className="bg-white hover:bg-white">
+                  {headerGroup.headers.map((header, idx) => (
+                    <TableHead key={header.id} className={`p-4 pb-4 font-medium text-sm text-gray-500 bg-white ${idx === 0 ? 'pl-8' : ''}`}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -607,9 +600,9 @@ export function ApprovalsPage() {
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4">
+                  <TableRow key={row.id} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200">
+                    {row.getVisibleCells().map((cell, idx) => (
+                      <TableCell key={cell.id} className={`py-3 px-4 ${idx === 0 ? 'pl-8' : ''}`}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -620,15 +613,18 @@ export function ApprovalsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center px-4">
+                  <TableCell colSpan={columns.length} className="h-24 text-center py-3 px-4">
                     No results.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 } 

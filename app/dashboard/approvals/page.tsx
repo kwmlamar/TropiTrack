@@ -1,10 +1,5 @@
-import DashboardLayout from "@/components/layouts/dashboard-layout";
-import { ApprovalsPage } from "@/components/timesheets/approvals-page";
+import { ApprovalsPageClient } from "@/components/timesheets/approvals-page-client";
 
 export default async function Page() {
-  return (
-    <DashboardLayout title="Approvals">
-      <ApprovalsPage />
-    </DashboardLayout>
-  );
+  return <ApprovalsPageClient />;
 } 

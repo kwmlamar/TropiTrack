@@ -351,6 +351,12 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // For weekly view, we need to paginate workers instead of timesheets
   const weeklyWorkerEntries = viewMode === "weekly" 
     ? Array.from((groupedTimesheets as Map<string, TimesheetWithDetails[]>).entries())
+        .sort((a, b) => {
+          // Sort by total hours descending (most hours first)
+          const aTotal = a[1].reduce((sum, ts) => sum + ts.total_hours, 0);
+          const bTotal = b[1].reduce((sum, ts) => sum + ts.total_hours, 0);
+          return bTotal - aTotal;
+        })
     : [];
   const weeklyTotalPages = Math.ceil(weeklyWorkerEntries.length / ITEMS_PER_PAGE);
   const weeklyStartIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -681,7 +687,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                                   Number.parseFloat(e.target.value) || 0,
                                                 )
                                               }
-                                              className="w-full h-10 text-center text-lg font-semibold border-0 bg-transparent focus:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                              className="w-full h-10 text-center text-2xl font-semibold border-0 bg-transparent focus:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
                                               step="0.5"
                                               min="0"
                                               max="24"
@@ -785,7 +791,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                                       Number.parseFloat(e.target.value) || 0,
                                                     )
                                                   }
-                                                  className="w-full h-10 text-center text-lg font-semibold border-0 bg-transparent focus:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                                  className="w-full h-10 text-center text-2xl font-semibold border-0 bg-transparent focus:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
                                                   step="0.5"
                                                   min="0"
                                                   max="24"
