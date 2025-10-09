@@ -1,9 +1,9 @@
 "use client"
 
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { useState } from "react"
 import { SiteHeader } from "@/components/site-header"
-
+import { PrimarySidebar } from "@/components/primary-sidebar"
+import { SecondarySidebar } from "@/components/secondary-sidebar"
 
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
@@ -18,9 +18,13 @@ type DashboardLayoutClientProps = {
   children: React.ReactNode
   title: string | React.ReactNode
   profile: UserProfileWithCompany
+  fullWidth?: boolean
 }
 
-export function DashboardLayoutClient({ children, title, profile }: DashboardLayoutClientProps) {
+export function DashboardLayoutClient({ children, title, profile, fullWidth = false }: DashboardLayoutClientProps) {
+  const [selectedSection, setSelectedSection] = useState<string | null>(null)
+  const [isSecondarySidebarCollapsed, setIsSecondarySidebarCollapsed] = useState(false)
+  
   // Determine if this is the timesheets, approvals, or time logs page
   const isTimesheets = title === "Timesheets";
   const isApprovals = title === "Approvals";
@@ -33,83 +37,67 @@ export function DashboardLayoutClient({ children, title, profile }: DashboardLay
   // Show report tabs only on reports page
   const showReportsTabs = isReports;
 
+  const layoutContent = (
+    <div className="flex h-screen overflow-hidden">
+      {/* Primary Sidebar - Icon based */}
+      <PrimarySidebar 
+        onSectionChange={setSelectedSection}
+        isSecondarySidebarCollapsed={isSecondarySidebarCollapsed}
+        onToggleSecondarySidebar={() => setIsSecondarySidebarCollapsed(!isSecondarySidebarCollapsed)}
+        profile={profile}
+      />
+      
+      {/* Secondary Sidebar - Contextual */}
+      <SecondarySidebar 
+        profile={profile} 
+        section={selectedSection}
+        isCollapsed={isSecondarySidebarCollapsed}
+        onToggleCollapse={() => setIsSecondarySidebarCollapsed(!isSecondarySidebarCollapsed)}
+      />
+      
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        {isReports ? (
+          <ReportsHeaderWrapper title={title} />
+        ) : (
+          <SiteHeader 
+            title={title} 
+            hideDateRangePicker={!showDateRangePicker} 
+            showTimesheetsDropdown={showTimesheetsDropdown}
+            showReportsTabs={showReportsTabs}
+          />
+        )}
+        
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto bg-white">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+              <div className={fullWidth ? "" : "px-4 lg:px-6"}>
+                {children}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      
+      {/* Setup Guide Dropdown - Lazy Loaded */}
+      <LazySetupGuide />
+      
+      {/* Onboarding Check - Shows company setup overlay when needed */}
+      <OnboardingCheck />
+    </div>
+  )
+
   return (
     <OnboardingProvider>
       <DateRangeProvider>
         {isReports ? (
           <ReportsTabsProvider>
-            <SidebarProvider
-          style={
-            {
-              "--sidebar-width": "calc(var(--spacing) * 64)",
-              "--header-height": "calc(var(--spacing) * 12)",
-            } as React.CSSProperties
-          }
-        >
-          <AppSidebar profile={profile} variant="inset" />
-          <SidebarInset>
-            {isReports ? (
-              <ReportsHeaderWrapper title={title} />
-            ) : (
-              <SiteHeader 
-                title={title} 
-                hideDateRangePicker={!showDateRangePicker} 
-                showTimesheetsDropdown={showTimesheetsDropdown}
-                showReportsTabs={showReportsTabs}
-              />
-            )}
-            <div className="flex flex-1 flex-col">
-              <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                  <div className="px-4 lg:px-6">
-                    {children}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SidebarInset>
-          
-          {/* Setup Guide Dropdown - Lazy Loaded */}
-          <LazySetupGuide />
-          
-          {/* Onboarding Check - Shows company setup overlay when needed */}
-          <OnboardingCheck />
-        </SidebarProvider>
+            {layoutContent}
           </ReportsTabsProvider>
         ) : (
-          <SidebarProvider
-            style={
-              {
-                "--sidebar-width": "calc(var(--spacing) * 64)",
-                "--header-height": "calc(var(--spacing) * 12)",
-              } as React.CSSProperties
-            }
-          >
-            <AppSidebar profile={profile} variant="inset" />
-            <SidebarInset>
-              <SiteHeader 
-                title={title} 
-                hideDateRangePicker={!showDateRangePicker} 
-                showTimesheetsDropdown={showTimesheetsDropdown}
-                showReportsTabs={showReportsTabs}
-              />
-              <div className="flex flex-1 flex-col">
-                <div className="@container/main flex flex-1 flex-col gap-2">
-                  <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                    <div className="px-4 lg:px-6">
-                      {children}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Setup Guide Dropdown - Lazy Loaded */}
-              <LazySetupGuide />
-              
-              {/* Onboarding Check - Shows company setup overlay when needed */}
-              <OnboardingCheck />
-            </SidebarInset>
-          </SidebarProvider>
+          layoutContent
         )}
       </DateRangeProvider>
     </OnboardingProvider>

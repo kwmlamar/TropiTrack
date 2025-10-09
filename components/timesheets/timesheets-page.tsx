@@ -5,8 +5,6 @@ import React from "react"
 import { User } from "@supabase/supabase-js"
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
@@ -24,8 +22,6 @@ import { AddTimesheetDialog } from "./add-timesheet-dialog"
 import { UnapproveTimesheetDialog } from "./unapprove-timesheet-dialog"
 import { getCurrentLocalDate } from "@/lib/utils"
 import { useDateRange } from "@/context/date-range-context"
-
-type AttendanceStatus = "present" | "absent" | "late"
 
 const ITEMS_PER_PAGE = 20;
 
@@ -264,12 +260,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
   }
 
   // Helper function to get attendance status from timesheet data
-  const getAttendanceStatus = (timesheet: TimesheetWithDetails): AttendanceStatus => {
-    if (timesheet.total_hours === 0) return "absent"
-    if (timesheet.notes?.toLowerCase().includes("late")) return "late"
-    return "present"
-  }
-
   // Filter timesheets based on selected filters
   const filteredTimesheets = useMemo(() => {
     return timesheets.filter((timesheet) => {
@@ -368,62 +358,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const weeklyEndIndex = weeklyStartIndex + ITEMS_PER_PAGE;
   const paginatedWorkerEntries = weeklyWorkerEntries.slice(weeklyStartIndex, weeklyEndIndex);
 
-
-
-  const getStatusBadge = (status: AttendanceStatus) => {
-    const labels = {
-      present: "Present",
-      absent: "Absent",
-      late: "Late",
-    }
-
-    const getBadgeClassName = (status: AttendanceStatus) => {
-      switch (status) {
-        case "present":
-          return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
-        case "absent":
-          return "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30 dark:bg-red-400/20 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
-        case "late":
-          return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/30 dark:hover:bg-amber-900/30 px-3 py-1 text-xs font-medium rounded-2xl";
-        default:
-          return "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30 dark:bg-gray-400/20 dark:text-gray-400 dark:border-gray-400/30 dark:hover:bg-gray-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
-      }
-    }
-
-    return (
-      <Badge className={getBadgeClassName(status)}>
-        {labels[status]}
-      </Badge>
-    )
-  }
-
-  const getApprovalStatusBadge = (status: "pending" | "approved" | "rejected") => {
-    const labels = {
-      pending: "Pending",
-      approved: "Approved",
-      rejected: "Rejected",
-    }
-
-    const getBadgeClassName = (status: "pending" | "approved" | "rejected") => {
-      switch (status) {
-        case "approved":
-          return "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl";
-        case "pending":
-          return "bg-orange-500/20 text-orange-600 border-orange-500/30 hover:bg-orange-500/30 dark:bg-orange-500/20 dark:text-orange-500 dark:border-orange-500/30 dark:hover:bg-orange-500/30 px-3 py-1 text-xs font-medium rounded-2xl";
-        case "rejected":
-          return "bg-red-500/20 text-red-600 border-red-500/30 hover:bg-red-500/30 dark:bg-red-400/20 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
-        default:
-          return "bg-gray-500/20 text-gray-600 border-gray-500/30 hover:bg-gray-500/30 dark:bg-gray-400/20 dark:text-gray-400 dark:border-gray-400/30 dark:hover:bg-gray-400/30 px-3 py-1 text-xs font-medium rounded-2xl";
-      }
-    }
-
-    return (
-      <Badge className={getBadgeClassName(status)}>
-        {labels[status]}
-      </Badge>
-    )
-  }
-
   const weekDays = useMemo(() => {
     if (viewMode === "daily") {
       return [selectedDate];
@@ -505,10 +439,10 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // Show loading state
   if (loading) {
     return (
-      <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+      <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
           {/* Header Skeleton */}
-          <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
+          <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
             <div className="flex items-center space-x-2">
               <div>
                 <div className="h-6 w-48 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50 mb-2" />
@@ -522,30 +456,31 @@ export default function TimesheetsPage({ user }: { user: User }) {
           </div>
 
           {/* Table Skeleton */}
-          <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
-            <CardContent className="px-0">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left p-4 pl-6 font-medium text-sm text-gray-500">
+          <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+            <div className="px-0 flex-1 flex flex-col">
+              <div className="overflow-x-auto flex-1 overflow-y-auto">
+                <table className="w-full border-collapse border-spacing-0 h-full">
+                  <thead className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
+                    <tr className="bg-white">
+                      <th className="text-left p-4 pl-6 pb-4 font-medium text-sm text-gray-500 bg-white">
                         <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                       </th>
-                      <th className="text-left p-4 font-medium text-sm text-gray-500">
+                      <th className="text-left p-4 pb-4 font-medium text-sm text-gray-500 bg-white">
                         <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                       </th>
                       {Array.from({ length: 7 }).map((_, i) => (
-                        <th key={i} className="text-center p-4 font-medium text-sm text-gray-500 min-w-[100px]">
-                          <div className="space-y-1">
+                        <th key={i} className="text-center px-4 py-2 font-medium text-sm text-gray-500 min-w-[100px] bg-white">
+                          <div className="flex flex-col items-center gap-0.5">
                             <div className="h-3 w-8 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                            <div className="h-4 w-12 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-6 w-8 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-3 w-8 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                           </div>
                         </th>
                       ))}
-                      <th className="text-center p-4 font-medium text-sm text-gray-500">
+                      <th className="text-center p-4 pb-4 font-medium text-sm text-gray-500 bg-white">
                         <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                       </th>
-                      <th className="text-center p-4 font-medium text-sm text-gray-500">
+                      <th className="text-center p-4 pb-4 font-medium text-sm text-gray-500 bg-white">
                         <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                       </th>
                     </tr>
@@ -562,14 +497,18 @@ export default function TimesheetsPage({ user }: { user: User }) {
                         <td className="p-4">
                           <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                         </td>
-                        {Array.from({ length: 7 }).map((_, colIndex) => (
-                          <td key={colIndex} className="p-4 text-center">
+                        {Array.from({ length: 7 }).map((_, colIndex) => {
+                          // Friday is index 4 in a Saturday-starting week
+                          const isFriday = colIndex === 6
+                          return (
+                          <td key={colIndex} className={`p-4 text-center border-l border-border/30 ${isFriday ? 'border-r border-border/30' : ''}`}>
                             <div className="space-y-2">
                               <div className="h-8 w-16 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                               <div className="h-5 w-12 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
                             </div>
                           </td>
-                        ))}
+                          )
+                        })}
                         <td className="p-4 text-center">
                           <div className="space-y-1">
                             <div className="h-4 w-12 mx-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
@@ -584,8 +523,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -594,7 +533,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
   // Show error state
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-destructive mb-4">{error}</p>
@@ -608,13 +547,13 @@ export default function TimesheetsPage({ user }: { user: User }) {
   }
 
   return (
-    <div className="container mx-auto space-y-2 pt-2 pb-6 px-6">
+    <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
       {/* Header Section */}
       {/* Removed Timesheets header and info alert as requested */}
 
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
         {/* Timesheet Table Header */}
-        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0">
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
           <div className="flex items-center space-x-2">
             <div>
               <h2 className="text-lg font-medium mb-0">
@@ -659,32 +598,31 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
 
             {/* Timesheet Table */}
-            <Card className="border-border/50 bg-sidebar backdrop-blur-sm shadow-none">
-              <CardContent className="px-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b border-border">
+            <div className="border-t border-b border-border/50 bg-white flex-1 flex flex-col">
+              <div className="px-0 flex-1 flex flex-col">
+                <div className="overflow-x-auto flex-1 overflow-y-auto">
+                  <table className="w-full border-collapse border-spacing-0 h-full">
+                    <thead className="sticky top-0 z-50 bg-white border-b-2 border-gray-400 shadow-sm">
+                      <tr className="bg-white">
 
-                        <th className="text-left p-4 pl-6 font-medium text-sm text-gray-500">Worker</th>
-                        <th className="text-left p-4 font-medium text-sm text-gray-500">Project</th>
+                        <th className="text-left p-4 pl-6 pb-4 font-medium text-sm text-gray-500 bg-white">Worker</th>
+                        <th className="text-left p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Project</th>
                         {viewMode === "weekly" ? (
                           weekDays.map((day) => (
-                            <th key={day.toISOString()} className="text-center p-4 font-medium text-sm text-gray-500 min-w-[100px]">
-                              <div className="text-xs text-gray-400 mb-1">{format(day, "EEE")}</div>
-                              <div className="font-medium text-gray-500">{format(day, "MMM d")}</div>
+                            <th key={day.toISOString()} className="text-center px-4 py-2 font-medium text-sm text-gray-500 min-w-[100px] bg-white">
+                              <div className="text-xs text-gray-400 leading-none">{format(day, "EEE")}</div>
+                              <div className="text-xl font-bold text-gray-700 leading-tight my-0.5">{format(day, "d")}</div>
+                              <div className="text-xs text-gray-500 leading-none">{format(day, "MMM")}</div>
                             </th>
                           ))
                         ) : (
                           <>
-                            <th className="text-center p-4 font-medium text-sm text-gray-500">Hours</th>
-                            <th className="text-center p-4 font-medium text-sm text-gray-500">Overtime</th>
-                            <th className="text-center p-4 font-medium text-sm text-gray-500">Status</th>
-                            <th className="text-left p-4 font-medium text-sm text-gray-500">Notes</th>
+                            <th className="text-center p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Hours</th>
+                            <th className="text-center p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Overtime</th>
+                            <th className="text-left p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Notes</th>
                           </>
                         )}
-                        {viewMode === "weekly" && <th className="text-center p-4 font-medium text-sm text-gray-500">Total</th>}
-                        {viewMode === "weekly" && <th className="text-center p-4 font-medium text-sm text-gray-500"></th>}
+                        {viewMode === "weekly" && <th className="text-center p-4 pb-4 font-medium text-sm text-gray-500 bg-white">Total</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -694,9 +632,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
                           const worker = workers.find(w => w.id === workerId);
                           const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
                           const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
-
-                          // Determine if all timesheets in the week are approved
-                          const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
 
                           return (
                             <tr key={workerId} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
@@ -718,44 +653,56 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                 const dayTimesheet = timesheetsInWeek.find(
                                   (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
                                 )
+                                const isFriday = format(day, "EEE") === "Fri"
+                                const getBgColor = () => {
+                                  if (!dayTimesheet) return ''
+                                  if (dayTimesheet.supervisor_approval === "approved") return 'bg-muted-foreground/10'
+                                  if (dayTimesheet.supervisor_approval === "pending") return ''
+                                  return ''
+                                }
                                 return (
-                                  <td key={day.toISOString()} className="p-4 text-center">
+                                  <td key={day.toISOString()} className={`p-2 text-center border-l border-border/30 ${isFriday ? 'border-r border-border/30' : ''} ${getBgColor()}`}>
                                     {dayTimesheet ? (
-                                      <div className="space-y-2">
+                                      <div className="flex flex-col items-center justify-center min-h-[60px]">
                                         {dayTimesheet.supervisor_approval === "approved" ? (
                                           <div
                                             onClick={() => handleDisabledInputClick(dayTimesheet)}
-                                            className="relative cursor-pointer"
+                                            className="cursor-pointer w-full"
                                             title="Click to unapprove timesheet"
                                           >
+                                            <div className="text-2xl font-semibold text-gray-400 mb-1">
+                                              {dayTimesheet.total_hours}
+                                            </div>
+                                            {dayTimesheet.overtime_hours > 0 && (
+                                              <div className="text-xs text-orange-600 font-medium">
+                                                +{dayTimesheet.overtime_hours}h
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <>
                                             <Input
                                               type="number"
                                               value={dayTimesheet.total_hours}
-                                              disabled={true}
-                                              className="w-16 h-8 text-center text-sm border-muted/50 bg-muted/30 opacity-60 hover:bg-muted/50 cursor-pointer"
+                                              onChange={(e) =>
+                                                handleUpdateTimesheet(
+                                                  dayTimesheet.id,
+                                                  "total_hours",
+                                                  Number.parseFloat(e.target.value) || 0,
+                                                )
+                                              }
+                                              className="w-full h-10 text-center text-lg font-semibold border-0 bg-transparent focus:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
                                               step="0.5"
                                               min="0"
                                               max="24"
                                             />
-                                          </div>
-                                        ) : (
-                                          <Input
-                                            type="number"
-                                            value={dayTimesheet.total_hours}
-                                            onChange={(e) =>
-                                              handleUpdateTimesheet(
-                                                dayTimesheet.id,
-                                                "total_hours",
-                                                Number.parseFloat(e.target.value) || 0,
-                                              )
-                                            }
-                                            className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
-                                            step="0.5"
-                                            min="0"
-                                            max="24"
-                                          />
+                                            {dayTimesheet.overtime_hours > 0 && (
+                                              <div className="text-xs text-orange-600 font-medium mt-1">
+                                                +{dayTimesheet.overtime_hours}h
+                                              </div>
+                                            )}
+                                          </>
                                         )}
-                                        {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                       </div>
                                     ) : (
                                       <button
@@ -763,7 +710,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                           e.preventDefault();
                                           handleCellClick(day, workerId);
                                         }}
-                                        className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                        className="w-full min-h-[60px] text-gray-300 text-2xl hover:bg-gray-50 hover:text-gray-400 transition-colors duration-200 flex items-center justify-center"
                                         title="Click to add timesheet entry"
                                       >
                                         +
@@ -778,11 +725,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   <div className="text-xs text-orange-600 font-medium">+{weekOvertimeHours}h OT</div>
                                 )}
                               </td>
-                              <td className="p-4 pr-6 text-center">
-                                {timesheetsInWeek.length > 0 && (
-                                  getApprovalStatusBadge(isWeekApproved ? "approved" : "pending")
-                                )}
-                              </td>
                             </tr>
                           );
                         })
@@ -794,9 +736,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
                               const worker = workers.find(w => w.id === workerId);
                               const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
                               const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
-
-                              // Determine if all timesheets in the week are approved
-                              const isWeekApproved = timesheetsInWeek.every(ts => ts.supervisor_approval === "approved");
 
                               return (
                                 <tr key={`${workerId}-${weekStart}`} className="border-b border-muted/20 last:border-b-0 hover:bg-muted/40 transition-all duration-200 group">
@@ -818,44 +757,56 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                     const dayTimesheet = timesheetsInWeek.find(
                                       (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
                                     )
+                                    const isFriday = format(day, "EEE") === "Fri"
+                                    const getBgColor = () => {
+                                      if (!dayTimesheet) return ''
+                                      if (dayTimesheet.supervisor_approval === "approved") return 'bg-muted-foreground/10'
+                                      if (dayTimesheet.supervisor_approval === "pending") return ''
+                                      return ''
+                                    }
                                     return (
-                                      <td key={day.toISOString()} className="p-4 text-center">
+                                      <td key={day.toISOString()} className={`p-2 text-center border-l border-border/30 ${isFriday ? 'border-r border-border/30' : ''} ${getBgColor()}`}>
                                         {dayTimesheet ? (
-                                          <div className="space-y-2">
+                                          <div className="flex flex-col items-center justify-center min-h-[60px]">
                                             {dayTimesheet.supervisor_approval === "approved" ? (
                                               <div
                                                 onClick={() => handleDisabledInputClick(dayTimesheet)}
-                                                className="relative cursor-pointer"
+                                                className="cursor-pointer w-full"
                                                 title="Click to unapprove timesheet"
                                               >
+                                                <div className="text-2xl font-semibold text-gray-400 mb-1">
+                                                  {dayTimesheet.total_hours}
+                                                </div>
+                                                {dayTimesheet.overtime_hours > 0 && (
+                                                  <div className="text-xs text-orange-600 font-medium">
+                                                    +{dayTimesheet.overtime_hours}h
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <>
                                                 <Input
                                                   type="number"
                                                   value={dayTimesheet.total_hours}
-                                                  disabled={true}
-                                                  className="w-16 h-8 text-center text-sm border-muted/50 bg-muted/30 opacity-60 hover:bg-muted/50 cursor-pointer"
+                                                  onChange={(e) =>
+                                                    handleUpdateTimesheet(
+                                                      dayTimesheet.id,
+                                                      "total_hours",
+                                                      Number.parseFloat(e.target.value) || 0,
+                                                    )
+                                                  }
+                                                  className="w-full h-10 text-center text-lg font-semibold border-0 bg-transparent focus:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
                                                   step="0.5"
                                                   min="0"
                                                   max="24"
                                                 />
-                                              </div>
-                                            ) : (
-                                              <Input
-                                                type="number"
-                                                value={dayTimesheet.total_hours}
-                                                onChange={(e) =>
-                                                  handleUpdateTimesheet(
-                                                    dayTimesheet.id,
-                                                    "total_hours",
-                                                    Number.parseFloat(e.target.value) || 0,
-                                                  )
-                                                }
-                                                className="w-16 h-8 text-center text-sm border-muted/50 focus:border-primary"
-                                                step="0.5"
-                                                min="0"
-                                                max="24"
-                                              />
+                                                {dayTimesheet.overtime_hours > 0 && (
+                                                  <div className="text-xs text-orange-600 font-medium mt-1">
+                                                    +{dayTimesheet.overtime_hours}h
+                                                  </div>
+                                                )}
+                                              </>
                                             )}
-                                            {getStatusBadge(getAttendanceStatus(dayTimesheet))}
                                           </div>
                                         ) : (
                                           <button
@@ -863,7 +814,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                               e.preventDefault();
                                               handleCellClick(day, workerId);
                                             }}
-                                            className="w-full h-8 text-muted-foreground text-sm hover:bg-muted/50 hover:text-foreground rounded border border-dashed border-muted-foreground/30 transition-colors duration-200 flex items-center justify-center"
+                                            className="w-full min-h-[60px] text-gray-300 text-2xl hover:bg-gray-50 hover:text-gray-400 transition-colors duration-200 flex items-center justify-center"
                                             title="Click to add timesheet entry"
                                           >
                                             +
@@ -876,11 +827,6 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                     <div className="font-medium text-sm text-gray-500">{weekTotalHours}h</div>
                                     {weekOvertimeHours > 0 && (
                                       <div className="text-xs text-orange-600 font-medium">+{weekOvertimeHours}h OT</div>
-                                    )}
-                                  </td>
-                                  <td className="p-4 text-center">
-                                    {timesheetsInWeek.length > 0 && (
-                                      getApprovalStatusBadge(isWeekApproved ? "approved" : "pending")
                                     )}
                                   </td>
                                 </tr>
@@ -960,8 +906,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
       {/* Add Timesheet Dialog */}

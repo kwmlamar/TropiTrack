@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
-import { useSidebar } from "@/components/ui/sidebar"
 import { ChevronRight, LogOut } from "lucide-react"
 import {
   DropdownMenu,
@@ -16,11 +15,10 @@ import Link from "next/link"
 
 interface SidebarUserInfoProps {
   profile: UserProfileWithCompany
+  isCollapsed?: boolean
 }
 
-export function SidebarUserInfo({ profile }: SidebarUserInfoProps) {
-  const { state } = useSidebar()
-  const isCollapsed = state === "collapsed"
+export function SidebarUserInfo({ profile, isCollapsed = false }: SidebarUserInfoProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
 
   useEffect(() => {

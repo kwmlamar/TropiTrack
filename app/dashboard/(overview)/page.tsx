@@ -1,10 +1,5 @@
-import DashboardLayout from "@/components/layouts/dashboard-layout"
-import { DashboardClient } from "@/components/dashboard/dashboard-client"
+import { redirect } from "next/navigation"
 
 export default function DashboardHome() {
-  return (
-    <DashboardLayout>
-      <DashboardClient />
-    </DashboardLayout>
-  )
+  redirect("/dashboard/timesheets")
 }
