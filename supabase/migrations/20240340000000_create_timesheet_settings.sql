@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS timesheet_settings (
     overtime_threshold INTEGER DEFAULT 40, -- in hours per week
     rounding_method VARCHAR(20) DEFAULT 'nearest_15' CHECK (rounding_method IN ('nearest_15', 'nearest_30', 'exact')),
     auto_clockout BOOLEAN DEFAULT true,
-    require_approval BOOLEAN DEFAULT true,
+    require_approval BOOLEAN DEFAULT false,
     allow_overtime BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),

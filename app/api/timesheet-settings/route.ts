@@ -48,7 +48,7 @@ export async function GET() {
         overtime_threshold: 40,
         rounding_method: 'nearest_15',
         auto_clockout: true,
-        require_approval: true,
+        require_approval: false,
         allow_overtime: true
       })
       .select()

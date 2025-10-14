@@ -86,11 +86,7 @@ export function UnapproveTimesheetDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent 
-        className="sm:max-w-[425px] bg-white border-0" 
-        style={{ 
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
-          backgroundColor: 'white'
-        }}
+        className="sm:max-w-[425px]"
       >
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-base">

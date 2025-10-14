@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -65,7 +66,6 @@ import { createTimesheet } from "@/lib/data/timesheets";
 import type { CreateTimesheetInput, TimesheetWithDetails } from "@/lib/types";
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
-import { cn } from "@/lib/utils";
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings";
 import { useTimesheetSettings } from "@/lib/hooks/use-timesheet-settings";
 import { processTimesheetApproval } from "@/lib/utils/timesheet-approval";
@@ -112,6 +112,7 @@ export function BulkTimesheetForm({
   onSuccess,
   onCancel,
 }: BulkTimesheetFormProps) {
+  const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
@@ -504,6 +505,17 @@ export function BulkTimesheetForm({
                           size="sm"
                           className="flex-1"
                           onClick={() => applyQuickDateRange("today")}
+                          style={{
+                            backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                            borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                            color: theme === 'dark' ? '#d1d5db' : '#374151'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                          }}
                         >
                           Today
                         </Button>
@@ -513,6 +525,17 @@ export function BulkTimesheetForm({
                           size="sm"
                           className="flex-1"
                           onClick={() => applyQuickDateRange("thisWeek")}
+                          style={{
+                            backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                            borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                            color: theme === 'dark' ? '#d1d5db' : '#374151'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                          }}
                         >
                           This Week
                         </Button>
@@ -522,6 +545,17 @@ export function BulkTimesheetForm({
                           size="sm"
                           className="flex-1"
                           onClick={() => applyQuickDateRange("nextWeek")}
+                          style={{
+                            backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                            borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                            color: theme === 'dark' ? '#d1d5db' : '#374151'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                          }}
                         >
                           Next Week
                         </Button>
@@ -539,11 +573,29 @@ export function BulkTimesheetForm({
           {/* Worker Selection */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Select Workers</h3>
+              <h3 
+                className="text-lg font-medium"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >Select Workers</h3>
               <div className="flex gap-2">
                 <Popover open={workerSelectOpen} onOpenChange={setWorkerSelectOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="min-w-[140px]">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="min-w-[140px]"
+                      style={{
+                        backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                        borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                        color: theme === 'dark' ? '#d1d5db' : '#374151'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                      }}
+                    >
                       <User className="h-4 w-4 mr-2" />
                       Select Workers
                       {selectedWorkers.size > 0 && (
@@ -555,7 +607,7 @@ export function BulkTimesheetForm({
                   </PopoverTrigger>
                   <PopoverContent className="w-[320px] p-0" align="end">
                     <Command className="rounded-lg">
-                      <CommandEmpty className="py-4 text-center text-sm text-gray-500">
+                      <CommandEmpty className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                         No workers found.
                       </CommandEmpty>
                       <CommandGroup className="max-h-[200px] overflow-y-auto">
@@ -595,10 +647,10 @@ export function BulkTimesheetForm({
                                 className="data-[state=checked]:text-white [&[data-state=checked]>div]:text-white [&[data-state=checked] svg]:text-white"
                               />
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate">
+                                <div className="font-medium text-sm truncate dark:text-gray-200">
                                   {worker.name}
                                 </div>
-                                <div className="text-xs text-gray-500 truncate">
+                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                   {worker.position}
                                 </div>
                               </div>
@@ -625,17 +677,23 @@ export function BulkTimesheetForm({
           {/* Worker Entries */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Worker Entries</h3>
+              <h3 
+                className="text-lg font-medium"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >Worker Entries</h3>
             </div>
 
             <div className="space-y-4">
               {fields.map((field, index) => (
                 <Card
                   key={field.id}
-                  className={cn(
-                    "border-border/50",
-                    index % 2 === 0 ? "bg-card/50" : "bg-muted/30"
-                  )}
+                  className="border-border/50"
+                  style={{
+                    backgroundColor: index % 2 === 0 
+                      ? (theme === 'dark' ? '#1f1f1f' : 'rgb(248 250 252 / 0.5)')
+                      : (theme === 'dark' ? '#171717' : 'rgb(243 244 246 / 0.3)'),
+                    border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
+                  }}
                 >
                   <CardHeader className="p-4">
                     <div className="flex items-center justify-between">
@@ -847,11 +905,34 @@ export function BulkTimesheetForm({
               ))}
 
               {fields.length === 0 && (
-                <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
-                  <p className="text-gray-500 mb-4">
+                <div 
+                  className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg"
+                  style={{
+                    borderColor: theme === 'dark' ? '#404040' : 'rgb(229 231 235)',
+                  }}
+                >
+                  <p 
+                    className="mb-4"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                  >
                     No worker entries added yet
                   </p>
-                  <Button type="button" variant="outline" onClick={addRow}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={addRow}
+                    style={{
+                      backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                      borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                      color: theme === 'dark' ? '#d1d5db' : '#374151'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                    }}
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Worker
                   </Button>
@@ -864,6 +945,17 @@ export function BulkTimesheetForm({
                   variant="outline"
                   size="sm"
                   onClick={addRow}
+                  style={{
+                    backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                    borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                    color: theme === 'dark' ? '#d1d5db' : '#374151'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                  }}
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add Worker
@@ -876,38 +968,76 @@ export function BulkTimesheetForm({
         <Separator />
 
         {/* Summary */}
-        <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-muted/50 rounded-lg">
+        <div 
+          className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 rounded-lg"
+          style={{
+            backgroundColor: theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.5)'
+          }}
+        >
           <div className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-gray-500" />
-            <span className="text-sm font-medium">Summary:</span>
+            <Calculator 
+              className="h-5 w-5"
+              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+            />
+            <span 
+              className="text-sm font-medium"
+              style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+            >Summary:</span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             <div>
-              <span className="text-sm text-gray-500">
+              <span 
+                className="text-sm"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >
                 Workers:
               </span>{" "}
-              <span className="font-medium">{totals.workers}</span>
+              <span 
+                className="font-medium"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{totals.workers}</span>
             </div>
             <div>
-              <span className="text-sm text-gray-500">Days:</span>{" "}
-              <span className="font-medium">{totals.days}</span>
+              <span 
+                className="text-sm"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >Days:</span>{" "}
+              <span 
+                className="font-medium"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{totals.days}</span>
             </div>
             <div>
-              <span className="text-sm text-gray-500">
+              <span 
+                className="text-sm"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >
                 Total Entries:
               </span>{" "}
-              <span className="font-medium">
+              <span 
+                className="font-medium"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >
                 {totals.workers * totals.days}
               </span>
             </div>
             <div>
-              <span className="text-sm text-gray-500">
+              <span 
+                className="text-sm"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >
                 Total Hours:
               </span>{" "}
-              <span className="font-medium">{totals.hours}h</span>
+              <span 
+                className="font-medium"
+                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              >{totals.hours}h</span>
             </div>
             <div>
-              <span className="text-sm text-gray-500">
+              <span 
+                className="text-sm"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >
                 Total Cost:
               </span>{" "}
               <span className="font-medium text-green-600">
@@ -947,7 +1077,22 @@ export function BulkTimesheetForm({
             )}
             {isSubmitting ? "Submitting..." : "Submit All Entries"}
           </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            style={{
+              backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+              borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+              color: theme === 'dark' ? '#d1d5db' : '#374151'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+            }}
+          >
             Cancel
           </Button>
         </div>

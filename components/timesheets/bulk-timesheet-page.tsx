@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTheme } from "next-themes"
 import { User } from "@supabase/supabase-js"
 import { ArrowLeft, Clock, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ interface BulkTimesheetPageProps {
 }
 
 export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
+  const { theme } = useTheme()
   const [workers, setWorkers] = useState<Worker[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,8 +71,11 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
       <div className="flex-1 space-y-6 p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-500" />
-            <p className="text-gray-500">Loading bulk timesheet form...</p>
+            <Clock 
+              className="h-8 w-8 animate-spin mx-auto mb-4"
+              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+            />
+            <p style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>Loading bulk timesheet form...</p>
           </div>
         </div>
       </div>
@@ -123,10 +128,16 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
       {/* Main Form */}
       <div className="space-y-6">
         <div className="space-y-4 mb-8">
-          <h2 className="text-xl font-semibold">
+          <h2 
+            className="text-xl font-semibold"
+            style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+          >
             Create Timesheet Entries
           </h2>
-          <p className="text-gray-500 mt-1">
+          <p 
+            className="mt-1"
+            style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+          >
             Select a project, individual dates, and workers to create multiple timesheet entries at once. 
             Use the quick templates or pick specific dates to match your construction schedule.
           </p>

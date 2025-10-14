@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { DevNav } from "@/components/dev-nav";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeColor } from "@/components/theme-color";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#f3f4f6", // Will be updated dynamically by ThemeColor component
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -62,6 +63,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <ThemeColor />
           {children}
           <DevNav />
           <Toaster />

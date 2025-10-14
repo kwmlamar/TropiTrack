@@ -20,6 +20,7 @@ import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
 import { AddTimesheetDialog } from "./add-timesheet-dialog"
 import { UnapproveTimesheetDialog } from "./unapprove-timesheet-dialog"
+import { ProjectListDialog } from "./project-list-dialog"
 import { getCurrentLocalDate } from "@/lib/utils"
 import { useDateRange } from "@/context/date-range-context"
 
@@ -734,16 +735,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                 >{worker?.position || "Worker"}</div>
                               </td>
                               <td className="p-4">
-                                <div 
-                                  className="text-sm"
-                                  style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-                                >
-                                  {Array.from(
+                                <ProjectListDialog
+                                  projects={Array.from(
                                     new Set(
                                       timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
                                     ),
-                                  ).join(", ")}
-                                </div>
+                                  )}
+                                  workerName={worker?.name || "Unknown Worker"}
+                                />
                               </td>
                               {weekDays.map((day) => {
                                 const dayTimesheet = timesheetsInWeek.find(
@@ -900,16 +899,14 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                     >{worker?.position || "Worker"}</div>
                                   </td>
                                   <td className="p-4">
-                                    <div 
-                                      className="text-sm"
-                                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-                                    >
-                                      {Array.from(
+                                    <ProjectListDialog
+                                      projects={Array.from(
                                         new Set(
                                           timesheetsInWeek.map((ts) => ts.project?.name || "Unknown Project"),
                                         ),
-                                      ).join(", ")}
-                                    </div>
+                                      )}
+                                      workerName={worker?.name || "Unknown Worker"}
+                                    />
                                   </td>
                                   {weekDays.map((day) => {
                                     const dayTimesheet = timesheetsInWeek.find(

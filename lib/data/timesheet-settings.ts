@@ -86,11 +86,11 @@ export async function getTimesheetSettingsRequireApproval(): Promise<boolean> {
     if (result.success && result.data) {
       return result.data.require_approval;
     }
-    // Default to true if settings not found
-    return true;
+    // Default to false if settings not found
+    return false;
   } catch (error) {
     console.error('Error checking approval requirement:', error);
-    // Default to true on error
-    return true;
+    // Default to false on error
+    return false;
   }
 }
