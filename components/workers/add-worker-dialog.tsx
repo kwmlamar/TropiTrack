@@ -103,6 +103,7 @@ export function AddWorkerDialog({
         emergency_contact: undefined, // Use undefined instead of empty string
         emergency_phone: undefined, // Use undefined instead of empty string
         nib_number: undefined, // Use undefined instead of empty string
+        nib_exempt: false, // Default to not exempt (will apply NIB deductions)
       })
 
       if (result.success && result.data) {

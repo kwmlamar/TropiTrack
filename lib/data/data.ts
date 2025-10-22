@@ -43,9 +43,14 @@ export async function getProfile(userId: string) {
 // WORKERS
 
 // Get all workers
+// By default, only returns active workers
+// Set includeInactive: true to get all workers (needed for historical data display)
 
-export async function fetchWorkersForCompany(userId: string) {
-  console.log("fetchWorkersForCompany called with userId:", userId);
+export async function fetchWorkersForCompany(
+  userId: string,
+  options: { includeInactive?: boolean } = {}
+) {
+  console.log("fetchWorkersForCompany called with userId:", userId, "options:", options);
   
   const profile = await getProfile(userId);
   console.log("Profile data:", profile);
@@ -57,39 +62,32 @@ export async function fetchWorkersForCompany(userId: string) {
   
   console.log("Profile company_id:", profile.company_id);
 
-  // Test the query without RLS to see if there are workers
-  const { data: allWorkers, error: allWorkersError } = await supabase
-    .from("workers")
-    .select("*");
-  
-  console.log("All workers (no RLS):", { allWorkers, allWorkersError });
-
-  // Test the RLS function directly
-  const { data: rlsTest, error: rlsError } = await supabase
-    .rpc('get_user_company_id');
-
-  console.log("RLS function test:", { rlsTest, rlsError });
-
-  // Test RLS-only query (should work if RLS is working)
-  const { data: rlsQuery, error: rlsQueryError } = await supabase
-    .from("workers")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  console.log("RLS-only query result:", { rlsQuery, rlsQueryError });
-
-  // Test manual filtering (current approach)
-  const { data: manualQuery, error: manualError } = await supabase
+  // Build the query
+  let query = supabase
     .from("workers")
     .select("*")
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
-  console.log("Manual filtering result:", { manualQuery, manualError });
+  // By default, only return active workers
+  if (!options.includeInactive) {
+    query = query.eq("is_active", true);
+    console.log("Filtering to active workers only");
+  } else {
+    console.log("Including inactive workers");
+  }
+
+  const { data, error } = await query;
+
+  console.log("Query result:", { 
+    count: data?.length || 0, 
+    activeCount: data?.filter(w => w.is_active).length || 0,
+    error 
+  });
 
   // Use the manual approach for now since RLS isn't working
-  if (manualError) throw new Error("Failed to fetch worker: " + manualError.message);
-  return manualQuery ?? [];
+  if (error) throw new Error("Failed to fetch workers: " + error.message);
+  return data ?? [];
 }
 
 // Add new employee

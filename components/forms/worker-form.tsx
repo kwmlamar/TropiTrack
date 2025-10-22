@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -94,6 +95,7 @@ export function EditWorkerDialog({
     emergency_contact: worker.emergency_contact ?? "",
     emergency_phone: worker.emergency_phone ?? "",
     nib_number: worker.nib_number ?? "",
+    nib_exempt: worker.nib_exempt ?? false,
   };
 
   const form = useForm<WorkerFormData>({
@@ -214,6 +216,31 @@ export function EditWorkerDialog({
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="nib_exempt"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-sm font-medium">
+                          Exempt from NIB Deductions
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          Toggle if this worker is exempt from NIB deductions (e.g., contractors, part-time)
+                        </p>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="position"

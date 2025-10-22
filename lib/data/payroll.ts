@@ -3,6 +3,7 @@ import type { PayrollRecord, CreatePayrollInput, UpdatePayrollInput, ApiResponse
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
 import { getTimesheets } from "@/lib/data/timesheets";
 import { completeOnboardingStep } from "@/lib/actions/onboarding-actions";
+import { getPayrollSettings } from "@/lib/data/payroll-settings";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPayrollRecord(data: any): PayrollRecord {
@@ -462,7 +463,32 @@ export async function generatePayrollForWorkerAndPeriod(
     });
     console.log(`[PayrollGen] Calculated totals: TotalHours=${totalHours}, OvertimeHours=${totalOvertimeHours}, GrossPay=${grossPay}`);
 
-    const EMPLOYEE_NIB_RATE = 0.0465; // 4.65% - Hardcoded for Bahamas compliance
+    // Fetch worker details to check NIB exemption status
+    const { data: workerData, error: workerError } = await supabase
+      .from("workers")
+      .select("nib_exempt")
+      .eq("id", workerId)
+      .single();
+    
+    if (workerError) {
+      console.error("[PayrollGen] Error fetching worker NIB exemption status:", workerError);
+    }
+    
+    const workerNibExempt = workerData?.nib_exempt ?? false; // Default to not exempt if field missing
+    console.log(`[PayrollGen] Worker NIB Exemption Status: ${workerNibExempt}`);
+
+    // Fetch payroll settings to get NIB configuration
+    const payrollSettingsResult = await getPayrollSettings();
+    const companyNibEnabled = payrollSettingsResult.data?.nib_enabled ?? true; // Default to enabled if settings not found
+    const nibRate = payrollSettingsResult.data?.nib_rate ?? 4.65; // Default to 4.65% if settings not found
+    
+    // Apply NIB only if:
+    // 1. Company has NIB enabled (companyNibEnabled = true)
+    // 2. Worker is NOT exempt (workerNibExempt = false)
+    const shouldApplyNib = companyNibEnabled && !workerNibExempt;
+    const EMPLOYEE_NIB_RATE = shouldApplyNib ? (nibRate / 100) : 0;
+    console.log(`[PayrollGen] NIB Settings: CompanyEnabled=${companyNibEnabled}, WorkerExempt=${workerNibExempt}, ShouldApplyNIB=${shouldApplyNib}, Rate=${nibRate}%, CalculatedRate=${EMPLOYEE_NIB_RATE}`);
+    
     const nibDeduction = grossPay * EMPLOYEE_NIB_RATE;
     const otherDeductions = 0;
 

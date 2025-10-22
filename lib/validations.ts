@@ -30,6 +30,7 @@ export const workerSchema = z.object({
     .regex(/^\d{8}$/, "NIB number must be exactly 8 digits")
     .optional()
     .or(z.literal("")),
+  nib_exempt: z.boolean().optional().default(false),
 })
 
 // Project validation schema

@@ -16,6 +16,8 @@ const DEFAULT_PAYMENT_SCHEDULE: PaymentSchedule = {
 const DEFAULT_PAYROLL_SETTINGS: PayrollSettings = {
   id: "default",
   company_id: "default",
+  nib_rate: 4.65,
+  nib_enabled: true,
   overtime_rate: 1.5,
   column_settings: {
     worker_name: true,
@@ -36,8 +38,10 @@ const DEFAULT_DEDUCTION_RULES: DeductionRule[] = []
 export function usePayrollSettings() {
   // Return mock data immediately without any API calls
   const calculateDeductions = useCallback((grossPay: number, overtimePay: number = 0) => {
-    // Calculate NIB deduction with hardcoded 4.65% rate
-    const EMPLOYEE_NIB_RATE = 0.0465 // 4.65%
+    // Calculate NIB deduction based on nib_enabled setting
+    const EMPLOYEE_NIB_RATE = DEFAULT_PAYROLL_SETTINGS.nib_enabled 
+      ? (DEFAULT_PAYROLL_SETTINGS.nib_rate / 100) 
+      : 0
     const nibDeduction = grossPay * EMPLOYEE_NIB_RATE
 
     // Calculate other deductions based on active rules

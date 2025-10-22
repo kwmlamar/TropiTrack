@@ -7,6 +7,9 @@ import { useTheme } from "next-themes"
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { Badge } from "@/components/ui/badge"
 
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isWithinInterval } from "date-fns"
 
@@ -30,7 +33,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const { theme } = useTheme()
   // Updated state to use TimesheetWithDetails
   const [timesheets, setTimesheets] = useState<TimesheetWithDetails[]>([])
-  const [workers, setWorkers] = useState<Worker[]>([])
+  const [workers, setWorkers] = useState<Worker[]>([]) // Active workers for new assignments
+  const [allWorkers, setAllWorkers] = useState<Worker[]>([]) // All workers for historical display
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +48,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const [viewMode] = useState<"daily" | "weekly">("weekly")
   const weekStartDay = 6 // Hard-coded to Saturday for construction industry
   const [currentPage, setCurrentPage] = useState(1)
+  
+  // Calendar popover state
+  const [calendarOpen, setCalendarOpen] = useState(false)
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -116,8 +123,15 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const loadWorkers = async () => {
     setLoading(true)
     try {
-      const data = await fetchWorkersForCompany(user.id)
-      setWorkers(data)
+      // Load active workers for new timesheet assignments
+      const activeWorkers = await fetchWorkersForCompany(user.id)
+      setWorkers(activeWorkers)
+      
+      // Load all workers (including inactive) for historical display
+      const allWorkersData = await fetchWorkersForCompany(user.id, { includeInactive: true })
+      setAllWorkers(allWorkersData)
+      
+      console.log(`Loaded ${activeWorkers.length} active workers, ${allWorkersData.length} total workers`)
     } catch (error) {
       console.log("Failed to fetch Workers:", error)
     } finally {
@@ -305,15 +319,16 @@ export default function TimesheetsPage({ user }: { user: User }) {
   const groupedTimesheets = useMemo(() => {
     if (viewMode === "weekly") {
       // For weekly view, group by worker only - all timesheets for the current week
-      // Include all workers, even if they don't have timesheets
+      // Use active workers for empty rows, but include inactive workers if they have timesheets
       const grouped = new Map<string, TimesheetWithDetails[]>();
       
-      // Initialize all workers with empty arrays
+      // Initialize active workers with empty arrays (for new assignments)
       workers.forEach(worker => {
         grouped.set(worker.id, []);
       });
       
       // Add timesheets to their respective workers (use filteredTimesheets to get all timesheets for the week)
+      // This will include timesheets from inactive workers
       filteredTimesheets.forEach((timesheet) => {
         const workerId = timesheet.worker_id;
         
@@ -442,6 +457,16 @@ export default function TimesheetsPage({ user }: { user: User }) {
     loadTimesheets()
     setUnapproveDialogOpen(false)
     setSelectedTimesheetForUnapprove(null)
+  }
+
+  const handleCalendarSelect = (date: Date | undefined) => {
+    if (date) {
+      // Calculate the week range for the selected date
+      const weekStart = startOfWeek(date, { weekStartsOn: weekStartDay });
+      const weekEnd = endOfWeek(date, { weekStartsOn: weekStartDay });
+      setDateRange({ from: weekStart, to: weekEnd });
+      setCalendarOpen(false);
+    }
   }
 
   // Show loading state
@@ -578,59 +603,97 @@ export default function TimesheetsPage({ user }: { user: User }) {
         {/* Timesheet Table Header */}
         <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
           <div className="flex items-center space-x-2">
-            <div>
-              <h2 
-                className="text-lg font-medium mb-0"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+            
+            <div 
+              className="flex items-center rounded-lg overflow-hidden border"
+              style={{
+                backgroundColor: theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))',
+                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240 / 0.5)'
+              }}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePreviousPeriod}
+                className="h-10 w-10 p-0 rounded-none border-0"
+                style={{
+                  color: theme === 'dark' ? '#d1d5db' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
               >
-                {viewMode === "daily" ? "Daily" : "Weekly"} Timesheet{" "}
-                {dateRange?.from && dateRange?.to ? (
-                  <span style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>
-                    {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
-                  </span>
-                ) : (
-                  <span style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>{format(selectedDate, "PPP")}</span>
-                )}
-              </h2>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="flex-1 text-center px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    style={{
+                      backgroundColor: theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))',
+                      color: theme === 'dark' ? '#d1d5db' : '#374151',
+                      borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)',
+                      borderRight: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)',
+                      border: 'none',
+                      outline: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#171717' : 'rgb(249 250 251)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))'
+                    }}
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    {dateRange?.from && dateRange?.to ? (
+                      <>
+                        {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
+                      </>
+                    ) : (
+                      format(selectedDate, 'PPP')
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="single"
+                    selected={dateRange?.from}
+                    onSelect={handleCalendarSelect}
+                    defaultMonth={dateRange?.from || selectedDate}
+                    weekStartsOn={weekStartDay as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+                    modifiers={{
+                      selected: dateRange?.from && dateRange?.to 
+                        ? eachDayOfInterval({ start: dateRange.from, end: dateRange.to })
+                        : []
+                    }}
+                    modifiersClassNames={{
+                      selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNextPeriod}
+                className="h-10 w-10 p-0 rounded-none border-0"
+                style={{
+                  color: theme === 'dark' ? '#d1d5db' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handlePreviousPeriod}
-              className="h-10 w-10 p-0"
-              style={{
-                backgroundColor: theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)',
-                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                color: theme === 'dark' ? '#d1d5db' : '#374151'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)'
-              }}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handleNextPeriod}
-              className="h-10 w-10 p-0"
-              style={{
-                backgroundColor: theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)',
-                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                color: theme === 'dark' ? '#d1d5db' : '#374151'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)'
-              }}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -704,7 +767,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
                       {viewMode === "weekly"
                         ? // Weekly view - one row per worker
                         paginatedWorkerEntries.map(([workerId, timesheetsInWeek]) => {
-                          const worker = workers.find(w => w.id === workerId);
+                          // Look up worker from allWorkers to include inactive workers
+                          const worker = allWorkers.find(w => w.id === workerId);
+                          const isInactive = worker && !worker.is_active;
                           const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
                           const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
 
@@ -714,7 +779,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
                               className="border-b last:border-b-0 transition-all duration-200 group"
                               style={{
                                 borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
-                                backgroundColor: 'transparent'
+                                backgroundColor: 'transparent',
+                                opacity: isInactive ? 0.7 : 1
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
@@ -725,14 +791,26 @@ export default function TimesheetsPage({ user }: { user: User }) {
                             >
 
                               <td className="p-4 pl-6">
-                                <div 
-                                  className="font-medium text-base"
-                                  style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
-                                >{worker?.name || "Unknown Worker"}</div>
-                                <div 
-                                  className="text-xs"
-                                  style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-                                >{worker?.position || "Worker"}</div>
+                                <div className="flex items-center gap-2">
+                                  <div>
+                                    <div 
+                                      className="font-medium text-base"
+                                      style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                                    >{worker?.name || "Unknown Worker"}</div>
+                                    <div 
+                                      className="text-xs"
+                                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                    >{worker?.position || "Worker"}</div>
+                                  </div>
+                                  {isInactive && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-xs bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                    >
+                                      Inactive
+                                    </Badge>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-4">
                                 <ProjectListDialog
@@ -868,7 +946,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
                         Array.from((groupedTimesheets as Map<string, Map<string, TimesheetWithDetails[]>>).entries()).map(([workerId, workerWeeks]) => (
                           <React.Fragment key={workerId}>
                             {Array.from(workerWeeks.entries()).map(([weekStart, timesheetsInWeek]) => {
-                              const worker = workers.find(w => w.id === workerId);
+                              // Look up worker from allWorkers to include inactive workers
+                              const worker = allWorkers.find(w => w.id === workerId);
+                              const isInactive = worker && !worker.is_active;
                               const weekTotalHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.total_hours, 0);
                               const weekOvertimeHours = timesheetsInWeek.reduce((sum, ts) => sum + ts.overtime_hours, 0);
 
@@ -878,7 +958,8 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   className="border-b last:border-b-0 transition-all duration-200 group"
                                   style={{
                                     borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
-                                    backgroundColor: 'transparent'
+                                    backgroundColor: 'transparent',
+                                    opacity: isInactive ? 0.7 : 1
                                   }}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
@@ -889,14 +970,26 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                 >
 
                                   <td className="p-4">
-                                    <div 
-                                      className="font-medium text-base"
-                                      style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
-                                    >{worker?.name || "Unknown Worker"}</div>
-                                    <div 
-                                      className="text-xs"
-                                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-                                    >{worker?.position || "Worker"}</div>
+                                    <div className="flex items-center gap-2">
+                                      <div>
+                                        <div 
+                                          className="font-medium text-base"
+                                          style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                                        >{worker?.name || "Unknown Worker"}</div>
+                                        <div 
+                                          className="text-xs"
+                                          style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                        >{worker?.position || "Worker"}</div>
+                                      </div>
+                                      {isInactive && (
+                                        <Badge 
+                                          variant="outline" 
+                                          className="text-xs bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                        >
+                                          Inactive
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="p-4">
                                     <ProjectListDialog

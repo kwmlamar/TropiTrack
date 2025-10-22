@@ -23,6 +23,7 @@ export interface Worker {
   created_by?: string
   department?: string
   nib_number?: string
+  nib_exempt?: boolean // When true, worker is exempt from NIB deductions
   // Biometric fields
   biometric_enrolled?: boolean
   biometric_enrollment_date?: string

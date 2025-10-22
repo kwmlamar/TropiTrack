@@ -509,46 +509,89 @@ export function ApprovalsPage({
               borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
             }}
           >
-            <div className="px-0 flex-1 flex-col">
+            <div className="px-0 flex-1 flex flex-col">
               <div className="overflow-x-auto flex-1 overflow-y-auto">
-            <div className="border-b">
-              <div className="grid grid-cols-7 gap-4 p-4">
-                <div className="h-4 w-4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-              </div>
-            </div>
-            
-            {/* Table Rows Skeleton */}
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="border-b last:border-b-0">
-                <div className="grid grid-cols-7 gap-4 p-4">
-                  <div className="h-4 w-4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 bg-muted-foreground/20 dark:bg-muted/50 rounded-full animate-pulse" />
-                    <div className="space-y-1">
-                      <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                      <div className="h-3 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                    <div className="h-3 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                  </div>
-                  <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                  <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                  <div className="h-6 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                  <div className="flex items-center gap-2 justify-end">
-                    <div className="h-8 w-8 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                    <div className="h-8 w-8 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
-                  </div>
-                </div>
-              </div>
-            ))}
+                <table className="w-full border-collapse border-spacing-0">
+                  <thead 
+                    className="sticky top-0 z-50 shadow-sm"
+                    style={{
+                      backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                      borderBottom: theme === 'dark' ? '2px solid #262626' : '2px solid rgb(226 232 240 / 0.5)'
+                    }}
+                  >
+                    <tr style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                      <th className="text-left p-4 pb-4 font-medium text-sm" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                        <div className="h-4 w-4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-left p-4 pb-4 font-medium text-sm" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                        <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-left p-4 pb-4 font-medium text-sm" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                        <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-left p-4 pb-4 font-medium text-sm" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                        <div className="h-4 w-12 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-left p-4 pb-4 font-medium text-sm" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                        <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-left p-4 pb-4 font-medium text-sm" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                        <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                      <th className="text-right p-4 pb-4 pr-6 font-medium text-sm" style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                        <div className="h-4 w-20 ml-auto animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <tr 
+                        key={i} 
+                        className="border-b last:border-b-0"
+                        style={{
+                          borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
+                        }}
+                      >
+                        <td className="p-4">
+                          <div className="h-4 w-4 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 bg-muted-foreground/20 dark:bg-muted/50 rounded-full animate-pulse" />
+                            <div className="space-y-1.5">
+                              <div className="h-4 w-28 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                              <div className="h-3 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="space-y-1.5">
+                            <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-3 w-24 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                        </td>
+                        <td className="p-4">
+                          <div className="space-y-1">
+                            <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-3 w-12 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-6 w-20 animate-pulse rounded-full bg-muted-foreground/20 dark:bg-muted/50" />
+                        </td>
+                        <td className="p-4 pr-6">
+                          <div className="flex items-center gap-2 justify-end">
+                            <div className="h-8 w-8 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                            <div className="h-8 w-8 animate-pulse rounded bg-muted-foreground/20 dark:bg-muted/50" />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

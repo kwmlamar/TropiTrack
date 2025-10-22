@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { fetchWorkersForCompany, deleteEmployee } from "@/lib/data/data";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -17,6 +19,7 @@ import {
   UserX,
   ChevronLeft,
   ChevronRight,
+  UserCheck,
 } from "lucide-react";
 import type { Worker } from "@/lib/types/worker";
 import {
@@ -44,17 +47,18 @@ export default function WorkersTable({ user }: { user: User }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [editWorkerDialogOpen, setEditWorkerDialogOpen] = useState(false);
   const [selectedWorkerForEdit, setSelectedWorkerForEdit] = useState<Worker | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
 
   useEffect(() => {
     loadWorkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showInactive]);
 
   const loadWorkers = async () => {
     setLoading(true);
     try {
-      console.log("Loading workers for user:", user.id);
-      const data = await fetchWorkersForCompany(user.id);
+      console.log("Loading workers for user:", user.id, "includeInactive:", showInactive);
+      const data = await fetchWorkersForCompany(user.id, { includeInactive: showInactive });
       console.log("Workers data:", data);
       setWorkers(data);
     } catch (error) {
@@ -77,6 +81,24 @@ export default function WorkersTable({ user }: { user: User }) {
     }
   };
 
+  const handleToggleWorkerStatus = async (worker: Worker, newStatus: boolean) => {
+    try {
+      const { updateWorker } = await import("@/lib/data/workers");
+      const result = await updateWorker(user.id, worker.id, { 
+        is_active: newStatus 
+      });
+      
+      if (result.success) {
+        console.log(`Worker ${worker.name} ${newStatus ? 'activated' : 'deactivated'}`);
+        loadWorkers();
+      } else {
+        console.error("Failed to update worker status:", result.error);
+      }
+    } catch (error) {
+      console.log("Failed to toggle worker status:", error);
+    }
+  };
+
   // Pagination logic
   const totalPages = Math.ceil(workers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -90,6 +112,34 @@ export default function WorkersTable({ user }: { user: User }) {
   return (
     <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
+        {/* Header with Toggle */}
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-inactive"
+                checked={showInactive}
+                onCheckedChange={setShowInactive}
+              />
+              <Label 
+                htmlFor="show-inactive"
+                className="text-sm font-medium cursor-pointer"
+                style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+              >
+                Show Inactive Workers
+              </Label>
+            </div>
+            {showInactive && (
+              <div 
+                className="text-xs"
+                style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+              >
+                Showing {workers.filter(w => !w.is_active).length} inactive workers
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Workers Table */}
         <div 
           className="border-t border-b flex-1 flex flex-col"
@@ -171,7 +221,8 @@ export default function WorkersTable({ user }: { user: User }) {
                         className="border-b last:border-b-0 transition-all duration-200 group"
                         style={{
                           borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
-                          backgroundColor: 'transparent'
+                          backgroundColor: 'transparent',
+                          opacity: worker.is_active ? 1 : 0.6
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
@@ -202,15 +253,26 @@ export default function WorkersTable({ user }: { user: User }) {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <Badge
-                            className={
-                              worker.is_active
-                                ? "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl"
-                                : "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl"
-                            }
-                          >
-                            {worker.is_active ? "Active" : "Inactive"}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={
+                                worker.is_active
+                                  ? "bg-green-600/20 text-green-600 border-green-600/30 hover:bg-green-600/30 dark:bg-green-600/20 dark:text-green-600 dark:border-green-600/30 dark:hover:bg-green-600/30 px-3 py-1 text-xs font-medium rounded-2xl"
+                                  : "bg-blue-500/20 text-blue-600 border-blue-500/30 hover:bg-blue-500/30 dark:bg-blue-400/20 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-400/30 px-3 py-1 text-xs font-medium rounded-2xl"
+                              }
+                            >
+                              {worker.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                            {worker.nib_exempt && (
+                              <Badge
+                                variant="outline"
+                                className="bg-orange-500/10 text-orange-600 border-orange-500/30 dark:bg-orange-400/10 dark:text-orange-400 dark:border-orange-400/30 px-2 py-0.5 text-xs font-medium rounded-2xl"
+                                title="This worker is exempt from NIB deductions"
+                              >
+                                NIB Exempt
+                              </Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4 pr-6">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -224,7 +286,7 @@ export default function WorkersTable({ user }: { user: User }) {
                                   <MoreVertical className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem
                                   onSelect={(e) => {
                                     e.preventDefault();
@@ -234,6 +296,22 @@ export default function WorkersTable({ user }: { user: User }) {
                                 >
                                   Edit Worker
                                 </DropdownMenuItem>
+                                {worker.is_active ? (
+                                  <DropdownMenuItem
+                                    onClick={() => handleToggleWorkerStatus(worker, false)}
+                                    className="cursor-pointer text-amber-600 focus:text-amber-600"
+                                  >
+                                    Deactivate Worker
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={() => handleToggleWorkerStatus(worker, true)}
+                                    className="cursor-pointer text-green-600 focus:text-green-600"
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Reactivate Worker
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setSelectedWorker(worker);

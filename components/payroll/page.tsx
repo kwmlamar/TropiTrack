@@ -5,13 +5,15 @@ import { useTheme } from "next-themes"
 
 import { Card, CardContent } from "@/components/ui/card"
 
-import { getAggregatedPayrolls, getPayrollPayments, getPayrollPaymentsBatch, addPayrollPayment, setPayrollPaymentAmount, deletePayroll } from "@/lib/data/payroll"
+import { getAggregatedPayrolls, getPayrollPayments, getPayrollPaymentsBatch, addPayrollPayment, setPayrollPaymentAmount, deletePayroll, generatePayrollForWorkerAndPeriod } from "@/lib/data/payroll"
 import type { PayrollRecord, PayrollPayment } from "@/lib/types"
 import type { User } from "@supabase/supabase-js"
-import { format, startOfWeek, endOfWeek } from "date-fns"
+import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown, Plus } from "lucide-react"
+import { SlidersHorizontal, ChevronLeft, ChevronRight, MoreVertical, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown, Plus, CalendarDays, RefreshCw } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { updatePayrollStatus, checkPendingTimesheetsForPayrolls } from "@/lib/data/payroll"
 import { toast } from "sonner"
 import { useDateRange } from "@/context/date-range-context"
@@ -178,8 +180,9 @@ export default function PayrollPage({
   const [weekStartDay, setWeekStartDay] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6>(1) // Default to Monday
 
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
-  const [remainingBalanceView, setRemainingBalanceView] = useState<"net" | "gross" | "both">("gross")
+  const [remainingBalanceView, setRemainingBalanceView] = useState<"net" | "gross" | "both">("net")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
   const isMountedRef = useRef(true)
   const processedSearchParamsRef = useRef<string>('')
   
@@ -187,6 +190,8 @@ export default function PayrollPage({
   const payrollCacheRef = useRef<Map<string, { data: PayrollRecord[], timestamp: number }>>(new Map())
   const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+  // Calendar popover state
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   // Payment modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -216,10 +221,10 @@ export default function PayrollPage({
 
 
 
-  
-  // Hard-coded deduction calculation
+  // Note: This is a placeholder. Actual NIB calculations should use payroll settings from the hook
+  // For now, this function is not actively used as deductions are calculated server-side
   const calculateDeductions = (grossPay: number) => {
-    const nibDeduction = grossPay * 0.0465 // 4.65% NIB rate
+    const nibDeduction = grossPay * 0.0465 // 4.65% NIB rate (Note: Should use settings)
     const otherDeductions = 0 // No other deductions for now
     return { nibDeduction, otherDeductions }
   }
@@ -516,6 +521,16 @@ export default function PayrollPage({
     }
   }
 
+  const handleCalendarSelect = (date: Date | undefined) => {
+    if (date) {
+      // Calculate the week range for the selected date
+      const weekStart = startOfWeek(date, { weekStartsOn: weekStartDay });
+      const weekEnd = endOfWeek(date, { weekStartsOn: weekStartDay });
+      setDateRange({ from: weekStart, to: weekEnd });
+      setCalendarOpen(false);
+    }
+  }
+
   // Pagination logic
   const totalPages = Math.ceil(filteredPayrolls.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -625,14 +640,14 @@ export default function PayrollPage({
       return
     }
 
-    // Check for payrolls with remaining balance and ask user what to do
+    // Check for payrolls with amount owed and ask user what to do
     const payrollsWithBalance = selectedPayrolls.filter(payroll => (payroll.remaining_balance || 0) > 0)
     
     if (payrollsWithBalance.length > 0) {
       const totalRemaining = payrollsWithBalance.reduce((sum, payroll) => sum + (payroll.remaining_balance || 0), 0)
       const shouldAutoComplete = confirm(
-        `${payrollsWithBalance.length} payroll(s) have remaining balance of $${totalRemaining.toFixed(2)}. ` +
-        "Would you like to automatically add the remaining balance as final payments before marking as paid?"
+        `${payrollsWithBalance.length} payroll(s) have amount owed of $${totalRemaining.toFixed(2)}. ` +
+        "Would you like to automatically add the amount owed as final payments before marking as paid?"
       )
       
       if (shouldAutoComplete) {
@@ -647,7 +662,7 @@ export default function PayrollPage({
             }
           }
         }
-        toast.success("Final payments added for remaining balances")
+        toast.success("Final payments added for amounts owed")
         // Refresh payroll data to show updated payment amounts
         if (isMountedRef.current) {
           await loadPayroll()
@@ -882,6 +897,86 @@ export default function PayrollPage({
     }
   }
 
+  const handleRegeneratePayroll = async () => {
+    if (!dateRange?.from || !dateRange?.to) {
+      toast.error("Please select a valid date range")
+      return
+    }
+
+    // Get unique workers from current payroll data
+    const uniqueWorkers = Array.from(new Set(payrolls.map(p => p.worker_id)))
+    
+    if (uniqueWorkers.length === 0) {
+      toast.error("No payroll records found for the selected period")
+      return
+    }
+
+    const confirmed = confirm(
+      `This will regenerate payroll for ${uniqueWorkers.length} worker${uniqueWorkers.length > 1 ? 's' : ''} in the selected period (${format(dateRange.from, 'MMM d')} - ${format(dateRange.to, 'MMM d, yyyy')}).\n\n` +
+      `This will recalculate all deductions based on current payroll settings (including NIB rates).\n\n` +
+      `Are you sure you want to continue?`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsRegenerating(true)
+    
+    try {
+      const dateFrom = format(dateRange.from, "yyyy-MM-dd")
+      const dateTo = format(dateRange.to, "yyyy-MM-dd")
+      
+      let successCount = 0
+      let failCount = 0
+      
+      // Regenerate payroll for each worker
+      for (const workerId of uniqueWorkers) {
+        try {
+          const result = await generatePayrollForWorkerAndPeriod(
+            user.id,
+            workerId,
+            dateFrom,
+            dateTo
+          )
+          
+          if (result.success) {
+            successCount++
+          } else {
+            failCount++
+            console.error(`Failed to regenerate payroll for worker ${workerId}:`, result.error)
+          }
+        } catch (error) {
+          failCount++
+          console.error(`Error regenerating payroll for worker ${workerId}:`, error)
+        }
+      }
+      
+      // Show results
+      if (successCount > 0) {
+        toast.success(`Successfully regenerated payroll for ${successCount} worker${successCount > 1 ? 's' : ''}`, {
+          description: failCount > 0 ? `${failCount} worker${failCount > 1 ? 's' : ''} failed` : "All workers processed successfully"
+        })
+        
+        // Refresh the payroll data
+        if (isMountedRef.current) {
+          setTimeout(() => {
+            loadPayroll(true) // Force refresh
+          }, 500)
+        }
+      } else {
+        toast.error("Failed to regenerate payroll", {
+          description: "No workers were successfully processed"
+        })
+      }
+    } catch (error) {
+      console.error("Error regenerating payroll:", error)
+      toast.error("An unexpected error occurred while regenerating payroll")
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
+
   // Calculate percentage change
   const calculatePercentageChange = (current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -973,63 +1068,126 @@ export default function PayrollPage({
         {/* Header with Date Navigation */}
         <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
           <div className="flex items-center space-x-2">
-            <div>
-              <h2 
-                className="text-lg font-medium mb-0"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+            <div 
+              className="flex items-center rounded-lg overflow-hidden border"
+              style={{
+                backgroundColor: theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))',
+                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240 / 0.5)'
+              }}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePreviousWeek}
+                className="h-10 w-10 p-0 rounded-none border-0"
+                style={{
+                  color: theme === 'dark' ? '#d1d5db' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
               >
-                Payroll{" "}
-                {dateRange?.from && dateRange?.to ? (
-                  <span style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>
-                    {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
-                  </span>
-                ) : (
-                  <span style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>Select a date range</span>
-                )}
-              </h2>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="flex-1 text-center px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    style={{
+                      backgroundColor: theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))',
+                      color: theme === 'dark' ? '#d1d5db' : '#374151',
+                      borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)',
+                      borderRight: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)',
+                      border: 'none',
+                      outline: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#171717' : 'rgb(249 250 251)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))'
+                    }}
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    {dateRange?.from && dateRange?.to ? (
+                      <>
+                        {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
+                      </>
+                    ) : (
+                      'Select a date range'
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="single"
+                    selected={dateRange?.from}
+                    onSelect={handleCalendarSelect}
+                    defaultMonth={dateRange?.from || new Date()}
+                    weekStartsOn={weekStartDay}
+                    modifiers={{
+                      selected: dateRange?.from && dateRange?.to 
+                        ? eachDayOfInterval({ start: dateRange.from, end: dateRange.to })
+                        : []
+                    }}
+                    modifiersClassNames={{
+                      selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNextWeek}
+                className="h-10 w-10 p-0 rounded-none border-0"
+                style={{
+                  color: theme === 'dark' ? '#d1d5db' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handlePreviousWeek}
-              className="h-10 w-10 p-0"
-              style={{
-                backgroundColor: theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)',
-                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                color: theme === 'dark' ? '#d1d5db' : '#374151'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)'
-              }}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handleNextWeek}
-              className="h-10 w-10 p-0"
-              style={{
-                backgroundColor: theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)',
-                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                color: theme === 'dark' ? '#d1d5db' : '#374151'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'oklch(1 0.003 250)'
-              }}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
           
-          {/* Filters Button */}
-          <DropdownMenu>
+          <div className="flex items-center gap-2">
+            {/* Regenerate Payroll Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRegeneratePayroll}
+              disabled={isRegenerating || isLoading || payrolls.length === 0}
+              className="gap-2 h-10"
+              style={{
+                backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
+                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
+                color: theme === 'dark' ? '#d1d5db' : '#374151'
+              }}
+              onMouseEnter={(e) => {
+                if (!isRegenerating && !isLoading && payrolls.length > 0) {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+              }}
+            >
+              <RefreshCw className={`h-4 w-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+              {isRegenerating ? 'Regenerating...' : 'Regenerate Period'}
+            </Button>
+
+            {/* Filters Button */}
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="outline" 
@@ -1095,6 +1253,7 @@ export default function PayrollPage({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -1320,13 +1479,13 @@ export default function PayrollPage({
                         <TableHead 
                           className="p-4 pb-4 font-medium text-sm text-gray-500"
                           style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
-                        >Payment Amount</TableHead>
+                        >Amount Paid</TableHead>
                         <TableHead 
                           className="p-4 pb-4 font-medium text-sm text-gray-500"
                           style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
                         >
                           <div className="flex items-center gap-2">
-                            <span>Remaining Balance</span>
+                            <span>Amount Owed</span>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -1520,9 +1679,8 @@ export default function PayrollPage({
                                           className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors w-full justify-start"
                                           style={{
                                             backgroundColor: theme === 'dark' ? '#262626' : 'rgb(249 250 251)',
-                                            borderColor: theme === 'dark' ? '#404040' : 'rgb(229 231 235)',
+                                            border: `1px solid ${theme === 'dark' ? '#404040' : 'rgb(229 231 235)'}`,
                                             color: theme === 'dark' ? '#9ca3af' : '#4b5563',
-                                            border: '1px solid'
                                           }}
                                           onMouseEnter={(e) => {
                                             e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
@@ -1568,9 +1726,8 @@ export default function PayrollPage({
                                             className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer"
                                             style={{
                                               backgroundColor: theme === 'dark' ? '#1f1f1f' : 'rgb(249 250 251)',
-                                              borderColor: theme === 'dark' ? '#404040' : 'rgb(229 231 235)',
+                                              border: `1px solid ${theme === 'dark' ? '#404040' : 'rgb(229 231 235)'}`,
                                               color: theme === 'dark' ? '#6b7280' : '#9ca3af',
-                                              border: '1px solid'
                                             }}
                                             onMouseEnter={(e) => {
                                               e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
@@ -1626,7 +1783,7 @@ export default function PayrollPage({
                                               style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
                                             >Net:</span>
                                             <span 
-                                              className="font-medium"
+                                              className="text-lg font-bold"
                                               style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
                                             >
                                               {new Intl.NumberFormat("en-BS", {
@@ -1645,7 +1802,7 @@ export default function PayrollPage({
                                               style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
                                             >Gross:</span>
                                             <span 
-                                              className="font-medium"
+                                              className="text-lg font-bold"
                                               style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
                                             >
                                               {new Intl.NumberFormat("en-BS", {
@@ -1873,7 +2030,7 @@ export default function PayrollPage({
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-medium text-gray-500">Remaining</div>
+                  <div className="text-sm font-medium text-gray-500">Amount Owed</div>
                   <div className="text-lg font-bold text-orange-600">
                     {new Intl.NumberFormat("en-BS", {
                       style: "currency",
@@ -1946,12 +2103,12 @@ export default function PayrollPage({
                     </div>
                   </div>
                   
-                  {/* Remaining Balance Display */}
+                  {/* Amount Owed Display */}
                   {modalPayroll && (
                     <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Remaining Balances</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount Owed</div>
                       <div className="grid grid-cols-2 gap-3">
-                        {/* Gross Pay Remaining */}
+                        {/* Gross Pay Amount Owed */}
                         <div className="space-y-1">
                           <div className="text-xs text-gray-500">Gross Pay</div>
                           <div className="flex items-center gap-2">
@@ -1970,7 +2127,7 @@ export default function PayrollPage({
                           </div>
                         </div>
                         
-                        {/* Net Pay Remaining */}
+                        {/* Net Pay Amount Owed */}
                         <div className="space-y-1">
                           <div className="text-xs text-gray-500">Net Pay</div>
                           <div className="flex items-center gap-2">
