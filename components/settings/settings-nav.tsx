@@ -3,31 +3,15 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { 
-  User, 
-  Shield, 
-  Building2
-} from "lucide-react"
+// Icons will be imported as needed
 
-const settingsNav = [
-  {
-    title: "Profile",
-    href: "/dashboard/settings/profile",
-    icon: User,
-    description: "Personal information and preferences"
-  },
-  {
-    title: "Account",
-    href: "/dashboard/settings/account", 
-    icon: Shield,
-    description: "Security, billing, and subscription"
-  },
-  {
-    title: "Company",
-    href: "/dashboard/settings/company",
-    icon: Building2,
-    description: "Business settings and configuration"
-  }
+const settingsNav: Array<{
+  title: string
+  href: string
+  icon: React.ElementType
+  description: string
+}> = [
+  // Settings navigation items will be added here
 ]
 
 export function SettingsNav() {

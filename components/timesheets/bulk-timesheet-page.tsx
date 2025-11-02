@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from "react"
 import { useTheme } from "next-themes"
 import { User } from "@supabase/supabase-js"
-import { ArrowLeft, Clock, CheckCircle } from "lucide-react"
+import { Clock, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BulkTimesheetForm } from "@/components/forms/bulk-timesheet-form"
+import { TimesheetSelectionSection } from "@/components/timesheets/timesheet-selection-section"
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
@@ -27,6 +27,11 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [submissionSuccess, setSubmissionSuccess] = useState(false)
   const router = useRouter()
+
+  // Selection state
+  const [selectedProject, setSelectedProject] = useState<string>("")
+  const [selectedDates, setSelectedDates] = useState<Date[]>([])
+  const [selectedWorkers, setSelectedWorkers] = useState<Set<string>>(new Set())
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -50,6 +55,7 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
 
   const handleSuccess = async (timesheets: TimesheetWithDetails[]) => {
     setSubmissionSuccess(true)
+    setIsSubmitting(false)
     toast.success(`Successfully created ${timesheets.length} timesheet entries!`)
     
     // Redirect back to timesheets page after a short delay
@@ -58,9 +64,12 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
     }, 2000)
   }
 
+
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // Header actions are now handled by the wrapper component
 
   const handleCancel = () => {
     router.push('/dashboard/timesheets')
@@ -96,61 +105,46 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      {/* Breadcrumb Navigation */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/timesheets" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Timesheets
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Entry</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-
-
+    <div className="flex-1 overflow-hidden h-full" style={{ maxHeight: 'calc(100vh - 120px)' }}>
       {/* Success Message */}
       {submissionSuccess && (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            All timesheet entries were successfully created! Redirecting to timesheets page...
-          </AlertDescription>
-        </Alert>
+        <div className="p-6">
+          <Alert className="border-green-200 bg-green-50 text-green-800">
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
+              All timesheet entries were successfully created! Redirecting to timesheets page...
+            </AlertDescription>
+          </Alert>
+        </div>
       )}
 
-      {/* Main Form */}
-      <div className="space-y-6">
-        <div className="space-y-4 mb-8">
-          <h2 
-            className="text-xl font-semibold"
-            style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
-          >
-            Create Timesheet Entries
-          </h2>
-          <p 
-            className="mt-1"
-            style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-          >
-            Select a project, individual dates, and workers to create multiple timesheet entries at once. 
-            Use the quick templates or pick specific dates to match your construction schedule.
-          </p>
+      {/* Full-width Selection Section - Extends to full screen width, touching site header */}
+      <div className="w-full -mx-6 -mt-8" style={{ width: 'calc(100vw - 4rem)', marginLeft: 'calc(-50vw + 50%)' }}>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+          <TimesheetSelectionSection
+            projects={projects}
+            workers={workers}
+            selectedProject={selectedProject}
+            selectedDates={selectedDates}
+            selectedWorkers={selectedWorkers}
+            onProjectChange={setSelectedProject}
+            onDatesChange={setSelectedDates}
+            onWorkersChange={setSelectedWorkers}
+          />
         </div>
-        
-        <BulkTimesheetForm
-          userId={user.id}
-          workers={workers}
-          projects={projects}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
       </div>
+
+      {/* Bulk Timesheet Form - Full Width */}
+      <BulkTimesheetForm
+        userId={user.id}
+        workers={workers}
+        projects={projects}
+        selectedProject={selectedProject}
+        selectedDates={selectedDates}
+        selectedWorkers={selectedWorkers}
+        onSuccess={handleSuccess}
+        onCancel={handleCancel}
+      />
     </div>
   )
 } 

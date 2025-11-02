@@ -121,9 +121,9 @@
   --foreground: #F8FAFC;
 
   /* Surface Colors */
-  --card: #1E293B;
+  --card: #181818;
   --card-foreground: #F8FAFC;
-  --popover: #1E293B;
+  --popover: #181818;
   --popover-foreground: #F8FAFC;
 
   /* Primary Colors */
@@ -135,11 +135,11 @@
   --secondary-foreground: #F8FAFC;
 
   /* Muted Colors */
-  --muted: #334155;
-  --muted-foreground: #94A3B8;
+  --muted: #1A1A1A;
+  --muted-foreground: #9CA3AF;
 
   /* Accent */
-  --accent: #1E293B;
+  --accent: #1A1A1A;
   --accent-foreground: #F8FAFC;
 
   /* Status Colors */
@@ -527,4 +527,155 @@ a:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid transparent !important;
   outline-offset: 2px !important;
+}
+
+/* Force neutral card colors in dark mode */
+.dark [data-slot="card"] {
+  background-color: #181818 !important;
+  border-color: #2A2A2A !important;
+}
+
+.dark .bg-card {
+  background-color: #181818 !important;
+}
+
+.dark .bg-white {
+  background-color: #181818 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #2A2A2A !important;
+}
+
+/* Specific overrides for settings page cards */
+.dark .bg-white {
+  background-color: #181818 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #2A2A2A !important;
+}
+
+/* Force dark mode for any card with these classes */
+.dark [class*="bg-white"] {
+  background-color: #181818 !important;
+}
+
+.dark [class*="border-gray-200"] {
+  border-color: #2A2A2A !important;
+}
+
+/* Nuclear option - force all cards in dark mode */
+.dark div[class*="Card"] {
+  background-color: #181818 !important;
+  border-color: #2A2A2A !important;
+}
+
+.dark [data-radix-collection-item] {
+  background-color: #181818 !important;
+  border-color: #2A2A2A !important;
+}
+
+/* Force settings page cards specifically */
+.dark .bg-card {
+  background-color: #181818 !important;
+}
+
+.dark .border-border {
+  border-color: #2A2A2A !important;
+}
+
+/* Override any conflicting styles */
+.dark [class*="bg-card"] {
+  background-color: #181818 !important;
+}
+
+.dark [class*="border-border"] {
+  border-color: #2A2A2A !important;
+}
+
+/* Target settings page specifically */
+.dark [data-pathname*="settings"] .bg-card {
+  background-color: #181818 !important;
+}
+
+.dark [data-pathname*="settings"] .border-border {
+  border-color: #2A2A2A !important;
+}
+
+/* Force all divs with card-like classes in dark mode */
+.dark div[class*="bg-card"] {
+  background-color: #181818 !important;
+}
+
+.dark div[class*="border-border"] {
+  border-color: #2A2A2A !important;
+}
+
+/* Force CSS variables to work properly */
+.dark [style*="var(--card)"] {
+  background-color: var(--card) !important;
+}
+
+.dark [style*="var(--border)"] {
+  border-color: var(--border) !important;
+}
+
+/* Force light mode colors for cards and buttons */
+:not(.dark) [data-slot="card"] {
+  background-color: white !important;
+  border-color: #e5e7eb !important;
+}
+
+:not(.dark) .bg-card {
+  background-color: white !important;
+}
+
+:not(.dark) .bg-white {
+  background-color: white !important;
+}
+
+:not(.dark) .border-gray-200 {
+  border-color: #e5e7eb !important;
+}
+
+:not(.dark) [data-slot="card"] .border-gray-200 {
+  border-color: #e5e7eb !important;
+}
+
+/* General button - match card styling exactly */
+.dark [data-value="general"] {
+  background-color: #181818 !important;
+  border-color: #2A2A2A !important;
+}
+
+/* Force dark mode colors for General button */
+.dark button[data-value="general"] {
+  background-color: #181818 !important;
+  border-color: #404040 !important;
+  box-shadow: none !important;
+}
+
+/* Force light mode colors for General button */
+:not(.dark) button[data-value="general"] {
+  background-color: white !important;
+  border-color: #d1d5db !important;
+  box-shadow: none !important;
+}
+
+/* Summary positioning - fixed to bottom of viewport, aligned with secondary sidebar */
+.summary-fixed-bottom {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 272px !important; /* Start at secondary sidebar right edge (w-16 + w-52 = 64px + 208px = 272px) */
+  right: 0 !important;
+  width: auto !important;
+  z-index: 10 !important; /* Behind sidebar (sidebar is usually z-50+) */
+  transition: all 300ms ease-in-out;
+  border-radius: 0 !important; /* Remove rounded corners */
+}
+
+/* When secondary sidebar is collapsed (w-0) */
+.summary-fixed-bottom.sidebar-collapsed {
+  left: 64px !important; /* Start from primary sidebar right edge (w-16 = 64px) */
 }

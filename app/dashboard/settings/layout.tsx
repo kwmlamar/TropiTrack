@@ -7,8 +7,12 @@ export default function SettingsLayout({
   children: React.ReactNode
 }) {
   return (
-    <DashboardLayout title="Settings">
-      <div className="space-y-6">
+    <DashboardLayout 
+      title="Settings"
+      showSettingsTabs={true}
+      activeSettingsTab="general"
+    >
+      <div className="space-y-6 mt-2">
         <SettingsNav />
         {children}
       </div>

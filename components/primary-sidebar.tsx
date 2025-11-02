@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
@@ -45,7 +45,12 @@ interface PrimarySidebarProps {
 export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = false, onToggleSecondarySidebar, profile }: PrimarySidebarProps) {
   const pathname = usePathname()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const isActive = (item: NavItem) => {
     // Check if current pathname matches this section
@@ -94,13 +99,29 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
     }
   };
 
+  if (!mounted) {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <div className="flex h-screen w-16 flex-col backdrop-blur-xl bg-gray-100 border-r border-gray-200">
+          <div className="flex h-16 shrink-0 items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/10">
+              <span className="text-xl font-bold text-primary">T</span>
+            </div>
+          </div>
+        </div>
+      </TooltipProvider>
+    )
+  }
+
   return (
     <TooltipProvider delayDuration={200}>
       <div 
         className="flex h-screen w-16 flex-col backdrop-blur-xl" 
         style={{ 
           backgroundColor: theme === 'dark' ? '#000000' : 'rgb(229 231 235 / 0.8)',
-          borderRight: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
+          borderRightWidth: theme === 'dark' ? '1px' : '1px',
+          borderRightStyle: 'solid',
+          borderRightColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
         }}
       >
         {/* Logo/Brand */}

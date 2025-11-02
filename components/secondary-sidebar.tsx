@@ -11,6 +11,9 @@ import {
   FolderKanban,
   Building2,
   Users,
+  CreditCard,
+  Building,
+  Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -40,6 +43,11 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
   const pathname = usePathname()
   const { theme } = useTheme()
   const [currentSection, setCurrentSection] = useState<string | null>(section || "track")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // Auto-detect section from pathname, default to "track" if no match
@@ -81,6 +89,20 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
 
   const content = currentSection ? sectionContent[currentSection] : null
 
+  if (!mounted) {
+    return (
+      <div className={cn(
+        "flex h-screen flex-col backdrop-blur-xl transition-all duration-300",
+        isCollapsed ? "w-0 overflow-hidden" : "w-52"
+      )}>
+        <div className="flex h-16 shrink-0 flex-col justify-center px-6">
+          <h2 className="text-lg font-semibold text-gray-900">TropiTrack</h2>
+          <p className="text-xs text-gray-500">{profile.company?.name || "Company"}</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!content) {
     return (
       <div 
@@ -90,7 +112,9 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
         )}
         style={{ 
           backgroundColor: theme === 'dark' ? '#0f0f0f' : 'rgb(243 244 246 / 0.98)',
-          borderRight: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
+          borderRightWidth: theme === 'dark' ? '1px' : '1px',
+          borderRightStyle: 'solid',
+          borderRightColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
         }}
       >
         <div className="flex h-16 shrink-0 flex-col justify-center px-6">
@@ -121,7 +145,9 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
       )}
       style={{ 
         backgroundColor: theme === 'dark' ? '#0f0f0f' : 'rgb(243 244 246 / 0.98)',
-        borderRight: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
+        borderRightWidth: theme === 'dark' ? '1px' : '1px',
+        borderRightStyle: 'solid',
+        borderRightColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
       }}
     >
       {/* Section Header */}
@@ -143,7 +169,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
           {sectionContent.track && (
             <div className="space-y-2">
               <h3 className={cn(
-                "px-2 text-xs font-medium uppercase tracking-wider",
+                "px-2 text-xs font-semibold uppercase tracking-wider",
                 theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
               )}>
                 {sectionContent.track.title}
@@ -158,7 +184,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
                       key={link.href}
                       href={link.href}
                       className={cn(
-                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                         isActive
                           ? theme === 'dark'
                             ? "bg-primary/20 text-gray-100 font-medium"
@@ -181,7 +207,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
           {sectionContent.analyze && (
             <div className="space-y-2">
               <h3 className={cn(
-                "px-2 text-xs font-medium uppercase tracking-wider",
+                "px-2 text-xs font-semibold uppercase tracking-wider",
                 theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
               )}>
                 {sectionContent.analyze.title}
@@ -196,7 +222,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
                       key={link.href}
                       href={link.href}
                       className={cn(
-                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                         isActive
                           ? theme === 'dark'
                             ? "bg-primary/20 text-gray-100 font-medium"
@@ -219,7 +245,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
           {sectionContent.manage && (
             <div className="space-y-2">
               <h3 className={cn(
-                "px-2 text-xs font-medium uppercase tracking-wider",
+                "px-2 text-xs font-semibold uppercase tracking-wider",
                 theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
               )}>
                 {sectionContent.manage.title}
@@ -234,7 +260,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
                       key={link.href}
                       href={link.href}
                       className={cn(
-                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                         isActive
                           ? theme === 'dark'
                             ? "bg-primary/20 text-gray-100 font-medium"
@@ -254,6 +280,72 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
           )}
         </div>
       </ScrollArea>
+
+      {/* Admin Footer Section */}
+      {profile.role === 'admin' && (
+        <div className="border-t p-4" style={{ 
+          borderTopWidth: '1px',
+          borderTopStyle: 'solid',
+          borderTopColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+        }}>
+          <h3 className={cn(
+            "px-2 text-xs font-medium uppercase tracking-wider mb-3",
+            theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+          )}>
+            Admin
+          </h3>
+          <nav className="space-y-0.5">
+            <a
+              href="/dashboard/subscription"
+              className={cn(
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 relative z-10",
+                pathname === "/dashboard/subscription" || pathname.startsWith("/dashboard/subscription")
+                  ? theme === 'dark'
+                    ? "bg-primary/20 text-gray-100 font-medium"
+                    : "bg-primary/10 text-gray-700 font-medium"
+                  : theme === 'dark'
+                    ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                    : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+              )}
+            >
+              <CreditCard className="h-4 w-4" />
+              <span className="flex-1">Subscription</span>
+            </a>
+            <a
+              href="/dashboard/organization"
+              className={cn(
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 relative z-10",
+                pathname === "/dashboard/organization" || pathname.startsWith("/dashboard/organization")
+                  ? theme === 'dark'
+                    ? "bg-primary/20 text-gray-100 font-medium"
+                    : "bg-primary/10 text-gray-700 font-medium"
+                  : theme === 'dark'
+                    ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                    : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+              )}
+            >
+              <Building className="h-4 w-4" />
+              <span className="flex-1">Organization</span>
+            </a>
+            <a
+              href="/dashboard/settings"
+              className={cn(
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 relative z-10",
+                pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings")
+                  ? theme === 'dark'
+                    ? "bg-primary/20 text-gray-100 font-medium"
+                    : "bg-primary/10 text-gray-700 font-medium"
+                  : theme === 'dark'
+                    ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                    : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+              )}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="flex-1">Settings</span>
+            </a>
+          </nav>
+        </div>
+      )}
     </div>
   )
 }

@@ -23,6 +23,9 @@ type SiteHeaderProps = {
   showReportsTabs?: boolean;
   activeReportTab?: string;
   onReportTabChange?: (tab: string) => void;
+  showSettingsTabs?: boolean;
+  activeSettingsTab?: string;
+  onSettingsTabChange?: (tab: string) => void;
 };
 
 export function SiteHeader({
@@ -33,6 +36,9 @@ export function SiteHeader({
   showReportsTabs = false,
   activeReportTab = "summary",
   onReportTabChange,
+  showSettingsTabs = false,
+  activeSettingsTab = "general",
+  onSettingsTabChange,
 }: SiteHeaderProps) {
   const { theme } = useTheme();
 
@@ -45,8 +51,8 @@ export function SiteHeader({
       }}
     >
       <div className="flex w-full items-center gap-2 px-4 lg:gap-4 lg:px-6">
-        {/* Left Section - Title */}
-        <div className="flex items-center gap-2">
+        {/* Left Section - Title and Settings Tabs */}
+        <div className="flex items-center gap-4">
           {showTimesheetsDropdown ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -80,6 +86,20 @@ export function SiteHeader({
             <h1 className="text-lg font-semibold text-foreground">
               {typeof title === 'string' ? title : title}
             </h1>
+          )}
+          
+          {/* Settings Tabs - Moved closer to title */}
+          {showSettingsTabs && (
+            <Tabs value={activeSettingsTab} onValueChange={onSettingsTabChange} className="w-auto">
+              <TabsList className="grid w-auto grid-cols-5 bg-transparent p-0 h-auto">
+                <TabsTrigger 
+                  value="general" 
+                  className="text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-3 py-1.5 shadow-none"
+                >
+                  General
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           )}
         </div>
 

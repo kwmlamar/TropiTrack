@@ -1,31 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Clock,
-  Building2,
-  Loader2,
-  Plus,
   Trash2,
   User,
   Calculator,
   Copy,
 } from "lucide-react";
-import { startOfWeek, endOfWeek, addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MultiDatePicker } from "@/components/ui/multi-date-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -38,34 +29,18 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import { createTimesheet } from "@/lib/data/timesheets";
 import type { CreateTimesheetInput, TimesheetWithDetails } from "@/lib/types";
 import type { Worker } from "@/lib/types/worker"
-import type { Project } from "@/lib/types/project"
 import { usePayrollSettings } from "@/lib/hooks/use-payroll-settings";
 import { useTimesheetSettings } from "@/lib/hooks/use-timesheet-settings";
 import { processTimesheetApproval } from "@/lib/utils/timesheet-approval";
@@ -100,24 +75,21 @@ type BulkTimesheetFormData = z.infer<typeof bulkTimesheetSchema>;
 interface BulkTimesheetFormProps {
   userId: string;
   workers: Worker[];
-  projects: Project[];
+  selectedProject?: string;
+  selectedDates?: Date[];
+  selectedWorkers?: Set<string>;
   onSuccess?: (timesheets: TimesheetWithDetails[]) => void;
-  onCancel?: () => void;
 }
 
 export function BulkTimesheetForm({
   userId,
   workers,
-  projects,
+  selectedProject,
+  selectedDates,
+  selectedWorkers,
   onSuccess,
-  onCancel,
 }: BulkTimesheetFormProps) {
   const { theme } = useTheme();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
-  const [selectedWorkers, setSelectedWorkers] = useState<Set<string>>(new Set());
-  const [workerSelectOpen, setWorkerSelectOpen] = useState(false);
   
   const { paymentSchedule } = usePayrollSettings();
   const { 
@@ -142,19 +114,9 @@ export function BulkTimesheetForm({
   const form = useForm<BulkTimesheetFormData>({
     resolver: zodResolver(bulkTimesheetSchema),
     defaultValues: {
-      project_id: "",
-      selected_dates: [],
-      entries: [
-        {
-          worker_id: "",
-          clock_in: settings?.work_day_start || "07:00",
-          clock_out: settings?.work_day_end || "16:00",
-          break_duration: settings?.break_time || 60,
-          hourly_rate: 0,
-          task_description: "",
-          notes: "",
-        },
-      ],
+      project_id: selectedProject || "",
+      selected_dates: selectedDates || [],
+      entries: [],
     },
   });
 
@@ -187,7 +149,7 @@ export function BulkTimesheetForm({
   });
 
   // Calculate totals reactively based on watched form values
-  const calculateTotals = () => {
+  const calculateTotals = useMemo(() => {
     const entries = watchedEntries || [];
     const selectedDates = watchedSelectedDates || [];
 
@@ -197,20 +159,31 @@ export function BulkTimesheetForm({
     let totalHours = 0;
     let totalCost = 0;
 
+    // Each worker works for each selected day
     entries.forEach((entry) => {
-      if (entry && entry.clock_in && entry.clock_out) {
-        const clockIn = new Date(`2000-01-01T${entry.clock_in}:00`);
-        const clockOut = new Date(`2000-01-01T${entry.clock_out}:00`);
+      if (entry && entry.clock_in && entry.clock_out && entry.worker_id) {
+        // Parse time strings properly (handle both HH:MM and HH:MM:SS formats)
+        const parseTime = (timeStr: string) => {
+          const [hours, minutes] = timeStr.split(':').map(Number);
+          return hours * 60 + minutes; // Convert to minutes
+        };
 
-        let diffMs = clockOut.getTime() - clockIn.getTime();
-        if (diffMs < 0) {
-          diffMs += 24 * 60 * 60 * 1000;
+        const clockInMinutes = parseTime(entry.clock_in);
+        const clockOutMinutes = parseTime(entry.clock_out);
+
+        // Calculate difference in minutes, handling overnight shifts
+        let diffMinutes = clockOutMinutes - clockInMinutes;
+        if (diffMinutes < 0) {
+          diffMinutes += 24 * 60; // Add 24 hours in minutes
         }
 
-        const breakMs = (entry.break_duration || 0) * 60 * 1000;
-        const hours = Math.max(0, (diffMs - breakMs) / (1000 * 60 * 60));
+        // Subtract break duration (in minutes)
+        const breakMinutes = entry.break_duration || 0;
+        const workMinutes = Math.max(0, diffMinutes - breakMinutes);
+        const hours = workMinutes / 60; // Convert to hours
         const hourlyRate = Number(entry.hourly_rate) || 0;
 
+        // Each worker works for each selected day
         totalHours += hours * numberOfDays;
         totalCost += hours * numberOfDays * hourlyRate;
       }
@@ -222,15 +195,11 @@ export function BulkTimesheetForm({
       days: numberOfDays,
       workers: entries.length,
     };
-  };
+  }, [watchedEntries, watchedSelectedDates]);
 
-  const totals = calculateTotals();
+  const totals = calculateTotals;
 
   const onSubmit = async (data: BulkTimesheetFormData) => {
-    setIsSubmitting(true);
-    setSubmissionError(null);
-    setSubmissionSuccess(false);
-
     try {
       // Create timesheet entries for each worker × each date combination
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -262,9 +231,7 @@ export function BulkTimesheetForm({
 
       const failures = results.filter((result) => !result.success);
       if (failures.length > 0) {
-        setSubmissionError(
-          `${failures.length} out of ${results.length} entries failed to submit.`
-        );
+        console.error(`${failures.length} out of ${results.length} entries failed to submit.`);
       } else {
         // If approval is not required, auto-approve and generate payroll
         if (!requireApproval) {
@@ -304,17 +271,11 @@ export function BulkTimesheetForm({
           }
         }
         
-        setSubmissionSuccess(true);
         const successData = results.map((result) => result.data);
         onSuccess?.(successData);
       }
     } catch (error) {
       console.error("Error submitting timesheets:", error);
-      setSubmissionError(
-        "An unexpected error occurred while submitting timesheets."
-      );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -326,18 +287,6 @@ export function BulkTimesheetForm({
     }
   };
 
-  // Add a new empty row
-  const addRow = () => {
-    append({
-      worker_id: "",
-      clock_in: settings?.work_day_start || "07:00",
-      clock_out: settings?.work_day_end || "16:00",
-      break_duration: settings?.break_time || 60,
-      hourly_rate: 0,
-      task_description: "",
-      notes: "",
-    });
-  };
 
   // Copy values from the previous row
   const copyFromPrevious = (index: number) => {
@@ -356,40 +305,6 @@ export function BulkTimesheetForm({
     }
   };
 
-  // Function to apply quick date range
-  const applyQuickDateRange = (range: "today" | "thisWeek" | "nextWeek") => {
-    const today = new Date();
-    const weekStartsOn = getPeriodStartDay();
-    let dates: Date[] = [];
-
-    switch (range) {
-      case "today":
-        dates = [today];
-        break;
-      case "thisWeek":
-        const thisWeekStart = startOfWeek(today, { weekStartsOn });
-        const thisWeekEnd = endOfWeek(today, { weekStartsOn });
-        dates = [];
-        const currentDate = new Date(thisWeekStart);
-        while (currentDate <= thisWeekEnd) {
-          dates.push(new Date(currentDate));
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-        break;
-      case "nextWeek":
-        const nextWeekStart = addDays(startOfWeek(today, { weekStartsOn }), 7);
-        const nextWeekEnd = addDays(endOfWeek(today, { weekStartsOn }), 7);
-        dates = [];
-        const nextCurrentDate = new Date(nextWeekStart);
-        while (nextCurrentDate <= nextWeekEnd) {
-          dates.push(new Date(nextCurrentDate));
-          nextCurrentDate.setDate(nextCurrentDate.getDate() + 1);
-        }
-        break;
-    }
-
-    form.setValue("selected_dates", dates);
-  };
 
   // Function to copy a field to all entries
   const copyFieldToAll = (fieldName: "clock_in" | "clock_out" | "break_duration" | "task_description", sourceIndex: number) => {
@@ -402,15 +317,29 @@ export function BulkTimesheetForm({
   };
 
   // Add selected workers to the form
-  const addSelectedWorkers = () => {
-    const selectedWorkersArray = Array.from(selectedWorkers);
+  const addSelectedWorkers = useCallback(() => {
+    const selectedWorkersArray = Array.from(selectedWorkers || new Set());
     
     if (selectedWorkersArray.length === 0) {
       return;
     }
 
+    // Get list of workers already in the form
+    const existingWorkerIds = new Set(
+      fields.map((_, index) => form.getValues(`entries.${index}.worker_id`)).filter(Boolean)
+    );
+
+    // Filter out workers that are already in the form
+    const workersToAdd = selectedWorkersArray.filter(
+      workerId => !existingWorkerIds.has(workerId)
+    );
+
+    if (workersToAdd.length === 0) {
+      return;
+    }
+
     // First, fill empty worker cards with selected workers
-    const remainingWorkers = [...selectedWorkersArray];
+    const remainingWorkers = [...workersToAdd];
     
     fields.forEach((field, index) => {
       const currentWorkerId = form.getValues(`entries.${index}.worker_id`);
@@ -433,545 +362,484 @@ export function BulkTimesheetForm({
       if (worker) {
         append({
           worker_id: worker.id,
-          clock_in: "07:00",
-          clock_out: "16:00",
-          break_duration: 60,
+          clock_in: settings?.work_day_start || "07:00",
+          clock_out: settings?.work_day_end || "16:00",
+          break_duration: settings?.break_time || 60,
           hourly_rate: Number(worker.hourly_rate) || 0,
           task_description: "",
           notes: "",
         });
       }
     });
-    
-    setSelectedWorkers(new Set());
-  };
+  }, [selectedWorkers, fields, form, workers, append, settings]);
+
+  // Auto-populate workers when selectedWorkers prop changes
+  useEffect(() => {
+    if (selectedWorkers) {
+      // Add newly selected workers
+      if (selectedWorkers.size > 0) {
+        addSelectedWorkers();
+      }
+      
+      // Remove deselected workers
+      const selectedWorkersArray = Array.from(selectedWorkers);
+      const indicesToRemove: number[] = [];
+      
+      fields.forEach((field, index) => {
+        const currentWorkerId = form.getValues(`entries.${index}.worker_id`);
+        if (currentWorkerId && !selectedWorkersArray.includes(currentWorkerId)) {
+          // Worker was deselected, mark for removal
+          indicesToRemove.push(index);
+        }
+      });
+      
+      // Remove in reverse order to avoid index shifting issues
+      indicesToRemove.reverse().forEach(index => remove(index));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWorkers]);
+
+  // Monitor secondary sidebar state for summary positioning
+  useEffect(() => {
+    const updateSummaryPosition = () => {
+      const summaryElement = document.querySelector('.summary-fixed-bottom');
+      if (!summaryElement) return;
+
+      // Check if secondary sidebar is collapsed by looking for elements with w-0 class
+      const secondarySidebar = document.querySelector('[class*="w-0 overflow-hidden"]');
+      if (secondarySidebar) {
+        summaryElement.classList.add('sidebar-collapsed');
+      } else {
+        summaryElement.classList.remove('sidebar-collapsed');
+      }
+    };
+
+    // Initial check
+    updateSummaryPosition();
+
+    // Set up observer to watch for sidebar changes
+    const observer = new MutationObserver(updateSummaryPosition);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+      subtree: true
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-6">
-          {/* Common Fields: Project and Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="project_id"
-              render={({ field }) => (
-                <div className="space-y-0">
-                  <FormItem className="space-y-0" style={{ margin: 0, padding: 0 }}>
-                    <FormLabel className="mb-0" style={{ marginBottom: '2px' }}>Project</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a project" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {projects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4" />
-                              <span>{project.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                </div>
-              )}
-            />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="overflow-hidden">
+        {/* Worker Entries Table - Full Width */}
+        <div className="space-y-4 overflow-hidden">
 
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="selected_dates"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Select Dates</FormLabel>
-                    <div className="flex flex-col space-y-2">
-                      <MultiDatePicker
-                        selectedDates={field.value}
-                        onDatesChange={field.onChange}
-                        placeholder="Choose individual dates"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => applyQuickDateRange("today")}
-                          style={{
-                            backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
-                            borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                            color: theme === 'dark' ? '#d1d5db' : '#374151'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
-                          }}
-                        >
-                          Today
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => applyQuickDateRange("thisWeek")}
-                          style={{
-                            backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
-                            borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                            color: theme === 'dark' ? '#d1d5db' : '#374151'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
-                          }}
-                        >
-                          This Week
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => applyQuickDateRange("nextWeek")}
-                          style={{
-                            backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
-                            borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                            color: theme === 'dark' ? '#d1d5db' : '#374151'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
-                          }}
-                        >
-                          Next Week
-                        </Button>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Worker Selection */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 
-                className="text-lg font-medium"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
-              >Select Workers</h3>
-              <div className="flex gap-2">
-                <Popover open={workerSelectOpen} onOpenChange={setWorkerSelectOpen}>
-                  <PopoverTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="min-w-[140px]"
-                      style={{
-                        backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
-                        borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                        color: theme === 'dark' ? '#d1d5db' : '#374151'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
-                      }}
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      Select Workers
-                      {selectedWorkers.size > 0 && (
-                        <span className="ml-2 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs font-medium">
-                          {selectedWorkers.size}
-                        </span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[320px] p-0" align="end">
-                    <Command className="rounded-lg">
-                      <CommandEmpty className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                        No workers found.
-                      </CommandEmpty>
-                      <CommandGroup className="max-h-[200px] overflow-y-auto">
-                        {workers.map((worker) => (
-                          <CommandItem
-                            key={worker.id}
-                            onSelect={() => {
-                              setSelectedWorkers(prev => {
-                                const next = new Set(prev);
-                                if (next.has(worker.id)) {
-                                  next.delete(worker.id);
-                                } else {
-                                  next.add(worker.id);
-                                }
-                                return next;
-                              });
-                            }}
-                            className="cursor-pointer hover:bg-accent/50 transition-all duration-200 group"
-                          >
-                            <div className="flex items-center gap-3 w-full py-1">
-                              <Checkbox
-                                color="var(--muted-foreground)"
-                                checked={selectedWorkers.has(worker.id)}
-                                onCheckedChange={(checked) => {
-                                  setSelectedWorkers(prev => {
-                                    const next = new Set(prev);
-                                    if (checked) {
-                                      next.add(worker.id);
-                                    } else {
-                                      next.delete(worker.id);
-                                    }
-                                    return next;
-                                  });
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                aria-label={`Select ${worker.name}`}
-                                className="data-[state=checked]:text-white [&[data-state=checked]>div]:text-white [&[data-state=checked] svg]:text-white"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate dark:text-gray-200">
-                                  {worker.name}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                  {worker.position}
-                                </div>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  type="button"
-                  onClick={addSelectedWorkers}
-                  disabled={selectedWorkers.size === 0}
-                >
-                  Add Selected Workers
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Worker Entries */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 
-                className="text-lg font-medium"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
-              >Worker Entries</h3>
-            </div>
-
-            <div className="space-y-4">
-              {fields.map((field, index) => (
-                <Card
-                  key={field.id}
-                  className="border-border/50"
-                  style={{
-                    backgroundColor: index % 2 === 0 
-                      ? (theme === 'dark' ? '#1f1f1f' : 'rgb(248 250 252 / 0.5)')
-                      : (theme === 'dark' ? '#171717' : 'rgb(243 244 246 / 0.3)'),
-                    border: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)'
-                  }}
-                >
-                  <CardHeader className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <FormField
-                          control={form.control}
-                          name={`entries.${index}.worker_id`}
-                          render={({ field: workerField }) => (
-                            <FormItem>
-                              <Select
-                                onValueChange={(value) => {
-                                  workerField.onChange(value);
-                                  handleWorkerChange(index, value);
-                                }}
-                                value={workerField.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a worker" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {workers.map((worker) => (
-                                    <SelectItem key={worker.id} value={worker.id}>
-                                      <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4" />
-                                        <span>{worker.name}</span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  copyFieldToAll("clock_in", index);
-                                  copyFieldToAll("clock_out", index);
-                                  copyFieldToAll("break_duration", index);
-                                }}
-                                className="h-8 w-8"
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Copy time settings to all entries</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        {index > 0 && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => copyFromPrevious(index)}
-                                  className="h-8 w-8"
-                                >
-                                  <Clock className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Copy time from previous entry</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {fields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-2">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <FormField
-                        control={form.control}
-                        name={`entries.${index}.clock_in`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Clock In</FormLabel>
-                            <FormControl>
-                              <Input type="time" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`entries.${index}.clock_out`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Clock Out</FormLabel>
-                            <FormControl>
-                              <Input type="time" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`entries.${index}.break_duration`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Break (minutes)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="480"
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(Number(e.target.value))
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`entries.${index}.hourly_rate`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Hourly Rate ($)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(Number(e.target.value))
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                      <FormField
-                        control={form.control}
-                        name={`entries.${index}.task_description`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Task Description (Optional)</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Describe the work performed..."
-                                className="resize-none h-20"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`entries.${index}.notes`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Notes (Optional)</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Additional notes or comments..."
-                                className="resize-none h-20"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {fields.length === 0 && (
-                <div 
-                  className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg"
-                  style={{
-                    borderColor: theme === 'dark' ? '#404040' : 'rgb(229 231 235)',
-                  }}
-                >
-                  <p 
-                    className="mb-4"
-                    style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-                  >
-                    No worker entries added yet
-                  </p>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={addRow}
+              <div 
+                className="border-t border-b flex-1 flex flex-col"
+                style={{
+                  backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                  borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)',
+                }}
+              >
+                <div className="px-0 flex-1 flex flex-col">
+                  <div 
+                    className="overflow-x-auto flex-1 overflow-y-auto"
                     style={{
-                      backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
-                      borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                      color: theme === 'dark' ? '#d1d5db' : '#374151'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
+                      maxHeight: 'calc(100vh - 185px)' // Account for header, selection section, and summary
                     }}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Worker
-                  </Button>
+                    <table className="w-full border-collapse border-spacing-0">
+                      <thead 
+                        className="sticky top-0 z-50 shadow-sm"
+                        style={{
+                          backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
+                          borderBottom: theme === 'dark' ? '2px solid #262626' : '2px solid rgb(226 232 240 / 0.5)'
+                        }}
+                      >
+                        <tr style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
+                          <th 
+                            className="text-left p-4 pl-8 pb-4 font-medium text-sm text-gray-500"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          >
+                            Worker
+                          </th>
+                          <th 
+                            className="text-center p-4 pb-4 font-medium text-sm text-gray-500"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          >
+                            Clock In
+                          </th>
+                          <th 
+                            className="text-center p-4 pb-4 font-medium text-sm text-gray-500"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          >
+                            Clock Out
+                          </th>
+                          <th 
+                            className="text-center p-4 pb-4 font-medium text-sm text-gray-500"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          >
+                            Break (min)
+                          </th>
+                          <th 
+                            className="text-center p-4 pb-4 font-medium text-sm text-gray-500"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          >
+                            Hourly Rate
+                          </th>
+                          <th 
+                            className="text-left p-4 pb-4 font-medium text-sm text-gray-500"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          >
+                            Task Description
+                          </th>
+                          <th 
+                            className="text-left p-4 pb-4 font-medium text-sm text-gray-500"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          >
+                            Notes
+                          </th>
+                          <th 
+                            className="w-12"
+                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          ></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fields.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="p-0">
+                              <div className="flex flex-col items-center justify-center py-16 px-6">
+                                <div 
+                                  className="flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                                  style={{ backgroundColor: theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.5)' }}
+                                >
+                                  <User 
+                                    className="h-8 w-8"
+                                    style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                                  />
+                                </div>
+                                <h3 
+                                  className="text-lg font-semibold mb-2"
+                                  style={{ color: theme === 'dark' ? '#9ca3af' : '#111827' }}
+                                >
+                                  No workers selected
+                                </h3>
+                                <p 
+                                  className="text-sm text-center max-w-sm"
+                                  style={{ color: theme === 'dark' ? '#6b7280' : '#6b7280' }}
+                                >
+                                  Select workers from the dropdown above to add them to the timesheet.
+                                </p>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          fields.map((field, index) => (
+                          <tr 
+                            key={field.id}
+                            className="border-b last:border-b-0 transition-all duration-200 group"
+                            style={{
+                              borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
+                              backgroundColor: 'transparent',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }}
+                          >
+                            <td className="p-4 pl-8">
+                              <FormField
+                                control={form.control}
+                                name={`entries.${index}.worker_id`}
+                                render={({ field: workerField }) => (
+                                  <FormItem>
+                                    <Select
+                                      onValueChange={(value) => {
+                                        workerField.onChange(value);
+                                        handleWorkerChange(index, value);
+                                      }}
+                                      value={workerField.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger className="w-full">
+                                          <SelectValue placeholder="Select worker" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {workers.map((worker) => (
+                                          <SelectItem key={worker.id} value={worker.id}>
+                                            <div className="flex items-center gap-2">
+                                              <User className="h-4 w-4" />
+                                              <span>{worker.name}</span>
+                                            </div>
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </td>
+                            <td className="p-2 text-center">
+                              <FormField
+                                control={form.control}
+                                name={`entries.${index}.clock_in`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input 
+                                        type="time" 
+                                        {...field} 
+                                        className="w-full h-10 text-center border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                        style={{
+                                          color: theme === 'dark' ? '#e5e7eb' : '#111827',
+                                          backgroundColor: 'transparent'
+                                        }}
+                                        onFocus={(e) => {
+                                          e.target.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                        }}
+                                        onBlur={(e) => {
+                                          e.target.style.backgroundColor = 'transparent'
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </td>
+                            <td className="p-2 text-center">
+                              <FormField
+                                control={form.control}
+                                name={`entries.${index}.clock_out`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input 
+                                        type="time" 
+                                        {...field} 
+                                        className="w-full h-10 text-center border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                        style={{
+                                          color: theme === 'dark' ? '#e5e7eb' : '#111827',
+                                          backgroundColor: 'transparent'
+                                        }}
+                                        onFocus={(e) => {
+                                          e.target.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                        }}
+                                        onBlur={(e) => {
+                                          e.target.style.backgroundColor = 'transparent'
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </td>
+                            <td className="p-2 text-center">
+                              <FormField
+                                control={form.control}
+                                name={`entries.${index}.break_duration`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        max="480"
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(Number(e.target.value))
+                                        }
+                                        className="w-full h-10 text-center border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                        style={{
+                                          color: theme === 'dark' ? '#e5e7eb' : '#111827',
+                                          backgroundColor: 'transparent'
+                                        }}
+                                        onFocus={(e) => {
+                                          e.target.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                        }}
+                                        onBlur={(e) => {
+                                          e.target.style.backgroundColor = 'transparent'
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </td>
+                            <td className="p-2 text-center">
+                              <FormField
+                                control={form.control}
+                                name={`entries.${index}.hourly_rate`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(Number(e.target.value))
+                                        }
+                                        className="w-full h-10 text-center border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                        style={{
+                                          color: theme === 'dark' ? '#e5e7eb' : '#111827',
+                                          backgroundColor: 'transparent'
+                                        }}
+                                        onFocus={(e) => {
+                                          e.target.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                        }}
+                                        onBlur={(e) => {
+                                          e.target.style.backgroundColor = 'transparent'
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </td>
+                            <td className="p-4">
+                              <FormField
+                                control={form.control}
+                                name={`entries.${index}.task_description`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Describe work..."
+                                        className="resize-none w-full border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                        rows={2}
+                                        {...field}
+                                        style={{
+                                          color: theme === 'dark' ? '#e5e7eb' : '#111827',
+                                          backgroundColor: 'transparent'
+                                        }}
+                                        onFocus={(e) => {
+                                          e.target.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                        }}
+                                        onBlur={(e) => {
+                                          e.target.style.backgroundColor = 'transparent'
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </td>
+                            <td className="p-4">
+                              <FormField
+                                control={form.control}
+                                name={`entries.${index}.notes`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Notes..."
+                                        className="resize-none w-full border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                        rows={2}
+                                        {...field}
+                                        style={{
+                                          color: theme === 'dark' ? '#e5e7eb' : '#111827',
+                                          backgroundColor: 'transparent'
+                                        }}
+                                        onFocus={(e) => {
+                                          e.target.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                        }}
+                                        onBlur={(e) => {
+                                          e.target.style.backgroundColor = 'transparent'
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </td>
+                            <td className="p-4 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                          copyFieldToAll("clock_in", index);
+                                          copyFieldToAll("clock_out", index);
+                                          copyFieldToAll("break_duration", index);
+                                        }}
+                                        className="h-8 w-8"
+                                      >
+                                        <Copy className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Copy time settings to all entries</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                {index > 0 && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => copyFromPrevious(index)}
+                                          className="h-8 w-8"
+                                        >
+                                          <Clock className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Copy time from previous entry</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                                {fields.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => remove(index)}
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              )}
-
-              <div className="flex gap-2 justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addRow}
-                  style={{
-                    backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
-                    borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-                    color: theme === 'dark' ? '#d1d5db' : '#374151'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Worker
-                </Button>
               </div>
-            </div>
           </div>
-        </div>
 
-        <Separator />
-
-        {/* Summary */}
+        {/* Summary - Sticky to bottom of content area */}
         <div 
-          className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 rounded-lg"
+          className="summary-fixed-bottom flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4"
           style={{
-            backgroundColor: theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.5)'
+            backgroundColor: theme === 'dark' ? '#0f0f0f' : 'rgb(243 244 246 / 0.98)', // Match secondary sidebar background
+            backdropFilter: 'blur(8px)',
+            borderTopWidth: '1px',
+            borderTopStyle: 'solid',
+            borderTopColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
           }}
         >
           <div className="flex items-center gap-2">
@@ -981,7 +849,7 @@ export function BulkTimesheetForm({
             />
             <span 
               className="text-sm font-medium"
-              style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
             >Summary:</span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -994,7 +862,7 @@ export function BulkTimesheetForm({
               </span>{" "}
               <span 
                 className="font-medium"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                style={{ color: theme === 'dark' ? '#d1d5db' : '#374151' }}
               >{totals.workers}</span>
             </div>
             <div>
@@ -1004,7 +872,7 @@ export function BulkTimesheetForm({
               >Days:</span>{" "}
               <span 
                 className="font-medium"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                style={{ color: theme === 'dark' ? '#d1d5db' : '#374151' }}
               >{totals.days}</span>
             </div>
             <div>
@@ -1016,7 +884,7 @@ export function BulkTimesheetForm({
               </span>{" "}
               <span 
                 className="font-medium"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                style={{ color: theme === 'dark' ? '#d1d5db' : '#374151' }}
               >
                 {totals.workers * totals.days}
               </span>
@@ -1030,7 +898,7 @@ export function BulkTimesheetForm({
               </span>{" "}
               <span 
                 className="font-medium"
-                style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                style={{ color: theme === 'dark' ? '#d1d5db' : '#374151' }}
               >{totals.hours}h</span>
             </div>
             <div>
@@ -1040,62 +908,16 @@ export function BulkTimesheetForm({
               >
                 Total Cost:
               </span>{" "}
-              <span className="font-medium text-green-600">
+              <span 
+                className="font-medium"
+                style={{ color: theme === 'dark' ? '#d1d5db' : '#374151' }}
+              >
                 ${totals.cost}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Error/Success Messages */}
-        {submissionError && (
-          <Alert variant="destructive">
-            <AlertDescription>{submissionError}</AlertDescription>
-          </Alert>
-        )}
-
-        {submissionSuccess && (
-          <Alert
-            variant="default"
-            className="bg-green-50 text-green-800 border-green-200"
-          >
-            <AlertDescription>
-              All timesheet entries were successfully submitted!
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Form Actions */}
-        <div className="w-full flex justify-start space-x-2">
-          <Button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="bg-[#E8EDF5] hover:bg-[#E8EDF5]/90 text-primary shadow-lg dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
-          >
-            {isSubmitting && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            {isSubmitting ? "Submitting..." : "Submit All Entries"}
-          </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-            style={{
-              backgroundColor: theme === 'dark' ? '#262626' : '#ffffff',
-              borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240)',
-              color: theme === 'dark' ? '#d1d5db' : '#374151'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#404040' : 'rgb(243 244 246)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : '#ffffff'
-            }}
-          >
-            Cancel
-          </Button>
-        </div>
       </form>
     </Form>
   );

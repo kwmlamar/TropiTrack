@@ -7,6 +7,9 @@ type DashboardLayoutProps = {
   title?: string | React.ReactNode
   fullWidth?: boolean
   headerActions?: React.ReactNode
+  showSettingsTabs?: boolean
+  activeSettingsTab?: string
+  onSettingsTabChange?: (tab: string) => void
 }
 
 export default async function DashboardLayout({ 
@@ -14,6 +17,9 @@ export default async function DashboardLayout({
   title = "Dashboard",
   fullWidth = false,
   headerActions,
+  showSettingsTabs = false,
+  activeSettingsTab = "general",
+  onSettingsTabChange,
 }: DashboardLayoutProps) {
   const profile = await getUserProfileWithCompany()
 
@@ -21,5 +27,5 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  return <DashboardLayoutClient profile={profile} title={title} fullWidth={fullWidth} headerActions={headerActions}>{children}</DashboardLayoutClient>
+  return <DashboardLayoutClient profile={profile} title={title} fullWidth={fullWidth} headerActions={headerActions} showSettingsTabs={showSettingsTabs} activeSettingsTab={activeSettingsTab} onSettingsTabChange={onSettingsTabChange}>{children}</DashboardLayoutClient>
 }

@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
-import { DevNav } from "@/components/dev-nav";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeColor } from "@/components/theme-color";
 
@@ -36,8 +35,8 @@ export const viewport: Viewport = {
   themeColor: "#f3f4f6", // Will be updated dynamically by ThemeColor component
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({
@@ -65,7 +64,7 @@ export default function RootLayout({
         >
           <ThemeColor />
           {children}
-          <DevNav />
+          {/* <DevNav /> */}
           <Toaster />
         </ThemeProvider>
       </body>

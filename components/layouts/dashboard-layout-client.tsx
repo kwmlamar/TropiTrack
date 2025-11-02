@@ -11,7 +11,6 @@ import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
 import { ReportsTabsProvider } from "@/context/reports-tabs-context"
 
-import { LazySetupGuide } from "@/components/onboarding/lazy-setup-guide"
 import { OnboardingCheck } from "@/components/onboarding/onboarding-check"
 import { ReportsHeaderWrapper } from "@/components/reports/reports-header-wrapper"
 
@@ -21,9 +20,12 @@ type DashboardLayoutClientProps = {
   profile: UserProfileWithCompany
   fullWidth?: boolean
   headerActions?: React.ReactNode
+  showSettingsTabs?: boolean
+  activeSettingsTab?: string
+  onSettingsTabChange?: (tab: string) => void
 }
 
-export function DashboardLayoutClient({ children, title, profile, fullWidth = false, headerActions }: DashboardLayoutClientProps) {
+export function DashboardLayoutClient({ children, title, profile, fullWidth = false, headerActions, showSettingsTabs = false, activeSettingsTab = "general", onSettingsTabChange }: DashboardLayoutClientProps) {
   const { theme } = useTheme()
   const [selectedSection, setSelectedSection] = useState<string | null>(null)
   const [isSecondarySidebarCollapsed, setIsSecondarySidebarCollapsed] = useState(false)
@@ -66,6 +68,9 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
             hideDateRangePicker={!showDateRangePicker} 
             showTimesheetsDropdown={showTimesheetsDropdown}
             showReportsTabs={showReportsTabs}
+            showSettingsTabs={showSettingsTabs}
+            activeSettingsTab={activeSettingsTab}
+            onSettingsTabChange={onSettingsTabChange}
           >
             {headerActions}
           </SiteHeader>
@@ -79,7 +84,7 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
           }}
         >
           <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <div className="flex flex-col gap-4 py-2 md:gap-6 md:py-3">
               <div className={fullWidth ? "" : "px-4 lg:px-6"}>
                 {children}
               </div>
@@ -89,7 +94,7 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
       </div>
       
       {/* Setup Guide Dropdown - Lazy Loaded */}
-      <LazySetupGuide />
+      {/* <LazySetupGuide /> */}
       
       {/* Onboarding Check - Shows company setup overlay when needed */}
       <OnboardingCheck />
