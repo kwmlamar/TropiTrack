@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useTheme } from "next-themes"
-import { Calendar, Users, FolderOpen } from "lucide-react"
+import { Calendar as CalendarIcon, Users, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { MultiDatePicker } from "@/components/ui/multi-date-picker"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverContent,
@@ -26,9 +26,11 @@ interface TimesheetSelectionSectionProps {
   selectedProject: string
   selectedDates: Date[]
   selectedWorkers: Set<string>
+  onToggleWorker: (workerId: string) => void
+  onSelectAllWorkers: () => void
+  onClearWorkers: () => void
   onProjectChange: (projectId: string) => void
   onDatesChange: (dates: Date[]) => void
-  onWorkersChange: (workerIds: Set<string>) => void
 }
 
 export function TimesheetSelectionSection({
@@ -37,57 +39,46 @@ export function TimesheetSelectionSection({
   selectedProject,
   selectedDates,
   selectedWorkers,
+  onToggleWorker,
+  onSelectAllWorkers,
+  onClearWorkers,
   onProjectChange,
   onDatesChange,
-  onWorkersChange,
 }: TimesheetSelectionSectionProps) {
   const { theme } = useTheme()
+  const [projectSelectOpen, setProjectSelectOpen] = useState(false)
+  const [dateSelectOpen, setDateSelectOpen] = useState(false)
   const [workerSelectOpen, setWorkerSelectOpen] = useState(false)
-
-
-  const handleWorkerToggle = (workerId: string) => {
-    const newSelectedWorkers = new Set(selectedWorkers)
-    if (newSelectedWorkers.has(workerId)) {
-      newSelectedWorkers.delete(workerId)
-    } else {
-      newSelectedWorkers.add(workerId)
-    }
-    onWorkersChange(newSelectedWorkers)
-  }
-
-  const handleSelectAllWorkers = () => {
-    const allWorkerIds = new Set(workers.map(w => w.id))
-    onWorkersChange(allWorkerIds)
-  }
-
-  const handleClearAllWorkers = () => {
-    onWorkersChange(new Set())
-  }
+  
+  // Get button text color based on theme
+  const buttonTextColor = useMemo(() => 
+    theme === 'dark' ? '#e5e7eb' : '#1f2937'
+  , [theme])
 
   return (
-    <div 
-      className="backdrop-blur-sm shadow-none rounded-none border-l-0 border-r-0 border-t-0 m-0"
-      style={{
-        backgroundColor: theme === 'dark' ? '#171717' : 'oklch(1 0.003 250)',
-        borderBottom: theme === 'dark' ? '1px solid #262626' : '1px solid rgb(226 232 240 / 0.5)'
-      }}
-    >
-      <div className="ml-64 mr-64 pt-8 pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 ml-0 mr-0">
+    <div className="w-full border-b backdrop-blur-sm border-slate-200/50 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+      <div className="pl-6 pr-6 pt-4 pb-4 md:px-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          
           {/* Project Selection */}
           <div className="space-y-2">
-            <Popover>
+            <Popover open={projectSelectOpen} onOpenChange={setProjectSelectOpen}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" className="w-full max-w-sm justify-start text-left font-semibold text-lg text-gray-700 hover:bg-transparent">
-                  <div className={`rounded p-1 mr-2 ${
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-left font-semibold text-base hover:bg-transparent"
+                  style={{ color: buttonTextColor }}
+                >
+                  <div className={`rounded p-1 mr-2 flex-shrink-0 ${
                     selectedProject 
                       ? "bg-primary" 
-                      : "bg-gray-700"
+                      : "bg-gray-300 dark:bg-gray-700"
                   }`}>
                     <FolderOpen className="h-4 w-4 text-white" />
                   </div>
-                  <span>{projects.find(p => p.id === selectedProject)?.name || "Project"}</span>
-                  
+                  <div className="truncate max-w-[150px]">
+                    {projects.find(p => p.id === selectedProject)?.name || "Project"}
+                  </div>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-0" align="start">
@@ -100,13 +91,14 @@ export function TimesheetSelectionSection({
                         value={project.id}
                         onSelect={() => {
                           onProjectChange(project.id)
+                          setProjectSelectOpen(false)
                         }}
                         className="flex items-center space-x-2"
                       >
                         <div className="flex-1">
                           <div className="font-medium">{project.name}</div>
                           {project.description && (
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-xs text-muted-foreground mt-0.5">
                               {project.description}
                             </div>
                           )}
@@ -121,23 +113,53 @@ export function TimesheetSelectionSection({
 
           {/* Date Selection */}
           <div className="space-y-2">
-            <Popover>
+            <Popover open={dateSelectOpen} onOpenChange={setDateSelectOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full max-w-sm justify-start text-left font-semibold text-lg text-gray-700 hover:bg-transparent"
+                  className="w-full justify-start text-left font-semibold text-base hover:bg-transparent"
+                  style={{ color: buttonTextColor }}
                 >
-                  <div className="bg-gray-700 rounded p-1 mr-2">
-                    <Calendar className="h-4 w-4 text-white" />
+                  <div className={`rounded p-1 mr-2 flex-shrink-0 ${
+                    selectedDates.length > 0
+                      ? "bg-primary" 
+                      : "bg-gray-300 dark:bg-gray-700"
+                  }`}>
+                    <CalendarIcon className="h-4 w-4 text-white" />
                   </div>
-                  <span>Dates</span>
+                  <div className="truncate max-w-[150px]">
+                    Dates {selectedDates.length > 0 ? `(${selectedDates.length})` : ''}
+                  </div>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <MultiDatePicker
-                  selectedDates={selectedDates}
-                  onDatesChange={onDatesChange}
-                />
+              <PopoverContent className="w-auto p-3" align="start">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">Select Dates</h4>
+                    {selectedDates.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDatesChange([])}
+                        className="h-7 text-xs"
+                      >
+                        Clear All
+                      </Button>
+                    )}
+                  </div>
+                  <Calendar
+                    mode="multiple"
+                    selected={selectedDates}
+                    onSelect={(dates) => {
+                      if (dates) {
+                        onDatesChange(Array.isArray(dates) ? dates : [dates])
+                      }
+                    }}
+                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                    numberOfMonths={2}
+                    className="rounded-md"
+                  />
+                </div>
               </PopoverContent>
             </Popover>
           </div>
@@ -148,23 +170,27 @@ export function TimesheetSelectionSection({
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full max-w-sm justify-start text-left font-semibold text-lg text-gray-700 hover:bg-transparent"
+                  className="w-full justify-start text-left font-semibold text-base hover:bg-transparent"
+                  style={{ color: buttonTextColor }}
                 >
-                  <div className="bg-gray-700 rounded p-1 mr-2">
+                  <div className="bg-gray-300 dark:bg-gray-700 rounded p-1 mr-2 flex-shrink-0">
                     <Users className="h-4 w-4 text-white" />
                   </div>
-                  <span>Workers</span>
+                  <div className="truncate max-w-[150px]">
+                    Workers
+                  </div>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-0" align="start">
                 <Command>
-                  <div className="p-2 border-b">
+                  <div className="p-2 border-b dark:border-neutral-700">
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          handleSelectAllWorkers()
+                        onClick={(e) => {
+                          e.preventDefault()
+                          onSelectAllWorkers()
                         }}
                         className="flex-1"
                       >
@@ -173,8 +199,9 @@ export function TimesheetSelectionSection({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          handleClearAllWorkers()
+                        onClick={(e) => {
+                          e.preventDefault()
+                          onClearWorkers()
                         }}
                         className="flex-1"
                       >
@@ -189,25 +216,28 @@ export function TimesheetSelectionSection({
                         key={worker.id}
                         value={worker.id}
                         onSelect={() => {
-                          // Prevent dropdown from closing
+                          // Prevent dropdown from closing on select
                         }}
                         className="flex items-center space-x-2 cursor-pointer"
                         onClick={(e) => {
                           e.preventDefault()
-                          handleWorkerToggle(worker.id)
+                          onToggleWorker(worker.id)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            onToggleWorker(worker.id)
+                            setWorkerSelectOpen(false)
+                          }
                         }}
                       >
                         <Checkbox
                           checked={selectedWorkers.has(worker.id)}
                           onCheckedChange={() => {
-                            handleWorkerToggle(worker.id)
+                            onToggleWorker(worker.id)
                           }}
                         />
                         <div className="flex-1">
                           <div className="font-medium">{worker.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {worker.position}
-                          </div>
                         </div>
                       </CommandItem>
                     ))}

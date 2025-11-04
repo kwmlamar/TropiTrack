@@ -6,8 +6,9 @@ import { User } from "@supabase/supabase-js"
 import { Clock, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { BulkTimesheetForm } from "@/components/forms/bulk-timesheet-form"
+import { BulkTimesheetForm } from "@/components/timesheets/bulk/BulkTimesheetForm"
 import { TimesheetSelectionSection } from "@/components/timesheets/timesheet-selection-section"
+import { useBulkTimesheetState } from "@/components/timesheets/bulk/useBulkTimesheetState"
 import { fetchProjectsForCompany, fetchWorkersForCompany } from "@/lib/data/data"
 import type { Worker } from "@/lib/types/worker"
 import type { Project } from "@/lib/types/project"
@@ -28,10 +29,17 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
   const [submissionSuccess, setSubmissionSuccess] = useState(false)
   const router = useRouter()
 
-  // Selection state
-  const [selectedProject, setSelectedProject] = useState<string>("")
-  const [selectedDates, setSelectedDates] = useState<Date[]>([])
-  const [selectedWorkers, setSelectedWorkers] = useState<Set<string>>(new Set())
+  // Selection state managed by custom hook
+  const {
+    selectedProject,
+    selectedDates,
+    selectedWorkers,
+    onToggleWorker,
+    onSelectAllWorkers,
+    onClearWorkers,
+    setSelectedProject,
+    setSelectedDates,
+  } = useBulkTimesheetState()
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -55,7 +63,6 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
 
   const handleSuccess = async (timesheets: TimesheetWithDetails[]) => {
     setSubmissionSuccess(true)
-    setIsSubmitting(false)
     toast.success(`Successfully created ${timesheets.length} timesheet entries!`)
     
     // Redirect back to timesheets page after a short delay
@@ -70,10 +77,6 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
   }, [loadData])
 
   // Header actions are now handled by the wrapper component
-
-  const handleCancel = () => {
-    router.push('/dashboard/timesheets')
-  }
 
   if (loading) {
     return (
@@ -118,32 +121,30 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
         </div>
       )}
 
-      {/* Full-width Selection Section - Extends to full screen width, touching site header */}
-      <div className="w-full -mx-6 -mt-8" style={{ width: 'calc(100vw - 4rem)', marginLeft: 'calc(-50vw + 50%)' }}>
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
-          <TimesheetSelectionSection
-            projects={projects}
-            workers={workers}
-            selectedProject={selectedProject}
-            selectedDates={selectedDates}
-            selectedWorkers={selectedWorkers}
-            onProjectChange={setSelectedProject}
-            onDatesChange={setSelectedDates}
-            onWorkersChange={setSelectedWorkers}
-          />
-        </div>
+      {/* Selection Section */}
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
+        <TimesheetSelectionSection
+          projects={projects}
+          workers={workers}
+          selectedProject={selectedProject}
+          selectedDates={selectedDates}
+          selectedWorkers={selectedWorkers}
+          onToggleWorker={onToggleWorker}
+          onSelectAllWorkers={() => onSelectAllWorkers(workers)}
+          onClearWorkers={onClearWorkers}
+          onProjectChange={setSelectedProject}
+          onDatesChange={setSelectedDates}
+        />
       </div>
 
       {/* Bulk Timesheet Form - Full Width */}
       <BulkTimesheetForm
         userId={user.id}
         workers={workers}
-        projects={projects}
         selectedProject={selectedProject}
         selectedDates={selectedDates}
         selectedWorkers={selectedWorkers}
         onSuccess={handleSuccess}
-        onCancel={handleCancel}
       />
     </div>
   )
