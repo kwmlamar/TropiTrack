@@ -53,6 +53,7 @@ export async function signup(formData: FormData): Promise<SignupResult> {
   const companyName = formData.get("company_name") as string || "My Company";
   const plan = formData.get("plan") as string;
   const inviteToken = formData.get("invite_token") as string; // New field for invite tokens
+  const testingCustomer = formData.get("testing_customer") as string; // Track free testing phase users
 
   // Validate inputs before signup
   if (!email || !password || !fullName) {
@@ -112,6 +113,10 @@ export async function signup(formData: FormData): Promise<SignupResult> {
     // For new company signups, include company name
     userMetadata.company_name = companyName;
     userMetadata.selected_plan = plan;
+    // Track testing phase customers
+    if (testingCustomer === 'true') {
+      userMetadata.testing_customer = 'true';
+    }
   }
 
   const { data: authData, error: authError } = await supabase.auth.signUp({

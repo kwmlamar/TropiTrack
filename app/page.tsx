@@ -2,312 +2,528 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { FaqAccordion } from "@/components/faq-accordion"
-import { NewsletterForm } from "@/components/newsletter-form"
 import { LeadCaptureForm } from "@/components/lead-capture-form"
-import { TrustedBySection } from "@/components/trusted-by-section"
-import { Clock, CreditCard, Users, Smartphone, CheckCircle, ArrowRight, Building2, Shield, DollarSign, FileText, CheckSquare } from "lucide-react"
+import { Clock, Users, Smartphone, CheckCircle, ArrowRight, Building2, MapPin, ClipboardCheck } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-white">
+      {/* Free Banner */}
+      <div className="bg-gradient-to-r from-[#041014] via-[#145369] to-[#041014] border-b border-[#2596be]/20">
+        <div className="container mx-auto px-4 py-3 text-center">
+          <p className="text-sm md:text-base text-gray-100">
+            <span className="font-semibold text-[#2596be]">Currently free</span> for Bahamian construction companies testing the platform 🇧🇸
+          </p>
+        </div>
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-40 w-full bg-[#041014] border-b border-[#2596be]/20 backdrop-blur-sm">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight">TropiTrack</span>
+            <span className="text-xl font-bold text-white">TropiTrack</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link href="#features" className="text-sm font-medium text-gray-300 hover:text-[#2596be] transition-colors">
               Features
             </Link>
-            <Link href="#pricing" className="text-sm font-medium transition-colors hover:text-primary">
-              Pricing
+            <Link href="#why-tropitrack" className="text-sm font-medium text-gray-300 hover:text-[#2596be] transition-colors">
+              Why TropiTrack
             </Link>
-            <Link href="#faq" className="text-sm font-medium transition-colors hover:text-primary">
-              FAQ
+            <Link href="#testimonials" className="text-sm font-medium text-gray-300 hover:text-[#2596be] transition-colors">
+              Testimonials
             </Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" className="hidden md:flex">
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" className="hidden md:flex text-gray-300 hover:text-[#2596be] hover:bg-[#2596be]/10">
               <Link href="/login">Sign In</Link>
             </Button>
-            <Button asChild className="bg-primary hover:bg-primary/90">
-              <Link href="#demo">Request Demo</Link>
+            <Button asChild className="bg-[#145369] hover:bg-[#0d3a4a] text-white font-semibold shadow-lg shadow-[#145369]/20">
+              <Link href="#demo">Try Demo</Link>
             </Button>
           </div>
         </div>
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden py-24 md:py-32 lg:py-40 bg-gradient-to-br from-black via-gray-900 to-black">
-          {/* Gradient overlay with Bahamas colors */}
-          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
-          <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-cyan-400/20"></div>
-          <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
+        {/* Hero Section - Centered */}
+        <section className="relative min-h-[85vh] flex items-center justify-center bg-[#041014] overflow-hidden">
+          {/* Subtle island-themed background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#041014] via-[#145369] to-[#041014]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#2596be]/10 via-transparent to-transparent"></div>
           
-          {/* Animated gradient orbs */}
-          <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-yellow-300/15 to-cyan-300/15 rounded-full blur-3xl animate-pulse delay-500"></div>
+          {/* Subtle construction/island pattern overlay */}
+          <div className="absolute inset-0 opacity-5" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232596be' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}></div>
           
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center rounded-full border border-yellow-400/30 bg-black/50 backdrop-blur-sm px-4 py-2 text-sm mb-8">
-                <span className="mr-2 rounded-full bg-gradient-to-r from-yellow-400 to-cyan-400 h-2 w-2"></span>
-                <span className="text-yellow-100">Built for construction companies in the Bahamas</span>
-              </div>
-              
-              <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl mb-8">
-                <span className="bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
-                  Construction Time Tracking
-                </span>
-                <span className="block bg-gradient-to-r from-yellow-400 via-yellow-300 to-cyan-400 bg-clip-text text-transparent">
-                  Made Simple
-                </span>
+              {/* Main Headline */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 leading-tight">
+                Track time. Run payroll. Build better.
               </h1>
               
-              <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-                Stop losing money on manual timesheets. Track time, manage payroll, handle approvals, and run basic accounting 
-                with confidence using our all-in-one platform built for construction companies in the Bahamas.
+              {/* Subheadline */}
+              <p className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Time tracking and payroll software built for Bahamian construction teams. Simple, accurate, and made for the field.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <Button size="lg" className="group bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-6 h-auto font-semibold shadow-lg hover:shadow-xl transition-colors duration-200" asChild>
+              {/* Single Primary CTA */}
+              <div className="mb-8">
+                <Button size="lg" className="bg-[#2596be] hover:bg-[#1d7a9a] text-white text-lg px-12 py-7 h-auto font-semibold shadow-2xl shadow-[#2596be]/30 hover:shadow-[#2596be]/40 transition-all" asChild>
                   <Link href="#demo">
-                    Request a Demo
-                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                    Try TropiTrack Free
+                    <ArrowRight className="ml-2 h-6 w-6" />
                   </Link>
-                </Button>
-                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 border-2 border-gray-300 hover:border-gray-400 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg">
-                  Learn More
                 </Button>
               </div>
               
-              <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
+              {/* Trust indicators */}
+              <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-gray-400">
                 <div className="flex items-center">
-                  <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
-                  Built for Bahamas construction
+                  <CheckCircle className="mr-2 h-4 w-4 text-[#2596be]" />
+                  No credit card required
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
-                  NIB compliant payroll
+                  <CheckCircle className="mr-2 h-4 w-4 text-[#2596be]" />
+                  Built in the Bahamas
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="mr-2 h-4 w-4 text-yellow-400" />
-                  Works offline
+                  <CheckCircle className="mr-2 h-4 w-4 text-[#2596be]" />
+                  NIB compliant
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Benefits Section - Plain Language */}
+        <section className="py-16 md:py-24 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16 max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#041014] mb-4">
+                Built for the way construction crews actually work
+              </h2>
+              <p className="text-lg text-gray-600">
+                Simple, powerful tools that solve real problems on the job site
+              </p>
+            </div>
+
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+              <div className="p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 w-12 h-12 rounded-lg bg-gradient-to-br from-[#2596be]/20 to-[#2596be]/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-[#2596be]" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#041014] mb-3">No more paper timesheets</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Workers clock in from their phone. Hours are tracked automatically. 
+                  Everything syncs to the dashboard in real-time.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 w-12 h-12 rounded-lg bg-gradient-to-br from-[#145369]/20 to-[#145369]/10 flex items-center justify-center">
+                  <ClipboardCheck className="h-6 w-6 text-[#145369]" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#041014] mb-3">Accurate hours, faster payroll</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  GPS verification means no time theft. Overtime and NIB calculations happen automatically. 
+                  Run payroll in minutes, not hours.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 w-12 h-12 rounded-lg bg-gradient-to-br from-[#2596be]/20 to-[#2596be]/10 flex items-center justify-center">
+                  <Smartphone className="h-6 w-6 text-[#2596be]" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#041014] mb-3">Designed for field workers</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Works on any phone, even offline. Simple enough that anyone can use it. 
+                  No training needed.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 w-12 h-12 rounded-lg bg-gradient-to-br from-[#145369]/20 to-[#145369]/10 flex items-center justify-center">
+                  <MapPin className="h-6 w-6 text-[#145369]" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#041014] mb-3">Know who&apos;s where, always</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  See which workers are on which job sites. Track project hours separately. 
+                  Better visibility means better decisions.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 w-12 h-12 rounded-lg bg-gradient-to-br from-[#2596be]/20 to-[#2596be]/10 flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-[#2596be]" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#041014] mb-3">Built for Bahamian businesses</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  NIB deductions done right. Holiday pay calculations. Local support in your timezone. 
+                  We understand Bahamas construction.
+                </p>
+              </div>
+ 
+              <div className="p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 w-12 h-12 rounded-lg bg-gradient-to-br from-[#145369]/20 to-[#145369]/10 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-[#145369]" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#041014] mb-3">Your crew will actually use it</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Clean interface. Fast loading. No confusing features. 
+                  Just the tools you need to get work done.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Mobile + Dashboard UI Showcase */}
+        <section id="features" className="py-16 md:py-24 bg-gradient-to-br from-[#041014] via-[#145369] to-[#041014] relative overflow-hidden">
+          {/* Subtle water effect */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#2596be]/5 via-transparent to-transparent"></div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-6xl mx-auto">
+              {/* Mobile Support Showcase */}
+              <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+                <div className="order-2 lg:order-1">
+                  <div className="relative bg-gradient-to-br from-[#145369] to-[#041014] rounded-2xl p-8 shadow-xl border border-[#2596be]/15">
+                    {/* Mobile devices illustration */}
+                    <div className="bg-[#0a1f2a] rounded-xl shadow-2xl p-8 mx-auto max-w-sm border-0">
+                      <div className="flex items-center justify-center mb-6">
+                        <div className="relative">
+                          <Smartphone className="h-24 w-24 text-[#2596be]" />
+                          <div className="absolute -top-2 -right-2">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2596be] text-white text-xs font-bold">
+                              ✓
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3 text-center">
+                        <p className="text-sm font-semibold text-white">Works on Any Device</p>
+                        <p className="text-xs text-gray-400">Responsive web app • iOS • Android</p>
+                        <div className="pt-2">
+                          <span className="inline-flex items-center text-xs font-medium text-[#2596be] bg-[#2596be]/10 px-3 py-1.5 rounded-full border border-[#2596be]/20">
+                            <Smartphone className="h-3 w-3 mr-1.5" />
+                            Native apps in development
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="order-1 lg:order-2">
+                  <div className="inline-flex items-center text-sm font-medium text-[#2596be] bg-[#2596be]/10 px-4 py-2 rounded-full mb-4 border border-[#2596be]/20">
+                    Mobile Support Included
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                    Built for the job site — mobile support included
+                  </h2>
+                  <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+                    The web app works great on phones and tablets today. Your crew can clock in, check hours, 
+                    and track projects from any device. Native iOS + Android apps are actively in development.
+                  </p>
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">Mobile-optimized web interface (available now)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">GPS location verification built-in</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">Offline mode with automatic sync</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">Native iOS & Android apps coming Q1 2025</span>
+                    </li>
+                  </ul>
             </div>
           </div>
           
-          {/* Hero Image */}
-          <div className="mt-16 max-w-6xl mx-auto px-4 relative z-10">
-            <div className="relative rounded-2xl border border-yellow-400/30 bg-black/50 backdrop-blur-sm p-2 shadow-2xl">
+              {/* Dashboard Showcase */}
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                    Your command center
+                  </h2>
+                  <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+                    See everything happening across all your job sites in real-time. 
+                    Approve timesheets, run payroll, and track project costs—all from one dashboard.
+                  </p>
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">Real-time crew tracking</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">One-click payroll processing</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">Project cost tracking</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300">Export reports for accounting</span>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <div className="relative rounded-xl shadow-2xl shadow-[#2596be]/20 overflow-hidden border border-[#2596be]/20">
               <Image
                 src="/images/Dashboard.png"
-                alt="TropiTrack Dashboard Preview"
+                      alt="TropiTrack dashboard interface"
                 width={1200}
-                height={600}
-                className="rounded-xl shadow-lg"
+                      height={675}
+                      className="w-full h-auto"
               />
-              <div className="absolute -top-4 -right-4 h-32 w-32 rounded-full bg-gradient-to-r from-yellow-400/30 to-cyan-400/30 blur-3xl"></div>
-              <div className="absolute -bottom-4 -left-4 h-32 w-32 rounded-full bg-gradient-to-r from-cyan-400/30 to-yellow-400/30 blur-3xl"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Trusted By Section */}
-        <TrustedBySection />
 
-        {/* Benefits Section */}
-        <section className="py-24 bg-background">
+        {/* Why Bahamian Construction Teams Trust TropiTrack */}
+        <section id="why-tropitrack" className="py-16 md:py-24 bg-white">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
-                Why construction companies choose TropiTrack
+            <div className="text-center mb-16 max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#041014] mb-4">
+                Why Bahamian construction teams trust TropiTrack
               </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Built specifically for the unique needs of construction teams in the Bahamas
+              <p className="text-lg text-gray-600">
+                Built by people who understand the unique challenges of construction work in the Bahamas
               </p>
             </div>
 
-            <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
-              <div className="text-center">
-                <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock className="h-8 w-8 text-primary" />
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+              <div className="text-center p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 text-4xl font-bold text-[#2596be]">100%</div>
+                <h3 className="text-lg font-semibold text-[#041014] mb-2">Local Support</h3>
+                <p className="text-gray-600">
+                  Based in the Bahamas. We answer calls in your timezone and understand local regulations.
+                </p>
                 </div>
-                <h3 className="text-xl font-bold mb-4">Time Tracking</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">
-                  GPS-verified clock in/out with automatic overtime calculations. No more lost timesheets or manual entry.
+
+              <div className="text-center p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 text-4xl font-bold text-[#145369]">10min</div>
+                <h3 className="text-lg font-semibold text-[#041014] mb-2">Setup Time</h3>
+                <p className="text-gray-600">
+                  From signup to first clock-in takes less than 10 minutes. Start tracking time today.
                 </p>
               </div>
 
-              <div className="text-center">
-                <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <DollarSign className="h-8 w-8 text-primary" />
+              <div className="text-center p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 text-4xl font-bold text-[#2596be]">24/7</div>
+                <h3 className="text-lg font-semibold text-[#041014] mb-2">Always Available</h3>
+                <p className="text-gray-600">
+                  Your workers can clock in anytime, anywhere. Offline mode means no connectivity issues.
+                </p>
                 </div>
-                <h3 className="text-xl font-bold mb-4">Payroll</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">
-                  Automated NIB calculations, holiday pay, and overtime. Export ready data for your accounting system.
+
+              <div className="text-center p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 text-4xl font-bold text-[#145369]">$0</div>
+                <h3 className="text-lg font-semibold text-[#041014] mb-2">Currently Free</h3>
+                <p className="text-gray-600">
+                  We&apos;re testing with real construction companies. Get in now while it&apos;s free to use.
                 </p>
               </div>
 
-              <div className="text-center">
-                <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <CheckSquare className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">Approvals</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">
-                  Streamlined approval workflows for timesheets and expenses. Keep projects on track and within budget.
+              <div className="text-center p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 text-4xl font-bold text-[#2596be]">NIB</div>
+                <h3 className="text-lg font-semibold text-[#041014] mb-2">Compliant Payroll</h3>
+                <p className="text-gray-600">
+                  Automatic NIB calculations that match Bahamian employment law. No guesswork.
                 </p>
               </div>
 
-              <div className="text-center">
-                <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <FileText className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">Accounting</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">
-                  Basic accounting features to track project costs, generate reports, and manage your construction business finances.
+              <div className="text-center p-6 rounded-lg hover:bg-[#2596be]/5 transition-colors">
+                <div className="mb-4 text-4xl font-bold text-[#145369]">GPS</div>
+                <h3 className="text-lg font-semibold text-[#041014] mb-2">Verified Hours</h3>
+                <p className="text-gray-600">
+                  GPS tracking ensures workers are on-site. Reduce time theft and billing disputes.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-24 bg-muted/50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
-                Everything you need to run your construction business
+        {/* Founding Customers Section */}
+        <section id="testimonials" className="py-16 md:py-24 bg-gradient-to-br from-[#041014] via-[#145369] to-[#041014] relative overflow-hidden">
+          {/* Subtle water effect */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2596be]/10 via-transparent to-transparent"></div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center mb-16 max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Founding Customers in Progress
               </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Powerful features designed to streamline your operations and boost productivity
+              <p className="text-lg text-gray-300">
+                We&apos;re currently onboarding Bahamian construction companies. Your team could be one of the first.
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto mb-12">
+              {/* Card 1 - Active Onboarding */}
+              <Card className="bg-gradient-to-br from-[#0a1f2a] to-[#041014] border border-[#2596be]/20 shadow-xl hover:shadow-2xl hover:shadow-[#2596be]/20 hover:border-[#2596be]/40 transition-all duration-300 group">
                 <CardContent className="p-8">
-                  <div className="mb-6 rounded-full bg-primary/10 p-4 w-fit">
-                    <Clock className="h-8 w-8 text-primary" />
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-end mb-6">
+                    <span className="text-xs font-semibold text-[#2596be] bg-[#2596be]/15 px-4 py-2 rounded-full border-0 backdrop-blur-sm">
+                      ● Onboarding
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Smart Time Tracking</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    GPS-verified clock in/out, project assignment, and automatic overtime calculations. 
-                    Workers can use any device - mobile or desktop.
+                  
+                  {/* Icon */}
+                  <div className="mb-6">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#2596be]/20 to-[#2596be]/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Building2 className="h-8 w-8 text-[#2596be]" />
+                    </div>
+                  </div>
+                  
+                  {/* Content */}
+                  <p className="text-gray-300 mb-6 leading-relaxed text-base">
+                    Testing time tracking and GPS verification across multiple job sites in Nassau.
                   </p>
+                  
+                  {/* Company Info */}
+                  <div className="pt-4 border-t border-[#2596be]/10">
+                    <p className="font-semibold text-white mb-1">Commercial Construction</p>
+                    <p className="text-sm text-gray-400 flex items-center">
+                      <MapPin className="h-3 w-3 mr-1.5 text-[#2596be]" />
+                      Nassau, New Providence
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              {/* Card 2 - In Progress */}
+              <Card className="bg-gradient-to-br from-[#0a1f2a] to-[#041014] border border-[#145369]/20 shadow-xl hover:shadow-2xl hover:shadow-[#145369]/20 hover:border-[#145369]/40 transition-all duration-300 group">
                 <CardContent className="p-8">
-                  <div className="mb-6 rounded-full bg-primary/10 p-4 w-fit">
-                    <CreditCard className="h-8 w-8 text-primary" />
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-end mb-6">
+                    <span className="text-xs font-semibold text-[#145369] bg-[#145369]/15 px-4 py-2 rounded-full border-0 backdrop-blur-sm">
+                      ● In Progress
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Automated Payroll</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    Calculate regular pay, overtime, holiday pay, and NIB deductions automatically. 
-                    Export payroll data ready for your accounting system.
+                  
+                  {/* Icon */}
+                  <div className="mb-6">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#145369]/20 to-[#145369]/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Building2 className="h-8 w-8 text-[#145369]" />
+                    </div>
+                  </div>
+                  
+                  {/* Content */}
+                  <p className="text-gray-300 mb-6 leading-relaxed text-base">
+                    Implementing payroll automation and NIB calculations for 20+ crew members.
                   </p>
+                  
+                  {/* Company Info */}
+                  <div className="pt-4 border-t border-[#145369]/10">
+                    <p className="font-semibold text-white mb-1">Residential Builder</p>
+                    <p className="text-sm text-gray-400 flex items-center">
+                      <MapPin className="h-3 w-3 mr-1.5 text-[#145369]" />
+                      Eleuthera
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-8">
-                  <div className="mb-6 rounded-full bg-primary/10 p-4 w-fit">
-                    <Users className="h-8 w-8 text-primary" />
+              {/* Card 3 - Open Slot (Highlighted) */}
+              <Card className="bg-gradient-to-br from-[#0a1f2a] via-[#0d2533] to-[#041014] border border-[#2596be]/30 shadow-xl hover:shadow-2xl hover:shadow-[#2596be]/30 hover:border-[#2596be]/50 transition-all duration-300 relative overflow-hidden group">
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#2596be]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <CardContent className="p-8 relative z-10">
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-end mb-6">
+                    <span className="text-xs font-semibold text-gray-300 bg-gray-700/50 px-4 py-2 rounded-full border-0 backdrop-blur-sm">
+                      Open Slot
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Worker Management</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    Track skills, certifications, availability, and performance. 
-                    Assign workers to projects and manage their schedules efficiently.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-8">
-                  <div className="mb-6 rounded-full bg-primary/10 p-4 w-fit">
-                    <Building2 className="h-8 w-8 text-primary" />
+                  
+                  {/* Icon */}
+                  <div className="mb-6">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#2596be]/15 to-[#2596be]/5 flex items-center justify-center border border-[#2596be]/20 border-dashed group-hover:scale-110 group-hover:border-solid transition-all">
+                      <Users className="h-8 w-8 text-[#2596be]" />
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Project Tracking</h3>
-                  <p className="text-gray-500 text-lg leading-relaxed">
-                    Monitor project progress, track costs, and generate reports. 
-                    Keep your projects on time and within budget.
+                  
+                  {/* Content */}
+                  <p className="text-gray-300 mb-6 leading-relaxed text-base">
+                    Your construction company could be here. Get early access and help shape the product.
                   </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-8">
-                  <div className="mb-6 rounded-full bg-primary/10 p-4 w-fit">
-                    <Smartphone className="h-8 w-8 text-primary" />
+                  
+                  {/* Company Info - Placeholder */}
+                  <div className="pt-4 border-t border-[#2596be]/15 border-dashed">
+                    <p className="font-semibold text-white mb-1">Your Company</p>
+                    <p className="text-sm text-gray-400 flex items-center">
+                      <MapPin className="h-3 w-3 mr-1.5 text-[#2596be]" />
+                      Anywhere in the Bahamas
+                    </p>
                   </div>
-                  <h3 className="text-2xl font-bold mb-4">Mobile First</h3>
-                  <p className="text-gray-500 text-lg leading-relaxed">
-                    Works perfectly on phones, tablets, and computers. 
-                    Offline capability ensures work never stops, even without internet.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-8">
-                  <div className="mb-6 rounded-full bg-primary/10 p-4 w-fit">
-                    <Shield className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4">Secure & Reliable</h3>
-                  <p className="text-gray-500 text-lg leading-relaxed">
-                    Enterprise-grade security with automatic backups. 
-                    Your data is safe, secure, and always accessible.
-                  </p>
                 </CardContent>
               </Card>
             </div>
+
+            <div className="text-center">
+              <Button size="lg" className="bg-[#2596be] hover:bg-[#1d7a9a] text-white px-8 py-6 h-auto font-semibold shadow-lg shadow-[#2596be]/20 hover:shadow-xl hover:shadow-[#2596be]/30 transition-all" asChild>
+                <Link href="#demo">
+                  Become a Founding Customer
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
-
 
         {/* Lead Capture Section */}
-        <section id="demo" className="py-24 bg-gradient-to-br from-gray-50 to-white">
+        <section id="demo" className="py-16 md:py-24 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="grid gap-12 lg:grid-cols-2 items-center">
                 <div>
-                  <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
-                    Ready to transform your construction business?
+                  <h2 className="text-3xl md:text-4xl font-bold text-[#041014] mb-6">
+                    Ready to simplify your construction operations?
                   </h2>
-                  <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                    See how TropiTrack can help you save time, reduce errors, and grow your construction company. 
-                    Request a personalized demo and discover the difference our platform makes.
+                  <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                    See TropiTrack in action with a personalized demo, or book a quick 10-minute onboarding call 
+                    to get started today.
                   </p>
                   
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-gray-900">Personalized Demo</h4>
-                        <p className="text-gray-600">See TropiTrack configured for your specific needs</p>
+                        <h4 className="font-semibold text-[#041014]">Currently free for testing</h4>
+                        <p className="text-gray-600">Get full access while we perfect the platform</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                      <CheckCircle className="h-6 w-6 text-[#145369] mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-gray-900">Free Consultation</h4>
-                        <p className="text-gray-600">Get expert advice on optimizing your construction operations</p>
+                        <h4 className="font-semibold text-[#041014]">Set up in 10 minutes</h4>
+                        <p className="text-gray-600">From signup to first clock-in—faster than you think</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                      <CheckCircle className="h-6 w-6 text-[#2596be] mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-gray-900">No Obligation</h4>
-                        <p className="text-gray-600">Explore our platform without any commitment</p>
+                        <h4 className="font-semibold text-[#041014]">Local support</h4>
+                        <p className="text-gray-600">Based in the Bahamas, here to help when you need it</p>
                       </div>
                     </div>
                   </div>
@@ -321,216 +537,33 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Pricing Section */}
-        <section id="pricing" className="py-24 bg-muted/50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">Simple, transparent pricing</h2>
-              <p className="text-xl text-gray-500 max-w-3xl mx-auto">
-                Choose the plan that works best for your construction business. All plans include our 2-week free trial.
-              </p>
-            </div>
-
-            <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto">
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardContent className="p-8">
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold mb-2">Starter</h3>
-                    <p className="text-gray-500 mb-4">Perfect for small crews</p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">$39</span>
-                      <span className="text-gray-500">/month</span>
-                    </div>
-                  </div>
-                  <ul className="mb-8 space-y-4">
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Up to 15 workers</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Up to 5 active projects at a time</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Time tracking & approvals</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Basic payroll reports</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Mobile app access</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Email support</span>
-                    </li>
-                  </ul>
-                  <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="#demo">Request Demo</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-2 border-primary shadow-xl relative">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium">
-                    Most Popular
-                  </span>
-                </div>
-                <CardContent className="p-8">
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold mb-2">Professional</h3>
-                    <p className="text-gray-500 mb-4">For growing companies</p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">$89</span>
-                      <span className="text-gray-500">/month</span>
-                    </div>
-                  </div>
-                  <ul className="mb-8 space-y-4">
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Up to 50 workers</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Unlimited projects</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Advanced payroll features</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Project cost tracking</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Document management</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Priority support</span>
-                    </li>
-                  </ul>
-                  <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="#demo">Request Demo</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardContent className="p-8">
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
-                    <p className="text-gray-500 mb-4">For large operations</p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">$179</span>
-                      <span className="text-gray-500">/month</span>
-                    </div>
-                  </div>
-                  <ul className="mb-8 space-y-4">
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Unlimited workers</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Multi-company access</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Advanced analytics</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Equipment tracking</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>API access</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle className="mr-3 h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Dedicated support</span>
-                    </li>
-                  </ul>
-                  <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link href="#demo">Request Demo</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ Section */}
-        <section id="faq" className="py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">Frequently asked questions</h2>
-              <p className="text-xl text-gray-500 max-w-3xl mx-auto">
-                Everything you need to know about TropiTrack
-              </p>
-            </div>
-
-            <div className="mx-auto max-w-4xl">
-              <FaqAccordion />
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="relative py-24 bg-gradient-to-br from-black via-gray-900 to-black overflow-hidden">
-          {/* Gradient overlay with Bahamas colors */}
-          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-transparent to-black/60"></div>
-          <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/15 via-transparent to-cyan-400/15"></div>
-          <div className="absolute inset-0 bg-gradient-to-bl from-cyan-300/10 via-transparent to-yellow-300/10"></div>
-          
-          {/* Animated gradient orbs */}
-          <div className="absolute top-10 left-20 w-64 h-64 bg-gradient-to-r from-yellow-400/25 to-cyan-400/25 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-10 right-20 w-80 h-80 bg-gradient-to-l from-cyan-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        {/* Final CTA Section */}
+        <section className="py-16 md:py-24 bg-gradient-to-br from-[#041014] via-[#145369] to-[#041014] relative overflow-hidden">
+          {/* Tropical water effect */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#2596be]/20 via-[#2596be]/5 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#041014]/50 via-transparent to-transparent"></div>
           
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
-                <span className="bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
-                  Join the construction companies already using TropiTrack
-                </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                Start tracking time the right way
               </h2>
-              <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-                See how TropiTrack is helping construction companies across the Bahamas save time, reduce errors, and grow their business.
+              <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+                Join Bahamian construction companies testing TropiTrack. No credit card required. 
+                Get started in 10 minutes.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <Button size="lg" className="group bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black text-lg px-8 py-6 h-auto font-semibold shadow-lg hover:shadow-xl transition-colors duration-200" asChild>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="bg-[#2596be] hover:bg-[#1d7a9a] text-white text-base px-8 py-6 h-auto font-semibold shadow-lg shadow-[#2596be]/20 hover:shadow-xl hover:shadow-[#2596be]/30 transition-all" asChild>
                   <Link href="#demo">
-                    Request Your Demo
-                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                    Try TropiTrack Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 border-2 border-gray-300 hover:border-gray-400 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg">
-                  Learn More
+                <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto font-semibold border border-[#145369]/40 text-[#145369] hover:border-[#145369] hover:bg-[#145369]/10 transition-all" asChild>
+                  <Link href="https://calendly.com/lamar-tropitech/10min" target="_blank">
+                    Book 10-min Onboarding
+                  </Link>
                 </Button>
-              </div>
-              <p className="text-sm text-gray-400">
-                Personalized demo • Free consultation • No obligation
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Newsletter Section */}
-        <section className="py-24 bg-muted/50">
-          <div className="container mx-auto px-4">
-            <div className="mx-auto max-w-3xl text-center">
-              <h2 className="text-4xl font-bold tracking-tight mb-6">Stay updated with TropiTrack</h2>
-              <p className="text-xl text-gray-500 mb-8">
-                Get the latest features, construction tips, and industry insights delivered to your inbox.
-              </p>
-              <div className="flex justify-center">
-                <NewsletterForm />
               </div>
             </div>
           </div>
@@ -538,143 +571,87 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-card">
-        <div className="container mx-auto px-4 py-16">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-xl font-bold tracking-tight">TropiTrack</span>
+      <footer className="border-t border-[#2596be]/20 bg-[#041014]">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5 mb-8">
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl font-bold text-white">TropiTrack</span>
               </div>
-              <p className="text-gray-500 mb-6">
-                Modern time tracking and payroll management for construction companies in the Bahamas.
+              <p className="text-sm text-gray-400 mb-6 max-w-sm">
+                Time tracking and payroll management built for Bahamian construction crews. 
+                Simple, powerful, and made for the field.
               </p>
-              <div className="flex space-x-4">
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-5 w-5"
-                  >
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                  </svg>
-                  <span className="sr-only">Facebook</span>
-                </Button>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-5 w-5"
-                  >
-                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
-                  </svg>
-                  <span className="sr-only">Instagram</span>
-                </Button>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-5 w-5"
-                  >
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                  </svg>
-                  <span className="sr-only">Twitter</span>
-                </Button>
-              </div>
             </div>
             <div>
-              <h3 className="font-semibold mb-6">Product</h3>
+              <h3 className="font-semibold text-white mb-4 text-sm">Product</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#features" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Pricing
+                  <Link href="#demo" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
+                    Try Demo
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Integrations
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Security
+                  <Link href="/login" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
+                    Sign In
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-6">Company</h3>
+              <h3 className="font-semibold text-white mb-4 text-sm">Company</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                    About
+                  <Link href="#why-tropitrack" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
+                    Why TropiTrack
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Support
+                  <Link href="#testimonials" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
+                    Testimonials
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <a href="mailto:lamar@tropitech.org" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
+                    Contact
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white mb-4 text-sm">Legal</h3>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="#" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Link href="#" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
                     Terms of Service
                   </Link>
                 </li>
               </ul>
             </div>
-            <div>
-              <h3 className="font-semibold mb-6">Contact</h3>
-              <ul className="space-y-3">
-                <li>
-                  <p className="text-muted-foreground">
-                    Email: <a href="mailto:lamar@tropitech.org" className="hover:text-foreground transition-colors">lamar@tropitech.org</a>
-                  </p>
-                </li>
-                <li>
-                  <p className="text-muted-foreground">
-                    Phone: <a href="tel:+13349130982" className="hover:text-foreground transition-colors">+1 (334) 913-0982</a>
-                  </p>
-                </li>
-                <li>
-                  <p className="text-muted-foreground">Address: Eleuthera, Bahamas</p>
-                </li>
-              </ul>
-            </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} TropiTrack. All rights reserved.
+          <div className="pt-8 border-t border-[#2596be]/20 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-400">
+              © {new Date().getFullYear()} TropiTrack. Powered by TropiTech Solutions. Built in the Bahamas 🇧🇸
+            </p>
+            <div className="flex items-center gap-4">
+              <a href="mailto:lamar@tropitech.org" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
+                lamar@tropitech.org
+              </a>
+              <span className="text-gray-600">•</span>
+              <a href="tel:+13349130982" className="text-sm text-gray-400 hover:text-[#2596be] transition-colors">
+                +1 (334) 913-0982
+              </a>
+            </div>
           </div>
         </div>
       </footer>

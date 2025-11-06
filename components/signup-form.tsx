@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signup, signUpWithGoogle } from "@/app/actions/auth"; // adjust path if needed
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { TropiTrackLogo } from "@/components/tropitrack-logo";
@@ -28,18 +27,12 @@ export function SignupForm({
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('');
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // Get plan from URL parameter, default to starter if none selected
+  // Auto-assign Professional plan during free testing phase
   useEffect(() => {
-    const plan = searchParams.get('plan');
-    if (plan && ['starter', 'professional', 'enterprise'].includes(plan)) {
-      setSelectedPlan(plan);
-    } else {
-      // Default to starter plan if no plan selected
-      setSelectedPlan('starter');
-    }
-  }, [searchParams]);
+    // During testing, everyone gets Professional plan automatically
+    setSelectedPlan('professional');
+  }, []);
 
   async function handleSubmit(formData: FormData) {
     try {
@@ -50,6 +43,9 @@ export function SignupForm({
       if (selectedPlan) {
         formData.append('plan', selectedPlan);
       }
+      
+      // Add testing customer flag
+      formData.append('testing_customer', 'true');
       
       const result = await signup(formData);
 
@@ -69,7 +65,7 @@ export function SignupForm({
         }
         
         toast.success("Account created!", {
-          description: `Welcome to TropiTrack! Your ${selectedPlan} trial starts now.`,
+          description: "Welcome to TropiTrack! Check your email to verify your account.",
         });
         // Redirect to the check-email page
         if (result.redirectTo) {
@@ -140,24 +136,12 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          {/* Plan Selection */}
-          {selectedPlan && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-800">
-                    Selected Plan: {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}
-                  </p>
-                   <p className="text-xs text-blue-600">
-                      You&apos;ll start with a 14-day free trial
-                  </p>
-                </div>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  Free Trial
-                </Badge>
-              </div>
-            </div>
-          )}
+          {/* Testing Phase Banner */}
+          <div className="mb-4 p-3 bg-gradient-to-r from-[#2596be]/10 to-[#145369]/10 border border-[#2596be]/20 rounded-lg">
+            <p className="text-sm font-medium text-[#041014]">
+              🇧🇸 <span className="font-semibold">Currently free</span> for Bahamian construction companies testing the platform
+            </p>
+          </div>
 
           <form action={handleSubmit}>
             <div className="flex flex-col gap-4">
