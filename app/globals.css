@@ -679,3 +679,22 @@ a:focus-visible,
 .summary-fixed-bottom.sidebar-collapsed {
   left: 64px !important; /* Start from primary sidebar right edge (w-16 = 64px) */
 }
+
+/* Wave animations for landing page CTA section - smooth ocean flow */
+@keyframes wave-flow-1 {
+  0% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(-2%) scaleY(1.02); }
+  100% { transform: translateX(0) scaleY(1); }
+}
+
+@keyframes wave-flow-2 {
+  0% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(2%) scaleY(0.98); }
+  100% { transform: translateX(0) scaleY(1); }
+}
+
+@keyframes wave-flow-3 {
+  0% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(-1.5%) scaleY(1.01); }
+  100% { transform: translateX(0) scaleY(1); }
+}
