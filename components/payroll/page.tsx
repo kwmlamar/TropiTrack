@@ -221,13 +221,8 @@ export default function PayrollPage({
 
 
 
-  // Note: This is a placeholder. Actual NIB calculations should use payroll settings from the hook
-  // For now, this function is not actively used as deductions are calculated server-side
-  const calculateDeductions = (grossPay: number) => {
-    const nibDeduction = grossPay * 0.0465 // 4.65% NIB rate (Note: Should use settings)
-    const otherDeductions = 0 // No other deductions for now
-    return { nibDeduction, otherDeductions }
-  }
+  // NIB deductions are calculated server-side during payroll generation
+  // and respect both company-level settings and per-worker exemptions
 
   // Share handlers with parent component (for header actions)
   useEffect(() => {
@@ -388,11 +383,14 @@ export default function PayrollPage({
               totalPayroll: previousResponse.data.reduce((sum, payroll) => sum + payroll.gross_pay, 0),
               totalWorkers: previousResponse.data.length,
               totalNIB: previousResponse.data.reduce((sum, payroll) => {
-                const { nibDeduction } = calculateDeductions(payroll.gross_pay)
+                // Use NIB deduction from database (already calculated with worker exemptions)
+                const nibDeduction = payroll.nib_deduction || 0
                 return sum + nibDeduction
               }, 0),
               totalUnpaid: previousResponse.data.reduce((sum, payroll) => {
-                const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay)
+                // Use deductions from database
+                const nibDeduction = payroll.nib_deduction || 0
+                const otherDeductions = payroll.other_deductions || 0
                 const netPay = payroll.gross_pay - (nibDeduction + otherDeductions)
                 return sum + Math.max(0, netPay)
               }, 0)
@@ -415,7 +413,9 @@ export default function PayrollPage({
 
         // Process payrolls with payment data
         const processedPayrolls = currentResponse.data.map((payroll) => {
-          const { nibDeduction, otherDeductions } = calculateDeductions(payroll.gross_pay)
+          // Use NIB deduction from database (already calculated server-side with worker exemptions)
+          const nibDeduction = payroll.nib_deduction || 0
+          const otherDeductions = payroll.other_deductions || 0
           
           // Get payments for this specific payroll
           const payments = paymentsByPayrollId[payroll.id] || []
@@ -1778,10 +1778,6 @@ export default function PayrollPage({
                                         {/* Show based on selected view */}
                                         {(remainingBalanceView === "net" || remainingBalanceView === "both") && (
                                           <div className="flex items-center gap-1">
-                                            <span 
-                                              className="text-xs"
-                                              style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-                                            >Net:</span>
                                             <span 
                                               className="text-lg font-bold"
                                               style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}

@@ -654,10 +654,11 @@ export function PayrollReports({ payrolls }: PayrollReportsProps) {
                         return (
                           <>
                             {paginatedData.map((payroll) => {
-                              const employeeNibRate = 0.0465; // 4.65%
+                              // Use actual NIB deduction from database (respects worker exemptions)
+                              const employeeNib = payroll.nib_deduction || 0;
                               const employerNibRate = 0.0665; // 6.65%
-                              const employeeNib = payroll.gross_pay * employeeNibRate;
-                              const employerNib = payroll.gross_pay * employerNibRate;
+                              // Calculate employer NIB based on gross pay if employee NIB was applied
+                              const employerNib = employeeNib > 0 ? payroll.gross_pay * employerNibRate : 0;
                               const totalNib = employeeNib + employerNib;
                               const isCompliant = employeeNib > 0;
                               
