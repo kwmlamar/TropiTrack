@@ -162,8 +162,9 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
               >
                 <a href="/dashboard" className="flex items-center gap-3">
                   <div className="relative flex items-center">
-                    <span className="text-xl font-bold text-sidebar-foreground">
-                      TropiTrack
+                    <span className="text-xl">
+                      <span className="font-extrabold text-[#2596be]">Tropi</span>
+                      <span className="font-medium text-[#145369]">Track</span>
                     </span>
                   </div>
                   {isCollapsed && (

@@ -57,7 +57,7 @@ export function TimesheetSelectionSection({
 
   return (
     <div className="w-full border-b backdrop-blur-sm border-slate-200/50 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-      <div className="pl-6 pr-6 pt-4 pb-4 md:px-2">
+      <div className="pl-6 pr-6 pt-2 pb-3 md:px-2">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           
           {/* Project Selection */}

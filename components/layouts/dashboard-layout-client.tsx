@@ -5,6 +5,7 @@ import { useTheme } from "next-themes"
 import { SiteHeader } from "@/components/site-header"
 import { PrimarySidebar } from "@/components/primary-sidebar"
 import { SecondarySidebar } from "@/components/secondary-sidebar"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
@@ -41,21 +42,25 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
 
   const layoutContent = (
     <div className="flex h-screen overflow-hidden">
-      {/* Primary Sidebar - Icon based */}
-      <PrimarySidebar 
-        onSectionChange={setSelectedSection}
-        isSecondarySidebarCollapsed={isSecondarySidebarCollapsed}
-        onToggleSecondarySidebar={() => setIsSecondarySidebarCollapsed(!isSecondarySidebarCollapsed)}
-        profile={profile}
-      />
+      {/* Primary Sidebar - Hidden on mobile, shown on desktop */}
+      <div className="hidden md:flex">
+        <PrimarySidebar 
+          onSectionChange={setSelectedSection}
+          isSecondarySidebarCollapsed={isSecondarySidebarCollapsed}
+          onToggleSecondarySidebar={() => setIsSecondarySidebarCollapsed(!isSecondarySidebarCollapsed)}
+          profile={profile}
+        />
+      </div>
       
-      {/* Secondary Sidebar - Contextual */}
-      <SecondarySidebar 
-        profile={profile} 
-        section={selectedSection}
-        isCollapsed={isSecondarySidebarCollapsed}
-        onToggleCollapse={() => setIsSecondarySidebarCollapsed(!isSecondarySidebarCollapsed)}
-      />
+      {/* Secondary Sidebar - Hidden on mobile, shown on desktop */}
+      <div className="hidden md:flex">
+        <SecondarySidebar 
+          profile={profile} 
+          section={selectedSection}
+          isCollapsed={isSecondarySidebarCollapsed}
+          onToggleCollapse={() => setIsSecondarySidebarCollapsed(!isSecondarySidebarCollapsed)}
+        />
+      </div>
       
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -78,20 +83,23 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
         
         {/* Page Content */}
         <main 
-          className="flex-1 overflow-auto"
+          className="flex-1 overflow-auto pb-16 md:pb-0"
           style={{
             backgroundColor: theme === 'dark' ? '#171717' : '#ffffff'
           }}
         >
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-2 md:gap-6 md:py-3">
-              <div className={fullWidth ? "" : "px-4 lg:px-6"}>
+              <div className={fullWidth ? "" : "px-3 sm:px-4 lg:px-6"}>
                 {children}
               </div>
             </div>
           </div>
         </main>
       </div>
+      
+      {/* Mobile Bottom Navigation - Only visible on mobile */}
+      <MobileBottomNav />
       
       {/* Setup Guide Dropdown - Lazy Loaded */}
       {/* <LazySetupGuide /> */}

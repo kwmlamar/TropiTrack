@@ -3,6 +3,7 @@
 import type React from "react";
 import { ChevronDown, FileText, CheckCircle, Clock, BarChart3, TrendingUp, Users, DollarSign } from "lucide-react";
 import { useTheme } from "next-themes";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,6 +42,27 @@ export function SiteHeader({
   onSettingsTabChange,
 }: SiteHeaderProps) {
   const { theme } = useTheme();
+  const pathname = usePathname();
+  const router = useRouter();
+  
+  // Determine active settings tab from pathname if not provided
+  const currentSettingsTab = showSettingsTabs 
+    ? (pathname?.includes('/settings/nib') ? 'nib' : 'general')
+    : activeSettingsTab;
+  
+  // Handle settings tab change
+  const handleSettingsTabChange = (tab: string) => {
+    if (onSettingsTabChange) {
+      onSettingsTabChange(tab);
+    } else if (showSettingsTabs) {
+      // Default navigation behavior
+      if (tab === 'nib') {
+        router.push('/dashboard/settings/nib');
+      } else {
+        router.push('/dashboard/settings');
+      }
+    }
+  };
 
   return (
     <header 
@@ -52,12 +74,12 @@ export function SiteHeader({
     >
       <div className="flex w-full items-center gap-2 px-4 lg:gap-4 lg:px-6">
         {/* Left Section - Title and Settings Tabs */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {showTimesheetsDropdown ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
-                  <span className="truncate max-w-[120px]">{title}</span>
+                  <span className="truncate max-w-[100px] sm:max-w-[120px]">{title}</span>
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -90,13 +112,20 @@ export function SiteHeader({
           
           {/* Settings Tabs - Moved closer to title */}
           {showSettingsTabs && (
-            <Tabs value={activeSettingsTab} onValueChange={onSettingsTabChange} className="w-auto">
-              <TabsList className="grid w-auto grid-cols-5 bg-transparent p-0 h-auto">
+            <Tabs value={currentSettingsTab} onValueChange={handleSettingsTabChange} className="w-auto">
+              <TabsList className="grid w-auto grid-cols-2 bg-transparent p-0 h-auto gap-1 sm:gap-2">
                 <TabsTrigger 
                   value="general" 
-                  className="text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-3 py-1.5 shadow-none"
+                  className="text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none"
                 >
                   General
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="nib" 
+                  className="text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
+                >
+                  <span className="hidden sm:inline">NIB Settings</span>
+                  <span className="sm:hidden">NIB</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -104,37 +133,37 @@ export function SiteHeader({
         </div>
 
         {/* Center Section - Date Range Picker or Report Tabs */}
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex justify-center min-w-0">
           {showReportsTabs ? (
             <Tabs value={activeReportTab} onValueChange={onReportTabChange} className="w-full max-w-2xl">
               <TabsList className="grid w-full grid-cols-4 bg-transparent p-0 h-auto">
                 <TabsTrigger 
                   value="summary" 
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
                 >
                   <BarChart3 className="h-4 w-4" />
-                  Summary
+                  <span className="hidden sm:inline">Summary</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="detailed" 
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
                 >
                   <TrendingUp className="h-4 w-4" />
-                  Detailed
+                  <span className="hidden sm:inline">Detailed</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="workload" 
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
                 >
                   <Users className="h-4 w-4" />
-                  Workload
+                  <span className="hidden sm:inline">Workload</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="profitability" 
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
                 >
                   <DollarSign className="h-4 w-4" />
-                  Profitability
+                  <span className="hidden sm:inline">Profitability</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>

@@ -24,6 +24,7 @@ import type { Project } from "@/lib/types/project"
 import { AddTimesheetDialog } from "./add-timesheet-dialog"
 import { UnapproveTimesheetDialog } from "./unapprove-timesheet-dialog"
 import { ProjectListDialog } from "./project-list-dialog"
+import { TimesheetsMobileCards } from "./timesheets-mobile-cards"
 import { getCurrentLocalDate } from "@/lib/utils"
 import { useDateRange } from "@/context/date-range-context"
 
@@ -500,7 +501,7 @@ export default function TimesheetsPage({ user }: { user: User }) {
               <div className="overflow-x-auto flex-1 overflow-y-auto">
                 <table className="w-full border-collapse border-spacing-0 h-full">
                   <thead 
-                    className="sticky top-0 z-50 shadow-sm"
+                    className="shadow-sm"
                     style={{
                       backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
                       borderBottom: theme === 'dark' ? '2px solid #262626' : '2px solid rgb(226 232 240 / 0.5)'
@@ -601,29 +602,23 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
         {/* Timesheet Table Header */}
-        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-6">
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative mb-0 px-3 sm:px-6">
           <div className="flex items-center space-x-2">
             
             <div 
-              className="flex items-center rounded-lg overflow-hidden border"
+              className="flex items-center rounded-xl overflow-hidden shadow-sm"
               style={{
-                backgroundColor: theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))',
-                borderColor: theme === 'dark' ? '#404040' : 'rgb(226 232 240 / 0.5)'
+                backgroundColor: theme === 'dark' ? '#0E141A' : '#FFFFFF',
+                border: theme === 'dark' ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)'
               }}
             >
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handlePreviousPeriod}
-                className="h-10 w-10 p-0 rounded-none border-0"
+                className="h-10 w-10 p-0 rounded-none border-0 hover:bg-primary/10 transition-colors"
                 style={{
-                  color: theme === 'dark' ? '#d1d5db' : '#374151'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
+                  color: theme === 'dark' ? '#9CA3AF' : '#6B7280'
                 }}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -631,30 +626,28 @@ export default function TimesheetsPage({ user }: { user: User }) {
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <button
-                    className="flex-1 text-center px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    className="flex-1 text-center px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 sm:gap-2 cursor-pointer transition-all hover:bg-primary/5"
                     style={{
-                      backgroundColor: theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))',
-                      color: theme === 'dark' ? '#d1d5db' : '#374151',
-                      borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)',
-                      borderRight: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.5)',
+                      backgroundColor: 'transparent',
+                      color: theme === 'dark' ? '#F3F4F6' : '#374151',
                       border: 'none',
                       outline: 'none'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#171717' : 'rgb(249 250 251)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = theme === 'dark' ? '#0f0f0f' : 'hsl(var(--background))'
-                    }}
                   >
-                    <CalendarDays className="h-4 w-4" />
-                    {dateRange?.from && dateRange?.to ? (
-                      <>
-                        {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
-                      </>
-                    ) : (
-                      format(selectedDate, 'PPP')
-                    )}
+                    <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="truncate">
+                      {dateRange?.from && dateRange?.to ? (
+                        <>
+                          <span className="hidden sm:inline">{format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}</span>
+                          <span className="sm:hidden">{format(dateRange.from, 'M/d')} - {format(dateRange.to, 'M/d/yy')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="hidden sm:inline">{format(selectedDate, 'PPP')}</span>
+                          <span className="sm:hidden">{format(selectedDate, 'M/d/yyyy')}</span>
+                        </>
+                      )}
+                    </span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="center">
@@ -680,15 +673,9 @@ export default function TimesheetsPage({ user }: { user: User }) {
                 variant="ghost"
                 size="sm"
                 onClick={handleNextPeriod}
-                className="h-10 w-10 p-0 rounded-none border-0"
+                className="h-10 w-10 p-0 rounded-none border-0 hover:bg-primary/10 transition-colors"
                 style={{
-                  color: theme === 'dark' ? '#d1d5db' : '#374151'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
+                  color: theme === 'dark' ? '#9CA3AF' : '#6B7280'
                 }}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -699,66 +686,89 @@ export default function TimesheetsPage({ user }: { user: User }) {
 
 
 
-            {/* Timesheet Table */}
+            {/* Timesheet Table - Desktop */}
             <div 
-              className="border-t border-b flex-1 flex flex-col"
+              className="flex-1 flex-col hidden md:flex px-4 lg:px-6"
               style={{
-                backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
-                borderColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+                backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
               }}
             >
-              <div className="px-0 flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col">
                 <div className="overflow-x-auto flex-1 overflow-y-auto">
-                  <table className="w-full border-collapse border-spacing-0 h-full">
+                  <table className="w-full border-separate" style={{ borderSpacing: '0 8px' }}>
                     <thead 
-                      className="sticky top-0 z-50 shadow-sm"
                       style={{
-                        backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
-                        borderBottom: theme === 'dark' ? '2px solid #262626' : '2px solid rgb(226 232 240 / 0.5)'
+                        backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
                       }}
                     >
-                      <tr style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}>
-
+                      <tr>
                         <th 
-                          className="text-left p-4 pl-6 pb-4 font-medium text-sm text-gray-500"
-                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          className="text-left px-6 py-4 font-bold text-xs uppercase tracking-wider"
+                          style={{ 
+                            color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                            backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                          }}
                         >Worker</th>
                         <th 
-                          className="text-left p-4 pb-4 font-medium text-sm text-gray-500"
-                          style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                          className="text-left px-4 py-4 font-bold text-xs uppercase tracking-wider"
+                          style={{ 
+                            color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                            backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                          }}
                         >Project</th>
                         {viewMode === "weekly" ? (
                           weekDays.map((day) => (
                             <th 
                               key={day.toISOString()} 
-                              className="text-center px-4 py-2 font-medium text-sm text-gray-500 min-w-[100px]"
-                              style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                              className="text-center px-4 py-4 font-semibold text-xs uppercase tracking-wider min-w-[100px]"
+                              style={{ 
+                                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                                backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                              }}
                             >
-                              <div className="text-xs text-gray-400 leading-none">{format(day, "EEE")}</div>
-                              <div className="text-xl font-bold leading-tight my-0.5" style={{ color: theme === 'dark' ? '#d1d5db' : '#374151' }}>{format(day, "d")}</div>
-                              <div className="text-xs text-gray-500 leading-none">{format(day, "MMM")}</div>
+                              <div className="text-xs font-bold leading-none mb-1" style={{ color: theme === 'dark' ? '#E5E7EB' : '#374151' }}>
+                                {format(day, "EEE")}
+                              </div>
+                              <div className="text-2xl font-extrabold leading-tight" style={{ color: theme === 'dark' ? '#2596be' : '#2596be' }}>
+                                {format(day, "d")}
+                              </div>
+                              <div className="text-xs leading-none mt-1" style={{ color: theme === 'dark' ? '#6B7280' : '#9CA3AF' }}>
+                                {format(day, "MMM")}
+                              </div>
                             </th>
                           ))
                         ) : (
                           <>
                             <th 
-                              className="text-center p-4 pb-4 font-medium text-sm text-gray-500"
-                              style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                              className="text-center px-4 py-4 font-bold text-xs uppercase tracking-wider"
+                              style={{ 
+                                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                                backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                              }}
                             >Hours</th>
                             <th 
-                              className="text-center p-4 pb-4 font-medium text-sm text-gray-500"
-                              style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                              className="text-center px-4 py-4 font-bold text-xs uppercase tracking-wider"
+                              style={{ 
+                                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                                backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                              }}
                             >Overtime</th>
                             <th 
-                              className="text-left p-4 pb-4 font-medium text-sm text-gray-500"
-                              style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                              className="text-left px-4 py-4 font-bold text-xs uppercase tracking-wider"
+                              style={{ 
+                                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                                backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                              }}
                             >Notes</th>
                           </>
                         )}
                         {viewMode === "weekly" && (
                           <th 
-                            className="text-center p-4 pb-4 font-medium text-sm text-gray-500"
-                            style={{ backgroundColor: theme === 'dark' ? '#171717' : '#ffffff' }}
+                            className="text-center px-6 py-4 font-bold text-xs uppercase tracking-wider"
+                            style={{ 
+                              color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                              backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                            }}
                           >Total</th>
                         )}
                       </tr>
@@ -776,43 +786,57 @@ export default function TimesheetsPage({ user }: { user: User }) {
                           return (
                             <tr 
                               key={workerId} 
-                              className="border-b last:border-b-0 transition-all duration-200 group"
+                              className="transition-all duration-200 group"
                               style={{
-                                borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
-                                backgroundColor: 'transparent',
-                                opacity: isInactive ? 0.7 : 1
+                                backgroundColor: theme === 'dark' ? '#0E141A' : '#FFFFFF',
+                                opacity: isInactive ? 0.7 : 1,
+                                boxShadow: theme === 'dark' 
+                                  ? '0 1px 3px 0 rgba(0, 0, 0, 0.3)' 
+                                  : '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+                                borderRadius: '12px'
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(243 244 246 / 0.4)'
+                                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#1A2332' : '#F9FAFB'
+                                e.currentTarget.style.boxShadow = theme === 'dark' 
+                                  ? '0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3)' 
+                                  : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent'
+                                e.currentTarget.style.backgroundColor = theme === 'dark' ? '#0E141A' : '#FFFFFF'
+                                e.currentTarget.style.boxShadow = theme === 'dark' 
+                                  ? '0 1px 3px 0 rgba(0, 0, 0, 0.3)' 
+                                  : '0 1px 3px 0 rgba(0, 0, 0, 0.05)'
                               }}
                             >
 
-                              <td className="p-4 pl-6">
-                                <div className="flex items-center gap-2">
+                              <td className="p-5 pl-6 rounded-l-xl">
+                                <div className="flex items-center gap-3">
                                   <div>
                                     <div 
-                                      className="font-medium text-base"
-                                      style={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                                      className="font-semibold text-base"
+                                      style={{ color: theme === 'dark' ? '#F3F4F6' : '#111827' }}
                                     >{worker?.name || "Unknown Worker"}</div>
                                     <div 
-                                      className="text-xs"
-                                      style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                                      className="text-sm"
+                                      style={{ color: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
                                     >{worker?.position || "Worker"}</div>
                                   </div>
                                   {isInactive && (
                                     <Badge 
                                       variant="outline" 
-                                      className="text-xs bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                      className="text-xs"
+                                      style={{
+                                        backgroundColor: theme === 'dark' ? 'rgba(37, 150, 190, 0.1)' : 'rgba(37, 150, 190, 0.1)',
+                                        color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                                        borderColor: theme === 'dark' ? '#374151' : '#D1D5DB'
+                                      }}
                                     >
                                       Inactive
                                     </Badge>
                                   )}
                                 </div>
                               </td>
-                              <td className="p-4">
+                              <td className="p-5">
                                 <ProjectListDialog
                                   projects={Array.from(
                                     new Set(
@@ -822,25 +846,25 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   workerName={worker?.name || "Unknown Worker"}
                                 />
                               </td>
-                              {weekDays.map((day) => {
+                              {weekDays.map((day, dayIndex) => {
                                 const dayTimesheet = timesheetsInWeek.find(
                                   (ts) => format(parseISO(ts.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd"),
                                 )
-                                const isFriday = format(day, "EEE") === "Fri"
+                                const isLastDay = dayIndex === weekDays.length - 1
                                 const getCellBgColor = () => {
-                                  if (!dayTimesheet) return theme === 'dark' ? 'transparent' : 'transparent'
+                                  if (!dayTimesheet) return 'transparent'
                                   if (dayTimesheet.supervisor_approval === "approved") {
-                                    return theme === 'dark' ? '#262626' : 'rgb(156 163 175 / 0.1)'
+                                    return theme === 'dark' 
+                                      ? 'rgba(37, 150, 190, 0.08)' 
+                                      : 'rgba(37, 150, 190, 0.05)'
                                   }
                                   return 'transparent'
                                 }
                                 return (
                                   <td 
                                     key={day.toISOString()} 
-                                    className="p-2 text-center"
+                                    className={`p-3 text-center ${isLastDay && viewMode === "weekly" ? '' : ''}`}
                                     style={{
-                                      borderLeft: theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.3)',
-                                      borderRight: isFriday ? (theme === 'dark' ? '1px solid #404040' : '1px solid rgb(226 232 240 / 0.3)') : 'none',
                                       backgroundColor: getCellBgColor()
                                     }}
                                   >
@@ -849,17 +873,23 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                         {dayTimesheet.supervisor_approval === "approved" ? (
                                           <div
                                             onClick={() => handleDisabledInputClick(dayTimesheet)}
-                                            className="cursor-pointer w-full"
+                                            className="cursor-pointer w-full p-2 rounded-lg hover:opacity-80 transition-opacity"
                                             title="Click to unapprove timesheet"
                                           >
                                             <div 
-                                              className="text-2xl font-semibold mb-1"
-                                              style={{ color: theme === 'dark' ? '#9ca3af' : '#9ca3af' }}
+                                              className="text-2xl font-bold mb-1"
+                                              style={{ color: theme === 'dark' ? '#9CA3AF' : '#9CA3AF' }}
                                             >
-                                              {dayTimesheet.total_hours}
+                                              {dayTimesheet.total_hours}h
                                             </div>
                                             {dayTimesheet.overtime_hours > 0 && (
-                                              <div className="text-xs font-medium" style={{ color: theme === 'dark' ? '#fb923c' : '#ea580c' }}>
+                                              <div 
+                                                className="text-xs font-semibold px-2 py-0.5 rounded-full inline-block"
+                                                style={{ 
+                                                  color: '#ea580c',
+                                                  backgroundColor: theme === 'dark' ? 'rgba(234, 88, 12, 0.15)' : 'rgba(234, 88, 12, 0.1)'
+                                                }}
+                                              >
                                                 +{dayTimesheet.overtime_hours}h
                                               </div>
                                             )}
@@ -876,13 +906,15 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                                   Number.parseFloat(e.target.value) || 0,
                                                 )
                                               }
-                                              className="w-full h-10 text-center text-2xl font-semibold border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/20 rounded"
+                                              className="w-full h-12 text-center text-2xl font-bold border-0 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg transition-all"
                                               style={{
-                                                color: theme === 'dark' ? '#e5e7eb' : '#111827',
+                                                color: theme === 'dark' ? '#F3F4F6' : '#111827',
                                                 backgroundColor: 'transparent'
                                               }}
                                               onFocus={(e) => {
-                                                e.target.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
+                                                e.target.style.backgroundColor = theme === 'dark' 
+                                                  ? 'rgba(37, 150, 190, 0.1)' 
+                                                  : 'rgba(37, 150, 190, 0.05)'
                                               }}
                                               onBlur={(e) => {
                                                 e.target.style.backgroundColor = 'transparent'
@@ -905,18 +937,20 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                           e.preventDefault();
                                           handleCellClick(day, workerId);
                                         }}
-                                        className="w-full min-h-[60px] text-2xl transition-colors duration-200 flex items-center justify-center"
+                                        className="w-full min-h-[60px] text-3xl font-light transition-all duration-200 flex items-center justify-center rounded-lg"
                                         style={{
-                                          color: theme === 'dark' ? '#404040' : '#d1d5db',
+                                          color: theme === 'dark' ? '#374151' : '#E5E7EB',
                                           backgroundColor: 'transparent'
                                         }}
                                         onMouseEnter={(e) => {
-                                          e.currentTarget.style.backgroundColor = theme === 'dark' ? '#262626' : 'rgb(249 250 251)'
-                                          e.currentTarget.style.color = theme === 'dark' ? '#6b7280' : '#9ca3af'
+                                          e.currentTarget.style.backgroundColor = theme === 'dark' 
+                                            ? 'rgba(37, 150, 190, 0.1)' 
+                                            : 'rgba(37, 150, 190, 0.05)'
+                                          e.currentTarget.style.color = theme === 'dark' ? '#2596be' : '#2596be'
                                         }}
                                         onMouseLeave={(e) => {
                                           e.currentTarget.style.backgroundColor = 'transparent'
-                                          e.currentTarget.style.color = theme === 'dark' ? '#404040' : '#d1d5db'
+                                          e.currentTarget.style.color = theme === 'dark' ? '#374151' : '#E5E7EB'
                                         }}
                                         title="Click to add timesheet entry"
                                       >
@@ -926,17 +960,22 @@ export default function TimesheetsPage({ user }: { user: User }) {
                                   </td>
                                 )
                               })}
-                              <td className="p-4 text-center">
-                                <div 
-                                  className="font-medium text-sm"
-                                  style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
-                                >{weekTotalHours}h</div>
-                                {weekOvertimeHours > 0 && (
+                              <td className="p-5 pr-6 text-center rounded-r-xl">
+                                <div className="flex flex-col items-center gap-1">
                                   <div 
-                                    className="text-xs font-medium"
-                                    style={{ color: theme === 'dark' ? '#fb923c' : '#ea580c' }}
-                                  >+{weekOvertimeHours}h OT</div>
-                                )}
+                                    className="text-xl font-bold"
+                                    style={{ color: theme === 'dark' ? '#F3F4F6' : '#111827' }}
+                                  >{weekTotalHours}h</div>
+                                  {weekOvertimeHours > 0 && (
+                                    <div 
+                                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                      style={{ 
+                                        color: '#ea580c',
+                                        backgroundColor: theme === 'dark' ? 'rgba(234, 88, 12, 0.15)' : 'rgba(234, 88, 12, 0.1)'
+                                      }}
+                                    >+{weekOvertimeHours}h OT</div>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           );
@@ -1158,48 +1197,79 @@ export default function TimesheetsPage({ user }: { user: User }) {
                 {/* Pagination Controls */}
                 {((viewMode === "weekly" && weeklyWorkerEntries.length > ITEMS_PER_PAGE) || 
                   (viewMode === "daily" && filteredTimesheets.length > ITEMS_PER_PAGE)) && (
-                  <div className="flex items-center justify-between px-6 py-4">
-                    <div className="text-sm text-gray-500">
+                  <div className="flex items-center justify-between px-3 sm:px-6 py-5 mt-4" style={{
+                    backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+                  }}>
+                    <div className="text-xs sm:text-sm font-medium hidden sm:block" style={{
+                      color: theme === 'dark' ? '#9CA3AF' : '#6B7280'
+                    }}>
                       {viewMode === "weekly" 
                         ? `Showing ${weeklyStartIndex + 1} to ${Math.min(weeklyEndIndex, weeklyWorkerEntries.length)} of ${weeklyWorkerEntries.length} workers`
                         : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTimesheets.length)} of ${filteredTimesheets.length} timesheets`
                       }
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 sm:space-x-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="h-8 w-8 p-0"
+                        className="h-9 w-9 p-0 rounded-lg hover:bg-primary/10 disabled:opacity-30"
+                        style={{
+                          color: theme === 'dark' ? '#9CA3AF' : '#6B7280'
+                        }}
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       
-                      <div className="flex items-center space-x-1">
-                        {Array.from({ length: viewMode === "weekly" ? weeklyTotalPages : totalPages }, (_, i) => i + 1).map((page) => (
-                          <Button
-                            key={page}
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(page)}
-                            className={`h-8 w-8 p-0 ${
-                              currentPage === page 
-                                ? "bg-muted text-gray-800 border-muted dark:bg-gray-500 dark:text-gray-100 dark:border-gray-500" 
-                                : "hover:bg-muted dark:hover:bg-gray-600 dark:hover:text-gray-100"
-                            }`}
-                          >
-                            {page}
-                          </Button>
-                        ))}
+                      <div className="flex items-center space-x-1 flex-1 sm:flex-initial justify-center sm:justify-start">
+                        {Array.from({ length: viewMode === "weekly" ? weeklyTotalPages : totalPages }, (_, i) => i + 1)
+                          .filter((page) => {
+                            // On mobile, show only current page and adjacent pages
+                            const totalPages = viewMode === "weekly" ? weeklyTotalPages : totalPages
+                            if (totalPages <= 5) return true
+                            return Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages
+                          })
+                          .map((page, index, array) => {
+                            // Add ellipsis if there's a gap
+                            const showEllipsisBefore = index > 0 && page - array[index - 1] > 1
+                            
+                            return (
+                              <React.Fragment key={page}>
+                                {showEllipsisBefore && (
+                                  <span className="text-muted-foreground px-1 hidden sm:inline">...</span>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handlePageChange(page)}
+                                  className="h-8 w-8 sm:h-9 sm:w-9 p-0 text-xs sm:text-sm font-semibold rounded-lg transition-all"
+                                  style={{
+                                    backgroundColor: currentPage === page 
+                                      ? (theme === 'dark' ? 'rgba(37, 150, 190, 0.2)' : 'rgba(37, 150, 190, 0.12)')
+                                      : 'transparent',
+                                    color: currentPage === page 
+                                      ? '#2596be'
+                                      : (theme === 'dark' ? '#9CA3AF' : '#6B7280')
+                                  }}
+                                >
+                                  {page}
+                                </Button>
+                              </React.Fragment>
+                            )
+                          })
+                        }
                       </div>
                       
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === (viewMode === "weekly" ? weeklyTotalPages : totalPages)}
-                        className="h-8 w-8 p-0"
+                        className="h-9 w-9 p-0 rounded-lg hover:bg-primary/10 disabled:opacity-30"
+                        style={{
+                          color: theme === 'dark' ? '#9CA3AF' : '#6B7280'
+                        }}
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -1209,6 +1279,17 @@ export default function TimesheetsPage({ user }: { user: User }) {
               </div>
             </div>
           </div>
+
+          {/* Mobile Card View */}
+          <TimesheetsMobileCards
+            workerEntries={paginatedWorkerEntries}
+            allWorkers={allWorkers}
+            weekDays={weekDays}
+            viewMode={viewMode}
+            onUpdateTimesheet={handleUpdateTimesheet}
+            onCellClick={handleCellClick}
+            onDisabledInputClick={handleDisabledInputClick}
+          />
 
       {/* Add Timesheet Dialog */}
       {selectedCellDate && (

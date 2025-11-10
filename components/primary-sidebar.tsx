@@ -104,8 +104,10 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
       <TooltipProvider delayDuration={200}>
         <div className="flex h-screen w-16 flex-col backdrop-blur-xl bg-gray-100 border-r border-gray-200">
           <div className="flex h-16 shrink-0 items-center justify-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/10">
-              <span className="text-xl font-bold text-primary">T</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{
+              background: 'linear-gradient(to bottom right, rgba(37, 150, 190, 0.2), rgba(37, 150, 190, 0.1))'
+            }}>
+              <span className="text-xl font-bold text-[#2596be]">T</span>
             </div>
           </div>
         </div>
@@ -118,17 +120,19 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
       <div 
         className="flex h-screen w-16 flex-col backdrop-blur-xl" 
         style={{ 
-          backgroundColor: theme === 'dark' ? '#000000' : 'rgb(229 231 235 / 0.8)',
+          backgroundColor: theme === 'dark' ? '#0A0F14' : 'rgb(235 238 242 / 0.9)',
           borderRightWidth: theme === 'dark' ? '1px' : '1px',
           borderRightStyle: 'solid',
-          borderRightColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+          borderRightColor: theme === 'dark' ? '#1A2332' : 'rgb(223 232 240 / 0.6)'
         }}
       >
         {/* Logo/Brand */}
         <div className="flex h-16 shrink-0 items-center justify-center">
           <a href="/dashboard" className="flex items-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/10">
-              <span className="text-xl font-bold text-primary">T</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{
+              background: 'linear-gradient(to bottom right, rgba(37, 150, 190, 0.2), rgba(37, 150, 190, 0.1))'
+            }}>
+              <span className="text-xl font-bold text-[#2596be]">T</span>
             </div>
           </a>
         </div>
@@ -149,13 +153,17 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
                     className={cn(
                       "group relative flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200",
                       active
-                        ? "bg-primary/10 text-primary shadow-sm"
+                        ? "shadow-sm"
                         : "text-gray-500 hover:bg-sidebar-accent/50 hover:text-gray-700"
                     )}
+                    style={active ? {
+                      backgroundColor: 'rgba(37, 150, 190, 0.12)',
+                      color: '#2596be'
+                    } : undefined}
                   >
                     <Icon className="h-5 w-5" />
                     {active && (
-                      <div className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-primary" />
+                      <div className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-[#2596be]" />
                     )}
                     {hoveredItem === item.title && !active && (
                       <ChevronRight className="absolute -right-1 h-4 w-4 text-gray-400" />
@@ -244,12 +252,15 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
                     src="/placeholder.svg"
                     alt={profile.name}
                   />
-                  <AvatarFallback className={cn(
-                    "text-sm font-medium",
-                    theme === 'dark'
-                      ? 'bg-primary/10 text-gray-300'
-                      : 'bg-sidebar-primary/10 text-gray-500'
-                  )}>
+                  <AvatarFallback 
+                    className="text-sm font-medium"
+                    style={{
+                      backgroundColor: theme === 'dark' 
+                        ? 'rgba(37, 150, 190, 0.15)' 
+                        : 'rgba(37, 150, 190, 0.12)',
+                      color: theme === 'dark' ? '#E5E7EB' : '#2596be'
+                    }}
+                  >
                     {profile.name
                       ? profile.name
                           .split(" ")

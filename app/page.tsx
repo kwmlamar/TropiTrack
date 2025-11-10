@@ -23,7 +23,10 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 flex h-20 items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-[#041014]">TropiTrack</span>
+            <span className="text-2xl">
+              <span className="font-bold text-[#2596be]">Tropi</span>
+              <span className="font-semibold text-[#145369]">Track</span>
+            </span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
@@ -490,7 +493,10 @@ export default function Home() {
           <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5 mb-12">
             <div className="lg:col-span-2">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl font-bold text-[#041014]">TropiTrack</span>
+                <span className="text-2xl">
+                  <span className="font-extrabold text-[#2596be]">Tropi</span>
+                  <span className="font-medium text-[#145369]">Track</span>
+                </span>
               </div>
               <p className="text-sm text-gray-600 mb-6 max-w-sm leading-relaxed">
                 Time tracking and payroll management built for Bahamian construction crews. 

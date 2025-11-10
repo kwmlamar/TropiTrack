@@ -46,11 +46,11 @@ export function NavMain({ items }: NavMainProps) {
                 isActive && "font-medium",
               )}
               style={{
-                backgroundColor: isActive ? 'rgba(195, 209, 239, 0.2)' : 'transparent'
+                backgroundColor: isActive ? 'rgba(37, 150, 190, 0.15)' : 'transparent'
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'rgba(195, 209, 239, 0.1)'
+                  e.currentTarget.style.backgroundColor = 'rgba(37, 150, 190, 0.08)'
                 }
               }}
               onMouseLeave={(e) => {
@@ -67,7 +67,7 @@ export function NavMain({ items }: NavMainProps) {
                       ? ""
                       : "text-gray-400 group-hover:text-gray-600",
                   )}
-                  style={isActive ? { color: '#00ABC9' } : undefined}
+                  style={isActive ? { color: '#2596be' } : undefined}
                 />
                 {!isCollapsed && (
                   <>

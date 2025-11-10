@@ -28,12 +28,11 @@ export async function GET() {
       )
     }
 
-    // Get active workers for the company
+    // Get all workers for the company (including inactive for NIB settings)
     const { data: workers, error: workersError } = await supabase
       .from("workers")
-      .select("id, name")
+      .select("id, name, position, nib_number, nib_exempt, is_active")
       .eq("company_id", profile.company_id)
-      .eq("is_active", true)
       .order("name")
 
     if (workersError) {
@@ -46,7 +45,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      workers: workers || []
+      data: workers || []
     })
   } catch (error) {
     console.error("Error in workers API:", error)

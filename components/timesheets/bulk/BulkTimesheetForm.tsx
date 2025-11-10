@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
+import { useTheme } from "next-themes";
 
 import { Form } from "@/components/ui/form";
 import { WorkerRowsTable } from "./WorkerRowsTable";
 import { TotalsBar } from "./TotalsBar";
+import { toast } from "sonner";
 
 import { createTimesheet } from "@/lib/data/timesheets";
 import type { CreateTimesheetInput, TimesheetWithDetails } from "@/lib/types";
@@ -71,8 +73,10 @@ export function BulkTimesheetForm({
   selectedWorkers,
   onSuccess,
 }: BulkTimesheetFormProps) {
+  const { theme } = useTheme();
   const { paymentSchedule } = usePayrollSettings();
   const { requireApproval, settings } = useTimesheetSettings();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form
   const form = useForm<BulkTimesheetFormData>({
@@ -149,6 +153,27 @@ export function BulkTimesheetForm({
     }
   }, [settings, fields, form]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + S to submit
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        form.handleSubmit(onSubmit)();
+      }
+      
+      // Ctrl/Cmd + Enter to submit (alternative)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        form.handleSubmit(onSubmit)();
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
+
   // Calculate totals reactively
   const totals = useMemo(() => {
     return calculateBulkTimesheetTotals(
@@ -159,10 +184,17 @@ export function BulkTimesheetForm({
 
   // Handle form submission
   const onSubmit = async (data: BulkTimesheetFormData) => {
+    setIsSubmitting(true);
+    
     try {
       // Create timesheet entries for each worker × each date combination
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const timesheetPromises: Promise<any>[] = [];
+      const totalEntries = data.entries.length * data.selected_dates.length;
+      
+      toast.info(`Creating ${totalEntries} timesheet entries...`, {
+        duration: 2000
+      });
 
       data.entries.forEach((entry) => {
         data.selected_dates.forEach((date) => {
@@ -235,25 +267,95 @@ export function BulkTimesheetForm({
       }
     } catch (error) {
       console.error("Error submitting timesheets:", error);
+      toast.error("Failed to create timesheets. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="overflow-hidden">
-        <WorkerRowsTable
-          control={form.control}
-          fields={fields}
-          workers={workers}
-          onWorkerChange={handleWorkerChange}
-          onCopyToAll={copyFieldToAll}
-          onCopyFromPrevious={copyFromPrevious}
-          onRemove={remove}
-        />
+      <form 
+        onSubmit={form.handleSubmit(onSubmit)} 
+        className="flex flex-col h-full overflow-hidden relative"
+      >
+        {/* Submission Loading Overlay */}
+        {isSubmitting && (
+          <div 
+            className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm"
+            role="status"
+            aria-live="polite"
+            aria-label="Creating timesheet entries"
+          >
+            <div 
+              className="rounded-xl p-8 shadow-2xl space-y-4 max-w-md mx-4"
+              style={{
+                backgroundColor: theme === 'dark' ? '#0E141A' : '#FFFFFF',
+                backdropFilter: 'blur(8px)'
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div 
+                    className="h-12 w-12 rounded-full border-4 animate-spin"
+                    style={{
+                      borderColor: 'rgba(37, 150, 190, 0.2)',
+                      borderTopColor: '#2596be'
+                    }}
+                  />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">Creating Timesheets</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Processing {fields.length * (watchedSelectedDates?.length || 0)} entries...
+                  </p>
+                </div>
+              </div>
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300 animate-pulse" 
+                  style={{ width: '70%' }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
-        <TotalsBar totals={totals} />
+        {/* Scrollable Table Container */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <WorkerRowsTable
+            control={form.control}
+            fields={fields}
+            workers={workers}
+            onWorkerChange={handleWorkerChange}
+            onCopyToAll={copyFieldToAll}
+            onCopyFromPrevious={copyFromPrevious}
+            onRemove={remove}
+          />
+        </div>
+
+        {/* Sticky Summary Bar */}
+        <div className="sticky bottom-0 z-10">
+          <TotalsBar 
+            totals={totals} 
+            isSubmitting={isSubmitting}
+            onSubmit={form.handleSubmit(onSubmit)}
+            entriesCount={fields.length}
+            datesCount={watchedSelectedDates?.length || 0}
+          />
+        </div>
+        
+        {/* Keyboard shortcut hint */}
+        <div 
+          className="sr-only" 
+          role="status" 
+          aria-live="polite"
+        >
+          Press Ctrl+S or Cmd+S to submit the form
+        </div>
       </form>
     </Form>
   );
 }
+
 

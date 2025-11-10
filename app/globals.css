@@ -15,20 +15,20 @@
   --popover: oklch(1.0 0.0 0);
   --popover-foreground: #0D141C;
   /* Primary Colors - TropiTrack brand blue */
-  --primary: #01a2be;
+  --primary: #2596be;
   --primary-foreground: oklch(1.0 0 0);
 
   /* Secondary Colors - Subtle gray with hint of blue */
-  --secondary: #9c9c9c;
-  --secondary-foreground: oklch(1.0 0 0);
+  --secondary: #E8F1F5;
+  --secondary-foreground: #145369;
 
   /* Muted Colors - Improved readability */
   --muted: oklch(0.97 0.01 250);
-  --muted-foreground: #01a2be;
+  --muted-foreground: #2596be;
 
   /* Accent - Energetic blue */
-  --accent: #E8EDF5;
-  --accent-foreground: #0D141C;
+  --accent: #E8F1F5;
+  --accent-foreground: #145369;
 
   /* Status Colors - Clear and accessible */
   --destructive: #DC2626;
@@ -37,16 +37,16 @@
   --success-foreground: oklch(1.0 0 0);
   --warning: #D97706;
   --warning-foreground: oklch(1.0 0 0);
-  --info: #4A739C;
+  --info: #2596be;
   --info-foreground: oklch(1.0 0 0);
 
   /* Interactive Elements - Refined */
-  --border: #E2E8F0;
+  --border: #DFE8ED;
   --input: oklch(0.97 0.01 250);
-  --ring: #4A739C;
+  --ring: #2596be;
 
   /* Chart Colors - Distinct and harmonious */
-  --chart-1: #4A739C;
+  --chart-1: #2596be;
   --chart-2: #0D141C;
   --chart-3: #059669;
   --chart-4: #D97706;
@@ -55,14 +55,14 @@
   /* Sidebar - Professional and focused */
   --sidebar: oklch(1 0.003 250);
   --sidebar-foreground: #0D141C;
-  --sidebar-primary: #4A739C;
+  --sidebar-primary: #2596be;
   --sidebar-primary-foreground: oklch(1.0 0 0);
-  --sidebar-accent: #E8EDF5;
+  --sidebar-accent: #E8F1F5;
   --sidebar-accent-foreground: #0D141C;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #4A739C;
-  --sidebar-muted-foreground: #00ABC9;
-  --sidebar-selected: #00ABC9;
+  --sidebar-border: #DFE8ED;
+  --sidebar-ring: #2596be;
+  --sidebar-muted-foreground: #2596be;
+  --sidebar-selected: #2596be;
 
   /* Typography */
   --font-sans: "Work Sans Variable", "Work Sans", system-ui, sans-serif;
@@ -127,11 +127,11 @@
   --popover-foreground: #F8FAFC;
 
   /* Primary Colors */
-  --primary: #01a2be;
-  --primary-foreground: #0D141C;
+  --primary: #2596be;
+  --primary-foreground: #FFFFFF;
 
   /* Secondary Colors */
-  --secondary: #475569;
+  --secondary: #2C3E50;
   --secondary-foreground: #F8FAFC;
 
   /* Muted Colors */
@@ -139,8 +139,8 @@
   --muted-foreground: #9CA3AF;
 
   /* Accent */
-  --accent: #1A1A1A;
-  --accent-foreground: #F8FAFC;
+  --accent: #2C3E50;
+  --accent-foreground: #2596be;
 
   /* Status Colors */
   --destructive: #EF4444;
@@ -149,25 +149,25 @@
   --success-foreground: #F8FAFC;
   --warning: #F59E0B;
   --warning-foreground: #F8FAFC;
-  --info: #3B82F6;
+  --info: #2596be;
   --info-foreground: #F8FAFC;
 
   /* Interactive Elements */
-  --border: #334155;
+  --border: #2C3E50;
   --input: #1E293B;
-  --ring: #3B82F6;
+  --ring: #2596be;
 
   /* Sidebar */
   --sidebar: #1E293B;
   --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #01a2be;
-  --sidebar-primary-foreground: #0D141C;
-  --sidebar-accent: #334155;
+  --sidebar-primary: #2596be;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2C3E50;
   --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #334155;
-  --sidebar-ring: #3B82F6;
-  --sidebar-muted-foreground: #01a2be;
-  --sidebar-selected: #01a2be;
+  --sidebar-border: #2C3E50;
+  --sidebar-ring: #2596be;
+  --sidebar-muted-foreground: #2596be;
+  --sidebar-selected: #2596be;
 }
 
 @theme inline {

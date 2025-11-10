@@ -96,8 +96,11 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
         isCollapsed ? "w-0 overflow-hidden" : "w-52"
       )}>
         <div className="flex h-16 shrink-0 flex-col justify-center px-6">
-          <h2 className="text-lg font-semibold text-gray-900">TropiTrack</h2>
-          <p className="text-xs text-gray-500">{profile.company?.name || "Company"}</p>
+          <h2 className="text-lg">
+            <span className="font-extrabold text-[#2596be]">Tropi</span>
+            <span className="font-medium text-[#145369]">Track</span>
+          </h2>
+          <p className="text-xs font-semibold text-gray-500">{profile.company?.name || "Company"}</p>
         </div>
       </div>
     )
@@ -111,19 +114,22 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
           isCollapsed ? "w-0 overflow-hidden" : "w-52"
         )}
         style={{ 
-          backgroundColor: theme === 'dark' ? '#0f0f0f' : 'rgb(243 244 246 / 0.98)',
+          backgroundColor: theme === 'dark' ? '#0E141A' : 'rgb(240 243 246 / 0.95)',
           borderRightWidth: theme === 'dark' ? '1px' : '1px',
           borderRightStyle: 'solid',
-          borderRightColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+          borderRightColor: theme === 'dark' ? '#1E2A38' : 'rgb(218 228 235 / 0.6)'
         }}
       >
         <div className="flex h-16 shrink-0 flex-col justify-center px-6">
-          <h2 className={cn(
-            "text-lg font-semibold",
-            theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-          )}>TropiTrack</h2>
+          <h2 className="text-lg">
+            <span className="font-extrabold text-[#2596be]">Tropi</span>
+            <span className={cn(
+              "font-medium",
+              theme === 'dark' ? 'text-[#2596be]' : 'text-[#145369]'
+            )}>Track</span>
+          </h2>
           <p className={cn(
-            "text-xs",
+            "text-xs font-semibold",
             theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
           )}>{profile.company?.name || "Company"}</p>
         </div>
@@ -144,20 +150,23 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
         isCollapsed ? "w-0 overflow-hidden" : "w-52"
       )}
       style={{ 
-        backgroundColor: theme === 'dark' ? '#0f0f0f' : 'rgb(243 244 246 / 0.98)',
+        backgroundColor: theme === 'dark' ? '#0E141A' : 'rgb(240 243 246 / 0.95)',
         borderRightWidth: theme === 'dark' ? '1px' : '1px',
         borderRightStyle: 'solid',
-        borderRightColor: theme === 'dark' ? '#262626' : 'rgb(226 232 240 / 0.5)'
+        borderRightColor: theme === 'dark' ? '#1E2A38' : 'rgb(218 228 235 / 0.6)'
       }}
     >
       {/* Section Header */}
       <div className="flex h-16 shrink-0 flex-col justify-center px-6">
-        <h2 className={cn(
-          "text-lg font-semibold",
-          theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-        )}>TropiTrack</h2>
+        <h2 className="text-lg">
+          <span className="font-extrabold text-[#2596be]">Tropi</span>
+          <span className={cn(
+            "font-medium",
+            theme === 'dark' ? 'text-[#2596be]' : 'text-[#145369]'
+          )}>Track</span>
+        </h2>
         <p className={cn(
-          "text-xs",
+          "text-xs font-semibold",
           theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
         )}>{profile.company?.name || "Company"}</p>
       </div>
@@ -187,14 +196,34 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                         isActive
                           ? theme === 'dark'
-                            ? "bg-primary/20 text-gray-100 font-medium"
-                            : "bg-primary/10 text-gray-700 font-medium"
+                            ? "text-gray-100 font-medium"
+                            : "text-gray-800 font-medium"
                           : theme === 'dark'
-                            ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-                            : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                            ? "text-gray-400"
+                            : "text-gray-600"
                       )}
+                      style={isActive ? {
+                        backgroundColor: theme === 'dark' 
+                          ? 'rgba(37, 150, 190, 0.18)' 
+                          : 'rgba(37, 150, 190, 0.12)'
+                      } : undefined}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = theme === 'dark' 
+                            ? 'rgba(255, 255, 255, 0.05)' 
+                            : 'rgba(37, 150, 190, 0.06)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                      }}
                     >
-                      {Icon && <Icon className="h-4 w-4" />}
+                      {Icon && <Icon className={cn(
+                        "h-4 w-4 transition-colors",
+                        isActive && "text-[#2596be]"
+                      )} />}
                       <span className="flex-1">{link.title}</span>
                     </a>
                   )
@@ -225,14 +254,34 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                         isActive
                           ? theme === 'dark'
-                            ? "bg-primary/20 text-gray-100 font-medium"
-                            : "bg-primary/10 text-gray-700 font-medium"
+                            ? "text-gray-100 font-medium"
+                            : "text-gray-800 font-medium"
                           : theme === 'dark'
-                            ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-                            : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                            ? "text-gray-400"
+                            : "text-gray-600"
                       )}
+                      style={isActive ? {
+                        backgroundColor: theme === 'dark' 
+                          ? 'rgba(37, 150, 190, 0.18)' 
+                          : 'rgba(37, 150, 190, 0.12)'
+                      } : undefined}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = theme === 'dark' 
+                            ? 'rgba(255, 255, 255, 0.05)' 
+                            : 'rgba(37, 150, 190, 0.06)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                      }}
                     >
-                      {Icon && <Icon className="h-4 w-4" />}
+                      {Icon && <Icon className={cn(
+                        "h-4 w-4 transition-colors",
+                        isActive && "text-[#2596be]"
+                      )} />}
                       <span className="flex-1">{link.title}</span>
                     </a>
                   )
@@ -263,14 +312,34 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
                         "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                         isActive
                           ? theme === 'dark'
-                            ? "bg-primary/20 text-gray-100 font-medium"
-                            : "bg-primary/10 text-gray-700 font-medium"
+                            ? "text-gray-100 font-medium"
+                            : "text-gray-800 font-medium"
                           : theme === 'dark'
-                            ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-                            : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                            ? "text-gray-400"
+                            : "text-gray-600"
                       )}
+                      style={isActive ? {
+                        backgroundColor: theme === 'dark' 
+                          ? 'rgba(37, 150, 190, 0.18)' 
+                          : 'rgba(37, 150, 190, 0.12)'
+                      } : undefined}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = theme === 'dark' 
+                            ? 'rgba(255, 255, 255, 0.05)' 
+                            : 'rgba(37, 150, 190, 0.06)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                      }}
                     >
-                      {Icon && <Icon className="h-4 w-4" />}
+                      {Icon && <Icon className={cn(
+                        "h-4 w-4 transition-colors",
+                        isActive && "text-[#2596be]"
+                      )} />}
                       <span className="flex-1">{link.title}</span>
                     </a>
                   )
@@ -298,49 +367,97 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
             <a
               href="/dashboard/subscription"
               className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 relative z-10",
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                 pathname === "/dashboard/subscription" || pathname.startsWith("/dashboard/subscription")
                   ? theme === 'dark'
-                    ? "bg-primary/20 text-gray-100 font-medium"
-                    : "bg-primary/10 text-gray-700 font-medium"
+                    ? "text-gray-100"
+                    : "text-gray-800"
                   : theme === 'dark'
-                    ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-                    : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                    ? "text-gray-400"
+                    : "text-gray-600"
               )}
+              style={(pathname === "/dashboard/subscription" || pathname.startsWith("/dashboard/subscription")) ? {
+                backgroundColor: theme === 'dark' ? 'rgba(37, 150, 190, 0.18)' : 'rgba(37, 150, 190, 0.12)'
+              } : undefined}
+              onMouseEnter={(e) => {
+                if (!(pathname === "/dashboard/subscription" || pathname.startsWith("/dashboard/subscription"))) {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(37, 150, 190, 0.06)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!(pathname === "/dashboard/subscription" || pathname.startsWith("/dashboard/subscription"))) {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }
+              }}
             >
-              <CreditCard className="h-4 w-4" />
+              <CreditCard className={cn(
+                "h-4 w-4 transition-colors",
+                (pathname === "/dashboard/subscription" || pathname.startsWith("/dashboard/subscription")) && "text-[#2596be]"
+              )} />
               <span className="flex-1">Subscription</span>
             </a>
             <a
               href="/dashboard/organization"
               className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 relative z-10",
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                 pathname === "/dashboard/organization" || pathname.startsWith("/dashboard/organization")
                   ? theme === 'dark'
-                    ? "bg-primary/20 text-gray-100 font-medium"
-                    : "bg-primary/10 text-gray-700 font-medium"
+                    ? "text-gray-100"
+                    : "text-gray-800"
                   : theme === 'dark'
-                    ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-                    : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                    ? "text-gray-400"
+                    : "text-gray-600"
               )}
+              style={(pathname === "/dashboard/organization" || pathname.startsWith("/dashboard/organization")) ? {
+                backgroundColor: theme === 'dark' ? 'rgba(37, 150, 190, 0.18)' : 'rgba(37, 150, 190, 0.12)'
+              } : undefined}
+              onMouseEnter={(e) => {
+                if (!(pathname === "/dashboard/organization" || pathname.startsWith("/dashboard/organization"))) {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(37, 150, 190, 0.06)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!(pathname === "/dashboard/organization" || pathname.startsWith("/dashboard/organization"))) {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }
+              }}
             >
-              <Building className="h-4 w-4" />
+              <Building className={cn(
+                "h-4 w-4 transition-colors",
+                (pathname === "/dashboard/organization" || pathname.startsWith("/dashboard/organization")) && "text-[#2596be]"
+              )} />
               <span className="flex-1">Organization</span>
             </a>
             <a
               href="/dashboard/settings"
               className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 relative z-10",
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 relative z-10",
                 pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings")
                   ? theme === 'dark'
-                    ? "bg-primary/20 text-gray-100 font-medium"
-                    : "bg-primary/10 text-gray-700 font-medium"
+                    ? "text-gray-100"
+                    : "text-gray-800"
                   : theme === 'dark'
-                    ? "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-                    : "text-gray-600 hover:bg-sidebar-accent/50 hover:text-gray-900"
+                    ? "text-gray-400"
+                    : "text-gray-600"
               )}
+              style={(pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings")) ? {
+                backgroundColor: theme === 'dark' ? 'rgba(37, 150, 190, 0.18)' : 'rgba(37, 150, 190, 0.12)'
+              } : undefined}
+              onMouseEnter={(e) => {
+                if (!(pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings"))) {
+                  e.currentTarget.style.backgroundColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(37, 150, 190, 0.06)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!(pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings"))) {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }
+              }}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className={cn(
+                "h-4 w-4 transition-colors",
+                (pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings")) && "text-[#2596be]"
+              )} />
               <span className="flex-1">Settings</span>
             </a>
           </nav>
