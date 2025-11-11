@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
+import Image from "next/image"
 import {
   ChevronRight,
   PanelLeftClose,
@@ -104,11 +105,13 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
       <TooltipProvider delayDuration={200}>
         <div className="flex h-screen w-16 flex-col backdrop-blur-xl bg-gray-100 border-r border-gray-200">
           <div className="flex h-16 shrink-0 items-center justify-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{
-              background: 'linear-gradient(to bottom right, rgba(37, 150, 190, 0.2), rgba(37, 150, 190, 0.1))'
-            }}>
-              <span className="text-xl font-bold text-[#2596be]">T</span>
-            </div>
+              <Image
+              src="/images/tropitrack-logo.png"
+              alt="TropiTrack"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
           </div>
         </div>
       </TooltipProvider>
@@ -129,11 +132,13 @@ export function PrimarySidebar({ onSectionChange, isSecondarySidebarCollapsed = 
         {/* Logo/Brand */}
         <div className="flex h-16 shrink-0 items-center justify-center">
           <a href="/dashboard" className="flex items-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{
-              background: 'linear-gradient(to bottom right, rgba(37, 150, 190, 0.2), rgba(37, 150, 190, 0.1))'
-            }}>
-              <span className="text-xl font-bold text-[#2596be]">T</span>
-            </div>
+            <Image
+              src="/images/tropitrack-logo.png"
+              alt="TropiTrack"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
           </a>
         </div>
 

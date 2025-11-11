@@ -23,10 +23,13 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 flex h-20 items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">
-              <span className="font-bold text-[#2596be]">Tropi</span>
-              <span className="font-semibold text-[#145369]">Track</span>
-            </span>
+            <Image
+              src="/images/tropitrack-logo.png"
+              alt="TropiTrack"
+              width={80}
+              height={27}
+              className="object-contain"
+            />
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">

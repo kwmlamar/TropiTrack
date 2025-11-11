@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   House,
   Building2,
@@ -161,22 +162,13 @@ export function AppSidebar({ profile, ...props }: AppSidebarProps) {
                 className="data-[slot=sidebar-menu-button]:!py-2 data-[slot=sidebar-menu-button]:!px-2 bg-transparent hover:bg-sidebar-accent/10 transition-all duration-200 rounded-md"
               >
                 <a href="/dashboard" className="flex items-center gap-3">
-                  <div className="relative flex items-center">
-                    <span className="text-xl">
-                      <span className="font-extrabold text-[#2596be]">Tropi</span>
-                      <span className="font-medium text-[#145369]">Track</span>
-                    </span>
-                  </div>
-                  {isCollapsed && (
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-sidebar-foreground">
-                        TropiTrack
-                      </span>
-                      <span className="text-xs text-sidebar-foreground/60">
-                        Construction Suite
-                      </span>
-                    </div>
-                  )}
+                  <Image
+                    src="/images/tropitrack-logo.png"
+                    alt="TropiTrack"
+                    width={isCollapsed ? 140 : 100}
+                    height={isCollapsed ? 46 : 33}
+                    className="object-contain"
+                  />
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
