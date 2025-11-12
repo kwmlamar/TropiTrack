@@ -61,7 +61,7 @@ export function WorkerRowsMobile({
 
   return (
     <div 
-      className="lg:hidden h-full overflow-y-auto space-y-4 p-4"
+      className="lg:hidden h-full overflow-y-auto space-y-4 px-4 pt-4 pb-0"
       style={{
         backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
       }}

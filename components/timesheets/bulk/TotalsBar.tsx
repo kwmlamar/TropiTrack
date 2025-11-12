@@ -1,8 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Calculator, Save, Loader2, Keyboard } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Calculator } from "lucide-react";
 import type { TimesheetTotals } from "@/lib/timesheets/calc";
 
 interface TotalsBarProps {
@@ -15,11 +14,10 @@ interface TotalsBarProps {
 
 /**
  * Summary bar showing bulk timesheet totals
- * Displays workers, days, total entries, hours, cost, and submit button
+ * Displays workers, days, total entries, hours, and cost
  */
-export function TotalsBar({ totals, isSubmitting = false, onSubmit, entriesCount = 0, datesCount = 0 }: TotalsBarProps) {
+export function TotalsBar({ totals }: TotalsBarProps) {
   const { theme } = useTheme();
-  const totalTimesheets = entriesCount * datesCount;
 
   return (
     <div
@@ -124,40 +122,6 @@ export function TotalsBar({ totals, isSubmitting = false, onSubmit, entriesCount
           </span>
         </div>
       </div>
-      
-      {/* Submit Button */}
-      {onSubmit && totalTimesheets > 0 && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button 
-            type="submit"
-            onClick={onSubmit}
-            disabled={isSubmitting || entriesCount === 0}
-            className="relative overflow-hidden h-11 px-6 font-bold bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all"
-            aria-label={`Create ${totalTimesheets} timesheet entries`}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Create {totalTimesheets} {totalTimesheets === 1 ? 'Timesheet' : 'Timesheets'}
-              </>
-            )}
-          </Button>
-          
-          {/* Keyboard shortcut hint */}
-          <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Keyboard className="h-3 w-3" />
-            <span>or press</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">Ctrl</kbd>
-            <span>+</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px]">S</kbd>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

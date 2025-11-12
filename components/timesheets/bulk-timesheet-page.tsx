@@ -9,7 +9,6 @@ import { BulkTimesheetForm } from "@/components/timesheets/bulk/BulkTimesheetFor
 import { TimesheetSelectionSection } from "@/components/timesheets/timesheet-selection-section"
 import { useBulkTimesheetState } from "@/components/timesheets/bulk/useBulkTimesheetState"
 import { useCompanyData } from "@/lib/hooks/use-company-data"
-import { LoadingSkeleton } from "@/components/ui/loading-state"
 import type { TimesheetWithDetails } from "@/lib/types"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -57,9 +56,71 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
     }, REDIRECT_DELAY_MS)
   }
 
-  // Loading state with skeleton UI
+  // Loading state with optimized skeleton UI
   if (loading) {
-    return <LoadingSkeleton />
+    return (
+      <div 
+        className="flex flex-col overflow-hidden" 
+        style={{ 
+          minHeight: 'calc(100vh - 64px)',
+          backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB',
+          marginTop: '-0.75rem',
+          marginBottom: '-1.5rem'
+        }}
+      >
+        {/* Selection Section Skeleton */}
+        <div className="shrink-0 w-full border-b backdrop-blur-sm border-slate-200/50 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+          <div className="pl-6 pr-6 pt-2 pb-3 md:px-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div 
+                className="h-10 w-32 rounded animate-pulse"
+                style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#e5e7eb' }}
+              />
+              <div 
+                className="h-10 w-32 rounded animate-pulse"
+                style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#e5e7eb' }}
+              />
+              <div 
+                className="h-10 w-32 rounded animate-pulse"
+                style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#e5e7eb' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="flex-1 min-h-0 px-4 lg:px-6 py-4">
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div 
+                key={i}
+                className="rounded-xl p-6"
+                style={{
+                  backgroundColor: theme === 'dark' ? '#0E141A' : '#FFFFFF',
+                  animation: `fadeIn 0.3s ease-out ${i * 0.1}s both`
+                }}
+              >
+                <div className="space-y-3">
+                  <div 
+                    className="h-6 w-40 rounded animate-pulse"
+                    style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#e5e7eb' }}
+                  />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[1, 2, 3, 4].map((j) => (
+                      <div 
+                        key={j}
+                        className="h-11 rounded animate-pulse"
+                        style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#e5e7eb' }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Error state with retry functionality
@@ -95,12 +156,14 @@ export default function BulkTimesheetPage({ user }: BulkTimesheetPageProps) {
     <div 
       className="flex flex-col overflow-hidden" 
       style={{ 
-        height: 'calc(100vh - 120px)',
-        backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
+        minHeight: 'calc(100vh - 64px)',
+        backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB',
+        marginTop: '-0.75rem',
+        marginBottom: '-1.5rem'
       }}
     >
       {/* Selection Section - Fixed at top */}
-      <div className="shrink-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards">
+      <div className="shrink-0">
         <TimesheetSelectionSection
           projects={projects}
           workers={workers}

@@ -97,6 +97,13 @@ export function useSyncSelectedWorkers<TFormData extends { entries: any[] }>({
       // Add newly selected workers
       if (selectedWorkers.size > 0) {
         addSelectedWorkers();
+        
+        // Prevent auto-focus by blurring any active element
+        setTimeout(() => {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        }, 0);
       }
       
       // Remove deselected workers

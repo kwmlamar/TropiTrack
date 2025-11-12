@@ -118,7 +118,7 @@ export function WorkerRowsTable({
           backgroundColor: theme === 'dark' ? '#0A0F14' : '#F9FAFB'
         }}
       >
-        <div className="px-4 lg:px-6 py-4">
+        <div className="px-4 lg:px-6 pt-4 pb-0">
           <table className="w-full border-separate" style={{ borderSpacing: '0 10px' }}>
             <thead
               className="sticky z-50"
@@ -237,7 +237,6 @@ export function WorkerRowsTable({
                         role="row"
                         aria-rowindex={index + 1}
                         aria-selected={isSelected}
-                        tabIndex={0}
                         className="transition-all duration-200 group animate-in fade-in slide-in-from-left-4"
                         style={{
                           backgroundColor: theme === 'dark' ? '#0E141A' : '#FFFFFF',
@@ -264,12 +263,6 @@ export function WorkerRowsTable({
                           e.currentTarget.style.boxShadow = theme === 'dark' 
                             ? '0 2px 4px 0 rgba(0, 0, 0, 0.3)' 
                             : '0 2px 4px 0 rgba(0, 0, 0, 0.08)'
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === ' ') {
-                            e.preventDefault()
-                            toggleRowSelection(index)
-                          }
                         }}
                       >
                       {/* Checkbox cell */}

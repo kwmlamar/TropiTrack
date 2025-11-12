@@ -11,6 +11,7 @@ import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
 import { ReportsTabsProvider } from "@/context/reports-tabs-context"
+import { SidebarProvider, useSidebarCollapse } from "@/context/sidebar-context"
 
 import { OnboardingCheck } from "@/components/onboarding/onboarding-check"
 import { ReportsHeaderWrapper } from "@/components/reports/reports-header-wrapper"
@@ -29,7 +30,6 @@ type DashboardLayoutClientProps = {
 export function DashboardLayoutClient({ children, title, profile, fullWidth = false, headerActions, showSettingsTabs = false, activeSettingsTab = "general", onSettingsTabChange }: DashboardLayoutClientProps) {
   const { theme } = useTheme()
   const [selectedSection, setSelectedSection] = useState<string | null>(null)
-  const [isSecondarySidebarCollapsed, setIsSecondarySidebarCollapsed] = useState(false)
   
   // Determine if this is the time logs or reports page
   const isTimeLogs = title === "Time Logs";
@@ -39,6 +39,59 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
   const showDateRangePicker = false;
   // Show report tabs only on reports page
   const showReportsTabs = isReports;
+
+  return (
+    <SidebarProvider>
+      <DashboardLayoutContent 
+        theme={theme}
+        title={title}
+        profile={profile}
+        fullWidth={fullWidth}
+        headerActions={headerActions}
+        showSettingsTabs={showSettingsTabs}
+        activeSettingsTab={activeSettingsTab}
+        onSettingsTabChange={onSettingsTabChange}
+        isTimeLogs={isTimeLogs}
+        isReports={isReports}
+        showTimesheetsDropdown={showTimesheetsDropdown}
+        showDateRangePicker={showDateRangePicker}
+        showReportsTabs={showReportsTabs}
+        selectedSection={selectedSection}
+        setSelectedSection={setSelectedSection}
+      >
+        {children}
+      </DashboardLayoutContent>
+    </SidebarProvider>
+  )
+}
+
+function DashboardLayoutContent({ 
+  children, 
+  theme, 
+  title, 
+  profile, 
+  fullWidth, 
+  headerActions, 
+  showSettingsTabs, 
+  activeSettingsTab, 
+  onSettingsTabChange,
+  isReports,
+  showTimesheetsDropdown,
+  showDateRangePicker,
+  showReportsTabs,
+  selectedSection,
+  setSelectedSection
+}: DashboardLayoutClientProps & {
+  theme: string | undefined
+  isTimeLogs: boolean
+  isReports: boolean
+  showTimesheetsDropdown: boolean
+  showDateRangePicker: boolean
+  showReportsTabs: boolean
+  selectedSection: string | null
+  setSelectedSection: (section: string | null) => void
+}) {
+  const { isSecondarySidebarCollapsed, setIsSecondarySidebarCollapsed } = useSidebarCollapse()
 
   const layoutContent = (
     <div className="flex h-screen overflow-hidden">

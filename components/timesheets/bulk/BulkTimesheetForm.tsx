@@ -24,6 +24,7 @@ import { getPeriodStartDay } from "@/lib/timesheets/payrollRules";
 import { useSyncSelectedWorkers } from "@/hooks/timesheets/useSyncSelectedWorkers";
 import { useCopyToAll } from "@/hooks/timesheets/useCopyToAll";
 import { useCarryDown } from "@/hooks/timesheets/useCarryDown";
+import { useSidebarCollapse } from "@/context/sidebar-context";
 
 // Schema for a single timesheet entry
 const timesheetEntrySchema = z.object({
@@ -77,6 +78,17 @@ export function BulkTimesheetForm({
   const { paymentSchedule } = usePayrollSettings();
   const { requireApproval, settings } = useTimesheetSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionProgress, setSubmissionProgress] = useState(0);
+  const { isSecondarySidebarCollapsed } = useSidebarCollapse();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Track mobile state
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Initialize form
   const form = useForm<BulkTimesheetFormData>({
@@ -182,23 +194,48 @@ export function BulkTimesheetForm({
     );
   }, [watchedEntries, watchedSelectedDates]);
 
-  // Handle form submission
+  // Optimized batch processing with controlled concurrency
+  const processBatch = async <T, R>(
+    items: T[],
+    batchSize: number,
+    processFn: (item: T) => Promise<R>,
+    onProgress?: (completed: number, total: number) => void
+  ): Promise<R[]> => {
+    const results: R[] = [];
+    
+    // Process in batches to prevent overwhelming server and browser
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map(processFn));
+      results.push(...batchResults);
+      
+      // Update progress
+      if (onProgress) {
+        const completed = Math.min(i + batchSize, items.length);
+        onProgress(completed, items.length);
+      }
+      
+      // Small delay between batches to prevent rate limiting (only if more batches remaining)
+      if (i + batchSize < items.length) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+    
+    return results;
+  };
+
+  // Handle form submission with optimized batching
   const onSubmit = async (data: BulkTimesheetFormData) => {
     setIsSubmitting(true);
+    setSubmissionProgress(0);
     
     try {
-      // Create timesheet entries for each worker × each date combination
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const timesheetPromises: Promise<any>[] = [];
-      const totalEntries = data.entries.length * data.selected_dates.length;
+      // Prepare all timesheet data
+      const timesheetDataArray: CreateTimesheetInput[] = [];
       
-      toast.info(`Creating ${totalEntries} timesheet entries...`, {
-        duration: 2000
-      });
-
       data.entries.forEach((entry) => {
         data.selected_dates.forEach((date) => {
-          const timesheetData: CreateTimesheetInput = {
+          timesheetDataArray.push({
             date: format(date, "yyyy-MM-dd"),
             project_id: data.project_id,
             worker_id: entry.worker_id,
@@ -210,66 +247,78 @@ export function BulkTimesheetForm({
             overtime_hours: 0,
             total_hours: 0,
             total_pay: 0,
+            hourly_rate: entry.hourly_rate,
             supervisor_approval: requireApproval ? "pending" : "approved",
             notes: entry.notes || "",
-          };
-
-          timesheetPromises.push(createTimesheet(userId, timesheetData));
+          });
         });
       });
 
-      const results = await Promise.all(timesheetPromises);
+      const totalEntries = timesheetDataArray.length;
+      
+      toast.info(`Creating ${totalEntries} timesheet entries...`, {
+        duration: 2000
+      });
+
+      // Process timesheets in batches of 25 - optimal for most servers
+      const BATCH_SIZE = 25;
+      const results = await processBatch(
+        timesheetDataArray,
+        BATCH_SIZE,
+        (timesheetData) => createTimesheet(userId, timesheetData),
+        (completed, total) => {
+          const progress = Math.round((completed / total) * 100);
+          setSubmissionProgress(progress);
+        }
+      );
 
       const failures = results.filter((result) => !result.success);
+      
       if (failures.length > 0) {
         console.error(`${failures.length} out of ${results.length} entries failed to submit.`);
+        toast.error(`${failures.length} entries failed. ${results.length - failures.length} created successfully.`);
       } else {
-        // If approval is not required, auto-approve and generate payroll
-        if (!requireApproval) {
-          console.log('[BulkTimesheetForm] Auto-approving timesheets and generating payroll...');
+        toast.success(`Successfully created ${results.length} timesheet entries!`);
+      }
+      
+      // If approval is not required, auto-approve with batching
+      if (!requireApproval && failures.length < results.length) {
+        console.log('[BulkTimesheetForm] Auto-approving timesheets...');
 
-          const successfulTimesheets = results
-            .filter((result) => result.success && result.data)
-            .map((result) => result.data);
+        const successfulTimesheets = results
+          .filter((result) => result.success && result.data)
+          .map((result) => result.data);
 
-          // Process auto-approval for each timesheet
-          const approvalPromises = successfulTimesheets.map(async (timesheet) => {
+        // Process approvals in batches of 20
+        const APPROVAL_BATCH_SIZE = 20;
+        await processBatch(
+          successfulTimesheets,
+          APPROVAL_BATCH_SIZE,
+          async (timesheet) => {
             try {
-              const approvalResult = await processTimesheetApproval(
+              return await processTimesheetApproval(
                 timesheet.id,
                 userId,
                 timesheet.worker_id,
                 timesheet.date,
                 getPeriodStartDay(paymentSchedule)
               );
-
-              if (!approvalResult.success) {
-                console.warn(`[BulkTimesheetForm] Failed to auto-approve timesheet ${timesheet.id}:`, approvalResult.error);
-              }
-
-              return approvalResult;
             } catch (error) {
-              console.error(`[BulkTimesheetForm] Error processing auto-approval for timesheet ${timesheet.id}:`, error);
+              console.error(`Error auto-approving timesheet ${timesheet.id}:`, error);
               return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
             }
-          });
-
-          const approvalResults = await Promise.all(approvalPromises);
-          const approvalFailures = approvalResults.filter((result) => !result.success);
-
-          if (approvalFailures.length > 0) {
-            console.warn(`[BulkTimesheetForm] ${approvalFailures.length} timesheets failed auto-approval`);
           }
-        }
-
-        const successData = results.map((result) => result.data);
-        onSuccess?.(successData);
+        );
       }
+
+      const successData = results.filter(r => r.success).map((result) => result.data);
+      onSuccess?.(successData);
     } catch (error) {
       console.error("Error submitting timesheets:", error);
       toast.error("Failed to create timesheets. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setSubmissionProgress(0);
     }
   };
 
@@ -304,25 +353,31 @@ export function BulkTimesheetForm({
                     }}
                   />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-bold text-lg text-foreground">Creating Timesheets</h3>
                   <p className="text-sm text-muted-foreground">
                     Processing {fields.length * (watchedSelectedDates?.length || 0)} entries...
                   </p>
                 </div>
               </div>
-              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-300 animate-pulse" 
-                  style={{ width: '70%' }}
-                />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Progress</span>
+                  <span className="font-bold">{submissionProgress}%</span>
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300" 
+                    style={{ width: `${submissionProgress}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* Scrollable Table Container */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden pb-12">
           <WorkerRowsTable
             control={form.control}
             fields={fields}
@@ -334,8 +389,13 @@ export function BulkTimesheetForm({
           />
         </div>
 
-        {/* Sticky Summary Bar */}
-        <div className="sticky bottom-0 z-10">
+        {/* Fixed Summary Bar */}
+        <div 
+          className="fixed bottom-0 right-0 z-50 transition-all duration-300"
+          style={{
+            left: isMobile ? '0' : (isSecondarySidebarCollapsed ? '64px' : '272px')
+          }}
+        >
           <TotalsBar 
             totals={totals} 
             isSubmitting={isSubmitting}

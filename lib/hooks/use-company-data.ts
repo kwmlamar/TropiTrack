@@ -14,16 +14,37 @@ interface UseCompanyDataReturn extends CompanyDataState {
   refetch: () => Promise<void>
 }
 
+// Cache for company data to prevent redundant fetches
+const companyDataCache = new Map<string, {
+  workers: Worker[]
+  projects: Project[]
+  timestamp: number
+}>()
+
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 /**
  * Shared hook for fetching workers and projects for a company
- * Includes loading state, error handling, and cleanup logic
+ * Includes loading state, error handling, cleanup logic, and caching
  */
 export function useCompanyData(userId: string): UseCompanyDataReturn {
-  const [state, setState] = useState<CompanyDataState>({
-    workers: [],
-    projects: [],
-    loading: true,
-    error: null
+  const [state, setState] = useState<CompanyDataState>(() => {
+    // Check cache on init for instant data
+    const cached = companyDataCache.get(userId)
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return {
+        workers: cached.workers,
+        projects: cached.projects,
+        loading: false,
+        error: null
+      }
+    }
+    return {
+      workers: [],
+      projects: [],
+      loading: true,
+      error: null
+    }
   })
 
   useEffect(() => {
@@ -31,6 +52,13 @@ export function useCompanyData(userId: string): UseCompanyDataReturn {
     const abortController = new AbortController()
 
     const fetchData = async () => {
+      // Check cache first
+      const cached = companyDataCache.get(userId)
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        // Use cached data, no need to fetch
+        return
+      }
+
       setState(prev => ({ ...prev, loading: true, error: null }))
       
       try {
@@ -40,6 +68,13 @@ export function useCompanyData(userId: string): UseCompanyDataReturn {
         ])
         
         if (mounted && !abortController.signal.aborted) {
+          // Cache the data
+          companyDataCache.set(userId, {
+            workers: workersData,
+            projects: projectsData,
+            timestamp: Date.now()
+          })
+
           setState({
             workers: workersData,
             projects: projectsData,
@@ -76,6 +111,13 @@ export function useCompanyData(userId: string): UseCompanyDataReturn {
         fetchProjectsForCompany(userId)
       ])
       
+      // Update cache
+      companyDataCache.set(userId, {
+        workers: workersData,
+        projects: projectsData,
+        timestamp: Date.now()
+      })
+      
       setState({
         workers: workersData,
         projects: projectsData,
@@ -93,5 +135,14 @@ export function useCompanyData(userId: string): UseCompanyDataReturn {
   }
 
   return { ...state, refetch }
+}
+
+// Export function to clear cache when needed (e.g., after creating new worker/project)
+export function clearCompanyDataCache(userId?: string) {
+  if (userId) {
+    companyDataCache.delete(userId)
+  } else {
+    companyDataCache.clear()
+  }
 }
 

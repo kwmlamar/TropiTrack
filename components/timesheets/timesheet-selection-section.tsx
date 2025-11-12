@@ -58,16 +58,19 @@ export function TimesheetSelectionSection({
   return (
     <div className="w-full border-b backdrop-blur-sm border-slate-200/50 dark:border-neutral-800 bg-white dark:bg-neutral-900">
       <div className="pl-6 pr-6 pt-2 pb-3 md:px-2">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           
           {/* Project Selection */}
-          <div className="space-y-2">
+          <div>
             <Popover open={projectSelectOpen} onOpenChange={setProjectSelectOpen}>
               <PopoverTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start text-left font-semibold text-base hover:bg-transparent"
-                  style={{ color: buttonTextColor }}
+                  className="justify-start text-left font-semibold text-base hover:bg-transparent transition-all duration-200"
+                  style={{ 
+                    color: buttonTextColor,
+                    backgroundColor: selectedProject ? 'rgba(37, 150, 190, 0.1)' : 'transparent'
+                  }}
                 >
                   <div className={`rounded p-1 mr-2 flex-shrink-0 ${
                     selectedProject 
@@ -76,7 +79,7 @@ export function TimesheetSelectionSection({
                   }`}>
                     <FolderOpen className="h-4 w-4 text-white" />
                   </div>
-                  <div className="truncate max-w-[150px]">
+                  <div className="whitespace-nowrap">
                     {projects.find(p => p.id === selectedProject)?.name || "Project"}
                   </div>
                 </Button>
@@ -112,13 +115,16 @@ export function TimesheetSelectionSection({
           </div>
 
           {/* Date Selection */}
-          <div className="space-y-2">
+          <div>
             <Popover open={dateSelectOpen} onOpenChange={setDateSelectOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-left font-semibold text-base hover:bg-transparent"
-                  style={{ color: buttonTextColor }}
+                  className="justify-start text-left font-semibold text-base hover:bg-transparent transition-all duration-200"
+                  style={{ 
+                    color: buttonTextColor,
+                    backgroundColor: selectedDates.length > 0 ? 'rgba(37, 150, 190, 0.1)' : 'transparent'
+                  }}
                 >
                   <div className={`rounded p-1 mr-2 flex-shrink-0 ${
                     selectedDates.length > 0
@@ -127,7 +133,7 @@ export function TimesheetSelectionSection({
                   }`}>
                     <CalendarIcon className="h-4 w-4 text-white" />
                   </div>
-                  <div className="truncate max-w-[150px]">
+                  <div className="whitespace-nowrap">
                     Dates {selectedDates.length > 0 ? `(${selectedDates.length})` : ''}
                   </div>
                 </Button>
@@ -165,19 +171,26 @@ export function TimesheetSelectionSection({
           </div>
 
           {/* Worker Selection */}
-          <div className="space-y-2">
+          <div>
             <Popover open={workerSelectOpen} onOpenChange={setWorkerSelectOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-left font-semibold text-base hover:bg-transparent"
-                  style={{ color: buttonTextColor }}
+                  className="justify-start text-left font-semibold text-base hover:bg-transparent transition-all duration-200"
+                  style={{ 
+                    color: buttonTextColor,
+                    backgroundColor: selectedWorkers.size > 0 ? 'rgba(37, 150, 190, 0.1)' : 'transparent'
+                  }}
                 >
-                  <div className="bg-gray-300 dark:bg-gray-700 rounded p-1 mr-2 flex-shrink-0">
+                  <div className={`rounded p-1 mr-2 flex-shrink-0 ${
+                    selectedWorkers.size > 0
+                      ? "bg-primary" 
+                      : "bg-gray-300 dark:bg-gray-700"
+                  }`}>
                     <Users className="h-4 w-4 text-white" />
                   </div>
-                  <div className="truncate max-w-[150px]">
-                    Workers
+                  <div className="whitespace-nowrap">
+                    Workers {selectedWorkers.size > 0 ? `(${selectedWorkers.size})` : ''}
                   </div>
                 </Button>
               </PopoverTrigger>
