@@ -133,36 +133,36 @@ export function SiteHeader({
         </div>
 
         {/* Center Section - Date Range Picker or Report Tabs */}
-        <div className="flex-1 flex justify-center min-w-0">
+        <div className="flex-1 flex justify-start min-w-0">
           {showReportsTabs ? (
-            <Tabs value={activeReportTab} onValueChange={onReportTabChange} className="w-full max-w-2xl">
-              <TabsList className="grid w-full grid-cols-4 bg-transparent p-0 h-auto">
+            <Tabs value={activeReportTab} onValueChange={onReportTabChange} className="w-auto">
+              <TabsList className="grid w-auto grid-cols-4 bg-transparent p-0 h-auto gap-1 sm:gap-2">
                 <TabsTrigger 
                   value="summary" 
-                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
-                  <BarChart3 className="h-4 w-4" />
+                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Summary</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="detailed" 
-                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
-                  <TrendingUp className="h-4 w-4" />
+                  <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Detailed</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="workload" 
-                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
-                  <Users className="h-4 w-4" />
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Workload</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="profitability" 
-                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none border-b-2 border-transparent [&[data-state=active]_svg]:text-muted-foreground"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
-                  <DollarSign className="h-4 w-4" />
+                  <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Profitability</span>
                 </TabsTrigger>
               </TabsList>
