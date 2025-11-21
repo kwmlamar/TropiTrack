@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
-import { LeadNotificationEmail, WelcomeEmail } from './templates';
+import type { Invoice } from '@/lib/types/invoice';
+import { LeadNotificationEmail, WelcomeEmail, InvoiceEmailTemplate } from './templates';
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -68,6 +69,55 @@ export class EmailService {
     } catch (error) {
       console.error('Error sending welcome email:', error);
       return { success: false, error: 'Failed to send welcome email' };
+    }
+  }
+
+  /**
+   * Send invoice email with optional PDF attachment
+   */
+  static async sendInvoiceEmail({
+    invoice,
+    to,
+    message,
+    pdfBuffer,
+    subject,
+  }: {
+    invoice: Invoice
+    to: string
+    message?: string
+    pdfBuffer?: Buffer
+    subject?: string
+  }) {
+    try {
+      const html = InvoiceEmailTemplate({ invoice, message })
+
+      const attachments = pdfBuffer
+        ? [
+            {
+              filename: `invoice-${invoice.invoice_number}.pdf`,
+              content: pdfBuffer.toString("base64"),
+              type: "application/pdf",
+            },
+          ]
+        : undefined
+
+      const { error } = await resend.emails.send({
+        from: 'TropiTrack <noreply@tropitrack.org>',
+        to: [to],
+        subject: subject || `Invoice ${invoice.invoice_number}`,
+        html,
+        attachments,
+      })
+
+      if (error) {
+        console.error('Error sending invoice email:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error sending invoice email:', error);
+      return { success: false, error: 'Failed to send invoice email' };
     }
   }
 

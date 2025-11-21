@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { 
+import {
   Clock,
   BarChart3,
   ClipboardCheck,
@@ -14,6 +14,7 @@ import {
   CreditCard,
   Building,
   Settings,
+  Receipt,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -55,7 +56,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
       setCurrentSection("track")
     } else if (pathname.includes("/reports") || pathname.includes("/approvals")) {
       setCurrentSection("analyze")
-    } else if (pathname.includes("/payroll") || pathname.includes("/projects") || pathname.includes("/clients") || pathname.includes("/workers")) {
+    } else if (pathname.includes("/payroll") || pathname.includes("/projects") || pathname.includes("/clients") || pathname.includes("/workers") || pathname.includes("/invoices")) {
       setCurrentSection("manage")
     } else {
       setCurrentSection("track") // Default to track section
@@ -83,6 +84,7 @@ export function SecondarySidebar({ profile, section, isCollapsed = false }: Seco
         { title: "Projects", href: "/dashboard/projects", icon: FolderKanban },
         { title: "Clients", href: "/dashboard/clients", icon: Building2 },
         { title: "Workers", href: "/dashboard/workers", icon: Users },
+        { title: "Invoices", href: "/dashboard/invoices", icon: Receipt },
       ],
     },
   }

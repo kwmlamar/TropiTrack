@@ -14,6 +14,7 @@ import { ProjectDetailsSection } from "@/components/projects/project-details-sec
 import { TeamMembersClient } from "@/components/projects/team-members-client";
 import { ProjectDocumentsNew } from "@/components/projects/project-documents-new";
 import { ProjectQRCodes } from "@/components/projects/project-qr-codes";
+import { ProjectInvoices } from "@/components/projects/project-invoices";
 import { getWorkers } from "@/lib/data/workers";
 
 // Helper function to get color based on percentage
@@ -94,6 +95,18 @@ export default async function ProjectPage({
   const payrollsResponse = await getPayrollsByProject(id);
   const payrolls = payrollsResponse.data || [];
 
+  const { data: projectInvoices } = await supabase
+    .from("invoices")
+    .select(`
+      *,
+      client:clients(id, name, company),
+      payments:invoice_payments(id, amount),
+      line_items:invoice_line_items(id, total)
+    `)
+    .eq("company_id", profile.company_id)
+    .eq("project_id", id)
+    .order("issue_date", { ascending: false });
+
   // Calculate actual costs from confirmed payroll
   const actualPayrollCost = payrolls.reduce((total, payroll) => total + (payroll.gross_pay || 0), 0);
   const actualOtherCosts = projectTransactions.reduce((total, transaction) => total + transaction.amount, 0);
@@ -165,6 +178,14 @@ export default async function ProjectPage({
                   className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
                 >
                   Documents
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="invoices"
+                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
+                >
+                  Invoices
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
                 </TabsTrigger>
               </TabsList>
@@ -265,6 +286,14 @@ export default async function ProjectPage({
 
             <TabsContent value="documents" className="container mx-auto py-4 space-y-6">
               <ProjectDocumentsNew projectId={id} />
+            </TabsContent>
+
+            <TabsContent value="invoices" className="container mx-auto py-4 space-y-6">
+              <ProjectInvoices
+                invoices={projectInvoices || []}
+                projectId={id}
+                clientId={project.client_id}
+              />
             </TabsContent>
           </Tabs>
         </div>

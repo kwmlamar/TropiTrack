@@ -9,11 +9,11 @@ import { getPayrollSettings } from "@/lib/data/payroll-settings";
 function mapPayrollRecord(data: any): PayrollRecord {
   const workerInfo = Array.isArray(data.worker) && data.worker.length > 0 
     ? data.worker[0] as { id: string; name: string; hourly_rate?: number; position?: string; department?: string; }
-    : null;
+    : (data.worker ? data.worker as { id: string; name: string; hourly_rate?: number; position?: string; department?: string; } : null);
 
-  const projectInfo = data.projects
-    ? data.projects as { id: string; name: string; }
-    : null;
+  const projectInfo = Array.isArray(data.projects) && data.projects.length > 0
+    ? data.projects[0] as { id: string; name: string; }
+    : (data.projects ? data.projects as { id: string; name: string; } : null);
 
   const mapped: PayrollRecord = {
     id: data.id,
@@ -101,7 +101,36 @@ export async function getPayrolls(
     }
 
     // Optimize data mapping
-    const payrolls = data ? data.map(mapPayrollRecord) : [];
+    const mappedPayrolls = data ? data.map(mapPayrollRecord) : [];
+
+    // Deduplicate payroll records by worker_id and pay period
+    // Group by worker_id, pay_period_start, and pay_period_end
+    const payrollMap = new Map<string, PayrollRecord>();
+    
+    mappedPayrolls.forEach((payroll) => {
+      // Create a unique key for worker + pay period
+      const key = `${payroll.worker_id}-${payroll.pay_period_start}-${payroll.pay_period_end}`;
+      
+      const existing = payrollMap.get(key);
+      
+      if (!existing) {
+        // First record for this worker + period, add it
+        payrollMap.set(key, payroll);
+      } else {
+        // Duplicate found - keep the most recent one (by updated_at, then created_at)
+        const existingDate = new Date(existing.updated_at || existing.created_at || 0);
+        const currentDate = new Date(payroll.updated_at || payroll.created_at || 0);
+        
+        if (currentDate > existingDate) {
+          // Current record is more recent, replace it
+          payrollMap.set(key, payroll);
+        }
+        // Otherwise, keep the existing record
+      }
+    });
+
+    // Convert map back to array
+    const payrolls = Array.from(payrollMap.values());
 
     return { data: payrolls, error: null, success: true };
   } catch (error) {
@@ -821,7 +850,36 @@ export async function getPayrollsByProject(
     }
 
     // Optimize data mapping
-    const payrolls = data ? data.map(mapPayrollRecord) : [];
+    const mappedPayrolls = data ? data.map(mapPayrollRecord) : [];
+
+    // Deduplicate payroll records by worker_id and pay period
+    // Group by worker_id, pay_period_start, and pay_period_end
+    const payrollMap = new Map<string, PayrollRecord>();
+    
+    mappedPayrolls.forEach((payroll) => {
+      // Create a unique key for worker + pay period
+      const key = `${payroll.worker_id}-${payroll.pay_period_start}-${payroll.pay_period_end}`;
+      
+      const existing = payrollMap.get(key);
+      
+      if (!existing) {
+        // First record for this worker + period, add it
+        payrollMap.set(key, payroll);
+      } else {
+        // Duplicate found - keep the most recent one (by updated_at, then created_at)
+        const existingDate = new Date(existing.updated_at || existing.created_at || 0);
+        const currentDate = new Date(payroll.updated_at || payroll.created_at || 0);
+        
+        if (currentDate > existingDate) {
+          // Current record is more recent, replace it
+          payrollMap.set(key, payroll);
+        }
+        // Otherwise, keep the existing record
+      }
+    });
+
+    // Convert map back to array
+    const payrolls = Array.from(payrollMap.values());
 
     return { data: payrolls, error: null, success: true };
   } catch (error) {

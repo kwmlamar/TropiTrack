@@ -136,6 +136,8 @@ export const LeadNotificationEmail = (lead: Lead): string => `
 </html>
 `;
 
+import type { Invoice } from "@/lib/types/invoice"
+
 export const WelcomeEmail = (lead: Lead): string => `
 <!DOCTYPE html>
 <html>
@@ -257,3 +259,42 @@ export const WelcomeEmail = (lead: Lead): string => `
 </body>
 </html>
 `;
+
+export const InvoiceEmailTemplate = ({
+  invoice,
+  message,
+}: {
+  invoice: Invoice
+  message?: string
+}): string => `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice ${invoice.invoice_number}</title>
+  </head>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; padding: 24px;">
+    <table style="max-width: 640px; margin: 0 auto; width: 100%; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding: 32px;">
+          <p style="margin: 0 0 16px; color: #0f172a;">Hello ${invoice.client?.name || ""},</p>
+          ${
+            message
+              ? `<p style="margin: 0 0 16px; color: #475569;">${message}</p>`
+              : `<p style="margin: 0 0 16px; color: #475569;">Please find your invoice details below.</p>`
+          }
+          <div style="margin: 24px 0; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+            <p style="margin: 0 0 8px; font-weight: 600; color: #0f172a;">Invoice #${invoice.invoice_number}</p>
+            <p style="margin: 0 0 4px; color: #475569;">Amount Due: <strong>$${Number(invoice.total_amount).toFixed(2)}</strong></p>
+            <p style="margin: 0 0 4px; color: #475569;">Status: <strong>${invoice.status.toUpperCase()}</strong></p>
+            <p style="margin: 0; color: #475569;">Due Date: <strong>${invoice.due_date}</strong></p>
+          </div>
+          <p style="margin: 0 0 16px; color: #475569;">A PDF copy of this invoice is attached for your records.</p>
+          <p style="margin: 0; color: #64748b;">Thank you,<br />The TropiTrack Team</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`
