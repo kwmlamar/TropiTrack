@@ -1,20 +1,22 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { LeadCaptureForm } from "@/components/lead-capture-form"
-import { Clock, Users, Smartphone, CheckCircle, ArrowRight, Building2, MapPin, ClipboardCheck } from "lucide-react"
+import { Clock, Users, Smartphone, CheckCircle, ArrowRight, Building2, MapPin, ClipboardCheck, Menu, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      {/* Free Banner */}
+      {/* Pricing Banner */}
       <div className="bg-[#2596be] border-b border-[#2596be]">
         <div className="container mx-auto px-4 py-3 text-center">
           <p className="text-sm md:text-base text-white font-medium">
-            <span className="font-bold">Currently free</span> for Bahamian construction companies testing the platform 🇧🇸
+            Simple pricing starting at <span className="font-bold">$49/month</span> for Bahamian construction companies 🇧🇸
           </p>
         </div>
       </div>
@@ -35,6 +37,9 @@ export default function Home() {
             <Link href="#features" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
               Features
             </Link>
+            <Link href="#pricing" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
+              Pricing
+            </Link>
             <Link href="#why-tropitrack" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
               Why TropiTrack
             </Link>
@@ -44,13 +49,84 @@ export default function Home() {
           </nav>
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" className="hidden md:flex text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 font-semibold">
-              <Link href="/login">Sign In</Link>
+              <Link href="/login">Log In</Link>
             </Button>
             <Button asChild className="bg-[#2596be] hover:bg-[#1d7a9a] text-white font-bold shadow-lg shadow-[#2596be]/20 rounded-full px-6">
-              <Link href="#demo">Try Free</Link>
+              <Link href="#pricing">Get Started</Link>
+            </Button>
+            {/* Mobile Hamburger Menu Button */}
+            <Button
+              variant="ghost"
+              className="md:hidden p-2 text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </Button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="md:hidden fixed inset-0 top-20 bg-black/20 z-40"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            {/* Menu Panel */}
+            <div className="md:hidden fixed inset-x-0 top-20 bg-white z-50 border-t border-gray-200 shadow-lg">
+              <div className="flex flex-col h-[calc(100vh-5rem)]">
+                <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+                  <Link
+                    href="#features"
+                    className="block px-4 py-3 text-base font-semibold text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 rounded-lg transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Features
+                  </Link>
+                  <Link
+                    href="#pricing"
+                    className="block px-4 py-3 text-base font-semibold text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 rounded-lg transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Pricing
+                  </Link>
+                  <Link
+                    href="#why-tropitrack"
+                    className="block px-4 py-3 text-base font-semibold text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 rounded-lg transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Why TropiTrack
+                  </Link>
+                  <Link
+                    href="#testimonials"
+                    className="block px-4 py-3 text-base font-semibold text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 rounded-lg transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Testimonials
+                  </Link>
+                </nav>
+                
+                {/* Login Button at Bottom */}
+                <div className="px-4 py-6 border-t border-gray-200 bg-gray-50">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full text-gray-700 hover:text-[#2596be] hover:border-[#2596be] font-semibold"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link href="/login">Log In</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </header>
 
       <main className="flex-1">
@@ -76,8 +152,8 @@ export default function Home() {
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                   <Button size="lg" className="bg-[#2596be] hover:bg-[#1d7a9a] text-white text-base px-10 py-7 h-auto font-bold shadow-xl shadow-[#2596be]/20 hover:shadow-2xl hover:shadow-[#2596be]/30 rounded-full transition-all" asChild>
-                    <Link href="#demo">
-                      Try TropiTrack Free
+                    <Link href="#pricing">
+                      Get Started
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>
@@ -91,7 +167,7 @@ export default function Home() {
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-3 text-sm text-gray-500 mt-8">
                   <div className="flex items-center">
                     <CheckCircle className="mr-2 h-4 w-4 text-[#2596be]" />
-                    No credit card
+                    Simple pricing
                   </div>
                   <div className="flex items-center">
                     <CheckCircle className="mr-2 h-4 w-4 text-[#2596be]" />
@@ -245,10 +321,10 @@ export default function Home() {
               </div>
 
               <div className="text-center p-8 bg-gradient-to-br from-[#145369]/5 to-white rounded-3xl hover:shadow-lg transition-all duration-300">
-                <div className="mb-4 text-5xl font-extrabold text-[#145369]">$0</div>
-                <h3 className="text-lg font-bold text-[#041014] mb-2">Currently Free</h3>
+                <div className="mb-4 text-5xl font-extrabold text-[#145369]">$49</div>
+                <h3 className="text-lg font-bold text-[#041014] mb-2">Starting Price</h3>
                 <p className="text-gray-600 text-sm">
-                  Get in now while we&apos;re testing with Bahamian companies.
+                  Simple, transparent pricing for Bahamian construction companies.
                 </p>
               </div>
 
@@ -267,6 +343,157 @@ export default function Home() {
                   GPS tracking ensures workers are on-site.
                 </p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="py-20 md:py-28 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16 max-w-3xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-extrabold text-[#041014] mb-5 tracking-tight">
+                Simple, transparent pricing
+              </h2>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Choose the plan that fits your team size. All plans include everything you need to track time and run payroll.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {/* Starter Plan */}
+              <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-[#2596be]/30">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-[#041014] mb-2">Starter</h3>
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-5xl font-extrabold text-[#041014]">$49</span>
+                    <span className="text-gray-600 font-medium">/month</span>
+                  </div>
+                  <p className="text-gray-600 text-sm">Perfect for small crews</p>
+                </div>
+                
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#2596be] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Up to 10 workers</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#2596be] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Time tracking</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#2596be] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Supervisor approvals</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#2596be] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Basic payroll export</span>
+                  </li>
+                </ul>
+
+                <Button 
+                  className="w-full bg-[#2596be] hover:bg-[#1d7a9a] text-white font-bold rounded-full py-6" 
+                  asChild
+                >
+                  <Link href="/signup?plan=starter">
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Growth Plan - Popular */}
+              <div className="bg-gradient-to-br from-[#2596be] to-[#1d7a9a] p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-[#2596be] relative">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-white text-[#2596be] text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+                    MOST POPULAR
+                  </span>
+                </div>
+                
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">Growth</h3>
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-5xl font-extrabold text-white">$79</span>
+                    <span className="text-white/90 font-medium">/month</span>
+                  </div>
+                  <p className="text-white/90 text-sm">For growing companies</p>
+                </div>
+                
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                    <span className="text-white">Up to 25 workers</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                    <span className="text-white">Everything in Starter</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                    <span className="text-white">Weekly payroll summaries</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                    <span className="text-white">Basic reports</span>
+                  </li>
+                </ul>
+
+                <Button 
+                  className="w-full bg-white hover:bg-gray-50 text-[#2596be] font-bold rounded-full py-6" 
+                  asChild
+                >
+                  <Link href="/signup?plan=growth">
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Pro Plan */}
+              <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-[#145369]/30">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-[#041014] mb-2">Pro</h3>
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-5xl font-extrabold text-[#041014]">$119</span>
+                    <span className="text-gray-600 font-medium">/month</span>
+                  </div>
+                  <p className="text-gray-600 text-sm">For established teams</p>
+                </div>
+                
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#145369] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Up to 50 workers</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#145369] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Everything in Growth</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#145369] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Priority support</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-[#145369] mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Assisted setup</span>
+                  </li>
+                </ul>
+
+                <Button 
+                  className="w-full bg-[#145369] hover:bg-[#0d3a4a] text-white font-bold rounded-full py-6" 
+                  asChild
+                >
+                  <Link href="/signup?plan=pro">
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="text-center mt-12">
+              <p className="text-gray-600 text-sm">
+                All plans include NIB compliance, GPS verification, and mobile access. No hidden fees.
+              </p>
             </div>
           </div>
         </section>
@@ -408,15 +635,15 @@ export default function Home() {
                     Ready to get started?
                   </h2>
                   <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                    Join Bahamian construction companies testing TropiTrack. Currently free with full access to all features.
+                    Join Bahamian construction companies using TropiTrack. Simple pricing starting at $49/month.
                   </p>
                   
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <CheckCircle className="h-6 w-6 text-[#2596be] mt-0.5 flex-shrink-0" />
                       <div>
-                        <h4 className="font-bold text-[#041014]">Currently free for testing</h4>
-                        <p className="text-gray-600 text-sm">Get full access while we perfect the platform</p>
+                        <h4 className="font-bold text-[#041014]">Simple, transparent pricing</h4>
+                        <p className="text-gray-600 text-sm">Choose the plan that fits your team size</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -470,12 +697,12 @@ export default function Home() {
                 Start tracking time the right way
               </h2>
               <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Join Bahamian construction companies testing TropiTrack. No credit card required. Get started in 10 minutes.
+                Join Bahamian construction companies using TropiTrack. Simple pricing starting at $49/month. Get started in 10 minutes.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-white hover:bg-gray-50 text-[#2596be] text-base px-10 py-7 h-auto font-bold shadow-xl hover:shadow-2xl rounded-full transition-all" asChild>
-                  <Link href="#demo">
-                    Try TropiTrack Free
+                  <Link href="#pricing">
+                    View Pricing
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
@@ -521,7 +748,7 @@ export default function Home() {
                 </li>
                 <li>
                   <Link href="/login" className="text-sm text-gray-600 hover:text-[#2596be] transition-colors font-medium">
-                    Sign In
+                    Log In
                   </Link>
                 </li>
               </ul>
