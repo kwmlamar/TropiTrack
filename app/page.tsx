@@ -1,15 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { LeadCaptureForm } from "@/components/lead-capture-form"
 import { Clock, Users, Smartphone, CheckCircle, ArrowRight, Building2, MapPin, ClipboardCheck, Menu, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { isPWAStandalone } from "@/lib/utils/pwa"
+import { createClient } from "@/utils/supabase/client"
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const router = useRouter()
+
+  // PWA Detection and Redirect Logic
+  // When the app is opened in PWA/standalone mode, we want to skip the landing page
+  // and go directly to the app experience (dashboard if authenticated, login if not)
+  useEffect(() => {
+    const checkPWARedirect = async () => {
+      // Check if we're running in PWA/standalone mode
+      const isPWA = isPWAStandalone()
+
+      if (isPWA) {
+        // We're in PWA mode - check authentication status
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (user) {
+          // User is authenticated - redirect to dashboard
+          router.replace('/dashboard')
+        } else {
+          // User is not authenticated - redirect to login
+          router.replace('/login')
+        }
+      }
+    }
+
+    // Run the check after component mounts
+    checkPWARedirect()
+  }, [router])
   return (
     <div className="flex min-h-screen flex-col bg-white">
       {/* Pricing Banner */}
