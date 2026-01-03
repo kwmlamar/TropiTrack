@@ -10,37 +10,60 @@ import Image from "next/image"
 import Link from "next/link"
 import { isPWAStandalone } from "@/lib/utils/pwa"
 import { createClient } from "@/utils/supabase/client"
+import { LoadingScreen } from "@/components/loading-screen"
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
   const router = useRouter()
 
-  // PWA Detection and Redirect Logic
-  // When the app is opened in PWA/standalone mode, we want to skip the landing page
-  // and go directly to the app experience (dashboard if authenticated, login if not)
+  // Authentication Check and Redirect Logic
+  // Check authentication status immediately on load to prevent landing page flash
   useEffect(() => {
-    const checkPWARedirect = async () => {
-      // Check if we're running in PWA/standalone mode
-      const isPWA = isPWAStandalone()
+    const checkAuthAndRedirect = async () => {
+      try {
+        // Check if we're running in PWA/standalone mode
+        const isPWA = isPWAStandalone()
 
-      if (isPWA) {
-        // We're in PWA mode - check authentication status
+        // Check authentication status
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
           // User is authenticated - redirect to dashboard
+          // This applies to both PWA and web
           router.replace('/dashboard')
         } else {
-          // User is not authenticated - redirect to login
+          // User is not authenticated
+          if (isPWA) {
+            // In PWA mode, redirect to login
+            router.replace('/login')
+          } else {
+            // On web, show landing page
+            setIsAuthLoading(false)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error)
+        // On error, show landing page (web) or login (PWA)
+        const isPWA = isPWAStandalone()
+        if (isPWA) {
           router.replace('/login')
+        } else {
+          setIsAuthLoading(false)
         }
       }
     }
 
-    // Run the check after component mounts
-    checkPWARedirect()
+    // Run the check immediately
+    checkAuthAndRedirect()
   }, [router])
+
+  // Show loading screen while checking authentication
+  // This prevents the landing page from flashing during auth check
+  if (isAuthLoading) {
+    return <LoadingScreen />
+  }
   return (
     <div className="flex min-h-screen flex-col bg-white">
       {/* Pricing Banner */}

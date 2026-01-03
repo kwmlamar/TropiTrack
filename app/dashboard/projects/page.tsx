@@ -1,8 +1,19 @@
 import DashboardLayout from "@/components/layouts/dashboard-layout";
-import ProjectsTable from "@/components/projects/projects-table";
+import { ProjectsPageClient } from "@/components/projects/projects-page-client";
 import { createClient } from "@/utils/supabase/server";
 import { ProjectsHeaderActions } from "@/components/projects/projects-header-actions";
+import { AssetsHeaderActions } from "@/components/assets/assets-header-actions";
 
+/**
+ * Projects Page
+ * 
+ * This page serves dual purposes:
+ * - Mobile/PWA: Shows the Assets page with organized sections and quick access buttons
+ * - Desktop: Shows the existing Projects table view
+ * 
+ * The ProjectsPageClient component handles the conditional rendering based on
+ * screen size and PWA mode detection.
+ */
 export default async function ProjectsPage() {
   const supabase = await createClient();
 
@@ -15,11 +26,11 @@ export default async function ProjectsPage() {
 
   return (
     <DashboardLayout 
-      title="Projects" 
+      title="Assets" 
       fullWidth={true}
-      headerActions={<ProjectsHeaderActions userId={user.id} />}
+      headerActions={<AssetsHeaderActions desktopActions={<ProjectsHeaderActions userId={user.id} />} />}
     >
-      <ProjectsTable user={user} />
+      <ProjectsPageClient user={user} />
     </DashboardLayout>
   );
 }
