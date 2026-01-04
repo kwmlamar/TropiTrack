@@ -78,16 +78,6 @@ export function isPWAStandaloneServer(
     return false
   }
 
-  // iOS Safari in standalone mode often has specific patterns
-  // Android Chrome PWA may have specific indicators
-  // Note: This is a heuristic and may not be 100% accurate
-  const ua = userAgent.toLowerCase()
-
-  // Check for mobile browsers that support PWA
-  const isMobile = /iphone|ipad|ipod|android/i.test(ua)
-  const isChrome = /chrome/i.test(ua)
-  const isSafari = /safari/i.test(ua) && !isChrome
-
   // If it's a mobile browser, it could be PWA (but we can't be certain server-side)
   // We'll rely more on client-side detection for accuracy
   // For now, return false to be conservative - let client-side handle it

@@ -4,16 +4,16 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { MobileDashboard } from "./mobile-dashboard"
 import { isPWAStandalone } from "@/lib/utils/pwa"
-import { useIsMobile } from "@/hooks/use-mobile"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
+import type { MobileDashboardData } from "@/lib/data/mobile-dashboard"
 
 /**
  * Dashboard Home Client Component
- * 
+ *
  * Handles the conditional rendering logic for the dashboard home page:
  * - Shows mobile dashboard on mobile screens or PWA standalone mode
  * - Redirects to timesheets on desktop (maintains existing behavior)
- * 
+ *
  * This separation allows us to:
  * - Keep server-side profile fetching
  * - Handle client-side mobile/PWA detection
@@ -21,12 +21,12 @@ import { UserProfileWithCompany } from "@/lib/types/userProfile"
  */
 interface DashboardHomeClientProps {
   profile: UserProfileWithCompany
+  dashboardData?: MobileDashboardData | null
 }
 
-export function DashboardHomeClient({ profile }: DashboardHomeClientProps) {
+export function DashboardHomeClient({ profile, dashboardData }: DashboardHomeClientProps) {
   const router = useRouter()
   const isPWA = isPWAStandalone()
-  const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
 
   // Wait for component to mount and mobile detection to initialize
@@ -63,6 +63,6 @@ export function DashboardHomeClient({ profile }: DashboardHomeClientProps) {
   // Always render mobile dashboard
   // It will handle its own visibility logic
   // On desktop, the redirect above will send users to timesheets
-  return <MobileDashboard profile={profile} />
+  return <MobileDashboard profile={profile} dashboardData={dashboardData} />
 }
 
