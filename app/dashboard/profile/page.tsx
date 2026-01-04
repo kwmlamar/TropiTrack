@@ -1,8 +1,14 @@
-import DashboardLayout from "@/components/layouts/dashboard-layout"
-import { ProfileForm } from "@/components/profile/profile-form"
+import { ProfilePageClient } from "@/components/profile/profile-page-client"
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
 import { redirect } from "next/navigation"
 
+/**
+ * Profile Page
+ *
+ * Responsive profile page that adapts to mobile and desktop layouts:
+ * - Mobile/PWA: Native app-like experience with vertical stacking
+ * - Desktop: Standard dashboard layout with sidebar
+ */
 export default async function ProfilePage() {
   const profile = await getUserProfileWithCompany()
 
@@ -10,19 +16,5 @@ export default async function ProfilePage() {
     redirect('/login')
   }
 
-  return (
-    <DashboardLayout title="Profile">
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-          <p className="text-gray-500">
-            Manage your personal information and account settings.
-          </p>
-        </div>
-
-        <ProfileForm initialProfile={profile} />
-      </div>
-    </DashboardLayout>
-  )
+  return <ProfilePageClient profile={profile} />
 }
