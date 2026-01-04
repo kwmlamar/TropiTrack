@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -10,12 +10,15 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Loader2,
   CheckCircle2,
   Plus,
 } from "lucide-react"
 import { createTimesheet } from "@/lib/data/timesheets"
+import { useTimesheetSettings } from "@/lib/hooks/use-timesheet-settings"
 import type { Worker, Project, CreateTimesheetInput } from "@/lib/types"
 
 interface LogHoursFormProps {
@@ -97,6 +100,17 @@ function getYesterday(): Date {
   return date
 }
 
+/**
+ * Parse a TIME string (HH:MM or HH:MM:SS) to TimeValue
+ * Example: "07:00:00" or "07:00" -> { hours: 7, minutes: 0 }
+ */
+function parseTimeString(timeStr: string): TimeValue {
+  const parts = timeStr.split(":")
+  const hours = parseInt(parts[0] || "0", 10)
+  const minutes = parseInt(parts[1] || "0", 10)
+  return { hours, minutes }
+}
+
 export function LogHoursForm({
   userId,
   workers,
@@ -104,10 +118,13 @@ export function LogHoursForm({
   companyId,
 }: LogHoursFormProps) {
   const router = useRouter()
+  
+  // Load timesheet settings from database
+  const { settings: timesheetSettings, loading: settingsLoading } = useTimesheetSettings()
 
-  // Form state
+  // Form state - default values will be overridden when settings load
   const [dateOption, setDateOption] = useState<DateOption>("today")
-  const [customDate, setCustomDate] = useState<string>(formatDateToString(getToday()))
+  const [customDates, setCustomDates] = useState<string[]>([formatDateToString(getToday())])
   const [selectedWorkers, setSelectedWorkers] = useState<Worker[]>([])
   const [selectedProject, setSelectedProject] = useState<Project | null>(
     projects.length === 1 ? projects[0] : null
@@ -117,23 +134,55 @@ export function LogHoursForm({
   const [breakMinutes, setBreakMinutes] = useState(30)
   const [notes, setNotes] = useState("")
   const [showDetails, setShowDetails] = useState(false)
+  
+  // Update times when settings load from database
+  useEffect(() => {
+    if (timesheetSettings && !settingsLoading) {
+      // Parse work_day_start (e.g., "07:00:00" or "07:00") to TimeValue
+      if (timesheetSettings.work_day_start) {
+        const parsedStart = parseTimeString(timesheetSettings.work_day_start)
+        setStartTime(parsedStart)
+      }
+      
+      // Parse work_day_end (e.g., "16:00:00" or "16:00") to TimeValue
+      if (timesheetSettings.work_day_end) {
+        const parsedEnd = parseTimeString(timesheetSettings.work_day_end)
+        setEndTime(parsedEnd)
+      }
+      
+      // Set break time (already in minutes)
+      if (timesheetSettings.break_time !== undefined) {
+        setBreakMinutes(timesheetSettings.break_time)
+      }
+    }
+  }, [timesheetSettings, settingsLoading])
 
   // UI state
   const [showWorkerSearch, setShowWorkerSearch] = useState(false)
   const [showProjectSelect, setShowProjectSelect] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState<"start" | "end" | null>(null)
-  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false)
   const [workerSearchQuery, setWorkerSearchQuery] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Computed values
-  const selectedDate = useMemo(() => {
-    if (dateOption === "today") return getToday()
-    if (dateOption === "yesterday") return getYesterday()
-    return new Date(customDate + "T00:00:00")
-  }, [dateOption, customDate])
+  const selectedDates = useMemo(() => {
+    if (dateOption === "today") return [getToday()]
+    if (dateOption === "yesterday") return [getYesterday()]
+    return customDates.map((d) => new Date(d + "T00:00:00"))
+  }, [dateOption, customDates])
+
+  // For backward compatibility and display
+  const selectedDate = selectedDates[0]
+
+  const dateDisplayText = useMemo(() => {
+    if (selectedDates.length === 1) {
+      return formatDateDisplay(selectedDates[0])
+    }
+    return `${selectedDates.length} dates selected`
+  }, [selectedDates])
 
   const totalHours = useMemo(
     () => calculateTotalHours(startTime, endTime, breakMinutes),
@@ -158,9 +207,10 @@ export function LogHoursForm({
 
   // Handlers
   const handleDateOptionChange = (option: DateOption) => {
-    setDateOption(option)
     if (option === "custom") {
-      setShowDatePicker(true)
+      setShowDatePickerModal(true)
+    } else {
+      setDateOption(option)
     }
   }
 
@@ -168,8 +218,10 @@ export function LogHoursForm({
     if (!selectedWorkers.find((w) => w.id === worker.id)) {
       setSelectedWorkers([...selectedWorkers, worker])
     }
+    // Clear search query but keep the list open for multi-select
     setWorkerSearchQuery("")
-    setShowWorkerSearch(false)
+    // Don't close the worker search - allow multiple selections
+    // setShowWorkerSearch(false) - Removed to allow multi-select
   }
 
   const handleRemoveWorker = (workerId: string) => {
@@ -177,21 +229,23 @@ export function LogHoursForm({
   }
 
   const handleQuickTime = (hours: number) => {
-    // Set standard times based on hours
-    if (hours === 8) {
-      setStartTime({ hours: 7, minutes: 0 })
-      setEndTime({ hours: 15, minutes: 30 })
-      setBreakMinutes(30)
-    } else if (hours === 10) {
-      setStartTime({ hours: 6, minutes: 0 })
-      setEndTime({ hours: 16, minutes: 30 })
-      setBreakMinutes(30)
-    } else if (hours === 4) {
-      // Half day
-      setStartTime({ hours: 7, minutes: 0 })
-      setEndTime({ hours: 11, minutes: 30 })
-      setBreakMinutes(30)
-    }
+    // Use timesheet settings if available, otherwise use defaults
+    const defaultStart = timesheetSettings?.work_day_start ? parseTimeString(timesheetSettings.work_day_start) : { hours: 7, minutes: 0 }
+    const defaultBreak = timesheetSettings?.break_time ?? 30
+    
+    // Calculate end time: start time + target hours + break time
+    const startMinutes = defaultStart.hours * 60 + defaultStart.minutes
+    const targetMinutes = hours * 60 // Target work hours in minutes
+    const breakMins = hours === 4 ? Math.floor(defaultBreak / 2) : defaultBreak // Half break for half day
+    const totalMinutes = startMinutes + targetMinutes + breakMins
+    
+    // Convert back to hours and minutes
+    const endHours = Math.floor(totalMinutes / 60) % 24
+    const endMinutes = totalMinutes % 60
+    
+    setStartTime(defaultStart)
+    setEndTime({ hours: endHours, minutes: endMinutes })
+    setBreakMinutes(breakMins)
   }
 
   const handleSubmit = async () => {
@@ -200,14 +254,20 @@ export function LogHoursForm({
     setIsSubmitting(true)
     setError(null)
 
-    const dateString = formatDateToString(selectedDate)
     const clockIn = formatTimeToString(startTime)
     const clockOut = formatTimeToString(endTime)
 
     try {
-      // Create timesheet for each selected worker
+      // Create timesheet for each selected worker AND each selected date
+      const allInputs: { worker: Worker; dateString: string }[] = []
+      for (const worker of selectedWorkers) {
+        for (const date of selectedDates) {
+          allInputs.push({ worker, dateString: formatDateToString(date) })
+        }
+      }
+
       const results = await Promise.all(
-        selectedWorkers.map((worker) => {
+        allInputs.map(({ worker, dateString }) => {
           const input: CreateTimesheetInput = {
             date: dateString,
             worker_id: worker.id,
@@ -322,7 +382,7 @@ export function LogHoursForm({
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-4 h-4 text-gray-400" />
             <span className="text-base font-medium text-gray-900">
-              {formatDateDisplay(selectedDate)}
+              {dateDisplayText}
             </span>
           </div>
 
@@ -361,18 +421,6 @@ export function LogHoursForm({
               Other
             </button>
           </div>
-
-          {/* Custom Date Picker */}
-          {dateOption === "custom" && (
-            <input
-              type="date"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-              max={formatDateToString(getToday())}
-              className="mt-3 w-full h-12 px-4 bg-white border border-gray-200 rounded-xl
-                         text-gray-900 text-base"
-            />
-          )}
         </section>
 
         {/* Worker Selection */}
@@ -710,6 +758,19 @@ export function LogHoursForm({
         />
       )}
 
+      {/* Date Picker Modal */}
+      {showDatePickerModal && (
+        <DatePickerModal
+          selectedDates={customDates}
+          onConfirm={(dates) => {
+            setCustomDates(dates)
+            setDateOption("custom")
+            setShowDatePickerModal(false)
+          }}
+          onClose={() => setShowDatePickerModal(false)}
+        />
+      )}
+
       {/* Sticky Submit Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 py-4 safe-bottom">
         <button
@@ -875,6 +936,196 @@ function TimePicker({
               </button>
             ))}
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Date Picker Modal Component with multi-select calendar
+ */
+function DatePickerModal({
+  selectedDates,
+  onConfirm,
+  onClose,
+}: {
+  selectedDates: string[]
+  onConfirm: (dates: string[]) => void
+  onClose: () => void
+}) {
+  const [tempSelectedDates, setTempSelectedDates] = useState<Set<string>>(
+    new Set(selectedDates)
+  )
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const today = new Date()
+    return { year: today.getFullYear(), month: today.getMonth() }
+  })
+
+  const today = new Date()
+  const todayString = formatDateToString(today)
+
+  // Generate calendar days for the current month view
+  const calendarDays = useMemo(() => {
+    const days: Date[] = []
+    const firstDay = new Date(calendarMonth.year, calendarMonth.month, 1)
+    const lastDay = new Date(calendarMonth.year, calendarMonth.month + 1, 0)
+
+    // Add padding for days before the first day of the month
+    const startPadding = firstDay.getDay()
+    for (let i = startPadding - 1; i >= 0; i--) {
+      const d = new Date(calendarMonth.year, calendarMonth.month, -i)
+      days.push(d)
+    }
+
+    // Add all days of the month
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      days.push(new Date(calendarMonth.year, calendarMonth.month, d))
+    }
+
+    // Add padding for days after the last day of the month
+    const endPadding = 6 - lastDay.getDay()
+    for (let i = 1; i <= endPadding; i++) {
+      days.push(new Date(calendarMonth.year, calendarMonth.month + 1, i))
+    }
+
+    return days
+  }, [calendarMonth])
+
+  const toggleDate = (date: Date) => {
+    const dateString = formatDateToString(date)
+    setTempSelectedDates((prev) => {
+      const next = new Set(prev)
+      if (next.has(dateString)) {
+        next.delete(dateString)
+      } else {
+        next.add(dateString)
+      }
+      return next
+    })
+  }
+
+  const handleConfirm = () => {
+    const sortedDates = Array.from(tempSelectedDates).sort()
+    if (sortedDates.length > 0) {
+      onConfirm(sortedDates)
+    }
+  }
+
+  const prevMonth = () => {
+    setCalendarMonth((prev) => {
+      if (prev.month === 0) {
+        return { year: prev.year - 1, month: 11 }
+      }
+      return { ...prev, month: prev.month - 1 }
+    })
+  }
+
+  const nextMonth = () => {
+    setCalendarMonth((prev) => {
+      if (prev.month === 11) {
+        return { year: prev.year + 1, month: 0 }
+      }
+      return { ...prev, month: prev.month + 1 }
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="relative bg-white w-full max-w-lg rounded-t-2xl safe-bottom">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button onClick={onClose} className="text-gray-500 font-medium">
+            Cancel
+          </button>
+          <span className="font-semibold text-gray-900">Select Dates</span>
+          <button
+            onClick={handleConfirm}
+            disabled={tempSelectedDates.size === 0}
+            className={`font-semibold ${
+              tempSelectedDates.size > 0 ? "text-[#2596be]" : "text-gray-300"
+            }`}
+          >
+            Confirm
+          </button>
+        </div>
+
+        {/* Month Navigation */}
+        <div className="flex items-center justify-between px-5 py-3">
+          <button
+            onClick={prevMonth}
+            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <span className="font-medium text-gray-900">
+            {new Date(calendarMonth.year, calendarMonth.month).toLocaleDateString(
+              "en-US",
+              { month: "long", year: "numeric" }
+            )}
+          </span>
+          <button
+            onClick={nextMonth}
+            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="px-5 pb-6">
+          <div className="grid grid-cols-7 gap-1">
+            {/* Day Headers */}
+            {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
+              <div
+                key={i}
+                className="h-8 flex items-center justify-center text-xs font-medium text-gray-500"
+              >
+                {day}
+              </div>
+            ))}
+
+            {/* Calendar Days */}
+            {calendarDays.map((date, i) => {
+              const dateString = formatDateToString(date)
+              const isCurrentMonth = date.getMonth() === calendarMonth.month
+              const isSelected = tempSelectedDates.has(dateString)
+              const isToday = dateString === todayString
+              const isFuture = date > today
+              const isPastLimit =
+                date < new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+              const isDisabled = isFuture || isPastLimit || !isCurrentMonth
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => !isDisabled && toggleDate(date)}
+                  disabled={isDisabled}
+                  className={`
+                    h-11 flex items-center justify-center rounded-lg text-sm font-medium
+                    transition-all
+                    ${isDisabled ? "text-gray-300 cursor-not-allowed" : ""}
+                    ${!isDisabled && !isSelected ? "text-gray-900 hover:bg-gray-100 active:bg-gray-200" : ""}
+                    ${isSelected ? "bg-[#2596be] text-white" : ""}
+                    ${isToday && !isSelected ? "ring-2 ring-[#2596be] ring-inset text-[#2596be]" : ""}
+                  `}
+                >
+                  {date.getDate()}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Selected count */}
+          {tempSelectedDates.size > 0 && (
+            <p className="text-center text-sm text-gray-500 mt-4">
+              {tempSelectedDates.size} date{tempSelectedDates.size !== 1 ? "s" : ""} selected
+            </p>
+          )}
         </div>
       </div>
     </div>
