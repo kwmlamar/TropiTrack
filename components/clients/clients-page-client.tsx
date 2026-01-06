@@ -1,34 +1,29 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { MobileAssetsPage } from "@/components/assets/mobile-assets-page"
-import { MobileProjectsList } from "@/components/projects/mobile-projects-list"
+import { MobileClientsList } from "./mobile-clients-list"
 import { DashboardLayoutClient } from "@/components/layouts/dashboard-layout-client"
-import ProjectsTable from "@/components/projects/projects-table"
-import { ProjectsHeaderActions } from "@/components/projects/projects-header-actions"
-import { AssetsHeaderActions } from "@/components/assets/assets-header-actions"
+import ClientTable from "./client-table"
+import { ClientsHeaderActions } from "./clients-header-actions"
 import { isPWAStandalone } from "@/lib/utils/pwa"
 import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import type { User } from "@supabase/supabase-js"
 
-interface ProjectsPageClientProps {
+interface ClientsPageClientProps {
   profile: UserProfileWithCompany
   user: User
 }
 
 /**
- * Projects Page Client Component
+ * Clients Page Client Component
  *
- * Handles conditional rendering for the projects page:
- * - Mobile: Shows Assets hub by default, Projects list when ?view=list
- * - Desktop: Shows projects table within dashboard layout
+ * Handles conditional rendering for the clients page:
+ * - Mobile/PWA: Shows mobile clients list without dashboard layout
+ * - Desktop: Shows clients table within dashboard layout
  */
-export function ProjectsPageClient({ profile, user }: ProjectsPageClientProps) {
+export function ClientsPageClient({ profile, user }: ClientsPageClientProps) {
   const isPWA = isPWAStandalone()
   const [isMobile, setIsMobile] = useState<boolean | null>(null)
-  const searchParams = useSearchParams()
-  const viewList = searchParams.get("view") === "list"
 
   useEffect(() => {
     const checkMobile = () => {
@@ -51,24 +46,20 @@ export function ProjectsPageClient({ profile, user }: ProjectsPageClientProps) {
     )
   }
 
-  // Mobile: render mobile views without dashboard layout
+  // Mobile: render mobile view without dashboard layout
   if (isMobile) {
-    if (viewList) {
-      return <MobileProjectsList userId={user.id} />
-    }
-    return <MobileAssetsPage />
+    return <MobileClientsList />
   }
 
   // Desktop: render with dashboard layout
   return (
     <DashboardLayoutClient
       profile={profile}
-      title="Assets"
+      title="Clients"
       fullWidth={true}
-      headerActions={<AssetsHeaderActions desktopActions={<ProjectsHeaderActions userId={user.id} />} />}
+      headerActions={<ClientsHeaderActions userId={user.id} />}
     >
-      <ProjectsTable user={user} />
+      <ClientTable user={user} />
     </DashboardLayoutClient>
   )
 }
-

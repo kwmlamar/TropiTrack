@@ -1,36 +1,31 @@
-import DashboardLayout from "@/components/layouts/dashboard-layout";
-import { ProjectsPageClient } from "@/components/projects/projects-page-client";
-import { createClient } from "@/utils/supabase/server";
-import { ProjectsHeaderActions } from "@/components/projects/projects-header-actions";
-import { AssetsHeaderActions } from "@/components/assets/assets-header-actions";
+import { ProjectsPageClient } from "@/components/projects/projects-page-client"
+import { createClient } from "@/utils/supabase/server"
+import { getUserProfileWithCompany } from "@/lib/data/userProfiles"
+import { redirect } from "next/navigation"
 
 /**
  * Projects Page
- * 
- * This page serves dual purposes:
- * - Mobile/PWA: Shows the Assets page with organized sections and quick access buttons
- * - Desktop: Shows the existing Projects table view
- * 
- * The ProjectsPageClient component handles the conditional rendering based on
- * screen size and PWA mode detection.
+ *
+ * Responsive page that adapts to mobile and desktop layouts:
+ * - Mobile/PWA: Shows Assets hub (default) or Projects list (?view=list)
+ * - Desktop: Standard dashboard layout with projects table
  */
 export default async function ProjectsPage() {
-  const supabase = await createClient();
+  const supabase = await createClient()
 
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser()
 
-  if (error || !user) throw new Error("User not found");
+  if (error || !user) {
+    redirect("/login")
+  }
 
-  return (
-    <DashboardLayout 
-      title="Assets" 
-      fullWidth={true}
-      headerActions={<AssetsHeaderActions desktopActions={<ProjectsHeaderActions userId={user.id} />} />}
-    >
-      <ProjectsPageClient user={user} />
-    </DashboardLayout>
-  );
+  const profile = await getUserProfileWithCompany()
+  if (!profile) {
+    redirect("/login")
+  }
+
+  return <ProjectsPageClient profile={profile} user={user} />
 }
