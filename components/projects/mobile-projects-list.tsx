@@ -12,9 +12,13 @@ import {
   MapPin,
   Plus,
   X,
+  Loader2,
 } from "lucide-react"
+import { toast } from "sonner"
 import { fetchProjectsForCompany } from "@/lib/data/data"
+import { createProject } from "@/lib/data/projects"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+import { createClient } from "@/utils/supabase/client"
 
 interface ProjectWithClient {
   id: string
@@ -28,6 +32,11 @@ interface ProjectWithClient {
   }
 }
 
+interface ClientOption {
+  id: string
+  name: string
+}
+
 interface MobileProjectsListProps {
   userId: string
 }
@@ -37,6 +46,15 @@ export function MobileProjectsList({ userId }: MobileProjectsListProps) {
   const [projects, setProjects] = useState<ProjectWithClient[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Add Project form state
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
+  const [projectName, setProjectName] = useState("")
+  const [projectDescription, setProjectDescription] = useState("")
+  const [selectedClientId, setSelectedClientId] = useState("")
+  const [clients, setClients] = useState<ClientOption[]>([])
+  const [loadingClients, setLoadingClients] = useState(false)
 
   useEffect(() => {
     loadProjects()
@@ -52,6 +70,84 @@ export function MobileProjectsList({ userId }: MobileProjectsListProps) {
       console.error("Failed to fetch projects:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Load clients when form opens
+  const loadClients = async () => {
+    setLoadingClients(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single()
+
+      if (!profile?.company_id) return
+
+      const { data: clientsData } = await supabase
+        .from("clients")
+        .select("id, name")
+        .eq("company_id", profile.company_id)
+        .order("name")
+
+      if (clientsData) {
+        setClients(clientsData)
+      }
+    } catch (error) {
+      console.error("Failed to load clients:", error)
+    } finally {
+      setLoadingClients(false)
+    }
+  }
+
+  const handleOpenAddForm = () => {
+    setShowAddForm(true)
+    loadClients()
+  }
+
+  const handleCloseAddForm = () => {
+    setShowAddForm(false)
+    setProjectName("")
+    setProjectDescription("")
+    setSelectedClientId("")
+  }
+
+  const handleCreateProject = async () => {
+    if (!projectName.trim()) {
+      toast.error("Project name is required")
+      return
+    }
+
+    setFormLoading(true)
+    try {
+      // Build project data - client_id is required in the type, so we only include it if selected
+      const projectData: Parameters<typeof createProject>[1] = {
+        name: projectName.trim(),
+        description: projectDescription.trim() || undefined,
+        client_id: selectedClientId || "", // Empty string if no client - will be handled by backend
+        status: "not_started",
+        start_date: new Date().toISOString().split("T")[0],
+      }
+
+      const result = await createProject(userId, projectData)
+
+      if (result.success) {
+        toast.success("Project created")
+        handleCloseAddForm()
+        await loadProjects()
+      } else {
+        toast.error(result.error || "Failed to create project")
+      }
+    } catch (error) {
+      console.error("Error creating project:", error)
+      toast.error("Failed to create project")
+    } finally {
+      setFormLoading(false)
     }
   }
 
@@ -230,14 +326,109 @@ export function MobileProjectsList({ userId }: MobileProjectsListProps) {
         )}
       </div>
 
-      {/* Floating Add Button */}
+      {/* Floating Add Button - opens inline form instead of navigating */}
       <button
-        onClick={() => router.push("/dashboard/projects/new")}
+        onClick={handleOpenAddForm}
         className="fixed bottom-24 right-4 w-14 h-14 bg-[#2596be] text-white rounded-full shadow-lg flex items-center justify-center active:bg-[#1e7a9a] transition-colors z-50"
         aria-label="Add project"
       >
         <Plus className="w-6 h-6" />
       </button>
+
+      {/* Add Project Bottom Sheet */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={handleCloseAddForm}
+          />
+
+          {/* Bottom Sheet */}
+          <div className="relative w-full max-w-lg bg-white rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
+
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Add Project
+            </h2>
+
+            {/* Project Name */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Project Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter project name"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                className="h-12 text-base rounded-xl"
+                autoFocus
+              />
+            </div>
+
+            {/* Description */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Description
+              </label>
+              <textarea
+                placeholder="Enter project description (optional)"
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                className="w-full h-24 p-3 border border-gray-200 rounded-xl text-base resize-none focus:outline-none focus:ring-2 focus:ring-[#2596be] focus:border-transparent"
+              />
+            </div>
+
+            {/* Client Selector */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Client
+              </label>
+              {loadingClients ? (
+                <div className="h-12 flex items-center justify-center text-gray-400">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </div>
+              ) : (
+                <select
+                  value={selectedClientId}
+                  onChange={(e) => setSelectedClientId(e.target.value)}
+                  className="w-full h-12 px-3 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-[#2596be] focus:border-transparent bg-white"
+                >
+                  <option value="">No client (optional)</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCloseAddForm}
+                disabled={formLoading}
+                className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium text-base active:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateProject}
+                disabled={formLoading || !projectName.trim()}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#2596be] text-white font-medium text-base active:bg-[#1e7a9a] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {formLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />

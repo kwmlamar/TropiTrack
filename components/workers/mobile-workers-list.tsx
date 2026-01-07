@@ -10,9 +10,13 @@ import {
   ChevronRight,
   Search,
   Users,
+  Plus,
   X,
+  Loader2,
 } from "lucide-react"
+import { toast } from "sonner"
 import { fetchWorkersForCompany } from "@/lib/data/data"
+import { createWorker } from "@/lib/data/workers"
 import type { Worker } from "@/lib/types/worker"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 
@@ -25,6 +29,13 @@ export function MobileWorkersList({ userId }: MobileWorkersListProps) {
   const [workers, setWorkers] = useState<Worker[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Add Worker form state
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
+  const [workerName, setWorkerName] = useState("")
+  const [workerPhone, setWorkerPhone] = useState("")
+  const [workerNotes, setWorkerNotes] = useState("")
 
   useEffect(() => {
     loadWorkers()
@@ -40,6 +51,48 @@ export function MobileWorkersList({ userId }: MobileWorkersListProps) {
       console.error("Failed to fetch workers:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCloseAddForm = () => {
+    setShowAddForm(false)
+    setWorkerName("")
+    setWorkerPhone("")
+    setWorkerNotes("")
+  }
+
+  const handleCreateWorker = async () => {
+    if (!workerName.trim()) {
+      toast.error("Worker name is required")
+      return
+    }
+
+    setFormLoading(true)
+    try {
+      // Note: Workers added via mobile get default values for required fields
+      // Position and hourly_rate can be updated later from the desktop view
+      const result = await createWorker(userId, {
+        name: workerName.trim(),
+        phone: workerPhone.trim() || undefined,
+        notes: workerNotes.trim() || undefined,
+        position: "Worker", // Default position
+        hourly_rate: 0, // Default rate - to be set later
+        hire_date: new Date().toISOString().split("T")[0],
+        is_active: true,
+      })
+
+      if (result.success) {
+        toast.success("Worker added")
+        handleCloseAddForm()
+        await loadWorkers()
+      } else {
+        toast.error(result.error || "Failed to add worker")
+      }
+    } catch (error) {
+      console.error("Error creating worker:", error)
+      toast.error("Failed to add worker")
+    } finally {
+      setFormLoading(false)
     }
   }
 
@@ -127,7 +180,7 @@ export function MobileWorkersList({ userId }: MobileWorkersListProps) {
             <p className="text-sm text-gray-500 text-center">
               {searchQuery
                 ? "Try adjusting your search"
-                : "Add workers from the desktop dashboard"}
+                : "Tap the button below to add your first worker"}
             </p>
             {searchQuery && (
               <button
@@ -189,6 +242,99 @@ export function MobileWorkersList({ userId }: MobileWorkersListProps) {
           </div>
         )}
       </div>
+
+      {/* Floating Add Button */}
+      <button
+        onClick={() => setShowAddForm(true)}
+        className="fixed bottom-24 right-4 w-14 h-14 bg-[#2596be] text-white rounded-full shadow-lg flex items-center justify-center active:bg-[#1e7a9a] transition-colors z-50"
+        aria-label="Add worker"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
+      {/* Add Worker Bottom Sheet */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={handleCloseAddForm}
+          />
+
+          {/* Bottom Sheet */}
+          <div className="relative w-full max-w-lg bg-white rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
+
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Add Worker
+            </h2>
+
+            {/* Worker Name */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Worker Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter worker name"
+                value={workerName}
+                onChange={(e) => setWorkerName(e.target.value)}
+                className="h-12 text-base rounded-xl"
+                autoFocus
+              />
+            </div>
+
+            {/* Phone Number */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Phone Number
+              </label>
+              <Input
+                type="tel"
+                placeholder="Enter phone number (optional)"
+                value={workerPhone}
+                onChange={(e) => setWorkerPhone(e.target.value)}
+                className="h-12 text-base rounded-xl"
+              />
+            </div>
+
+            {/* Notes */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Notes
+              </label>
+              <textarea
+                placeholder="Enter notes (optional)"
+                value={workerNotes}
+                onChange={(e) => setWorkerNotes(e.target.value)}
+                className="w-full h-24 p-3 border border-gray-200 rounded-xl text-base resize-none focus:outline-none focus:ring-2 focus:ring-[#2596be] focus:border-transparent"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCloseAddForm}
+                disabled={formLoading}
+                className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium text-base active:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateWorker}
+                disabled={formLoading || !workerName.trim()}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#2596be] text-white font-medium text-base active:bg-[#1e7a9a] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {formLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />

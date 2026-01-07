@@ -13,9 +13,12 @@ import {
   Phone,
   Plus,
   X,
+  Loader2,
 } from "lucide-react"
+import { toast } from "sonner"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { createClient } from "@/utils/supabase/client"
+import { insertClient } from "@/lib/data/clients"
 
 interface ClientWithProjects {
   id: string
@@ -32,6 +35,14 @@ export function MobileClientsList() {
   const [clients, setClients] = useState<ClientWithProjects[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [userId, setUserId] = useState<string | null>(null)
+
+  // Add Client form state
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
+  const [clientName, setClientName] = useState("")
+  const [clientPhone, setClientPhone] = useState("")
+  const [clientEmail, setClientEmail] = useState("")
 
   useEffect(() => {
     loadClients()
@@ -44,12 +55,14 @@ export function MobileClientsList() {
 
       // Get authenticated user
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-      
+
       if (authError || !authUser) {
         console.error("Error getting authenticated user:", authError)
         setLoading(false)
         return
       }
+
+      setUserId(authUser.id)
 
       // Get user's company_id from profiles table
       const { data: profile, error: profileError } = await supabase
@@ -99,6 +112,47 @@ export function MobileClientsList() {
       console.error("Failed to fetch clients:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCloseAddForm = () => {
+    setShowAddForm(false)
+    setClientName("")
+    setClientPhone("")
+    setClientEmail("")
+  }
+
+  const handleCreateClient = async () => {
+    if (!clientName.trim()) {
+      toast.error("Client name is required")
+      return
+    }
+
+    if (!userId) {
+      toast.error("User not authenticated")
+      return
+    }
+
+    setFormLoading(true)
+    try {
+      const result = await insertClient(userId, {
+        name: clientName.trim(),
+        phone: clientPhone.trim() || undefined,
+        email: clientEmail.trim() || undefined,
+      })
+
+      if (result.success) {
+        toast.success("Client created")
+        handleCloseAddForm()
+        await loadClients()
+      } else {
+        toast.error(result.error || "Failed to create client")
+      }
+    } catch (error) {
+      console.error("Error creating client:", error)
+      toast.error("Failed to create client")
+    } finally {
+      setFormLoading(false)
     }
   }
 
@@ -260,14 +314,99 @@ export function MobileClientsList() {
         )}
       </div>
 
-      {/* Floating Add Button */}
+      {/* Floating Add Button - opens inline form instead of navigating */}
       <button
-        onClick={() => router.push("/dashboard/clients/new")}
+        onClick={() => setShowAddForm(true)}
         className="fixed bottom-24 right-4 w-14 h-14 bg-[#2596be] text-white rounded-full shadow-lg flex items-center justify-center active:bg-[#1e7a9a] transition-colors z-50"
         aria-label="Add client"
       >
         <Plus className="w-6 h-6" />
       </button>
+
+      {/* Add Client Bottom Sheet */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={handleCloseAddForm}
+          />
+
+          {/* Bottom Sheet */}
+          <div className="relative w-full max-w-lg bg-white rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
+
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Add Client
+            </h2>
+
+            {/* Client Name */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Client Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter client name"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                className="h-12 text-base rounded-xl"
+                autoFocus
+              />
+            </div>
+
+            {/* Phone Number */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Phone Number
+              </label>
+              <Input
+                type="tel"
+                placeholder="Enter phone number (optional)"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                className="h-12 text-base rounded-xl"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email
+              </label>
+              <Input
+                type="email"
+                placeholder="Enter email (optional)"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                className="h-12 text-base rounded-xl"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCloseAddForm}
+                disabled={formLoading}
+                className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium text-base active:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateClient}
+                disabled={formLoading || !clientName.trim()}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#2596be] text-white font-medium text-base active:bg-[#1e7a9a] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {formLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
