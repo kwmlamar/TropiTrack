@@ -118,7 +118,7 @@ export function LogHoursForm({
   companyId,
 }: LogHoursFormProps) {
   const router = useRouter()
-  
+
   // Load timesheet settings from database
   const { settings: timesheetSettings, loading: settingsLoading } = useTimesheetSettings()
 

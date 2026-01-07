@@ -165,7 +165,7 @@ export function MobileDashboard({ profile, dashboardData }: MobileDashboardProps
         {/* Pending Approvals Card (Conditional) */}
         {approvals.enabled && approvals.count > 0 && (
           <button
-            onClick={() => handleNavigate("/dashboard/timesheets?filter=pending")}
+            onClick={() => handleNavigate("/dashboard/approvals")}
             className="w-full bg-amber-50 border border-amber-200 rounded-xl p-4
                        flex items-center justify-between
                        transition-all active:scale-[0.98] active:bg-amber-100"

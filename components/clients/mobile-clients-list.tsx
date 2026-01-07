@@ -35,7 +35,6 @@ export function MobileClientsList() {
 
   useEffect(() => {
     loadClients()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadClients = async () => {

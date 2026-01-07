@@ -37,6 +37,21 @@ export default async function ProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  
+  // Handle "new" route - redirect to new project page or show create form
+  if (id === "new") {
+    // For now, redirect to projects list or show 404
+    // You may want to create a separate new project page
+    notFound();
+  }
+
+  // Validate that id is a valid UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    console.error("Invalid project ID format:", id);
+    notFound();
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -53,7 +68,11 @@ export default async function ProjectPage({
     throw new Error("User profile not found");
   }
 
-  // Update recent projects list
+  if (!profile.company_id) {
+    throw new Error("User profile missing company_id");
+  }
+
+  // Update recent projects list (only for valid project IDs)
   try {
     await updateRecentProject(user.id, id);
   } catch (error) {
@@ -65,6 +84,11 @@ export default async function ProjectPage({
   const projectResponse = await getProject(profile.company_id, id);
 
   if (!projectResponse.data) {
+    console.error("Project not found or access denied:", {
+      companyId: profile.company_id,
+      projectId: id,
+      error: projectResponse.error
+    });
     notFound();
   }
 

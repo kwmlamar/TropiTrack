@@ -1,21 +1,36 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { DashboardLayoutClient } from "@/components/layouts/dashboard-layout-client";
 import { ApprovalsPage } from "./approvals-page";
+import { MobileApprovalsPage } from "./mobile-approvals-page";
 import { Button } from "@/components/ui/button";
 import { getUserProfileWithCompany } from "@/lib/data/userProfiles";
-import { useEffect } from "react";
+import { isPWAStandalone } from "@/lib/utils/pwa";
 import type { UserProfileWithCompany } from "@/lib/types/userProfile";
 
 export function ApprovalsPageClient() {
   const { theme } = useTheme();
+  const isPWA = isPWAStandalone();
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
   const [profile, setProfile] = useState<UserProfileWithCompany | null>(null);
   const [selectedCount, setSelectedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [approveHandler, setApproveHandler] = useState<(() => void) | null>(null);
   const [refreshHandler, setRefreshHandler] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const windowWidth = window.innerWidth;
+      setIsMobile(isPWA || windowWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [isPWA]);
 
   useEffect(() => {
     getUserProfileWithCompany().then(setProfile);
@@ -71,6 +86,21 @@ export function ApprovalsPageClient() {
     </div>
   ) : null;
 
+  // Still detecting mobile - show loading spinner
+  if (isMobile === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#2596be] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Mobile: render mobile view without dashboard layout
+  if (isMobile) {
+    return <MobileApprovalsPage />;
+  }
+
+  // Desktop: render with dashboard layout
   if (!profile) {
     return (
       <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
@@ -87,7 +117,7 @@ export function ApprovalsPageClient() {
           </div>
 
           {/* Table Skeleton */}
-          <div 
+          <div
             className="border-t border-b flex-1 flex flex-col"
             style={{
               backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
@@ -97,7 +127,7 @@ export function ApprovalsPageClient() {
             <div className="px-0 flex-1 flex flex-col">
               <div className="overflow-x-auto flex-1 overflow-y-auto">
                 <table className="w-full border-collapse border-spacing-0">
-                  <thead 
+                  <thead
                     className="sticky top-0 z-50 shadow-sm"
                     style={{
                       backgroundColor: theme === 'dark' ? '#171717' : '#ffffff',
@@ -121,8 +151,8 @@ export function ApprovalsPageClient() {
                   </thead>
                   <tbody>
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <tr 
-                        key={i} 
+                      <tr
+                        key={i}
                         className="border-b last:border-b-0"
                         style={{
                           borderColor: theme === 'dark' ? '#262626' : 'rgb(229 231 235 / 0.2)',
@@ -162,13 +192,13 @@ export function ApprovalsPageClient() {
   }
 
   return (
-    <DashboardLayoutClient 
-      title="Approvals" 
-      profile={profile} 
+    <DashboardLayoutClient
+      title="Approvals"
+      profile={profile}
       fullWidth={true}
       headerActions={headerActions}
     >
-      <ApprovalsPage 
+      <ApprovalsPage
         onSelectedCountChange={setSelectedCount}
         onTotalCountChange={setTotalCount}
         onApproveHandlerChange={handleApproveHandlerChange}

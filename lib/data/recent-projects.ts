@@ -77,8 +77,9 @@ export async function updateRecentProject(userId: string, projectId: string): Pr
       .select("id")
       .eq("user_id", userId)
       .eq("project_id", projectId)
-      .single();
+      .maybeSingle();
 
+    // PGRST116 means no rows found, which is fine - we'll insert a new record
     if (lookupError && lookupError.code !== "PGRST116") {
       console.error("Error checking for existing recent project:", lookupError);
       return;

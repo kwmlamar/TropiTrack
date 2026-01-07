@@ -14,6 +14,21 @@ interface ClientDetailsPageProps {
 
 export default async function ClientDetailsPage({ params }: ClientDetailsPageProps) {
   const { id } = await params;
+  
+  // Handle "new" route - redirect to new client page or show create form
+  if (id === "new") {
+    // For now, show 404
+    // You may want to create a separate new client page
+    notFound();
+  }
+
+  // Validate that id is a valid UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    console.error("Invalid client ID format:", id);
+    notFound();
+  }
+
   const supabase = await createClient();
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -26,6 +41,10 @@ export default async function ClientDetailsPage({ params }: ClientDetailsPagePro
   const profile = await getProfile(user.id);
   if (!profile) {
     return <div>Profile not found</div>
+  }
+
+  if (!profile.company_id) {
+    throw new Error("User profile missing company_id");
   }
 
   // Fetch client details
