@@ -5,6 +5,7 @@ import { getProfile } from '@/lib/data/data';
 import { notFound } from 'next/navigation';
 import { ClientSummary } from '@/components/clients/client-summary';
 import { ClientTabs } from '@/components/clients/client-tabs';
+import { ClientDetailPageClient } from '@/components/clients/client-detail-page-client';
 
 interface ClientDetailsPageProps {
   params: Promise<{
@@ -56,22 +57,24 @@ export default async function ClientDetailsPage({ params }: ClientDetailsPagePro
   const client = clientResult.data;
 
   return (
-    <DashboardLayout title={
-      <>
-        <span className="text-gray-500">Client</span> <span className="text-gray-500">/</span> {client.name}
-      </>
-    }>
-      <div className="container mx-auto p-6">
-        <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
-          <div className="space-y-6">
-            {/* Summary Cards */}
-            <ClientSummary clientId={client.id} companyId={profile.company_id} />
+    <ClientDetailPageClient>
+      <DashboardLayout title={
+        <>
+          <span className="text-gray-500">Client</span> <span className="text-gray-500">/</span> {client.name}
+        </>
+      }>
+        <div className="container mx-auto p-6">
+          <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-1000">
+            <div className="space-y-6">
+              {/* Summary Cards */}
+              <ClientSummary clientId={client.id} companyId={profile.company_id} />
 
-            {/* Tabs */}
-            <ClientTabs clientId={client.id} companyId={profile.company_id} client={client} />
+              {/* Tabs */}
+              <ClientTabs clientId={client.id} companyId={profile.company_id} client={client} />
+            </div>
           </div>
         </div>
-      </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </ClientDetailPageClient>
   )
 }

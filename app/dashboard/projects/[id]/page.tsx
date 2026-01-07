@@ -16,6 +16,7 @@ import { ProjectDocumentsNew } from "@/components/projects/project-documents-new
 import { ProjectQRCodes } from "@/components/projects/project-qr-codes";
 import { ProjectInvoices } from "@/components/projects/project-invoices";
 import { getWorkers } from "@/lib/data/workers";
+import { ProjectDetailPageClient } from "@/components/projects/project-detail-page-client";
 
 // Helper function to get color based on percentage
 function getProgressColor(percentage: number): string {
@@ -169,12 +170,13 @@ export default async function ProjectPage({
   });
 
   return (
-    <DashboardLayout title={
-      <>
-        <span className="text-gray-500">Project</span> <span className="text-gray-500"> / </span> {project.name}
-      </>
-    }>
-      <div className="container mx-auto space-y-6 p-6">
+    <ProjectDetailPageClient>
+      <DashboardLayout title={
+        <>
+          <span className="text-gray-500">Project</span> <span className="text-gray-500"> / </span> {project.name}
+        </>
+      }>
+        <div className="container mx-auto space-y-6 p-6">
 
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
@@ -323,5 +325,6 @@ export default async function ProjectPage({
         </div>
       </div>
     </DashboardLayout>
+    </ProjectDetailPageClient>
   );
 } 
