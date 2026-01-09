@@ -19,11 +19,12 @@ export function AssetsHeaderActions({ desktopActions }: AssetsHeaderActionsProps
   const isMobile = useIsMobile()
 
   // Hide header actions on mobile/PWA (search bar is in content area)
-  if (isMobile || isPWA) {
+  // If isMobile is null (during hydration), default to showing desktop actions
+  if (isMobile === true || isPWA) {
     return null
   }
 
-  // Show desktop actions on desktop
+  // Show desktop actions on desktop or during initial render
   return <>{desktopActions}</>
 }
 

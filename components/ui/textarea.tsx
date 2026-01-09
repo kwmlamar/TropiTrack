@@ -7,7 +7,22 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
     <textarea
       data-slot="textarea"
       className={cn(
-        "border-input placeholder:text-gray-500 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        // Base layout
+        "flex field-sizing-content min-h-16 w-full rounded-lg border px-3 py-2 text-base transition-all duration-150 outline-none md:text-sm",
+        // Light mode - explicit colors
+        "bg-[#ffffff] border-[#d1d5db] text-[#111827] placeholder:text-[#9ca3af]",
+        // Dark mode - explicit colors
+        "dark:bg-[#18181b] dark:border-[#3f3f46] dark:text-[#fafafa] dark:placeholder:text-[#71717a]",
+        // Hover state
+        "hover:border-[#9ca3af] dark:hover:border-[#52525b]",
+        // Focus state
+        "focus-visible:border-[#3b82f6] focus-visible:ring-2 focus-visible:ring-[#3b82f6]/20",
+        "dark:focus-visible:border-[#3b82f6] dark:focus-visible:ring-[#3b82f6]/30",
+        // Error state
+        "aria-invalid:border-[#ef4444] aria-invalid:ring-2 aria-invalid:ring-[#ef4444]/20",
+        "dark:aria-invalid:border-[#ef4444] dark:aria-invalid:ring-[#ef4444]/30",
+        // Disabled state
+        "disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}

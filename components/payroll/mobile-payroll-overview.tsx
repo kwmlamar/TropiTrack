@@ -281,16 +281,16 @@ export function MobilePayrollOverview({ companyId }: MobilePayrollOverviewProps)
 
     setFinalizing(true)
     try {
-      // Update all pending payrolls to confirmed
+      // Update all pending payrolls to paid
       const payrollIds = pendingPayrolls.map((p) => p.id)
-      await updatePayrollStatus(payrollIds, "confirmed")
+      await updatePayrollStatus(payrollIds, "paid")
 
-      toast.success(`${pendingPayrolls.length} payroll records finalized`)
+      toast.success(`${pendingPayrolls.length} payroll records marked as paid`)
       setShowFinalizeDialog(false)
       loadPayrolls()
     } catch (error) {
-      console.error("Error finalizing payroll:", error)
-      toast.error("Failed to finalize payroll")
+      console.error("Error marking payroll as paid:", error)
+      toast.error("Failed to mark payroll as paid")
     } finally {
       setFinalizing(false)
     }
@@ -501,7 +501,7 @@ export function MobilePayrollOverview({ companyId }: MobilePayrollOverviewProps)
             )}
           </div>
 
-          {/* Finalize Payroll CTA */}
+          {/* Pay Workers CTA */}
           {workerPayrolls.length > 0 && (
             <div className="px-4 pt-6 pb-4">
               <button
@@ -515,24 +515,24 @@ export function MobilePayrollOverview({ companyId }: MobilePayrollOverviewProps)
               >
                 <CheckCircle className="w-5 h-5" />
                 {canFinalize
-                  ? `Finalize Payroll (${pendingPayrolls.length})`
-                  : "All Payroll Finalized"}
+                  ? `Pay workers (${pendingPayrolls.length})`
+                  : "All workers paid"}
               </button>
             </div>
           )}
         </>
       )}
 
-      {/* Finalize Confirmation Dialog */}
+      {/* Pay Workers Confirmation Dialog */}
       <AlertDialog open={showFinalizeDialog} onOpenChange={setShowFinalizeDialog}>
         <AlertDialogContent className="mx-4 rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">
-              Finalize Payroll?
+              Pay workers?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
               <p className="mb-4">
-                This will lock the payroll for{" "}
+                Mark all payroll as paid for{" "}
                 <span className="font-medium">
                   {format(periodStart, "MMM d")} - {format(periodEnd, "MMM d, yyyy")}
                 </span>
@@ -567,10 +567,10 @@ export function MobilePayrollOverview({ companyId }: MobilePayrollOverviewProps)
               {finalizing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Finalizing...
+                  Processing...
                 </>
               ) : (
-                "Finalize"
+                "Pay workers"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -136,13 +136,6 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          {/* Testing Phase Banner */}
-          <div className="mb-4 p-3 bg-gradient-to-r from-[#2596be]/10 to-[#145369]/10 border border-[#2596be]/20 rounded-lg">
-            <p className="text-sm font-medium text-[#041014]">
-              🇧🇸 <span className="font-semibold">Currently free</span> for Bahamian construction companies testing the platform
-                  </p>
-                </div>
-
           <form action={handleSubmit}>
             <div className="flex flex-col gap-4">
               <div className="grid gap-2">

@@ -8,6 +8,7 @@ import { User, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FormSection } from "@/components/ui/form-section"
 import { toast } from "sonner"
 
 import { createWorker } from "@/lib/data/workers"
@@ -136,7 +138,7 @@ export function AddWorkerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -148,118 +150,122 @@ export function AddWorkerDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="position"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Position</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a position" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {workerPositions.map((position) => (
-                        <SelectItem key={position} value={position}>
-                          {position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="hourly_rate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hourly Rate ($)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="20.00"
-                      {...field}
-                      onChange={(e) => {
-                        const value = e.target.value === "" ? 0 : Number(e.target.value)
-                        field.onChange(value)
-                      }}
-                      value={field.value || 0}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="setPin"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      checked={field.value || false}
-                      onChange={field.onChange}
-                      className="h-4 w-4"
-                    />
-                  </FormControl>
-                  <FormLabel className="text-sm font-normal">
-                    Set up PIN for clock in/out
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
-
-            {form.watch("setPin") && (
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormSection title="Basic Information" columns={2}>
               <FormField
                 control={form.control}
-                name="pin"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>PIN (4-8 digits)</FormLabel>
+                    <FormLabel>Full Name *</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter PIN"
-                        {...field}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 8)
-                          field.onChange(value)
-                        }}
-                        maxLength={8}
-                      />
+                      <Input placeholder="John Doe" {...field} />
                     </FormControl>
                     <FormMessage />
-                    <p className="text-xs text-muted-foreground">
-                      Worker will use this PIN to verify their identity when clocking in/out
-                    </p>
                   </FormItem>
                 )}
               />
-            )}
+
+              <FormField
+                control={form.control}
+                name="position"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Position *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a position" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {workerPositions.map((position) => (
+                          <SelectItem key={position} value={position}>
+                            {position}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </FormSection>
+
+            <FormSection title="Compensation">
+              <FormField
+                control={form.control}
+                name="hourly_rate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hourly Rate ($) *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="20.00"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : Number(e.target.value)
+                          field.onChange(value)
+                        }}
+                        value={field.value || 0}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </FormSection>
+
+            <FormSection title="Security">
+              <FormField
+                control={form.control}
+                name="setPin"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Set up PIN for clock in/out
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("setPin") && (
+                <FormField
+                  control={form.control}
+                  name="pin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PIN (4-8 digits)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Enter PIN"
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 8)
+                            field.onChange(value)
+                          }}
+                          maxLength={8}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-muted-foreground">
+                        Worker will use this PIN to verify their identity when clocking in/out
+                      </p>
+                    </FormItem>
+                  )}
+                />
+              )}
+            </FormSection>
 
             <DialogFooter>
               <Button

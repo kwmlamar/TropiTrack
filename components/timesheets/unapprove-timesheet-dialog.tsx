@@ -85,44 +85,43 @@ export function UnapproveTimesheetDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent 
-        className="sm:max-w-[425px]"
-      >
+      <AlertDialogContent className="sm:max-w-[425px]">
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
             Unapprove Timesheet
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm">
-            Unapprove this timesheet to edit it again?
+          <AlertDialogDescription>
+            This will mark the timesheet as pending and allow you to edit it again.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="space-y-3">
-          <div className="rounded-lg bg-muted/50 p-2 text-xs">
-            <p className="font-medium">Worker: {workerName}</p>
-            <p className="text-muted-foreground">Date: {displayDate}</p>
+        <div className="space-y-4">
+          <div className="rounded-lg bg-muted/50 p-3 text-sm space-y-1">
+            <p><span className="text-muted-foreground">Worker:</span> <span className="font-medium">{workerName}</span></p>
+            <p><span className="text-muted-foreground">Date:</span> <span className="font-medium">{displayDate}</span></p>
           </div>
 
           {error && (
-            <Alert variant="destructive" className="text-xs">
-              <AlertTriangle className="h-3 w-3" />
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
         </div>
 
-        <AlertDialogFooter className="gap-2">
+        <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleUnapprove}
             disabled={isLoading}
+            className="bg-amber-600 hover:bg-amber-700 text-white"
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Unapproving...
               </>
             ) : (
@@ -131,13 +130,6 @@ export function UnapproveTimesheetDialog({
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-      
-      {/* Custom CSS to override AlertDialog overlay */}
-      <style jsx>{`
-        [data-slot="alert-dialog-overlay"] {
-          background-color: rgba(75, 85, 99, 0.5) !important;
-        }
-      `}</style>
     </AlertDialog>
   )
 }

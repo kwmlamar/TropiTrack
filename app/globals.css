@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "leaflet/dist/leaflet.css";
 
+/* Configure Tailwind v4 to use class-based dark mode (for next-themes compatibility) */
+@custom-variant dark (&:is(.dark *));
+
 
 
 :root {
