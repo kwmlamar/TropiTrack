@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { useTheme } from "next-themes"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -161,10 +161,24 @@ export default function PayrollPage({
   const payrolls = internalPayrolls;
   const selectedPayrollIds = externalSelectedPayrollIds || internalSelectedPayrollIds;
   
-  const setPayrolls = (payrolls: PayrollRecord[]) => {
-    setInternalPayrolls(payrolls);
-    onPayrollsChange?.(payrolls);
-  };
+  // Use ref to store the callback so it doesn't cause dependency issues
+  const onPayrollsChangeRef = useRef(onPayrollsChange);
+  useEffect(() => {
+    onPayrollsChangeRef.current = onPayrollsChange;
+  }, [onPayrollsChange]);
+
+  const setPayrolls = useCallback((payrolls: PayrollRecord[] | ((prev: PayrollRecord[]) => PayrollRecord[])) => {
+    if (typeof payrolls === 'function') {
+      setInternalPayrolls((prev) => {
+        const newPayrolls = payrolls(prev);
+        onPayrollsChangeRef.current?.(newPayrolls);
+        return newPayrolls;
+      });
+    } else {
+      setInternalPayrolls(payrolls);
+      onPayrollsChangeRef.current?.(payrolls);
+    }
+  }, []);
   
   const setSelectedPayrollIds = (ids: Set<string> | ((prev: Set<string>) => Set<string>)) => {
     const newIds = typeof ids === 'function' ? ids(selectedPayrollIds) : ids;
@@ -185,6 +199,7 @@ export default function PayrollPage({
   const [isRegenerating, setIsRegenerating] = useState(false)
   const isMountedRef = useRef(true)
   const processedSearchParamsRef = useRef<string>('')
+  const loadingRef = useRef(false) // Add ref to track loading state
   
   // Cache for payroll data to prevent redundant API calls
   const payrollCacheRef = useRef<Map<string, { data: PayrollRecord[], timestamp: number }>>(new Map())
@@ -281,22 +296,21 @@ export default function PayrollPage({
     }
   }, [searchParams, setDateRange])
 
-  const loadPayroll = async (forceRefresh = false) => {
-    console.log('loadPayroll called', { isLoading, dateRange, payPeriodType });
-    
-    // Prevent multiple simultaneous loads
-    if (isLoading) {
-      console.log('loadPayroll: already loading, returning');
-      return
-    }
-    
+  const loadPayroll = useCallback(async (forceRefresh = false) => {
     // Prevent loading if no valid date range
     if (!dateRange?.from || !dateRange?.to) {
       console.log('loadPayroll: no valid date range, returning');
       return
     }
     
+    // Prevent multiple simultaneous loads
+    if (loadingRef.current && !forceRefresh) {
+      console.log('loadPayroll: already loading, returning');
+      return
+    }
+    
     console.log('loadPayroll: starting to load data');
+    loadingRef.current = true
     setIsLoading(true)
     
     // Set a timeout to prevent infinite loading states
@@ -330,6 +344,7 @@ export default function PayrollPage({
         if (isMountedRef.current) {
           setPayrolls(cachedData.data)
           setIsLoading(false)
+          loadingRef.current = false
         }
         return
       }
@@ -437,6 +452,7 @@ export default function PayrollPage({
         })
         
         if (isMountedRef.current) {
+          console.log('loadPayroll: setting payrolls', processedPayrolls.length, 'records');
           setPayrolls(processedPayrolls)
           
           // Cache the processed data
@@ -465,11 +481,15 @@ export default function PayrollPage({
     } finally {
       console.log('loadPayroll: finally block reached, setting isLoading to false');
       clearTimeout(loadingTimeout)
+      loadingRef.current = false
       if (isMountedRef.current) {
+        console.log('loadPayroll: calling setIsLoading(false)');
         setIsLoading(false)
+      } else {
+        console.log('loadPayroll: component not mounted, skipping setIsLoading');
       }
     }
-  }
+  }, [dateRange, payPeriodType])
 
   useEffect(() => {
     console.log('useEffect: checking dateRange', { dateRange, user, payPeriodType });
@@ -481,8 +501,7 @@ export default function PayrollPage({
     
     console.log('useEffect: calling loadPayroll');
     loadPayroll()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, dateRange?.from?.getTime(), dateRange?.to?.getTime(), payPeriodType])
+  }, [loadPayroll])
 
   // Filter payrolls based on status using useMemo
   const filteredPayrolls = useMemo(() => {
