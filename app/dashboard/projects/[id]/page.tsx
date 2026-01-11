@@ -3,10 +3,17 @@ import DashboardLayout from "@/components/layouts/dashboard-layout";
 import { updateRecentProject } from "@/lib/data/recent-projects";
 import { getProject } from "@/lib/data/projects";
 import { getProfile } from "@/lib/data/data";
-import { getTransactionsServer } from "@/lib/data/transactions";
 import { getPayrollsByProject } from "@/lib/data/payroll";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { TabsContent } from "@/components/ui/tabs";
+import { ProjectTabsWrapper } from "@/components/projects/project-tabs-wrapper";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { notFound } from "next/navigation";
 import { getProjectAssignments } from "@/lib/data/project-assignments";
 import { fetchClientsForCompany } from "@/lib/data/data";
@@ -17,19 +24,47 @@ import { ProjectQRCodes } from "@/components/projects/project-qr-codes";
 import { ProjectInvoices } from "@/components/projects/project-invoices";
 import { getWorkers } from "@/lib/data/workers";
 import { ProjectDetailPageClient } from "@/components/projects/project-detail-page-client";
+import { getTimesheets } from "@/lib/data/timesheets";
 
-// Helper function to get color based on percentage
-function getProgressColor(percentage: number): string {
-  if (percentage <= 70) return "bg-green-500";
-  if (percentage <= 90) return "bg-yellow-500";
-  return "bg-red-500";
-}
+// New v2 components
+import {
+  ProjectHeader,
+  FinancialSnapshot,
+  ProjectTimeline,
+  ProjectTasks,
+  ActivityFeed,
+  FinancialData
+} from "@/components/projects/project-detail-v2";
 
-// Helper function to get status text based on percentage
-function getProgressStatus(percentage: number): string {
-  if (percentage <= 70) return "On Track";
-  if (percentage <= 90) return "Warning";
-  return "Over Budget";
+// Helper function to calculate project progress based on dates
+function calculateProjectProgress(project: {
+  status: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  estimated_end_date?: string | null;
+}): number {
+  // If completed or cancelled, return appropriate values
+  if (project.status === 'completed') return 100;
+  if (project.status === 'cancelled' || project.status === 'not_started') return 0;
+
+  // Calculate based on dates
+  const startDate = project.start_date ? new Date(project.start_date) : null;
+  const endDate = project.end_date || project.estimated_end_date
+    ? new Date(project.end_date || project.estimated_end_date!)
+    : null;
+
+  if (startDate && endDate) {
+    const now = new Date();
+    const total = endDate.getTime() - startDate.getTime();
+    const elapsed = now.getTime() - startDate.getTime();
+    const progress = Math.min(100, Math.max(0, (elapsed / total) * 100));
+    return Math.round(progress);
+  }
+
+  // Fallback based on status
+  if (project.status === 'in_progress') return 50;
+  if (project.status === 'paused') return 50;
+  return 0;
 }
 
 export default async function ProjectPage({
@@ -109,13 +144,6 @@ export default async function ProjectPage({
   });
   const projectAssignments = projectAssignmentsResponse.data || [];
 
-  // Fetch transactions for this project (using project name as reference)
-  const transactionsResponse = await getTransactionsServer({ 
-    search: project.name,
-    type: "expense"
-  }, profile.company_id);
-  const projectTransactions = transactionsResponse.data || [];
-
   // Fetch payrolls for this project
   const payrollsResponse = await getPayrollsByProject(id);
   const payrolls = payrollsResponse.data || [];
@@ -132,18 +160,37 @@ export default async function ProjectPage({
     .eq("project_id", id)
     .order("issue_date", { ascending: false });
 
+  // Fetch recent timesheets for activity feed
+  const timesheetsResponse = await getTimesheets(user.id, {
+    project_id: id,
+    limit: 10
+  });
+  const recentTimesheets = timesheetsResponse.data || [];
+
   // Calculate actual costs from confirmed payroll
   const actualPayrollCost = payrolls.reduce((total, payroll) => total + (payroll.gross_pay || 0), 0);
-  const actualOtherCosts = projectTransactions.reduce((total, transaction) => total + transaction.amount, 0);
-  const actualTotalCost = actualPayrollCost + actualOtherCosts;
 
   // Calculate budgets
   const totalBudget = project.budget || 0;
-  const payrollBudget = project.payroll_budget || (totalBudget * 0.6); // Use specific payroll budget or fallback to 60% of total budget
+  const payrollBudget = project.payroll_budget || (totalBudget * 0.6);
 
-  // Calculate percentages
-  const totalBudgetPercentage = totalBudget > 0 ? (actualTotalCost / totalBudget) * 100 : 0;
-  const payrollBudgetPercentage = payrollBudget > 0 ? (actualPayrollCost / payrollBudget) * 100 : 0;
+  // Calculate financial data for new components
+  const invoicedAmount = projectInvoices?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0;
+  const paidAmount = projectInvoices?.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0) || 0;
+  const unpaidInvoices = projectInvoices?.filter(inv => (inv.total_amount || 0) > (inv.amount_paid || 0)) || [];
+
+  const financialData: FinancialData = {
+    estimatedLabor: payrollBudget,
+    actualLabor: actualPayrollCost,
+    invoicedAmount,
+    paidAmount,
+    outstandingBalance: invoicedAmount - paidAmount,
+    invoiceCount: projectInvoices?.length || 0,
+    unpaidInvoiceCount: unpaidInvoices.length
+  };
+
+  // Calculate project progress
+  const projectProgress = calculateProjectProgress(project);
 
   // Calculate totals for each worker from payroll data
   const workerTotals = new Map();
@@ -171,131 +218,66 @@ export default async function ProjectPage({
 
   return (
     <ProjectDetailPageClient>
-      <DashboardLayout title={
-        <>
-          <span className="text-gray-500">Project</span> <span className="text-gray-500"> / </span> {project.name}
-        </>
-      }>
+      <DashboardLayout
+        title={
+          <Breadcrumb>
+            <BreadcrumbList className="flex-nowrap">
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  href="/dashboard/projects"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Projects
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="text-muted-foreground" />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-[250px] md:max-w-[350px]">
+                  {project.name}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        }
+        showProjectTabs={true}
+      >
         <div className="container mx-auto space-y-6 p-6">
 
 
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards">
-          <Tabs defaultValue="overview" className="w-full">
-            <div className="border-b border-muted">
-              <TabsList className="inline-flex h-12 items-center justify-start p-0 bg-transparent border-none">
-                <TabsTrigger
-                  value="overview"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-                >
-                  Overview
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="qr-codes"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-                >
-                  QR Codes
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="documents"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-                >
-                  Documents
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="invoices"
-                  className="group relative px-4 py-2.5 text-sm font-semibold text-gray-500 transition-all duration-300 ease-in-out data-[state=active]:text-primary data-[state=active]:shadow-none min-w-[100px] border-none"
-                >
-                  Invoices
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out group-data-[state=active]:scale-x-100" />
-                </TabsTrigger>
-              </TabsList>
-            </div>
+          <ProjectTabsWrapper className="w-full">
 
             <TabsContent value="overview" className="container mx-auto py-4 space-y-6">
-              {/* Project Overview Cards */}
-              <div className="space-y-6">
-                {/* Total Budget Progress */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      Total Budget vs Actual Spend
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Track overall project spending against budget
-                    </p>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Budget Utilization</span>
-                      <span className="text-sm text-gray-500">
-                        {totalBudgetPercentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(totalBudgetPercentage)}`}
-                        style={{ width: `${Math.min(totalBudgetPercentage, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Actual: ${actualTotalCost.toFixed(2)}</span>
-                      <span className="text-gray-500">Budget: ${totalBudget.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payroll Budget Progress */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      Payroll Budget vs Actual
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Track labor costs against payroll budget
-                    </p>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Payroll Utilization</span>
-                      <span className="text-sm text-gray-500">
-                        {payrollBudgetPercentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(payrollBudgetPercentage)}`}
-                        style={{ width: `${Math.min(payrollBudgetPercentage, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Actual: ${actualPayrollCost.toFixed(2)}</span>
-                      <span className="text-gray-500">Budget: ${payrollBudget.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Status</span>
-                      <Badge 
-                        variant={payrollBudgetPercentage <= 70 ? "default" : payrollBudgetPercentage <= 90 ? "secondary" : "destructive"}
-                        className="text-xs"
-                      >
-                        {getProgressStatus(payrollBudgetPercentage)}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Project Details Section */}
-              <ProjectDetailsSection
+              {/* Project Header with Status and Progress */}
+              <ProjectHeader
                 project={project}
-                clients={clients}
-                userId={user.id}
+                progress={projectProgress}
               />
+
+              {/* Financial Snapshot - 4-card grid */}
+              <FinancialSnapshot financials={financialData} />
+
+              {/* Project Timeline (Gantt-lite) */}
+              <ProjectTimeline
+                projectStartDate={project.start_date}
+                projectEndDate={project.end_date || project.estimated_end_date}
+              />
+
+              {/* Tasks & Phases Section */}
+              <ProjectTasks />
+
+              {/* Two column layout for Activity and Details */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Activity Feed */}
+                <ActivityFeed timesheets={recentTimesheets} />
+
+                {/* Project Details Section */}
+                <ProjectDetailsSection
+                  project={project}
+                  clients={clients}
+                  userId={user.id}
+                />
+              </div>
 
               {/* Team Members Section */}
               <TeamMembersClient
@@ -321,7 +303,7 @@ export default async function ProjectPage({
                 clientId={project.client_id}
               />
             </TabsContent>
-          </Tabs>
+          </ProjectTabsWrapper>
         </div>
       </div>
     </DashboardLayout>

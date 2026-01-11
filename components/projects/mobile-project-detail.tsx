@@ -9,11 +9,13 @@ import {
   MapPin,
   Building2,
   Calendar,
-  Clock,
   Users,
   DollarSign,
   Edit2,
   ChevronRight,
+  Receipt,
+  AlertCircle,
+  TrendingUp,
 } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { getProject } from "@/lib/data/projects"
@@ -36,6 +38,23 @@ interface TimesheetSummary {
   entry_count: number
 }
 
+interface FinancialSummary {
+  estimatedLabor: number
+  actualLabor: number
+  invoicedAmount: number
+  outstandingBalance: number
+  invoiceCount: number
+}
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("en-BS", {
+    style: "currency",
+    currency: "BSD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
 export function MobileProjectDetail() {
   const router = useRouter()
   const params = useParams()
@@ -46,6 +65,14 @@ export function MobileProjectDetail() {
     total_pay: 0,
     entry_count: 0,
   })
+  const [financialSummary, setFinancialSummary] = useState<FinancialSummary>({
+    estimatedLabor: 0,
+    actualLabor: 0,
+    invoicedAmount: 0,
+    outstandingBalance: 0,
+    invoiceCount: 0,
+  })
+  const [projectProgress, setProjectProgress] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -112,6 +139,44 @@ export function MobileProjectDetail() {
           { total_hours: 0, total_pay: 0, entry_count: 0 }
         )
         setTimesheetSummary(summary)
+      }
+
+      // Load invoice data for financial summary
+      const { data: invoices } = await supabase
+        .from("invoices")
+        .select("total_amount, amount_paid")
+        .eq("project_id", params.id as string)
+        .eq("company_id", profile.company_id)
+
+      if (invoices && projectResult.data) {
+        const invoicedAmount = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+        const paidAmount = invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0)
+        const payrollBudget = projectResult.data.payroll_budget || (projectResult.data.budget || 0) * 0.6
+
+        setFinancialSummary({
+          estimatedLabor: payrollBudget,
+          actualLabor: timesheets?.reduce((sum, ts) => sum + (ts.total_pay || 0), 0) || 0,
+          invoicedAmount,
+          outstandingBalance: invoicedAmount - paidAmount,
+          invoiceCount: invoices.length,
+        })
+      }
+
+      // Calculate project progress
+      if (projectResult.data) {
+        const p = projectResult.data
+        let progress = 0
+        if (p.status === 'completed') progress = 100
+        else if (p.status === 'cancelled' || p.status === 'not_started') progress = 0
+        else if (p.start_date && (p.end_date || p.estimated_end_date)) {
+          const start = new Date(p.start_date).getTime()
+          const end = new Date(p.end_date || p.estimated_end_date!).getTime()
+          const now = Date.now()
+          progress = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100))
+        } else if (p.status === 'in_progress' || p.status === 'paused') {
+          progress = 50
+        }
+        setProjectProgress(Math.round(progress))
       }
     } catch (err) {
       console.error("Error loading project:", err)
@@ -226,59 +291,109 @@ export function MobileProjectDetail() {
         </div>
       </div>
 
-      {/* Project Header Card */}
+      {/* Project Header Card with Progress */}
       <div className="bg-white px-5 py-6 border-b border-gray-100">
         <div className="flex items-start gap-4">
           <div className="w-14 h-14 bg-[#2596be]/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <FolderKanban className="w-7 h-7 text-[#2596be]" />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-gray-900 truncate">
-              {project.name}
-            </h2>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-start justify-between gap-2">
+              <h2 className="text-xl font-bold text-gray-900 truncate flex-1">
+                {project.name}
+              </h2>
               {getStatusBadge(project.status)}
             </div>
-            {project.description && (
-              <p className="text-sm text-gray-500 mt-2 line-clamp-2">
-                {project.description}
+            {project.client && (
+              <p className="text-sm text-gray-500 mt-0.5">
+                {project.client.company || project.client.name}
+              </p>
+            )}
+            {(project.start_date || project.end_date || project.estimated_end_date) && (
+              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {formatDate(project.start_date)} → {formatDate(project.end_date || project.estimated_end_date)}
               </p>
             )}
           </div>
         </div>
+
+        {/* Progress Bar */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-gray-600">Overall Progress</span>
+            <span className="text-xs font-semibold text-gray-900">{projectProgress}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="h-2 rounded-full bg-[#2596be] transition-all duration-500"
+              style={{ width: `${projectProgress}%` }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Hours & Pay Summary */}
+      {/* Financial Snapshot - 4 Card Grid */}
       <div className="px-5 pt-5">
         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Project Totals
+          Financial Snapshot
         </h3>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
+          {/* Est. Labor Budget */}
+          <div className="bg-[#E8EDF5] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-500">Total Hours</span>
+              <DollarSign className="w-4 h-4 text-[#2596be]" />
+              <span className="text-xs text-gray-600">Est. Labor</span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
-              {timesheetSummary.total_hours.toFixed(1)}
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(financialSummary.estimatedLabor)}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {timesheetSummary.entry_count} entries
+            <p className="text-xs text-gray-500 mt-0.5">Budget allocated</p>
+          </div>
+
+          {/* Actual Labor */}
+          <div className="bg-[#E8EDF5] rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-4 h-4 text-[#2596be]" />
+              <span className="text-xs text-gray-600">Actual Labor</span>
+            </div>
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(financialSummary.actualLabor)}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {financialSummary.estimatedLabor > 0
+                ? `${((financialSummary.actualLabor / financialSummary.estimatedLabor) * 100).toFixed(0)}% of budget`
+                : `${timesheetSummary.total_hours.toFixed(1)}h logged`
+              }
             </p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
+
+          {/* Invoiced */}
+          <div className="bg-[#E8EDF5] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-500">Labor Cost</span>
+              <Receipt className="w-4 h-4 text-[#2596be]" />
+              <span className="text-xs text-gray-600">Invoiced</span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
-              ${timesheetSummary.total_pay.toFixed(0)}
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(financialSummary.invoicedAmount)}
             </p>
-            {project.payroll_budget && project.payroll_budget > 0 && (
-              <p className="text-xs text-gray-400 mt-0.5">
-                of ${project.payroll_budget.toFixed(0)} budget
-              </p>
-            )}
+            <p className="text-xs text-gray-500 mt-0.5">
+              {financialSummary.invoiceCount} invoice{financialSummary.invoiceCount !== 1 ? 's' : ''}
+            </p>
+          </div>
+
+          {/* Outstanding */}
+          <div className="bg-[#E8EDF5] rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertCircle className={`w-4 h-4 ${financialSummary.outstandingBalance > 0 ? 'text-amber-500' : 'text-green-500'}`} />
+              <span className="text-xs text-gray-600">Outstanding</span>
+            </div>
+            <p className={`text-xl font-bold ${financialSummary.outstandingBalance > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+              {formatCurrency(financialSummary.outstandingBalance)}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {financialSummary.outstandingBalance > 0 ? 'Pending payment' : 'All paid'}
+            </p>
           </div>
         </div>
       </div>

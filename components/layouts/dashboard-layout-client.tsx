@@ -11,10 +11,12 @@ import { UserProfileWithCompany } from "@/lib/types/userProfile"
 import { DateRangeProvider } from "@/context/date-range-context"
 import { OnboardingProvider } from "@/context/onboarding-context"
 import { ReportsTabsProvider } from "@/context/reports-tabs-context"
+import { ProjectTabsProvider } from "@/context/project-tabs-context"
 import { SidebarProvider, useSidebarCollapse } from "@/context/sidebar-context"
 
 import { OnboardingCheck } from "@/components/onboarding/onboarding-check"
 import { ReportsHeaderWrapper } from "@/components/reports/reports-header-wrapper"
+import { ProjectHeaderWrapper } from "@/components/projects/project-header-wrapper"
 
 type DashboardLayoutClientProps = {
   children: React.ReactNode
@@ -25,12 +27,13 @@ type DashboardLayoutClientProps = {
   showSettingsTabs?: boolean
   activeSettingsTab?: string
   onSettingsTabChange?: (tab: string) => void
+  showProjectTabs?: boolean
 }
 
-export function DashboardLayoutClient({ children, title, profile, fullWidth = false, headerActions, showSettingsTabs = false, activeSettingsTab = "general", onSettingsTabChange }: DashboardLayoutClientProps) {
+export function DashboardLayoutClient({ children, title, profile, fullWidth = false, headerActions, showSettingsTabs = false, activeSettingsTab = "general", onSettingsTabChange, showProjectTabs = false }: DashboardLayoutClientProps) {
   const { theme } = useTheme()
   const [selectedSection, setSelectedSection] = useState<string | null>(null)
-  
+
   // Determine if this is the time logs or reports page
   const isTimeLogs = title === "Time Logs";
   const isReports = title === "Reports";
@@ -42,7 +45,7 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
 
   return (
     <SidebarProvider>
-      <DashboardLayoutContent 
+      <DashboardLayoutContent
         theme={theme}
         title={title}
         profile={profile}
@@ -56,6 +59,7 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
         showTimesheetsDropdown={showTimesheetsDropdown}
         showDateRangePicker={showDateRangePicker}
         showReportsTabs={showReportsTabs}
+        showProjectTabs={showProjectTabs}
         selectedSection={selectedSection}
         setSelectedSection={setSelectedSection}
       >
@@ -65,20 +69,21 @@ export function DashboardLayoutClient({ children, title, profile, fullWidth = fa
   )
 }
 
-function DashboardLayoutContent({ 
-  children, 
-  theme, 
-  title, 
-  profile, 
-  fullWidth, 
-  headerActions, 
-  showSettingsTabs, 
-  activeSettingsTab, 
+function DashboardLayoutContent({
+  children,
+  theme,
+  title,
+  profile,
+  fullWidth,
+  headerActions,
+  showSettingsTabs,
+  activeSettingsTab,
   onSettingsTabChange,
   isReports,
   showTimesheetsDropdown,
   showDateRangePicker,
   showReportsTabs,
+  showProjectTabs,
   selectedSection,
   setSelectedSection
 }: DashboardLayoutClientProps & {
@@ -88,6 +93,7 @@ function DashboardLayoutContent({
   showTimesheetsDropdown: boolean
   showDateRangePicker: boolean
   showReportsTabs: boolean
+  showProjectTabs: boolean
   selectedSection: string | null
   setSelectedSection: (section: string | null) => void
 }) {
@@ -120,10 +126,14 @@ function DashboardLayoutContent({
         {/* Header */}
         {isReports ? (
           <ReportsHeaderWrapper title={title} />
+        ) : showProjectTabs ? (
+          <ProjectHeaderWrapper title={title}>
+            {headerActions}
+          </ProjectHeaderWrapper>
         ) : (
-          <SiteHeader 
-            title={title} 
-            hideDateRangePicker={!showDateRangePicker} 
+          <SiteHeader
+            title={title}
+            hideDateRangePicker={!showDateRangePicker}
             showTimesheetsDropdown={showTimesheetsDropdown}
             showReportsTabs={showReportsTabs}
             showSettingsTabs={showSettingsTabs}
@@ -169,6 +179,10 @@ function DashboardLayoutContent({
           <ReportsTabsProvider>
             {layoutContent}
           </ReportsTabsProvider>
+        ) : showProjectTabs ? (
+          <ProjectTabsProvider>
+            {layoutContent}
+          </ProjectTabsProvider>
         ) : (
           layoutContent
         )}

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { ChevronDown, FileText, CheckCircle, Clock, BarChart3, TrendingUp, Users, DollarSign } from "lucide-react";
+import { ChevronDown, FileText, CheckCircle, Clock, BarChart3, TrendingUp, Users, DollarSign, LayoutDashboard, QrCode, FolderOpen, Receipt } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,9 @@ type SiteHeaderProps = {
   showSettingsTabs?: boolean;
   activeSettingsTab?: string;
   onSettingsTabChange?: (tab: string) => void;
+  showProjectTabs?: boolean;
+  activeProjectTab?: string;
+  onProjectTabChange?: (tab: string) => void;
 };
 
 export function SiteHeader({
@@ -40,6 +43,9 @@ export function SiteHeader({
   showSettingsTabs = false,
   activeSettingsTab = "general",
   onSettingsTabChange,
+  showProjectTabs = false,
+  activeProjectTab = "overview",
+  onProjectTabChange,
 }: SiteHeaderProps) {
   const { theme } = useTheme();
   const pathname = usePathname();
@@ -132,38 +138,71 @@ export function SiteHeader({
           )}
         </div>
 
-        {/* Center Section - Date Range Picker or Report Tabs */}
+        {/* Center Section - Date Range Picker or Report/Project Tabs */}
         <div className="flex-1 flex justify-start min-w-0">
           {showReportsTabs ? (
             <Tabs value={activeReportTab} onValueChange={onReportTabChange} className="w-auto">
               <TabsList className="grid w-auto grid-cols-4 bg-transparent p-0 h-auto gap-1 sm:gap-2">
-                <TabsTrigger 
-                  value="summary" 
+                <TabsTrigger
+                  value="summary"
                   className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
                   <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Summary</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="detailed" 
+                <TabsTrigger
+                  value="detailed"
                   className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
                   <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Detailed</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="workload" 
+                <TabsTrigger
+                  value="workload"
                   className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
                   <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Workload</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="profitability" 
+                <TabsTrigger
+                  value="profitability"
                   className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
                 >
                   <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Profitability</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          ) : showProjectTabs ? (
+            <Tabs value={activeProjectTab} onValueChange={onProjectTabChange} className="w-auto">
+              <TabsList className="grid w-auto grid-cols-4 bg-transparent p-0 h-auto gap-1 sm:gap-2">
+                <TabsTrigger
+                  value="overview"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Overview</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="qr-codes"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
+                >
+                  <QrCode className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">QR Codes</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="documents"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
+                >
+                  <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Documents</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="invoices"
+                  className="flex items-center justify-center gap-1 text-xs sm:text-sm bg-white border-gray-200 dark:bg-[#181818] dark:border-[#2A2A2A] border rounded-lg px-2 sm:px-3 py-1.5 shadow-none whitespace-nowrap"
+                >
+                  <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Invoices</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>

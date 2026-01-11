@@ -10,9 +10,10 @@ type DashboardLayoutProps = {
   showSettingsTabs?: boolean
   activeSettingsTab?: string
   onSettingsTabChange?: (tab: string) => void
+  showProjectTabs?: boolean
 }
 
-export default async function DashboardLayout({ 
+export default async function DashboardLayout({
   children,
   title = "Dashboard",
   fullWidth = false,
@@ -20,6 +21,7 @@ export default async function DashboardLayout({
   showSettingsTabs = false,
   activeSettingsTab = "general",
   onSettingsTabChange,
+  showProjectTabs = false,
 }: DashboardLayoutProps) {
   const profile = await getUserProfileWithCompany()
 
@@ -27,5 +29,5 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  return <DashboardLayoutClient profile={profile} title={title} fullWidth={fullWidth} headerActions={headerActions} showSettingsTabs={showSettingsTabs} activeSettingsTab={activeSettingsTab} onSettingsTabChange={onSettingsTabChange}>{children}</DashboardLayoutClient>
+  return <DashboardLayoutClient profile={profile} title={title} fullWidth={fullWidth} headerActions={headerActions} showSettingsTabs={showSettingsTabs} activeSettingsTab={activeSettingsTab} onSettingsTabChange={onSettingsTabChange} showProjectTabs={showProjectTabs}>{children}</DashboardLayoutClient>
 }

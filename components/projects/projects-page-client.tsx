@@ -63,7 +63,7 @@ export function ProjectsPageClient({ profile, user }: ProjectsPageClientProps) {
   return (
     <DashboardLayoutClient
       profile={profile}
-      title="Assets"
+      title="Projects"
       fullWidth={true}
       headerActions={<AssetsHeaderActions desktopActions={<ProjectsHeaderActions userId={user.id} />} />}
     >
