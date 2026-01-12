@@ -56,7 +56,7 @@ const projectSchema = z.object({
   start_date: z.string().min(1, "Start date is required"),
   end_date: z.string().optional(),
   budget: z.number().min(0, "Budget must be positive").optional(),
-  payroll_budget: z.number().min(0, "Payroll budget must be positive").optional(),
+  payroll_budget: z.number().min(0, "Estimated labor cost must be positive").optional(),
   status: z.enum(["not_started", "in_progress", "paused", "completed", "cancelled"]),
   priority: z.enum(["low", "medium", "high", "urgent"]),
 })
@@ -406,7 +406,7 @@ export function EditProjectDialog({
                 name="payroll_budget"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payroll Budget</FormLabel>
+                    <FormLabel>Estimated Labor Cost</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />

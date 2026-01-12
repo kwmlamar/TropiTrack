@@ -151,10 +151,11 @@ export function MobileProjectDetail() {
       if (invoices && projectResult.data) {
         const invoicedAmount = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
         const paidAmount = invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0)
-        const payrollBudget = projectResult.data.payroll_budget || (projectResult.data.budget || 0) * 0.6
+        // Use payroll_budget directly from database (no fallback calculation)
+        const estimatedLaborCost = projectResult.data.payroll_budget || 0
 
         setFinancialSummary({
-          estimatedLabor: payrollBudget,
+          estimatedLabor: estimatedLaborCost,
           actualLabor: timesheets?.reduce((sum, ts) => sum + (ts.total_pay || 0), 0) || 0,
           invoicedAmount,
           outstandingBalance: invoicedAmount - paidAmount,

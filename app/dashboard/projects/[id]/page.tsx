@@ -172,7 +172,8 @@ export default async function ProjectPage({
 
   // Calculate budgets
   const totalBudget = project.budget || 0;
-  const payrollBudget = project.payroll_budget || (totalBudget * 0.6);
+  // Use payroll_budget directly from database (no fallback calculation)
+  const estimatedLaborCost = project.payroll_budget || 0;
 
   // Calculate financial data for new components
   const invoicedAmount = projectInvoices?.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) || 0;
@@ -180,7 +181,7 @@ export default async function ProjectPage({
   const unpaidInvoices = projectInvoices?.filter(inv => (inv.total_amount || 0) > (inv.amount_paid || 0)) || [];
 
   const financialData: FinancialData = {
-    estimatedLabor: payrollBudget,
+    estimatedLabor: estimatedLaborCost,
     actualLabor: actualPayrollCost,
     invoicedAmount,
     paidAmount,

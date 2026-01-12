@@ -12,8 +12,9 @@ import type { UserProfileWithCompany } from "@/lib/types/userProfile";
 
 export function ApprovalsPageClient() {
   const { theme } = useTheme();
-  const isPWA = isPWAStandalone();
+  const [isPWA, setIsPWA] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<UserProfileWithCompany | null>(null);
   const [selectedCount, setSelectedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -21,16 +22,24 @@ export function ApprovalsPageClient() {
   const [refreshHandler, setRefreshHandler] = useState<(() => void) | null>(null);
 
   useEffect(() => {
+    // Set mounted to true and check PWA status immediately on client
+    setMounted(true);
+    const pwa = isPWAStandalone();
+    setIsPWA(pwa);
+    
     const checkMobile = () => {
       const windowWidth = window.innerWidth;
-      setIsMobile(isPWA || windowWidth < 768);
+      setIsMobile(pwa || windowWidth < 768);
     };
 
+    // Check immediately on client
     checkMobile();
+    
+    // Add resize listener
     window.addEventListener("resize", checkMobile);
 
     return () => window.removeEventListener("resize", checkMobile);
-  }, [isPWA]);
+  }, []);
 
   useEffect(() => {
     getUserProfileWithCompany().then(setProfile);
@@ -86,13 +95,27 @@ export function ApprovalsPageClient() {
     </div>
   ) : null;
 
-  // Still detecting mobile - show loading spinner
-  if (isMobile === null) {
+  // Still detecting mobile - show loading spinner only if we're actually on mobile/PWA
+  // On desktop, we can render immediately once mounted to avoid loading screen flash
+  if (!mounted) {
+    // On server and initial client render, always return null to prevent hydration mismatch
+    // The useEffect will set mounted=true immediately on client and update isMobile
+    return null;
+  }
+  
+  // After mounted, show loading only if we're still detecting and it's mobile/PWA
+  if (isMobile === null && isPWA) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-[#2596be] border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+  
+  // If still null and not PWA (desktop), assume desktop to avoid loading screen
+  if (isMobile === null) {
+    // On desktop, we can safely assume it's desktop and render
+    // This prevents the loading screen flash
   }
 
   // Mobile: render mobile view without dashboard layout

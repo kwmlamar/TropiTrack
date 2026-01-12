@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { LeadCaptureForm } from "@/components/lead-capture-form"
-import { Clock, Users, Smartphone, CheckCircle, ArrowRight, Building2, MapPin, ClipboardCheck, Menu, X } from "lucide-react"
+import { Clock, Users, CheckCircle, ArrowRight, Building2, ClipboardCheck, Menu, X, Calculator, FileText, DollarSign, BarChart3 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { isPWAStandalone } from "@/lib/utils/pwa"
@@ -91,14 +91,14 @@ export default function Home() {
             <Link href="#features" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
               Features
             </Link>
+            <Link href="#how-it-works" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
+              How It Works
+            </Link>
             <Link href="#pricing" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
               Pricing
             </Link>
             <Link href="#why-tropitrack" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
               Why TropiTrack
-            </Link>
-            <Link href="#testimonials" className="text-sm font-semibold text-gray-700 hover:text-[#2596be] transition-colors">
-              Testimonials
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export default function Home() {
               <Link href="/login">Log In</Link>
             </Button>
             <Button asChild className="bg-[#2596be] hover:bg-[#1d7a9a] text-white font-bold shadow-lg shadow-[#2596be]/20 rounded-full px-6">
-              <Link href="#pricing">Get Started</Link>
+              <Link href="/signup">Get Started</Link>
             </Button>
             {/* Mobile Hamburger Menu Button */}
             <Button
@@ -144,6 +144,13 @@ export default function Home() {
                     Features
                   </Link>
                   <Link
+                    href="#how-it-works"
+                    className="block px-4 py-3 text-base font-semibold text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 rounded-lg transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    How It Works
+                  </Link>
+                  <Link
                     href="#pricing"
                     className="block px-4 py-3 text-base font-semibold text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 rounded-lg transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
@@ -156,13 +163,6 @@ export default function Home() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Why TropiTrack
-                  </Link>
-                  <Link
-                    href="#testimonials"
-                    className="block px-4 py-3 text-base font-semibold text-gray-700 hover:text-[#2596be] hover:bg-[#2596be]/5 rounded-lg transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Testimonials
                   </Link>
                 </nav>
                 
@@ -195,18 +195,18 @@ export default function Home() {
               {/* Left Column - Content */}
               <div className="text-center lg:text-left">
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#041014] mb-6 leading-tight tracking-tight">
-                  Track time.<br />
-                  Run payroll.<br />
-                  <span className="text-[#2596be]">Build better.</span>
+                  Stop guessing.<br />
+                  Start knowing.<br />
+                  <span className="text-[#2596be]">Get paid right.</span>
                 </h1>
-                
+
                 <p className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Time tracking and payroll software built for Bahamian construction teams. Simple, accurate, and made for the field.
+                  Log crew hours, calculate payroll, and see labor costs per project—all in one place. No more paper timesheets or WhatsApp guesswork.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                   <Button size="lg" className="bg-[#2596be] hover:bg-[#1d7a9a] text-white text-base px-10 py-7 h-auto font-bold shadow-xl shadow-[#2596be]/20 hover:shadow-2xl hover:shadow-[#2596be]/30 rounded-full transition-all" asChild>
-                    <Link href="#pricing">
+                    <Link href="/signup">
                       Get Started
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
@@ -258,77 +258,77 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 max-w-3xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-extrabold text-[#041014] mb-5 tracking-tight">
-                Everything you need to track time and run payroll
+                Everything you need to manage labor and payroll
               </h2>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Simple, powerful tools built for Bahamian construction teams
+                Simple tools that replace paper timesheets and spreadsheet headaches
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Card 1 */}
+              {/* Card 1 - Time Entry */}
               <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#2596be]/30 group">
                 <div className="mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2596be] to-[#1d7a9a] flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Clock className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-[#041014] mb-3">No more paper timesheets</h3>
+                <h3 className="text-xl font-bold text-[#041014] mb-3">Log hours in one place</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Workers clock in from their phone. Hours are tracked automatically. Everything syncs in real-time.
+                  Enter crew hours by worker and project. No more scraps of paper or WhatsApp threads to sort through.
                 </p>
               </div>
 
-              {/* Card 2 */}
+              {/* Card 2 - Payroll */}
               <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#145369]/30 group">
                 <div className="mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#145369] to-[#0d3a4a] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <ClipboardCheck className="h-7 w-7 text-white" />
+                  <Calculator className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-[#041014] mb-3">Accurate hours, faster payroll</h3>
+                <h3 className="text-xl font-bold text-[#041014] mb-3">Payroll calculated for you</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  GPS verification means no time theft. Overtime and NIB calculations happen automatically.
+                  Approve hours, and payroll is ready. Overtime and NIB deductions calculated automatically.
                 </p>
               </div>
 
-              {/* Card 3 */}
+              {/* Card 3 - Labor Costs */}
               <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#2596be]/30 group">
                 <div className="mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2596be] to-[#1d7a9a] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Smartphone className="h-7 w-7 text-white" />
+                  <DollarSign className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-[#041014] mb-3">Works on any device</h3>
+                <h3 className="text-xl font-bold text-[#041014] mb-3">See labor costs per project</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Mobile-optimized web app. Works offline. Simple enough that anyone can use it.
+                  Know exactly how much labor you&apos;ve spent on each job. Compare estimated vs. actual costs.
                 </p>
               </div>
 
-              {/* Card 4 */}
+              {/* Card 4 - Project Insight */}
               <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#145369]/30 group">
                 <div className="mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#145369] to-[#0d3a4a] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <MapPin className="h-7 w-7 text-white" />
+                  <BarChart3 className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-[#041014] mb-3">Know who&apos;s where, always</h3>
+                <h3 className="text-xl font-bold text-[#041014] mb-3">Know if a job is profitable</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  See which workers are on which job sites. Track project hours separately.
+                  Simple reports show you which projects are making money and which are eating into your margin.
                 </p>
               </div>
 
-              {/* Card 5 */}
+              {/* Card 5 - Invoicing */}
               <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#2596be]/30 group">
                 <div className="mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2596be] to-[#1d7a9a] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileText className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-[#041014] mb-3">Invoice from actual hours</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Generate invoices tied to the labor you logged. Bill clients based on real work performed.
+                </p>
+              </div>
+
+              {/* Card 6 - Bahamian */}
+              <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#145369]/30 group">
+                <div className="mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#145369] to-[#0d3a4a] flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Building2 className="h-7 w-7 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-[#041014] mb-3">Built for Bahamian businesses</h3>
                 <p className="text-gray-600 leading-relaxed">
                   NIB deductions done right. Holiday pay calculations. Local support in your timezone.
-                </p>
-              </div>
-
-              {/* Card 6 */}
-              <div className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#145369]/30 group">
-                <div className="mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#145369] to-[#0d3a4a] flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Users className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-[#041014] mb-3">Your crew will actually use it</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Clean interface. Fast loading. No confusing features. Just what you need.
                 </p>
               </div>
             </div>
@@ -337,15 +337,63 @@ export default function Home() {
 
 
 
-        {/* Why TropiTrack Section */}
-        <section id="why-tropitrack" className="py-20 md:py-28 bg-white">
+        {/* How It Works Section */}
+        <section id="how-it-works" className="py-20 md:py-28 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 max-w-3xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-extrabold text-[#041014] mb-5 tracking-tight">
-                Built for Bahamian construction teams
+                How it works
               </h2>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Local support, NIB compliance, and features that work the way you actually work
+                From hours logged to payroll ready—in four simple steps
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+              <div className="text-center p-6">
+                <div className="mb-4 w-12 h-12 rounded-full bg-[#2596be] text-white text-xl font-bold flex items-center justify-center mx-auto">1</div>
+                <h3 className="text-lg font-bold text-[#041014] mb-2">Log hours</h3>
+                <p className="text-gray-600 text-sm">
+                  Enter time worked for each crew member by project. Takes minutes, not hours.
+                </p>
+              </div>
+
+              <div className="text-center p-6">
+                <div className="mb-4 w-12 h-12 rounded-full bg-[#145369] text-white text-xl font-bold flex items-center justify-center mx-auto">2</div>
+                <h3 className="text-lg font-bold text-[#041014] mb-2">Review &amp; approve</h3>
+                <p className="text-gray-600 text-sm">
+                  Check the hours, make any adjustments, and approve for payroll.
+                </p>
+              </div>
+
+              <div className="text-center p-6">
+                <div className="mb-4 w-12 h-12 rounded-full bg-[#2596be] text-white text-xl font-bold flex items-center justify-center mx-auto">3</div>
+                <h3 className="text-lg font-bold text-[#041014] mb-2">Run payroll</h3>
+                <p className="text-gray-600 text-sm">
+                  Payroll is calculated automatically—overtime, NIB, and all deductions handled.
+                </p>
+              </div>
+
+              <div className="text-center p-6">
+                <div className="mb-4 w-12 h-12 rounded-full bg-[#145369] text-white text-xl font-bold flex items-center justify-center mx-auto">4</div>
+                <h3 className="text-lg font-bold text-[#041014] mb-2">See your costs</h3>
+                <p className="text-gray-600 text-sm">
+                  View labor costs per project. Know which jobs are profitable.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Why TropiTrack Section */}
+        <section id="why-tropitrack" className="py-20 md:py-28 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16 max-w-3xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-extrabold text-[#041014] mb-5 tracking-tight">
+                Why construction owners choose TropiTrack
+              </h2>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Built for how you actually run your business—not how software companies think you should
               </p>
             </div>
 
@@ -362,15 +410,15 @@ export default function Home() {
                 <div className="mb-4 text-5xl font-extrabold text-[#145369]">10min</div>
                 <h3 className="text-lg font-bold text-[#041014] mb-2">Setup Time</h3>
                 <p className="text-gray-600 text-sm">
-                  From signup to first clock-in. Start tracking time today.
+                  Add your workers and projects. Start logging hours today.
                 </p>
               </div>
 
               <div className="text-center p-8 bg-gradient-to-br from-[#2596be]/5 to-white rounded-3xl hover:shadow-lg transition-all duration-300">
-                <div className="mb-4 text-5xl font-extrabold text-[#2596be]">24/7</div>
-                <h3 className="text-lg font-bold text-[#041014] mb-2">Always Available</h3>
+                <div className="mb-4 text-5xl font-extrabold text-[#2596be]">0</div>
+                <h3 className="text-lg font-bold text-[#041014] mb-2">Paper Forms</h3>
                 <p className="text-gray-600 text-sm">
-                  Your workers can clock in anytime, anywhere.
+                  Everything digital. No more lost timesheets or illegible handwriting.
                 </p>
               </div>
 
@@ -378,7 +426,7 @@ export default function Home() {
                 <div className="mb-4 text-5xl font-extrabold text-[#145369]">$49</div>
                 <h3 className="text-lg font-bold text-[#041014] mb-2">Starting Price</h3>
                 <p className="text-gray-600 text-sm">
-                  Simple, transparent pricing for Bahamian construction companies.
+                  Simple, transparent pricing. No hidden fees or surprise charges.
                 </p>
               </div>
 
@@ -391,10 +439,10 @@ export default function Home() {
               </div>
 
               <div className="text-center p-8 bg-gradient-to-br from-[#145369]/5 to-white rounded-3xl hover:shadow-lg transition-all duration-300">
-                <div className="mb-4 text-5xl font-extrabold text-[#145369]">GPS</div>
-                <h3 className="text-lg font-bold text-[#041014] mb-2">Verified Hours</h3>
+                <div className="mb-4 text-5xl font-extrabold text-[#145369]">1 click</div>
+                <h3 className="text-lg font-bold text-[#041014] mb-2">Payroll Ready</h3>
                 <p className="text-gray-600 text-sm">
-                  GPS tracking ensures workers are on-site.
+                  Approve hours and payroll is calculated. No spreadsheet formulas needed.
                 </p>
               </div>
             </div>
@@ -546,7 +594,7 @@ export default function Home() {
 
             <div className="text-center mt-12">
               <p className="text-gray-600 text-sm">
-                All plans include NIB compliance, GPS verification, and mobile access. No hidden fees.
+                All plans include NIB compliance, payroll calculations, and project cost tracking. No hidden fees.
               </p>
             </div>
           </div>
@@ -584,14 +632,13 @@ export default function Home() {
                   
                   {/* Content */}
                   <p className="text-gray-600 mb-6 leading-relaxed text-base">
-                    Testing time tracking and GPS verification across multiple job sites in Nassau.
+                    Testing time tracking and payroll across multiple job sites in Nassau.
                   </p>
-                  
+
                   {/* Company Info */}
                   <div className="pt-4 border-t border-gray-200">
                     <p className="font-bold text-[#041014] mb-1">Commercial Construction</p>
-                    <p className="text-sm text-gray-500 flex items-center">
-                      <MapPin className="h-3 w-3 mr-1.5 text-[#2596be]" />
+                    <p className="text-sm text-gray-500">
                       Nassau, New Providence
                     </p>
                   </div>
@@ -623,8 +670,7 @@ export default function Home() {
                   {/* Company Info */}
                   <div className="pt-4 border-t border-gray-200">
                     <p className="font-bold text-[#041014] mb-1">Residential Builder</p>
-                    <p className="text-sm text-gray-500 flex items-center">
-                      <MapPin className="h-3 w-3 mr-1.5 text-[#145369]" />
+                    <p className="text-sm text-gray-500">
                       Eleuthera
                     </p>
                   </div>
@@ -635,7 +681,7 @@ export default function Home() {
               <Card className="bg-gradient-to-br from-[#2596be]/5 to-white border border-[#2596be]/30 shadow-xl hover:shadow-2xl hover:border-[#2596be]/60 transition-all duration-300 rounded-3xl group relative overflow-hidden">
                 {/* Subtle glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[#2596be]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                
+
                 <CardContent className="p-8 relative z-10">
                   {/* Status Badge */}
                   <div className="flex items-center justify-end mb-6">
@@ -643,24 +689,23 @@ export default function Home() {
                       Open Slot
                     </span>
                   </div>
-                  
+
                   {/* Icon */}
                   <div className="mb-6">
                     <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#2596be]/20 to-[#2596be]/10 flex items-center justify-center border-2 border-dashed border-[#2596be]/30 group-hover:scale-110 group-hover:border-solid transition-all">
                       <Users className="h-8 w-8 text-[#2596be]" />
                     </div>
                   </div>
-                  
+
                   {/* Content */}
                   <p className="text-gray-600 mb-6 leading-relaxed text-base">
                     Your construction company could be here. Get early access and help shape the product.
                   </p>
-                  
+
                   {/* Company Info - Placeholder */}
                   <div className="pt-4 border-t border-dashed border-gray-300">
                     <p className="font-bold text-[#041014] mb-1">Your Company</p>
-                    <p className="text-sm text-gray-500 flex items-center">
-                      <MapPin className="h-3 w-3 mr-1.5 text-[#2596be]" />
+                    <p className="text-sm text-gray-500">
                       Anywhere in the Bahamas
                     </p>
                   </div>
@@ -704,7 +749,7 @@ export default function Home() {
                       <CheckCircle className="h-6 w-6 text-[#145369] mt-0.5 flex-shrink-0" />
                       <div>
                         <h4 className="font-bold text-[#041014]">Set up in 10 minutes</h4>
-                        <p className="text-gray-600 text-sm">From signup to first clock-in—faster than you think</p>
+                        <p className="text-gray-600 text-sm">Add your workers and projects—start logging hours today</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -748,10 +793,10 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
-                Start tracking time the right way
+                Take control of labor costs
               </h2>
               <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Join Bahamian construction companies using TropiTrack. Simple pricing starting at $49/month. Get started in 10 minutes.
+                Join Bahamian construction companies using TropiTrack to track hours, run payroll, and know if their jobs are profitable. Starting at $49/month.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-white hover:bg-gray-50 text-[#2596be] text-base px-10 py-7 h-auto font-bold shadow-xl hover:shadow-2xl rounded-full transition-all" asChild>

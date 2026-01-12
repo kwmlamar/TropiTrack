@@ -152,7 +152,7 @@ function DashboardLayoutContent({
           }}
         >
           <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-2 md:gap-6 md:py-3">
+            <div className={`flex flex-col gap-4 md:gap-6 ${fullWidth ? 'pb-2 md:pb-3' : 'py-2 md:py-3'}`}>
               <div className={fullWidth ? "" : "px-3 sm:px-4 lg:px-6"}>
                 {children}
               </div>

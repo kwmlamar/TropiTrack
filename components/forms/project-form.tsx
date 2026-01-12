@@ -462,7 +462,7 @@ export function ProjectForm({
                 name="payroll_budget"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payroll Budget (Optional)</FormLabel>
+                    <FormLabel>Estimated Labor Cost (Optional)</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />

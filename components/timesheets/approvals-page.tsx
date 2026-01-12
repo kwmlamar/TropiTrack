@@ -499,7 +499,7 @@ export function ApprovalsPage({
 
   if (loading) {
     return (
-      <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
+      <div className="space-y-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
           {/* Table Skeleton */}
           <div 
@@ -612,7 +612,7 @@ export function ApprovalsPage({
   }
 
   return (
-    <div className="space-y-2 pt-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
+    <div className="space-y-2 pb-0 h-[calc(100vh-4rem)] flex flex-col">
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-forwards flex-1 flex flex-col">
         {/* Approvals Table */}
         <div 
